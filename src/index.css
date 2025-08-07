@@ -1,0 +1,62 @@
+/* GLOBAL */
+*{
+  font-family: 'Red-hat-display';
+}
+
+
+/* ROOT */
+:root{
+  --gray-bg-body: rgb(249, 249, 249);
+  --gray: #F5F5F5;
+  --gray-text: #71717ACC;
+  --gray-dark: #4D4D4D;
+  --shadow: 2px 10px 20px rgba(0, 0, 0, 0.063);
+}
+
+/* SELECTION */
+::selection{
+  background-color: var(--gray-text);
+  color: var(--gray);
+}
+
+
+/* BODY */
+body{
+  background-color: var(--gray-bg-body);
+  color: var(--gray-dark);
+}
+
+h1{
+  font-weight: bold;
+  font-size: 3rem;
+}
+
+h2{
+  font-weight: bold;
+  font-size: 1.3rem;
+}
+
+a, p{
+  font-size: 18px;
+}
+
+p{
+  color: var(--gray-text);
+}
+
+
+/* FONT */
+@font-face {
+  font-family: 'Red-hat-display';
+  src: url(./assets/font/Red_Hat_Display/RedHatDisplay-VariableFont_wght.ttf);
+}
+
+/* FONT SECUNDARY */
+@font-face {
+  font-family: 'Great-vibes';
+  src: url(./assets/font/Great_Vibes/GreatVibes-Regular.ttf);
+}
+
+.font-secundary{
+  font-family: 'Great-vibes';
+}
