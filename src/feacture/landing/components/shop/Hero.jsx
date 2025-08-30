@@ -31,7 +31,7 @@ export const Hero = () => {
 
                             {/* Flex buttom */}
                             <div className="flex gap-[10px]">
-                                <a href="" className="bg-white/90 text-black/90  inline-flex items-center p-[5px_15px_5px_5px] rounded-full gap-[10px] font-primary">
+                                <a href="" className="bg-white text-black/90  inline-flex items-center p-[5px_15px_5px_5px] rounded-full gap-[10px] font-primary">
                                     <span className="w-[60px] h-[60px] flex justify-center items-center bg-gray-900 rounded-full">
                                         <ArrowDown color="white" strokeWidth={1.3}/>
                                     </span>
