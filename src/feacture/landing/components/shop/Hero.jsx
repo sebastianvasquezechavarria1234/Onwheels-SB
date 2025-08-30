@@ -1,6 +1,7 @@
 import {React, Link} from "react";
 import  bg_hero_shop  from '/bg_hero_shop.jpg'
-import { ArrowDown, ArrowRight, ArrowUpToLine } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpToLine, Calendar, Shirt } from "lucide-react";
+import { BtnLinkIcon } from "../BtnLinkIcon";
 
 
 export const Hero = () => {
@@ -31,22 +32,13 @@ export const Hero = () => {
 
                             {/* Flex buttom */}
                             <div className="flex gap-[10px]">
-                                <a href="" className="bg-white text-black/90  inline-flex items-center p-[5px_15px_5px_5px] rounded-full gap-[10px] font-primary">
-                                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-gray-900 rounded-full">
-                                        <ArrowDown color="white" strokeWidth={1.3}/>
-                                    </span>
-                                    <h4 className="font-primary">
-                                        Ver productos
-                                    </h4>
-                                </a>
-                                <a href="" className=" inline-flex items-center p-[5px_15px_5px_5px] rounded-full gap-[10px] font-primary">
-                                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-white rounded-full">
-                                        <ArrowRight color="#333" strokeWidth={1.8}/>
-                                    </span>
-                                    <h4 className="font-primary">
-                                        Ver Eventos
-                                    </h4>
-                                </a>
+                                 <BtnLinkIcon title="Ver Productos" link="">
+                                        <Shirt color="white" strokeWidth={1.5} size={20}/>
+                                </BtnLinkIcon>
+                                 <BtnLinkIcon title="Ver Eventos" link="" style="bg-[transparent]! text-white" styleIcon="bg-white">
+                                        <Calendar color="black" strokeWidth={1.8} size={20}/>
+                                </BtnLinkIcon>
+                                
                             </div>
 
                         </div>

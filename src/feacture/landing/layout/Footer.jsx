@@ -1,9 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { BtnLink } from "../components/BtnLink";
 
 export const Footer = () => {
     return(
-        <footer className="mt-[120px] bg-[#333] text-white">
+        <footer className=" bg-[#333] text-white m-[120px_0px_0px_0px]">
             <div className="mt-[120px] max-w-[1500px] mx-auto px-[20px] py-[120px] grid grid-cols-4 gap-[20px]">
                 <div className="flex flex-col justify-between">
                     <h3 className="font-primary text-[3rem]!">OnWheels-SB</h3>
@@ -13,50 +14,62 @@ export const Footer = () => {
 
                 <div className="flex flex-col">
                     <h4 className="font-primary mb-[20px]">Enlaces rapidos</h4>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Inicio
-                    </Link>
-                    <Link className="hover:pl-[10px] duration-200 py-[5px]" to="">
-                        Tienda
-                    </Link>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Inicio
-                    </Link>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Clases
-                    </Link>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Eventos
-                    </Link>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Sobre nosotros
-                    </Link>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Inicio" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Pre-inscripciones" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Tienda" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Clases" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Eventos" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Sobre nosotros" link=""/>
+                    </p>
+                   
                 </div>
                 <div className="flex flex-col">
                     <h4 className="font-primary mb-[20px]">Siguenos en:</h4>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Facebook
-                    </Link>
-                    <Link className="hover:pl-[10px] duration-200 py-[5px]" to="">
-                        Youtube
-                    </Link>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Tik tok
-                    </Link>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        X
-                    </Link>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Facebook" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Youtube" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Tik tok" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="X" link=""/>
+                    </p>
                    
                 </div>
                 <div className="flex flex-col">
                     <h4 className="font-primary mb-[20px]">Contacto: </h4>
-                    <Link to="" className="hover:pl-[10px] duration-200 py-[5px]">
-                        Onwheels@gmail.com
-                    </Link>
-                    <Link className="hover:pl-[10px] duration-200 py-[5px]" to="">
-                        + 57 301652456
-                    </Link>
-                    
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="Onwheels@gmail.com" link=""/>
+                    </p>
+                    <p className="flex gap-[10px] items-center py-[5px]">
+                        <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                        <BtnLink title="+ 57 301652456" link=""/>
+                    </p>                    
                 </div>
 
             </div>

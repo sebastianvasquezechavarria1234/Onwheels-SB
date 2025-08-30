@@ -95,3 +95,34 @@ input::placeholder{
   backdrop-filter: 16px;
 
 }
+
+
+/* Animación para el efecto de rotación y desplazamiento en X */
+
+.BtnLinkIcon:hover .BtnLinkIcon--icon .BtnLinkIcon--icon__svg{
+  animation: shake 0.5s ease-in-out;
+}
+@keyframes shake {
+  0% {
+      transform: rotate(0deg) translateX(0);
+  }
+  25% {
+      transform: rotate(10deg) translateX(-5px); /* Rotación hacia la derecha y desplazamiento hacia la izquierda */
+  }
+  50% {
+      transform: rotate(-10deg) translateX(5px); /* Rotación hacia la izquierda y desplazamiento hacia la derecha */
+  }
+  75% {
+      transform: rotate(10deg) translateX(-5px);
+  }
+  100% {
+      transform: rotate(0deg) translateX(0);
+  }
+}
+
+
+
+
+/* --------------------------------- */
+
+
