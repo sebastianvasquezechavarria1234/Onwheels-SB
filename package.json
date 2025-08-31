@@ -12,14 +12,10 @@
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/vite": "^4.0.17",
-<<<<<<< HEAD
-    "lucide-react": "^0.542.0",
-=======
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
     "lucide-react": "^0.537.0",
     "postcss": "^8.5.6",
->>>>>>> 0d7dc4b4a275f2c9b14693e5326f44d094a4d793
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0",

@@ -1,12 +1,17 @@
 import React from "react";
 import { CalendarDays, MapPin } from "lucide-react";
 import Navbar from "../navbar/navbar";
+import { Footer } from "../layout/Footer";
+import { Header } from "../layout/Header";
 
 const Events = () => {
   return (
     <>
+    <div className="sticky top-0 z-50">
+
     <Navbar/>
-       <div className="min-h-screen flex flex-col">
+    </div>
+       <div className="min-h-screen flex flex-col mt-4">
     
         <section className="h-[400px] flex items-center bg-cover bg-center text-white"
         style={{
@@ -19,7 +24,7 @@ const Events = () => {
                     eventos y competiciones de stakeboarding
                 </h2>
                 <p className="mb-4">vive la emocion sobre ruedas</p>
-                <button className="bg-red-600 px-5 py-2 rounded-lg">
+                <button className="bg-red-600 px-5 py-2 rounded-lg hover:bg-red-800">
                     ver calendario
                 </button>
 
@@ -27,17 +32,17 @@ const Events = () => {
             
         </section>
 <div className="container mx-auto flex justify-center gap-4 my-6">
-    <select className="boder rounded-lg px-3 py-6  ">
+    <select className="boder rounded-lg px-3 py-6  text-white bg-blue-950 ">
         <option >categorias</option>
         <option>competencias</option>
         <option>exhibiciones</option>
     </select>
-        <select className="boder rounded-lg px-3 py-6">
+        <select className="boder rounded-lg px-3 py-6  text-white bg-blue-950 ">
         <option>ciudad</option>
         <option>medellin</option>
         <option>bogotá</option>
     </select>
-        <select className="boder rounded-lg px-3 py-6">
+        <select className="boder rounded-lg px-3 py-6 text-white bg-blue-950 ">
         <option>fecha</option>
         <option>este mes</option>
         <option>proximo mes</option>
@@ -64,7 +69,7 @@ const Events = () => {
                 <MapPin size={16}/> Medellín 
                 <CalendarDays size={16}/> 15 de Septiembre
               </p>
-              <button className="mt-3 border px-4 py-2 rounded-lg">
+              <button className="mt-3 border px-4 py-2 rounded-lg bg-blue-950 text-amber-100 hover:bg-blue-600">
                 Ver más
               </button>
             </div>
@@ -85,7 +90,7 @@ const Events = () => {
                 <MapPin size={16}/> Envigado 
                 <CalendarDays size={16}/> 21 de Junio
               </p>
-              <button className="mt-3 border px-4 py-2 rounded-lg">
+              <button className="mt-3 border px-4 py-2 rounded-lg bg-blue-950 text-amber-100 hover:bg-blue-600">
                 Ver más
               </button>
             </div>
@@ -93,7 +98,7 @@ const Events = () => {
         </div>
       </section>
 
-      <section className="container mx-auto my-10">
+      <section className="container mx-auto my-10 border-black pb-10">
         <h3 className="text-2xl font-bold mb-6">Próximos eventos</h3>
         <div className="bg-white shadow-md rounded-lg divide-y">
           <div className="p-4 hover:bg-gray-50 cursor-pointer">
@@ -129,17 +134,7 @@ const Events = () => {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-blue-900 text-white mt-10">
-        <div className="container mx-auto flex justify-between p-4">
-          <p>© 2025 OnWheels SB</p>
-          <div className="flex gap-4">
-            <a href="#">Políticas</a>
-            <a href="#">Contacto</a>
-            <a href="#">Soporte</a>
-          </div>
-        </div>
-      </footer>
+ <Footer></Footer>
     </div>
     </>
   );
