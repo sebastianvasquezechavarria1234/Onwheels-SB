@@ -1,62 +1,128 @@
 /* GLOBAL */
 *{
-  font-family: 'Red-hat-display';
+  font-family: 'Poppins';
+  
 }
 
-
-/* ROOT */
-:root{
-  --gray-bg-body: rgb(249, 249, 249);
-  --gray: #F5F5F5;
-  --gray-text: #71717ACC;
-  --gray-dark: #4D4D4D;
-  --shadow: 2px 10px 20px rgba(0, 0, 0, 0.063);
-}
-
-/* SELECTION */
-::selection{
-  background-color: var(--gray-text);
-  color: var(--gray);
-}
-
-
-/* BODY */
 body{
-  background-color: var(--gray-bg-body);
-  color: var(--gray-dark);
+  color: #333;
 }
+.font-primary{
+  font-family: 'Playfair-Display';
+
+}
+/* h1, h2, h3, h4, h5{
+  font-style: italic;
+} */
 
 h1{
+  font-size: 6rem;
+  line-height: 80px;
   font-weight: bold;
-  font-size: 3rem;
+  letter-spacing: -4px;
+}
+
+h1 span{
+  font-weight: 400;
+  margin: 0px 25px;
+}
+
+h3{
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -2px;
+ 
+}
+
+.font-title{
+    font-family: 'Poppins'!important;
+  font-style: normal;
+  font-weight: bold;
+  letter-spacing: -2px;
 }
 
 h2{
-  font-weight: bold;
-  font-size: 1.3rem;
+  font-size: 4rem;
+  font-weight: 500;
+  letter-spacing: -4px;
+}
+
+h4{
+   font-family: 'Poppins';
+   font-style: normal;
+   font-weight: 600;
+   font-size: 20px;
 }
 
 a, p{
   font-size: 18px;
+  font-weight: 500;
 }
 
-p{
-  color: var(--gray-text);
+input{
+  outline: none;
+  font-size: 16px;
+}
+
+input::placeholder{
+  color: currentColor;
 }
 
 
 /* FONT */
 @font-face {
-  font-family: 'Red-hat-display';
-  src: url(./assets/font/Red_Hat_Display/RedHatDisplay-VariableFont_wght.ttf);
+  font-family: 'Playfair-Display';
+  src: url(./assets/font/Playfair_Display/PlayfairDisplay-Italic-VariableFont_wght.ttf);
 }
 
 /* FONT SECUNDARY */
 @font-face {
-  font-family: 'Great-vibes';
-  src: url(./assets/font/Great_Vibes/GreatVibes-Regular.ttf);
+  font-family: 'Poppins';
+  src: url(./assets/font/Poppins/Poppins-ExtraLight.ttf);
 }
 
-.font-secundary{
-  font-family: 'Great-vibes';
+ 
+
+/* gradient */
+
+.gradient{
+  background: radial-gradient(rgba(0, 0, 0, 0.394), rgba(0, 0, 0, 0.814), rgb(0, 0, 0));
 }
+
+.gradient-backdrop{
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.927), rgba(0, 0, 0, 0.492), rgba(0, 0, 0, 0.704), rgba(0, 0, 0, 0.03));
+  backdrop-filter: 16px;
+
+}
+
+
+/* Animación para el efecto de rotación y desplazamiento en X */
+
+.BtnLinkIcon:hover .BtnLinkIcon--icon .BtnLinkIcon--icon__svg{
+  animation: shake 0.5s ease-in-out;
+}
+@keyframes shake {
+  0% {
+      transform: rotate(0deg) translateX(0);
+  }
+  25% {
+      transform: rotate(10deg) translateX(-5px); /* Rotación hacia la derecha y desplazamiento hacia la izquierda */
+  }
+  50% {
+      transform: rotate(-10deg) translateX(5px); /* Rotación hacia la izquierda y desplazamiento hacia la derecha */
+  }
+  75% {
+      transform: rotate(10deg) translateX(-5px);
+  }
+  100% {
+      transform: rotate(0deg) translateX(0);
+  }
+}
+
+
+
+
+/* --------------------------------- */
+
+

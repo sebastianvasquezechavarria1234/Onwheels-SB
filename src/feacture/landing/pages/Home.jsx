@@ -3,12 +3,15 @@ import { Sidebar } from "lucide-react";
 
 export const Home = () => {
     return (
-    <div className="flex">
-      <Sidebar />
-      <main className="flex-1 bg-gray-50 p-6">
-        <h1 className="text-2xl font-bold">Contenido principal</h1>
-        <p className="text-gray-600 mt-2">Aquí va tu página.</p>
-      </main>
-    </div>
+
+
+
+        <section className="">
+            <h1 className="">Lorem ipsum dolor sit amet ullam incidunt. , id eligendi est repudiandae error quam quia natus voluptate facilis.</h1>
+            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Assumenda provident asperiores doloremque facilis. Voluptate dolore esse et non veniam molestias adipisci vero, nihil officia! Libero doloribus fuga qui magni eos?.</p>  
+
+
+      
+        </section> 
     )
 }
