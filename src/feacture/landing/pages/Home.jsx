@@ -7,7 +7,9 @@ export const Home = () => {
         <section >
             <Hero></Hero>
             <Grid></Grid>
+
             
+       
         </section>
     )
 }
