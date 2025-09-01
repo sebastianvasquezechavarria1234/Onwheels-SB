@@ -4,15 +4,57 @@
   
 }
 
-h1, h2, h3, h4, h5{
-  font-family: 'Playfair-Display';
-  font-style: italic;
+body{
+  color: #333;
 }
+.font-primary{
+  font-family: 'Playfair-Display';
+
+}
+/* h1, h2, h3, h4, h5{
+  font-style: italic;
+} */
 
 h1{
   font-size: 5rem;
   line-height: 70px;
+  font-size: 6rem;
+  line-height: 80px;
+  font-weight: bold;
+  letter-spacing: -4px;
+}
+
+h1 span{
+  font-weight: 400;
+  margin: 0px 25px;
+}
+
+h3{
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -2px;
+ 
+}
+
+.font-title{
+    font-family: 'Poppins'!important;
+  font-style: normal;
+  font-weight: bold;
+  letter-spacing: -2px;
+}
+
+h2{
+  font-size: 4rem;
   font-weight: 500;
+  letter-spacing: -4px;
+}
+
+h4{
+   font-family: 'Poppins';
+   font-style: normal;
+   font-weight: 600;
+   font-size: 20px;
 }
 
 h2{
@@ -33,6 +75,15 @@ a, p{
   font-weight: 500;
 }
 
+input{
+  outline: none;
+  font-size: 16px;
+}
+
+input::placeholder{
+  color: currentColor;
+}
+
 
 /* FONT */
 @font-face {
@@ -51,3 +102,47 @@ a, p{
 }
 
  
+ 
+
+/* gradient */
+
+.gradient{
+  background: radial-gradient(rgba(0, 0, 0, 0.394), rgba(0, 0, 0, 0.814), rgb(0, 0, 0));
+}
+
+.gradient-backdrop{
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.927), rgba(0, 0, 0, 0.492), rgba(0, 0, 0, 0.704), rgba(0, 0, 0, 0.03));
+  backdrop-filter: 16px;
+
+}
+
+
+/* Animación para el efecto de rotación y desplazamiento en X */
+
+.BtnLinkIcon:hover .BtnLinkIcon--icon .BtnLinkIcon--icon__svg{
+  animation: shake 0.5s ease-in-out;
+}
+@keyframes shake {
+  0% {
+      transform: rotate(0deg) translateX(0);
+  }
+  25% {
+      transform: rotate(10deg) translateX(-5px); /* Rotación hacia la derecha y desplazamiento hacia la izquierda */
+  }
+  50% {
+      transform: rotate(-10deg) translateX(5px); /* Rotación hacia la izquierda y desplazamiento hacia la derecha */
+  }
+  75% {
+      transform: rotate(10deg) translateX(-5px);
+  }
+  100% {
+      transform: rotate(0deg) translateX(0);
+  }
+}
+
+
+
+
+/* --------------------------------- */
+
+

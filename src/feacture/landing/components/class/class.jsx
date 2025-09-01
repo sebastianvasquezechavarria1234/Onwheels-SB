@@ -134,7 +134,7 @@ export const Class = () => {
         </div>
 
         <div className="text-center mt-30">
-          <button className="bg-gradient-to-r from-red-400 to-red-500 hover:from-purple-600 hover:to-blue-500 text-white px-8 py-3 rounded-full text-3xl font-medium ">
+          <button  className="bg-gradient-to-r from-red-400 to-red-500 hover:from-purple-600 hover:to-blue-500 text-white px-8 py-3 rounded-full text-3xl font-medium ">
             Preinscribirme
           </button>
         </div>
