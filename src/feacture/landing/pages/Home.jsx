@@ -1,7 +1,10 @@
 import React from "react";
+import { Sidebar } from "lucide-react";
 
 export const Home = () => {
     return (
+
+
 
         <section className="">
             <h1 className="">Lorem ipsum dolor sit amet ullam incidunt. , id eligendi est repudiandae error quam quia natus voluptate facilis.</h1>
@@ -9,6 +12,6 @@ export const Home = () => {
 
 
       
-        </section>
+        </section> 
     )
 }
