@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 
-export const Card = ({img,text,descripcion }) => {
+export const Card = ({img,text,descripcion, dato }) => {
   return (
     <>
       <Link className="">
@@ -16,7 +16,7 @@ export const Card = ({img,text,descripcion }) => {
           {/* texto */}
 
           <h4 className="gradient-backdrop absolute z-20 top-2 left-3 text-white rounded-full font-primary ">
-            Proximos eventos :
+            {text}
           </h4>
 
 
@@ -25,11 +25,16 @@ export const Card = ({img,text,descripcion }) => {
               {descripcion }
               </p>
 
-              <p className=" font-primary z-20 bottom-5 text-white text-[30px]! ">$20.000</p>
+              <p className=" font-primary z-20 bottom-5 text-white text-[30px]! ">
+                {dato}
+                </p>
          
           </div>
+          
         </picture>
+
       </Link>
+      
 
       
     </>

@@ -20,7 +20,7 @@ export  const Hero = () =>{
 
                     </h1>
                     <div className="flex gap-[10px] mt-[30px]">
-                    <BtnLinkIcon title={"Preinscripciones"}>
+                    <BtnLinkIcon title={"Preinscribete!"}>
                         <NotebookPen size={20} strokeWidth={2} color="white"></NotebookPen>
                     </BtnLinkIcon>
                     <BtnLinkIcon title={"Nuestros Productos"} style="bg-[transparent]! text-white" styleIcon={"bg-white"} >

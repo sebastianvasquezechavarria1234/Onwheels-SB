@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom"
 import { ArrowDown } from "lucide-react"
 
-export const BtnLinkIcon = ({ title, children, style, styleIcon }) => {
+export const BtnLinkIcon = ({ title, children, style, styleIcon, link }) => {
   const letters = title.split("")
 
   return (
     <Link
-      to="/productos"
+      to={link}
       className={`
         ${style}
         BtnLinkIcon group bg-white text-black/90 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px]
