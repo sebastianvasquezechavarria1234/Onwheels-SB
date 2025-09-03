@@ -1,14 +1,23 @@
 import React from "react";
+import { Hero } from "../components/landing/Hero";
+import { Grid } from "../components/landing/grid";
+import { Header } from "../layout/Header";
+import { Footer } from "../layout/Footer";
 
 export const Home = () => {
     return (
+        <section >
+            <Header></Header>
+            <Hero></Hero>
+            <Grid></Grid>
+            <Footer></Footer>
 
-        <section className="">
-            <h1 className="">Lorem ipsum dolor sit amet ullam incidunt. , id eligendi est repudiandae error quam quia natus voluptate facilis.</h1>
-            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Assumenda provident asperiores doloremque facilis. Voluptate dolore esse et non veniam molestias adipisci vero, nihil officia! Libero doloribus fuga qui magni eos?.</p>  
+            
+       
+        </section>
+
 
 
       
-        </section>
     )
 }
