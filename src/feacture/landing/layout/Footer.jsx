@@ -7,8 +7,6 @@ export const Footer = () => {
             <div className="mt-[120px] max-w-[1500px] mx-auto px-[20px] py-[120px] grid grid-cols-4 gap-[20px]">
                 <div className="flex flex-col justify-between">
                     <h3 className="font-primary text-[3rem]!">OnWheels-SB</h3>
-                   
-
                 </div>
 
                 <div className="flex flex-col">
@@ -68,3 +66,5 @@ export const Footer = () => {
         </footer>
     )
 }
+
+export default Footer;

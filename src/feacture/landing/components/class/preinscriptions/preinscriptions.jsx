@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { Header } from "../../../layout/Header"
 
 const Preinscriptions = () => {
   const [edad, setEdad] = useState("")
@@ -26,7 +27,9 @@ const Preinscriptions = () => {
   })
 
   return (
+   
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white">
+    <Header />
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-200 p-8">
         <h2 className="text-center text-2xl font-bold text-gray-900 mb-6">
           Preinscripción
