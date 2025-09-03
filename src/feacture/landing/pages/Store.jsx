@@ -10,7 +10,7 @@ export const Shop = () => {
     return(
         <>
             <section class="">
-                {/* <Animation /> */}
+                <Animation />
                 <Header />
                 <Hero />
                 <Grid/>

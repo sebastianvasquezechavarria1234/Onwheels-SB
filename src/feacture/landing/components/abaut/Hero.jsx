@@ -13,17 +13,19 @@ export const Hero = () => {
                     <img className="w-full h-full object-cover object-center" src="/bg_hero_shop.jpg" alt="Hero" />
 
                     {/* Container text and gradient */}
-                    <div className="gradient absolute left-0 top-0 w-full h-full  p-[100px] items-end flex text-white">
+                    <div className="gradient absolute left-0 top-0 w-full h-full bg-red-600 p-[100px] items-end flex text-white">
                         <div className="max-w-[900px]">
-                            <p className="italic mb-[30px]">---Tienda</p>
+                            <p className="italic mb-[30px]">---Sobre nosotros</p>
+                             
+
                             <h1 className="mb-[30px]">
-                               Todo lo que 
+                               Somos la 
                                <span className="font-primary">
-                                    un skater 
+                                    calle sobre cuatro ruedas
                                </span>
-                               necesita en un 
+                               Skate, estilo y
                                 <span className="font-primary">
-                               solo lugar!
+                                pasión sin pausa.
 
                                 </span>
                             </h1>
