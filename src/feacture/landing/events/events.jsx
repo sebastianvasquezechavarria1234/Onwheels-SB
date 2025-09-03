@@ -9,7 +9,7 @@ const Events = () => {
     <>
     <div className="sticky top-0 z-50">
 
-    <Navbar/>
+    <Navbar />
     </div>
        <div className="min-h-screen flex flex-col mt-4">
     

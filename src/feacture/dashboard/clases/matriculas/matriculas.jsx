@@ -1,8 +1,8 @@
-import React from "react";
+import React from "react"; 
 import { Search, Plus } from "lucide-react";
-import Layout from "./layout";
+import Layout from "../../layout-dashboard/layout";
 
-export default function Estudiantes() {
+export default function Matriculas() {
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">
@@ -11,7 +11,7 @@ export default function Estudiantes() {
           {/* Encabezado */}
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-700">
-              Usuarios &gt; Estudiantes
+              matrículas &gt; Gestión de Matrículas
             </h2>
           </div>
 
@@ -20,14 +20,14 @@ export default function Estudiantes() {
             <div className="relative w-1/3">
               <input
                 type="text"
-                placeholder="Buscar estudiantes..."
+                placeholder="Buscar matrículas..."
                 className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             </div>
             <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all">
               <Plus className="h-4 w-4" />
-              Registrar un nuevo estudiante
+              Registrar nueva matrícula
             </button>
           </div>
 
@@ -36,18 +36,21 @@ export default function Estudiantes() {
             <table className="w-full text-sm text-left text-gray-600">
               <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
                 <tr>
-                  <th className="px-6 py-3">Nombre</th>
-                  <th className="px-6 py-3">Correo</th>
-                  <th className="px-6 py-3">Teléfono</th>
-                  <th className="px-6 py-3">Rol</th>
+                  <th className="px-6 py-3">ID Matrícula</th>
+                  <th className="px-6 py-3">Preinscripción</th>
+                  <th className="px-6 py-3">Clase</th>
+                  <th className="px-6 py-3">Plan</th>
+                  <th className="px-6 py-3">Fecha Matrícula</th>
+                  <th className="px-6 py-3">Valor Matrícula</th>
+                  <th className="px-6 py-3">Método de Pago</th>
                   <th className="px-6 py-3 text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {/* Ejemplo de fila vacía */}
                 <tr className="hover:bg-gray-50 transition">
-                  <td colSpan="5" className="text-center py-10 text-gray-400 italic">
-                    No hay estudiantes registrados
+                  <td colSpan="8" className="text-center py-10 text-gray-400 italic">
+                    No hay matrículas registradas
                   </td>
                 </tr>
               </tbody>
