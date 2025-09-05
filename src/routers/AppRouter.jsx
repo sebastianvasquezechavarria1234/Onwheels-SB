@@ -12,7 +12,13 @@ import { About } from "../feactures/landing/pages/About";
 import Login from "../feactures/Auth/pages/Login";
 import Register from "../feactures/Auth/pages/Register";
 // Dashboard
+import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
 import Eventos from "../feactures/dashboards/admin/pages/eventos/eventos/eventos";
+import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
+import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
+import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
+import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
+import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 
 export const AppRouter = () => {
 
@@ -28,7 +34,13 @@ export const AppRouter = () => {
       <Route path="register" element={<Register />} />
 
 
-      <Route path="dashboard" element={<Eventos />} />
+      <Route path="admin/matriculas" element={<Matriculas />} />
+      <Route path="admin/compras" element={<Compras />} />
+      <Route path="admin/eventos" element={<Eventos />} />
+      <Route path="admin/proveedores" element={<Proveedores />} />
+      <Route path="admin/ventas" element={<Ventas />} />
+      <Route path="admin/productos" element={<Productos />} />
+      <Route path="admin/categoriasProductos" element={<Categorias />} />
     </Routes>
 
   );
