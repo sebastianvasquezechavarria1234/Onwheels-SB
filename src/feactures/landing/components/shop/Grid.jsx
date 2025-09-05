@@ -14,7 +14,7 @@ export const Grid = () => {
                 {/* flex */}
                 <div className="flex gap-[20px]">
                     {/* Filtros */}
-                    <div className="w-[25%]">
+                    <div className="w-[20%]">
                         <form className="sticky top-[100px] border-y border-black/50  border-dashed py-[20px]">
                             <div className="flex items-center gap-[10px] mb-[20px]">
                                 <span className="w-[60px] h-[60px] flex justify-center items-center bg-gray-200 rounded-full">
@@ -51,14 +51,14 @@ export const Grid = () => {
                     </div>
 
                     {/* Grid */}
-                    <div className="w-[75%] ">
+                    <div className="w-[80%] ">
                         <h3 className="opacity-70 mb-[30px]">Explora
                             <span className="font-primary mx-[10px]">Nuestros productos</span>
                             creados para la vida 
                             <span className="font-primary mx-[10px]">sobre ruedas...</span>
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-[20px]">
+                        <div className="grid grid-cols-3 gap-[20px]">
                             <Card></Card>
                             <Card></Card>
                             <Card></Card>

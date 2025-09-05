@@ -5,8 +5,8 @@ import { BtnLink } from "../components/BtnLink";
 
 export const Header = () => {
   return (
-    <header className="w-[1450px] fixed rounded-full bg-[var(--color-blue)] backdrop-blur-[16px] top-4 left-1/2 transform -translate-x-1/2 z-50 text-white p-[5px]">
-      <nav className="flex items-center justify-between">
+    <header className=" w-full flex justify-center fixed z-50 text-white">
+      <nav className="flex items-center justify-between w-full   bg-[var(--color-blue)] backdrop-blur-[16px]  p-[5px]">
         <ul className="flex gap-[20px] items-center">
           <li>
             <Link to="">
