@@ -37,9 +37,9 @@ export const Grid = () => {
             dato="$ 20.000"
           />
         </div>
-        <div className="flex justify-end mt-[30px]">
-            <BtnLinkIcon title={"Ver más productos"} >
-                <ShirtIcon></ShirtIcon>
+        <div className="flex justify-center mt-[30px]">
+            <BtnLinkIcon styleIcon={"bg-white"} style={"text-white bg-[var(--color-blue)]!"}  title={"Ver más productos"} >
+                <ShirtIcon  className="text-[var(--color-blue)]!"></ShirtIcon>
             </BtnLinkIcon>
         </div>
       </section>
@@ -111,6 +111,11 @@ export const Grid = () => {
             src="./bg_hero_landing.jpg"
             alt="img"
           />
+        </div>
+         <div className="flex justify-center mt-[30px]">
+            <BtnLinkIcon styleIcon={"bg-white"} style={"text-white bg-[var(--color-blue)]!"}  title={"Ver más productos"} >
+                <ShirtIcon  className="text-[var(--color-blue)]!"></ShirtIcon>
+            </BtnLinkIcon>
         </div>
       </section>
     </>
