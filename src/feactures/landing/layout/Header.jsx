@@ -34,7 +34,7 @@ export const Header = () => {
         </ul>
         <ul className="flex gap-[5px] items-center">
           <li>
-            <BtnLinkIcon title="Carrito de compras" link="" style="bg-[transparent]! text-white!" styleIcon="bg-white!">
+            <BtnLinkIcon title="Carrito de compras" link="../shoppingCart" style="bg-[transparent]! text-white!" styleIcon="bg-white!">
               <ShoppingCart color="black" strokeWidth={1.5} size={20}/>
             </BtnLinkIcon>
           </li>
