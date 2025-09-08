@@ -24,6 +24,7 @@ import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
 import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
+import { Setting } from "../feactures/dashboards/student/pages/Setting";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -178,6 +179,10 @@ export const AppRouter = () => {
         <Route path="admin/ventas" element={<Ventas />} />
         <Route path="admin/productos" element={<Productos />} />
         <Route path="admin/categoriasProductos" element={<Categorias />} />
+
+
+
+        <Route path="student/setting" element={<Setting />} />
       </Routes>
     </AnimatePresence>
   );
