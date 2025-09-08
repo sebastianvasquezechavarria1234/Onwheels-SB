@@ -19,7 +19,8 @@ import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
 import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
-import CategoriasEventos from "../feactures/dashboards/admin/pages/configuracion/usuarios/usuarios";
+// import CategoriasEventos from "../feactures/dashboards/admin/pages/configuracion/usuarios/usuarios";
+import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 
 export const AppRouter = () => {
 
@@ -32,13 +33,14 @@ export const AppRouter = () => {
       <Route path="preinscriptions" element={<Preinscriptions />} />
       <Route path="about" element={<About />} />
       <Route path="login" element={<Login />} />
+      <Route path="shoppingCart" element={<ShoppingCart />} />
       <Route path="register" element={<Register />} />
 
 
       <Route path="admin/matriculas" element={<Matriculas />} />
       <Route path="admin/compras" element={<Compras />} />
       <Route path="admin/eventos" element={<Eventos />} />
-      <Route path="admin/categorias-eventos" element={<CategoriasEventos />} />
+      {/* <Route path="admin/categorias-eventos" element={<CategoriasEventos />} /> */}
       <Route path="admin/proveedores" element={<Proveedores />} />
       <Route path="admin/ventas" element={<Ventas />} />
       <Route path="admin/productos" element={<Productos />} />

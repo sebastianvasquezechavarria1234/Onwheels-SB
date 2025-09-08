@@ -2,13 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 
-export const Card = ({img,text,descripcion, dato }) => {
+export const Card = ({img,text,descripcion, dato, styleImage }) => {
   return (
     <>
       <Link className="">
         <picture className="relative group overflow-hidden h-[400px]   block  rounded-[20px]">
           <img
-            className="object-cover w-full h-[100%] group-hover:scale-[1.1] "
+            className={`${styleImage} object-cover w-full h-[100%] group-hover:scale-[1.1] duration-200`}
             src={img}
             alt="img"
           />

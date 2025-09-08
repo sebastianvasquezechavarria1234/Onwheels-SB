@@ -130,7 +130,7 @@ input::placeholder {
 
 /* Animación para el efecto de rotación y desplazamiento en X */
 
-.BtnLinkIcon:hover .BtnLinkIcon--icon .BtnLinkIcon--icon__svg .btn_info {
+.BtnLinkIcon:hover .BtnLinkIcon--icon .BtnLinkIcon--icon__svg {
   animation: shake 0.5s ease-in-out;
 }
 
