@@ -30,7 +30,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-[13%] h-screen bg-white shadow-md flex flex-col p-4">
+    <div className="w-[14%] h-screen bg-white shadow-md flex flex-col p-4">
       {/* Contenedor con espacio entre módulos */}
       <div className="flex flex-col space-y-4">
         {/* Dashboard */}
@@ -204,8 +204,8 @@ const Sidebar = () => {
 
       {/* Cerrar sesión */}
       <div className="mt-auto pt-4">
-        <BtnLinkIcon title="Cerrar session">
-            <LogOut color="white"/>
+        <BtnLinkIcon title="Cerrar session" style="bg-[var(--color-blue)]! text-white w-full" styleIcon="bg-white!">
+            <LogOut className="text-[var(--color-blue)]" strokeWidth={2}/>
         </BtnLinkIcon>
       </div>
     </div>

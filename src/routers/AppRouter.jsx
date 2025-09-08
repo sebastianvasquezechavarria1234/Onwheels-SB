@@ -25,6 +25,8 @@ import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
 import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
+import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses";
+import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -167,11 +169,11 @@ export const AppRouter = () => {
           }
         />
 
-        {/* Auth (sin animación) */}
+        {/* Auth  */}
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
 
-        {/* Dashboard (sin animación) */}
+        {/* Dashboard Admin */}
         <Route path="admin/matriculas" element={<Matriculas />} />
         <Route path="admin/compras" element={<Compras />} />
         <Route path="admin/eventos" element={<Eventos />} />
@@ -181,8 +183,10 @@ export const AppRouter = () => {
         <Route path="admin/categoriasProductos" element={<Categorias />} />
 
 
-
+        {/* Dasboard Student */}
         <Route path="student/setting" element={<Setting />} />
+        <Route path="student/myClasses" element={<MyClasses />} />
+        <Route path="student/myPurchases" element={<MyPurchases />} />
       </Routes>
     </AnimatePresence>
   );
