@@ -41,22 +41,7 @@ export const SettingInstructor = () => {
 
                         </div>
                     </div>
-                    {/* <div className="">
-                        <div className="gap-[10px]">
-                            <div className="mb-[20px] w-[50%] block">
-                                <p className="mb-[0px] translate-x-[20px]">Nombre:
-                                </p>
-                                <p className=" block p-[18px] rounded-[30px] border-1 border-black/40  border-dashed"> Sebastian</p>
-                            </div>
-                            <div className="mb-[20px] w-[50%] block">
-                                <p className="mb-[0px] translate-x-[20px]">Apellidos:
-                                </p>
-                                <p className=" block p-[18px] rounded-[30px] border-1 border-black/40  border-dashed">Vasquez echavarria</p>
-                            </div>
-
-                        </div>
-
-                    </div> */}
+                   
 
                 </div>
 

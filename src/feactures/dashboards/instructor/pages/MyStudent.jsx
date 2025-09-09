@@ -16,8 +16,8 @@ export const MyStudent = () => {
 
   return (
     <Layout>
-      <section className="pr-[10px] w-full bg-[var(--gray-bg-body)]">
-        <h2 className="sticky top-0 z-50 bg-[var(--gray-bg-body)] p-[30px] pb-[80px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-primary">
+      <section className="pr-[10px] w-full overflow-hidden h-creen">
+        <h2 className="sticky top-0 z-50 p-[30px] pb-[80px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-primary">
           Mis estudiantes
         </h2>
 

@@ -8,7 +8,7 @@ import { ArrowLeft, School, Settings, ShoppingBag, User, Users, X } from "lucide
 export const Layout = ({ children }) => {
 	return (
 		<main
-			className="relative w-full h-screen flex gap-[10px] overflow-x-hidden"
+			className="relative w-full h-screen flex gap-[10px] overflow-hidden"
 			style={{ perspective: "1200px" }}
 		>
 			{/* Sidebar */}

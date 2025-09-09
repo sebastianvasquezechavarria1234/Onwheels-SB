@@ -1,99 +1,185 @@
-import React from "react";
-import Layout from "../layout/layout";
-import { Mail, Phone, PhoneCall, User } from "lucide-react";
-import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
+import React, { useEffect, useState } from "react";
+import { Layout } from "../../student/layout/layout";
+import { Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+
+
+const initialClases = [
+    {
+        id: 1,
+        ubicacion: "Estadio",
+        direccion: "Calle 4 int 131",
+        dia: "Lunes",
+        hora: "11 pm a 1 pm",
+        nivel: "Intermedio",
+        cantidadEstudiantes: 12,
+        nombre: "Dibujo Intermedio",
+        instructor: "Sebastián Vásquez",
+        descripcion: "Clase enfocada en figura humana y composición (intermedio).",
+    },
+    {
+        id: 2,
+        ubicacion: "Estadio",
+        direccion: "Calle 4 int 131",
+        dia: "Lunes",
+        hora: "11 pm a 1 pm",
+        nivel: "Intermedio",
+        cantidadEstudiantes: 12,
+        nombre: "Dibujo Intermedio",
+        instructor: "Sebastián Vásquez",
+        descripcion: "Clase enfocada en figura humana y composición (intermedio).",
+    },
+];
 
 export const MyClasses = () => {
+    const [clases, setClases] = useState(initialClases);
+    const [selected, setSelected] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+
+    // cerrar con Escape
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === "Escape") closeModal();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
+
+    const openView = (c) => {
+        setSelected({ ...c });
+        setModalOpen(true);
+    };
+    const closeModal = () => {
+        setSelected(null);
+        setModalOpen(false);
+    };
+
     return (
         <Layout>
-            <section className="w-full h-full  rounded-[30px] p-[30px] bg-white border border-black/20">
-            <div className="flex justify-between">
-                <h1 className="font-primary">Mis clases.</h1>
-                <BtnLinkIcon title="Cotizar otra clase">
-                    <PhoneCall color="white" strokeWidth={1.3} size={20}/>
-                </BtnLinkIcon>
+            <section className="relative w-full bg-[var(--gray-bg-body)] side_bar">
+                <h2 className="font-primary sticky top-0 bg-[var(--gray-bg-body)] p-[30px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-secundaria">
+                    Mis clases
+                </h2>
 
-            </div>
+                <div className="p-[30px]">
+                    {/* Encabezados */}
+                    <article className="font-semibold italic mt-[120px] flex items-center border-b border-black/20 pb-[20px]">
+                        <p className="w-[10%]">Ubicación</p>
+                        <p className="w-[15%]">Dirección</p>
+                        <p className="w-[10%]">Día</p>
+                        <p className="w-[15%]">Hora</p>
+                        <p className="w-[20%]">Instructor</p>
+                        <p className="w-[15%]">Nivel de la clase</p>
+                        <p className="w-[15%]">Acciones</p>
+                    </article>
 
+                    {/* Lista de Clases */}
+                    {clases.map((c) => (
+                        <article
+                            key={c.id}
+                            className="py-[18px] border-b border-black/20 flex items-center"
+                        >
+                            <p className="w-[10%] line-clamp-1">{c.ubicacion}</p>
+                            <p className="w-[15%] line-clamp-1">{c.direccion}</p>
+                            <p className="w-[10%] line-clamp-1">{c.dia}</p>
+                            <p className="w-[15%] line-clamp-1">{c.hora}</p>
+                            <p className="w-[20%]">{c.instructor}</p>
+                            <p className="w-[15%]">
+                                <span className="inline-flex items-center gap-[5px] px-[15px] py-[7px] rounded-full bg-orange-100 text-orange-700">
+                                    <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
+                                    {c.nivel}
+                                </span>
+                            </p>
 
-                <div className="mt-[80px] grid grid-cols-2 gap-[20px]">
-                    <div className="flex gap-[35px] rounded-20px">
-                        <picture className="relative w-[50%] block rounded-[30px] overflow-hidden h-[300px]">
-                            <img className="w-full h-full object-cover " src="https://tse1.mm.bing.net/th/id/OIP.r6uFBHkbiNuM-Z3rdI0kOgHaD4?r=0&w=1200&h=630&rs=1&pid=ImgDetMain&o=7&rm=3" alt="estadio" />
-                            <div className="gradient-student absolute w-full h-full left-0 top-0"></div>
-                        </picture>
-
-                        <div className="flex flex-col gap-[10px]">
-                            <h4 className="font-primary">Instructor: Daniel</h4>
-                            <p>Ubicación: Estadio</p>
-                            <p>Dirección: Calle 5 54- 61 int 138</p>
-                            <p>Dia: Lunes</p>
-                            <p>Hora de inicio: 1 pm</p>
-                            <p>Hora de finalización: 2 pm</p>
-                            <p className="w-[130px] bg-orange-100 text-orange-700 rounded-full p-[5px_15px_5px_15px] flex justify-center font-bold!">Intermedio</p>
-                           
-
-                        </div>
-                    </div>
-                    <div className="flex gap-[35px] rounded-20px">
-                        <picture className="relative w-[50%] block rounded-[30px] overflow-hidden h-[300px]">
-                            <img className="w-full h-full object-cover " src="https://tse1.mm.bing.net/th/id/OIP.r6uFBHkbiNuM-Z3rdI0kOgHaD4?r=0&w=1200&h=630&rs=1&pid=ImgDetMain&o=7&rm=3" alt="estadio" />
-                            <div className="gradient-student absolute w-full h-full left-0 top-0"></div>
-                        </picture>
-
-                        <div className="flex flex-col gap-[10px]">
-                            <h4 className="font-primary">Instructor: Daniel</h4>
-                            <p>Ubicación: Estadio</p>
-                            <p>Dirección: Calle 5 54- 61 int 138</p>
-                            <p>Dia: Lunes</p>
-                            <p>Hora de inicio: 1 pm</p>
-                            <p>Hora de finalización: 2 pm</p>
-                            <p className="w-[130px] bg-orange-100 text-orange-700 rounded-full p-[5px_15px_5px_15px] flex justify-center font-bold!">Intermedio</p>
-                           
-
-                        </div>
-                    </div>
-                    <div className="flex gap-[35px] rounded-20px">
-                        <picture className="relative w-[50%] block rounded-[30px] overflow-hidden h-[300px]">
-                            <img className="w-full h-full object-cover " src="https://tse1.mm.bing.net/th/id/OIP.r6uFBHkbiNuM-Z3rdI0kOgHaD4?r=0&w=1200&h=630&rs=1&pid=ImgDetMain&o=7&rm=3" alt="estadio" />
-                            <div className="gradient-student absolute w-full h-full left-0 top-0"></div>
-                        </picture>
-
-                        <div className="flex flex-col gap-[10px]">
-                            <h4 className="font-primary">Instructor: Daniel</h4>
-                            <p>Ubicación: Estadio</p>
-                            <p>Dirección: Calle 5 54- 61 int 138</p>
-                            <p>Dia: Lunes</p>
-                            <p>Hora de inicio: 1 pm</p>
-                            <p>Hora de finalización: 2 pm</p>
-                            <p className="w-[130px] bg-orange-100 text-orange-700 rounded-full p-[5px_15px_5px_15px] flex justify-center font-bold!">Intermedio</p>
-                           
-
-                        </div>
-                    </div>
-                    <div className="flex gap-[35px] rounded-20px">
-                        <picture className="relative w-[50%] block rounded-[30px] overflow-hidden h-[300px]">
-                            <img className="w-full h-full object-cover " src="https://tse1.mm.bing.net/th/id/OIP.r6uFBHkbiNuM-Z3rdI0kOgHaD4?r=0&w=1200&h=630&rs=1&pid=ImgDetMain&o=7&rm=3" alt="estadio" />
-                            <div className="gradient-student absolute w-full h-full left-0 top-0"></div>
-                        </picture>
-
-                        <div className="flex flex-col gap-[10px]">
-                            <h4 className="font-primary">Instructor: Daniel</h4>
-                            <p>Ubicación: Estadio</p>
-                            <p>Dirección: Calle 5 54- 61 int 138</p>
-                            <p>Dia: Lunes</p>
-                            <p>Hora de inicio: 1 pm</p>
-                            <p>Hora de finalización: 2 pm</p>
-                            <p className="w-[130px] bg-orange-100 text-orange-700 rounded-full p-[5px_15px_5px_15px] flex justify-center font-bold!">Intermedio</p>
-                           
-
-                        </div>
-                    </div>
-                   
-                   
+                            {/* Solo acción Ver (estilo original con framer-motion) */}
+                            <div className="w-[15%] flex">
+                                <motion.span
+                                    className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
+                                    whileHover={{ scale: 1.15 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                    onClick={() => openView(c)}
+                                >
+                                    <Eye size={22} strokeWidth={1.3} />
+                                </motion.span>
+                            </div>
+                        </article>
+                    ))}
                 </div>
+
+                {/* Modal animado con AnimatePresence y ModalWrapper */}
+                <AnimatePresence>
+                    {modalOpen && selected && (
+                        <ModalWrapper onClose={closeModal}>
+                            <h3 className="font-primary text-center mb-[50px]">Detalles de la clase</h3>
+
+                            <div className="grid grid-cols-2">
+                                <div className="flex flex-col gap-[10px]">
+                                    <p className="font-medium">Ubicación:</p>
+                                    <p className="font-medium">Dirección:</p>
+                                    <p className="font-medium">Día:</p>
+                                    <p className="font-medium">Hora:</p>
+                                    <p className="font-medium">Nivel de la clase:</p>
+                                    <p className="font-medium">Cantidad de estudiantes:</p>
+                                    <p className="font-medium">Instructor:</p>
+                                </div>
+                                <div className="flex flex-col gap-[10px]">
+                                    <p className="text-gray-700">{selected.ubicacion}</p>
+                                    <p className="text-gray-700">{selected.direccion}</p>
+
+                                    <p className="text-gray-700">{selected.dia}</p>
+                                    <p className="text-gray-700">{selected.hora}</p>
+                                    <p className="text-gray-700">{selected.nivel}</p>
+                                    <p className="text-gray-700">{selected.cantidadEstudiantes}</p>
+                                    <p className="text-gray-700">{selected.instructor}</p>
+                                </div>
+
+
+
+
+
+
+                            </div>
+
+                        
+                            <div className="flex justify-end gap-[10px] mt-[30px]">
+                                <button className="btn bg-gray-200" onClick={closeModal}>
+                                    Cerrar
+                                </button>
+                            </div>
+                        </ModalWrapper>
+                    )}
+                </AnimatePresence>
             </section>
         </Layout>
-    )
+    );
+};
 
-}
+/* === Modal wrapper reutilizable (igual al ejemplo) === */
+const ModalWrapper = ({ children, onClose }) => {
+    return (
+        <motion.div
+            className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+        >
+            {/* overlay clickeable con dim */}
+            <div className="absolute inset-0" onClick={onClose} />
+
+            <motion.div
+                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+            >
+                {children}
+            </motion.div>
+        </motion.div>
+    );
+};
+
+export default MyClasses;

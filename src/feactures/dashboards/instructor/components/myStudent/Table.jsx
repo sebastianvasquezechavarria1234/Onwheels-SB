@@ -22,7 +22,7 @@ export const Table = ({ usuarios, setUsuarios }) => {
 	};
 
 	return (
-		<div className="relative px-[30px]">
+		<div className="relative px-[30px] overflow-hidden ">
 			{/* Header tabla */}
 			<div className="sticky top-[120px] z-50">
 				<article className="font-semibold italic mt-[120px] flex items-center border-b border-black/20 pb-[20px]">
