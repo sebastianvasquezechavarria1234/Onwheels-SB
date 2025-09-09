@@ -36,8 +36,8 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Mis compras">
-                <ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5}/>
+              <BtnSideBar title="Mis compras" link="../instructor/myPurchases">
+                <ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
                 
               </BtnSideBar>
             </li>

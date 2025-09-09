@@ -30,6 +30,7 @@ import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases";
 import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent";
 import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/MyClassesInstructor";
 import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor";
+import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -194,6 +195,7 @@ export const AppRouter = () => {
         <Route path="instructor/setting" element={<SettingInstructor />} />
         <Route path="instructor/myStudent" element={<MyStudent />} />
         <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
+        <Route path="instructor/myPurchases" element={<MyPurchasesInstructor/>} />
       </Routes>
     </AnimatePresence>
   );

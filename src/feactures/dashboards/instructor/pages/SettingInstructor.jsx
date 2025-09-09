@@ -16,7 +16,10 @@ export const SettingInstructor = () => {
                     </picture>
 
                     <div className="flex flex-col gap-[10px]">
-                        <p className="w-[130px] bg-green-100 text-green-700 rounded-full p-[5px_15px_5px_15px] flex justify-center font-bold!">Activo</p>
+                        <span className="inline-flex justify-center w-[100px] items-center gap-[5px] px-[15px] py-[7px] rounded-full bg-green-100 text-green-700">
+                            <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
+                            Activo
+                        </span>
                         <h4 className="font-primary">
                             Sebastian vasquez echavraia
                         </h4>

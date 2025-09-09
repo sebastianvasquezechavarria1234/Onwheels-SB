@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Layout } from "../../instructor/layout/layout";
-import { AnimatePresence } from "framer-motion";
 import { Table } from "../components/myStudent/Table";
-import { ModalDetails } from "../components/myStudent/ModalDetails";
 
 const initialUsuarios = [
   { id: 1, name: "Andrés", lastName: "Gómez", email: "andres.gomez@example.com", phone: "+57 300 111 2222", nivel: "Profesional" },
@@ -15,8 +13,6 @@ const initialUsuarios = [
 
 export const MyStudent = () => {
   const [usuarios, setUsuarios] = useState(initialUsuarios);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
 
   return (
     <Layout>
@@ -25,22 +21,8 @@ export const MyStudent = () => {
           Mis estudiantes
         </h2>
 
-        <Table
-          usuarios={usuarios}
-          setUsuarios={setUsuarios}
-          setUsuarioSeleccionado={setUsuarioSeleccionado}
-          setModalOpen={setModalOpen}
-        />
-
-        <AnimatePresence>
-          {modalOpen && (
-            <ModalDetails
-              usuarioSeleccionado={usuarioSeleccionado}
-              setUsuarioSeleccionado={setUsuarioSeleccionado}
-              setModalOpen={setModalOpen}
-            />
-          )}
-        </AnimatePresence>
+        {/* Table contiene la lista y los 3 modales (details / edit / delete) */}
+        <Table usuarios={usuarios} setUsuarios={setUsuarios} />
       </section>
     </Layout>
   );

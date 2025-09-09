@@ -1,280 +1,190 @@
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../instructor/layout/layout";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
- * Componente con datos quemados (hardcoded) y modales internos (view / edit / delete).
- * Listo para pegar.
+ * MyClassesInstructor con modal animado igual al componente Table que mostraste.
+ * - Usa AnimatePresence + ModalWrapper para animaciones limpias
+ * - Mantiene tu botón con motion y llama a openView(c)
+ * - Overlay clickeable y Escape para cerrar
  */
 
 const initialClases = [
-  {
-    id: 1,
-    nombre: "Dibujo Básico",
-    descripcion: "Introducción a las bases del dibujo: líneas, formas y proporciones.",
-    instructor: "Laura Pérez",
-    ubicacion: "Sede Centro",
-    horario: "Lun - Mié 6:00pm - 8:00pm",
-    estado: "activa",
-  },
-  {
-    id: 2,
-    nombre: "Acuarela para Principiantes",
-    descripcion: "Técnicas básicas de acuarela y mezcla de pigmentos.",
-    instructor: "Carlos Torres",
-    ubicacion: "Sede Norte",
-    horario: "Mar - Jue 4:00pm - 6:00pm",
-    estado: "no activa",
-  },
-  {
-    id: 3,
-    nombre: "Perspectiva y Volumen",
-    descripcion: "Estudio de perspectiva 1 y teoría del volumen aplicado al dibujo.",
-    instructor: "María Gómez",
-    ubicacion: "Sede Centro",
-    horario: "Sáb 9:00am - 12:00pm",
-    estado: "activa",
-  },
-  {
-    id: 4,
-    nombre: "Figura Humana Intermedia",
-    descripcion: "Anatomía básica aplicada al dibujo de figura humana.",
-    instructor: "Sebastián Vásquez",
-    ubicacion: "Sede Sur",
-    horario: "Vie 5:00pm - 8:00pm",
-    estado: "activa",
-  },
+	{
+		id: 1,
+		ubicacion: "Estadio",
+		direccion: "Calle 4 int 131",
+		dia: "Lunes",
+		hora: "11 pm a 1 pm",
+		nivel: "Intermedio",
+		cantidadEstudiantes: 12,
+		nombre: "Dibujo Intermedio",
+		instructor: "Sebastián Vásquez",
+		descripcion: "Clase enfocada en figura humana y composición (intermedio).",
+	},
+	{
+		id: 2,
+		ubicacion: "Estadio",
+		direccion: "Calle 4 int 131",
+		dia: "Lunes",
+		hora: "11 pm a 1 pm",
+		nivel: "Intermedio",
+		cantidadEstudiantes: 12,
+		nombre: "Dibujo Intermedio",
+		instructor: "Sebastián Vásquez",
+		descripcion: "Clase enfocada en figura humana y composición (intermedio).",
+	},
 ];
 
 export const MyClassesInstructor = () => {
-  const [clases, setClases] = useState(initialClases);
-  const [selected, setSelected] = useState(null);
-  const [modalType, setModalType] = useState(null); // 'view' | 'edit' | 'delete' | null
+	const [clases, setClases] = useState(initialClases);
+	const [selected, setSelected] = useState(null);
+	const [modalOpen, setModalOpen] = useState(false);
 
-  // cerrar con Escape
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") closeModal(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+	// cerrar con Escape
+	useEffect(() => {
+		const onKey = (e) => {
+			if (e.key === "Escape") closeModal();
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, []);
 
-  const openView = (c) => { setSelected({ ...c }); setModalType("view"); };
-  const openEdit = (c) => { setSelected({ ...c }); setModalType("edit"); };
-  const openDelete = (c) => { setSelected({ ...c }); setModalType("delete"); };
-  const closeModal = () => { setSelected(null); setModalType(null); };
+	const openView = (c) => {
+		setSelected({ ...c });
+		setModalOpen(true);
+	};
+	const closeModal = () => {
+		setSelected(null);
+		setModalOpen(false);
+	};
 
-  const handleSave = (updated) => {
-    setClases((prev) => prev.map((p) => (p.id === updated.id ? { ...updated } : p)));
-    closeModal();
-  };
+	return (
+		<Layout>
+			<section className="relative w-full bg-[var(--gray-bg-body)] side_bar">
+				<h2 className="font-primary sticky top-0 bg-[var(--gray-bg-body)] p-[30px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-secundaria">
+					Mis clases
+				</h2>
 
-  const handleDelete = (id) => {
-    setClases((prev) => prev.filter((p) => p.id !== id));
-    closeModal();
-  };
+				<div className="p-[30px]">
+					{/* Encabezados */}
+					<article className="font-semibold italic mt-[120px] flex items-center border-b border-black/20 pb-[20px]">
+						<p className="w-[10%]">Ubicación</p>
+						<p className="w-[15%]">Dirección</p>
+						<p className="w-[10%]">Día</p>
+						<p className="w-[15%]">Hora</p>
+						<p className="w-[20%]">Cantidad de estudiantes</p>
+						<p className="w-[15%]">Nivel de la clase</p>
+						<p className="w-[15%]">Acciones</p>
+					</article>
 
-  return (
-    <Layout>
-      <section className="relative w-full bg-[var(--gray-bg-body)] side_bar">
-        <h1 className="sticky top-0 bg-[var(--gray-bg-body)] p-[30px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-secundaria">
-          Clases
-        </h1>
+					{/* Lista de Clases */}
+					{clases.map((c) => (
+						<article
+							key={c.id}
+							className="py-[18px] border-b border-black/20 flex items-center"
+						>
+							<p className="w-[10%] line-clamp-1">{c.ubicacion}</p>
+							<p className="w-[15%] line-clamp-1">{c.direccion}</p>
+							<p className="w-[10%] line-clamp-1">{c.dia}</p>
+							<p className="w-[15%] line-clamp-1">{c.hora}</p>
+							<p className="w-[20%]">{c.cantidadEstudiantes}</p>
+							<p className="w-[15%]">
+								<span className="inline-flex items-center gap-[5px] px-[15px] py-[7px] rounded-full bg-orange-100 text-orange-700">
+									<span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
+									{c.nivel}
+								</span>
+							</p>
 
-        <div className="p-[30px]">
-          {/* Encabezados */}
-          <article className="font-semibold italic  mt-[120px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[30%]">Nombre de la clase</p>
-            <p className="w-[10%]">Instructor</p>
-            <p className="w-[15%]">Sede</p>
-            <p className="w-[20%]">Horario</p>
-            <p className="w-[10%]">Estado</p>
-            <p className="w-[15%]">Acciones</p>
-          </article>
+							{/* Solo acción Ver (estilo original con framer-motion) */}
+							<div className="w-[15%] flex">
+								<motion.span
+									className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
+									whileHover={{ scale: 1.15 }}
+									whileTap={{ scale: 0.95 }}
+									transition={{ type: "spring", stiffness: 300, damping: 20 }}
+									onClick={() => openView(c)}
+								>
+									<Eye size={22} strokeWidth={1.3} />
+								</motion.span>
+							</div>
+						</article>
+					))}
+				</div>
 
-          {/* Lista de Clases (hardcoded) */}
-          {clases.map((element) => (
-            <article key={element.id} className="py-[30px] border-b border-black/20 flex items-center">
-              <div className="w-[30%]">
-                <p className="italic font-semibold line-clamp-1">
-                  {element.nombre}
-                </p>
-                <p className="line-clamp-1 text-sm text-gray-700">
-                  {element.descripcion}
-                </p>
-              </div>
+				{/* Modal animado con AnimatePresence y ModalWrapper */}
+				<AnimatePresence>
+					{modalOpen && selected && (
+						<ModalWrapper onClose={closeModal}>
+							<h3 className="font-primary text-center mb-[50px]">Detalles de la clase</h3>
 
-              <p className="w-[10%] line-clamp-1">{element.instructor}</p>
-              <p className="w-[15%] line-clamp-1">{element.ubicacion}</p>
-              <p className="w-[20%]">{element.horario}</p>
+							<div className="grid grid-cols-2">
+								<div className="flex flex-col gap-[10px]">
+									<p className="font-medium">Ubicación:</p>
+									<p className="font-medium">Dirección:</p>
+									<p className="font-medium">Día:</p>
+									<p className="font-medium">Hora:</p>
+									<p className="font-medium">Nivel de la clase:</p>
+									<p className="font-medium">Cantidad de estudiantes:</p>
+									<p className="font-medium">Instructor:</p>
+								</div>
+								<div className="flex flex-col gap-[10px]">
+									<p className="text-gray-700">{selected.ubicacion}</p>
+									<p className="text-gray-700">{selected.direccion}</p>
 
-              <div className="w-[10%]">
-                <p
-                  className={`inline-flex items-center gap-[5px] px-[15px] py-[7px] rounded-full ${
-                    element.estado === "activa"
-                      ? "text-green-700! bg-green-100"
-                      : "text-gray-700! bg-gray-200"
-                  }`}
-                >
-                  <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
-                  {element.estado}
-                </p>
-              </div>
+									<p className="text-gray-700">{selected.dia}</p>
+									<p className="text-gray-700">{selected.hora}</p>
+									<p className="text-gray-700">{selected.nivel}</p>
+									<p className="text-gray-700">{selected.cantidadEstudiantes}</p>
+									<p className="text-gray-700">{selected.instructor}</p>
+								</div>
 
-              {/* Acciones icons */}
-              <div className="w-[15%] flex gap-[10px] items-center">
-                <ActionBtn onClick={() => openView(element)} bg="bg-green-100" color="text-green-700" title="Ver">
-                  <Eye size={22} strokeWidth={1.3} />
-                </ActionBtn>
 
-                <ActionBtn onClick={() => openEdit(element)} bg="bg-blue-100" color="text-blue-700" title="Editar">
-                  <Pencil size={22} strokeWidth={1.3} />
-                </ActionBtn>
 
-                <ActionBtn onClick={() => openDelete(element)} bg="bg-red-100" color="text-red-700" title="Eliminar">
-                  <Trash2 size={22} strokeWidth={1.3} />
-                </ActionBtn>
-              </div>
-            </article>
-          ))}
-        </div>
 
-        {/* Modales */}
-        {modalType === "view" && selected && (
-          <ViewModal clase={selected} onClose={closeModal} />
-        )}
 
-        {modalType === "edit" && selected && (
-          <EditModal clase={selected} onClose={closeModal} onSave={handleSave} />
-        )}
 
-        {modalType === "delete" && selected && (
-          <ConfirmDelete clase={selected} onClose={closeModal} onConfirm={() => handleDelete(selected.id)} />
-        )}
-      </section>
-    </Layout>
-  );
+							</div>
+
+						
+							<div className="flex justify-end gap-[10px] mt-[30px]">
+								<button className="btn bg-gray-200" onClick={closeModal}>
+									Cerrar
+								</button>
+							</div>
+						</ModalWrapper>
+					)}
+				</AnimatePresence>
+			</section>
+		</Layout>
+	);
 };
 
-/* ---------- Action button pequeño ---------- */
-const ActionBtn = ({ children, onClick, bg = "bg-gray-100", color = "text-gray-700", title }) => (
-  <span
-    className={`${bg} ${color} w-[45px] h-[45px] flex justify-center items-center rounded-[18px] cursor-pointer border border-black/5 shadow-md hover:scale-[1.25] transition-transform`}
-    style={{ transitionDuration: "450ms", transitionTimingFunction: "cubic-bezier(0.3, 1.8, 0.4, 1)" }}
-    onClick={onClick}
-    title={title}
-  >
-    {children}
-  </span>
-);
+/* === Modal wrapper reutilizable (igual al ejemplo) === */
+const ModalWrapper = ({ children, onClose }) => {
+	return (
+		<motion.div
+			className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center"
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
+			exit={{ opacity: 0 }}
+			transition={{ duration: 0.15 }}
+		>
+			{/* overlay clickeable con dim */}
+			<div className="absolute inset-0" onClick={onClose} />
 
-/* ---------- View Modal ---------- */
-const ViewModal = ({ clase, onClose }) => {
-  if (!clase) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 bg-white p-6 rounded-lg w-[90%] max-w-[700px]">
-        <h3 className="text-xl font-semibold mb-3">{clase.nombre}</h3>
-        <p className="mb-1"><strong>Instructor:</strong> {clase.instructor}</p>
-        <p className="mb-1"><strong>Sede:</strong> {clase.ubicacion}</p>
-        <p className="mb-1"><strong>Horario:</strong> {clase.horario}</p>
-        <p className="mb-3 text-sm text-gray-700">{clase.descripcion}</p>
-        <div className="flex justify-end gap-2">
-          <button className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>Cerrar</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ---------- Edit Modal ---------- */
-const EditModal = ({ clase, onClose, onSave }) => {
-  const [form, setForm] = useState({ id: null, nombre: "", descripcion: "", instructor: "", ubicacion: "", horario: "", estado: "" });
-
-  useEffect(() => {
-    if (clase) setForm({ ...clase });
-  }, [clase]);
-
-  const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.nombre || !form.instructor) {
-      alert("Nombre e instructor son requeridos.");
-      return;
-    }
-    onSave({ ...form });
-  };
-
-  if (!clase) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <form className="relative z-10 bg-white p-6 rounded-lg w-[90%] max-w-[700px]" onSubmit={handleSubmit}>
-        <h3 className="text-xl font-semibold mb-3">Editar clase</h3>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm">Nombre</label>
-            <input name="nombre" value={form.nombre} onChange={handleChange} className="w-full border p-2 rounded" />
-          </div>
-          <div>
-            <label className="block text-sm">Instructor</label>
-            <input name="instructor" value={form.instructor} onChange={handleChange} className="w-full border p-2 rounded" />
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm">Descripción</label>
-          <textarea name="descripcion" value={form.descripcion} onChange={handleChange} className="w-full border p-2 rounded" rows={3} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm">Sede</label>
-            <input name="ubicacion" value={form.ubicacion} onChange={handleChange} className="w-full border p-2 rounded" />
-          </div>
-          <div>
-            <label className="block text-sm">Horario</label>
-            <input name="horario" value={form.horario} onChange={handleChange} className="w-full border p-2 rounded" />
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm">Estado</label>
-          <select name="estado" value={form.estado} onChange={handleChange} className="w-full border p-2 rounded">
-            <option value="">Selecciona</option>
-            <option value="activa">activa</option>
-            <option value="no activa">no activa</option>
-          </select>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <button type="button" className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Guardar</button>
-        </div>
-      </form>
-    </div>
-  );
-};
-
-/* ---------- Confirm Delete ---------- */
-const ConfirmDelete = ({ clase, onClose, onConfirm }) => {
-  if (!clase) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 bg-white p-6 rounded-lg w-[90%] max-w-[480px]">
-        <h3 className="text-lg font-semibold mb-3">Confirmar eliminación</h3>
-        <p className="mb-4">¿Eliminar la clase <strong>{clase.nombre}</strong>? Esta acción no se puede deshacer.</p>
-        <div className="flex justify-end gap-2">
-          <button className="px-4 py-2 bg-gray-200 rounded" onClick={onClose}>Cancelar</button>
-          <button className="px-4 py-2 bg-red-600 text-white rounded" onClick={onConfirm}>Eliminar</button>
-        </div>
-      </div>
-    </div>
-  );
+			<motion.div
+				className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+				initial={{ scale: 0.9, opacity: 0 }}
+				animate={{ scale: 1, opacity: 1 }}
+				exit={{ scale: 0.9, opacity: 0 }}
+				transition={{ type: "spring", stiffness: 200, damping: 18 }}
+			>
+				{children}
+			</motion.div>
+		</motion.div>
+	);
 };
 
 export default MyClassesInstructor;
