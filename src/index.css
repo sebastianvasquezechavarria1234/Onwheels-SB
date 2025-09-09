@@ -74,6 +74,10 @@ h4{
   font-size: 22px;
 }
 
+.modal{
+  background: radial-gradient(rgba(0, 0, 0, 0.17), rgba(241, 241, 241, 0.745), rgb(255, 255, 255));
+}
+
 a, p
  {
 

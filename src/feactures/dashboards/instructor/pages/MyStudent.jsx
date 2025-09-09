@@ -1,61 +1,49 @@
-import React from "react";
-import Layout from "../layout/layout";
-import { Mail, Phone, PhoneCall, Search, Shirt, User, User2, User2Icon } from "lucide-react";
-import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
+import React, { useState } from "react";
+import { Layout } from "../../instructor/layout/layout";
+import { AnimatePresence } from "framer-motion";
+import { Table } from "../components/myStudent/Table";
+import { ModalDetails } from "../components/myStudent/ModalDetails";
+
+const initialUsuarios = [
+  { id: 1, name: "Andrés", lastName: "Gómez", email: "andres.gomez@example.com", phone: "+57 300 111 2222", nivel: "Profesional" },
+  { id: 2, name: "María", lastName: "López", email: "maria.lopez@example.com", phone: "+57 310 333 4444", nivel: "Principiante" },
+  { id: 3, name: "Sebastián", lastName: "Vásquez", email: "sebastian.vasquez@example.com", phone: "+57 320 555 6666", nivel: "Intermedio" },
+  { id: 4, name: "Camila", lastName: "Ramírez", email: "camila.ramirez@example.com", phone: "+57 321 777 8888", nivel: "Avanzado" },
+  { id: 5, name: "Daniel", lastName: "Torres", email: "daniel.torres@example.com", phone: "+57 322 999 0000", nivel: "Intermedio" },
+  { id: 6, name: "Laura", lastName: "Pérez", email: "laura.perez@example.com", phone: "+57 323 123 4567", nivel: "Profesional" },
+];
 
 export const MyStudent = () => {
-    return (
-        <Layout>
-            <section className="w-full h-full  rounded-[30px] p-[30px] bg-white border border-black/20">
-                <div className="flex justify-between">
-                    <h1 className="font-primary">Mis Estudiantes.</h1>
-                </div>
+  const [usuarios, setUsuarios] = useState(initialUsuarios);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
 
-                <div className="flex justify-between mt-[120px]">
-                    <label className="mb-[20px] block">
-                        <p className="translate-x-[0px] mb-[5px]">Buscar Estudiante:</p>
-                        <div className="relative">
-                            <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                            <input
-                                className="w-full p-[18px_18px_18px_50px] rounded-full border-1 border-black/40  border-dashed"
-                                type="text"
-                                placeholder="Por ejem: Sebastian" />
-                        </div>
-                    </label>
+  return (
+    <Layout>
+      <section className="pr-[10px] w-full bg-[var(--gray-bg-body)]">
+        <h2 className="sticky top-0 z-50 bg-[var(--gray-bg-body)] p-[30px] pb-[80px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-primary">
+          Mis estudiantes
+        </h2>
 
-                    <BtnLinkIcon title="Agregar estudiante">
-                        <User color="white" size={20} strokeWidth={1.8}/>
-                    </BtnLinkIcon>
-                </div>
+        <Table
+          usuarios={usuarios}
+          setUsuarios={setUsuarios}
+          setUsuarioSeleccionado={setUsuarioSeleccionado}
+          setModalOpen={setModalOpen}
+        />
 
+        <AnimatePresence>
+          {modalOpen && (
+            <ModalDetails
+              usuarioSeleccionado={usuarioSeleccionado}
+              setUsuarioSeleccionado={setUsuarioSeleccionado}
+              setModalOpen={setModalOpen}
+            />
+          )}
+        </AnimatePresence>
+      </section>
+    </Layout>
+  );
+};
 
-                <div className="flex mt-[20px] opacity-80 border-b border-dashed border-black/40 py-[20px]">
-                    <p className="w-[20%] font-bold! italic ">Nombre:</p>
-                    <p className="w-[20%] font-bold! italic ">Correo:</p>
-                    <p className="w-[20%] font-bold! italic ">Teléfono:</p>
-                    <p className="w-[20%] font-bold! italic ">Nivel:</p>
-                    <p className="w-[20%] font-bold! italic ">Acciones:</p>
-                </div>
-                <div className="flex mt-[20px] opacity-80 border-b border-dashed border-black/40 py-[20px]">
-                    <div className="w-[20%] flex gap-[15px] items-center font-bold! italic ">
-                        <span className="w-[70px] h-[70px] bg-red-600 rounded-full flex justify-center items-center">
-                            <User />
-                        </span>
-                        <div className="">
-                            <h4 className="font-primary">Sebastian</h4>
-                            <p>Vasquez echavarria</p>
-
-                        </div>
-
-                    </div>
-                    <p className="w-[20%] font-bold! italic ">Correo:</p>
-                    <p className="w-[20%] font-bold! italic ">Teléfono:</p>
-                    <p className="w-[20%] font-bold! italic ">Nivel:</p>
-                    <p className="w-[20%] font-bold! italic ">Acciones:</p>
-                </div>
-               
-            </section>
-        </Layout>
-    )
-
-}
+export default MyStudent;
