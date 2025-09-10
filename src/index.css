@@ -112,6 +112,11 @@ input::placeholder {
   background: radial-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.711), rgb(0, 0, 0));
 }
 
+.gradient-student{
+  background: radial-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.344), rgba(0, 0, 0, 0.812));
+
+}
+
  
 
 
