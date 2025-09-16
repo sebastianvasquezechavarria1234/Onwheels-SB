@@ -9,11 +9,11 @@ export const BtnLinkIcon = ({ title, children, style, styleIcon, link }) => {
       to={link}
       className={`
         ${style}
-        BtnLinkIcon group bg-white text-black/90 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px]
+        BtnLinkIcon group bg-white text-black/90 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]
         `}
     >
       <span className={
-        `${styleIcon} BtnLinkIcon--icon w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full`
+        `${styleIcon} BtnLinkIcon--icon w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]`
       }>
         <span className="BtnLinkIcon--icon__svg">{children}</span>
         

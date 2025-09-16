@@ -13,10 +13,10 @@ export const Hero = () => {
                     <img className="w-full h-full object-cover object-center" src="/bg_hero_shop.jpg" alt="Hero" />
 
                     {/* Container text and gradient */}
-                    <div className="gradient absolute left-0 top-0 w-full h-full  p-[100px] items-end flex text-white">
-                        <div className="max-w-[900px]">
-                            <p className="italic mb-[30px]">---Tienda</p>
-                            <h1 className="mb-[30px]">
+                    <div className="gradient absolute left-0 top-0 w-full h-full  p-[100px] items-end flex text-white max-md:p-[30px]">
+                        <div className="max-w-[50%] max-md:max-w-[80%]">
+                            <p className="italic mb-[2rem]">---Tienda</p>
+                            <h1 className="mb-[30px] max-2xl:mb-[15px]">
                                Todo lo que 
                                <span className="font-primary">
                                     un skater 
@@ -27,7 +27,7 @@ export const Hero = () => {
 
                                 </span>
                             </h1>
-                            <p className="mb-[30px]">Descubre una tienda hecha para skaters auténticos. Encuentra productos inspirados en la cultura urbana y vive la esencia del skate dentro y fuera de la tabla.</p>
+                            <p className="mb-[30px]  max-2xl:mb-[15px]">Descubre una tienda hecha para skaters auténticos. Encuentra productos inspirados en la cultura urbana y vive la esencia del skate dentro y fuera de la tabla.</p>
 
 
                             {/* Flex buttom */}

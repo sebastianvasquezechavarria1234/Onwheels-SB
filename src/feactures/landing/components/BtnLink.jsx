@@ -7,7 +7,7 @@ export const BtnLink = ({ title, link, style, target}) => {
     <Link
       target={target}
       to={link}
-      className="group"
+      className="header--tab group"
     >
       <p className={`${style} relative overflow-hidden h-6 leading-6`}>
         <span className=" left-0 top-0 w-full block will-change-transform">

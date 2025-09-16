@@ -7,12 +7,12 @@ export const Card = () => {
     return (
         <>
             <Link to="" className="group">
-                <picture className="relative w-full h-[20vw] flex rounded-[30px] overflow-hidden">
+                <picture className="relative w-full h-[430px] flex rounded-[30px] overflow-hidden max-md:h-[300px]">
                     <img className="absolute -z-10 w-full h-full object-cover scale-[1.1]  group-hover:scale-[1] duration-300 brightness-80 group-hover:brightness-100" src=".//bg_hero_shop.jpg" alt="avatar" />
                     <h4 className="font-primary absolute top-[10px] left-[10px] bg-white p-[6px_15px] rounded-full">Camisa de hombre</h4>
 
                     {/* Gradient */}
-                    <div className="absolute bottom-[-42%] group-hover:bottom-[-0%] left-0 gradient-backdrop p-[20px] text-white backdrop-[20px] z-30 duration-300">
+                    <div className="absolute bottom-[-40%] group-hover:bottom-[-0%] left-0 gradient-backdrop p-[20px] text-white backdrop-[20px] z-30 duration-300">
                         <div className="flex justify-between items-center">
                             <p className="line-clamp-2 w-[70%]">Lorem ipsum dolor sit amet consectetur adipisicing elit. Pariatur repudiandae obcaecati totam perferendis velit esse expedita ea reiciendis illo dolor unde consequuntur minima, quia enim corporis, dolorem eum commodi soluta.</p>
                             <p className="font-primary text-[35px]!">$20.000</p>
@@ -21,8 +21,8 @@ export const Card = () => {
 
 
                         {/* Grid talla color */}
-                        <div className="grid grid-cols-2 gap-[20px] mt-[20px]">
-                            {/* Talla */}
+                        {/* <div className="grid grid-cols-2 gap-[20px] mt-[20px]">
+                            
                             <div className="">
                                 <p>Talla:</p>
                                 <div className="flex flex-wrap gap-[5px] text-[#333]! ">
@@ -32,7 +32,7 @@ export const Card = () => {
 
                                 </div>
                             </div>
-                            {/* Color */}
+                          
                             <div className="">
                                 <p>Color:</p>
                                 <div className="flex flex-wrap gap-[5px]">
@@ -42,7 +42,7 @@ export const Card = () => {
 
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
 
                     <button className="p-[18px] flex justify-center items-center bg-blue-600 text-white rounded-full gap-[10px] w-full mt-[20px] cursor-pointer font-primary">
 
