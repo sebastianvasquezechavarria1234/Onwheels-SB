@@ -20,31 +20,9 @@ export const Card = () => {
                         </div>
 
 
-                        {/* Grid talla color */}
-                        {/* <div className="grid grid-cols-2 gap-[20px] mt-[20px]">
-                            
-                            <div className="">
-                                <p>Talla:</p>
-                                <div className="flex flex-wrap gap-[5px] text-[#333]! ">
-                                    <p className="font-bold! w-[40px] h-[40px] flex justify-center items-center bg-white rounded-full">xl</p>
-                                    <p className="font-bold! w-[40px] h-[40px] flex justify-center items-center border-1 border-black/40 rounded-full bg-white">l</p>
-                                    <p className="font-bold! bg-white !w-[40px] h-[40px] flex justify-center items-center border-1 border-black/40 rounded-full">s</p>
 
-                                </div>
-                            </div>
-                          
-                            <div className="">
-                                <p>Color:</p>
-                                <div className="flex flex-wrap gap-[5px]">
-                                    <p className="w-[40px] h-[40px] flex justify-center items-center border-1 border-black/40 rounded-full bg-yellow-600"></p>
-                                    <p className="w-[40px] h-[40px] flex justify-center items-center border-1 border-black/40 rounded-full bg-red-600"></p>
-                                    <p className="w-[40px] h-[40px] flex justify-center items-center border-1 border-black/40 rounded-full bg-pink-600"></p>
 
-                                </div>
-                            </div>
-                        </div> */}
-
-                    <button className="p-[18px] flex justify-center items-center bg-blue-600 text-white rounded-full gap-[10px] w-full mt-[20px] cursor-pointer font-primary">
+                    <button className="btn flex justify-center bg-blue-700 w-full gap-[10px] mt-[20px]">
 
                         <ShoppingCart size={20} strokeWidth={2} color="currentColor" />
                         Añadir al carrito de compras

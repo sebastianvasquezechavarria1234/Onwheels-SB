@@ -1,6 +1,6 @@
 import React from "react";
 import { Search, Plus } from "lucide-react";
-import Layout from "../../../layout/layout";
+import {Layout} from "../../../layout/layout";
 
 export default function Eventos() {
   return (
