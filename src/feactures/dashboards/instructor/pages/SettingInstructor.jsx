@@ -1,8 +1,8 @@
 import React from "react";
-import { Layout } from "../../student/layout/layout";
+import { Layout } from "../../instructor/layout/layout";
 import { Mail, Phone, User } from "lucide-react";
 
-export const Setting = () => {
+export const SettingInstructor = () => {
     return (
         <Layout>
             <section className="p-[30px] relative w-[100%]">
@@ -41,7 +41,7 @@ export const Setting = () => {
 
                         </div>
                     </div>
-                  
+                   
 
                 </div>
 

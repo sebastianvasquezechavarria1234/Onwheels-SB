@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Layout } from "../../student/layout/layout";
+import { Layout } from "../../instructor/layout/layout";
 import { Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-
+/**
+ * MyPurchasesInstructor
+ * - Datos quemados de compras
+ * - Estado: verde si es Entregado, rojo si es Pendiente
+ * - Mantiene modal animado
+ */
 
 const initialPurchases = [
     {
@@ -28,7 +33,7 @@ const initialPurchases = [
     },
 ];
 
-export const MyPurchases = () => {
+export const MyPurchasesInstructor = () => {
     const [compras, setCompras] = useState(initialPurchases);
     const [selected, setSelected] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -168,7 +173,7 @@ export const MyPurchases = () => {
     );
 };
 
-/*  Modal wrapper  === */
+/* === Modal wrapper reutilizable === */
 const ModalWrapper = ({ children, onClose }) => {
     return (
         <motion.div
@@ -178,7 +183,7 @@ const ModalWrapper = ({ children, onClose }) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
         >
-            {/* overla */}
+            {/* overlay clickeable */}
             <div className="absolute inset-0" onClick={onClose} />
 
             <motion.div
@@ -194,4 +199,4 @@ const ModalWrapper = ({ children, onClose }) => {
     );
 };
 
-export default MyPurchases;
+export default MyPurchasesInstructor;
