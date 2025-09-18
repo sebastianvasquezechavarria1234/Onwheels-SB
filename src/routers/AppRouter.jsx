@@ -22,7 +22,6 @@ import Eventos from "../feactures/dashboards/admin/pages/eventos/eventos/eventos
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
-import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
 import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses";
@@ -203,7 +202,6 @@ export const AppRouter = () => {
         <Route path="admin/eventos" element={<Eventos />} />
         <Route path="admin/proveedores" element={<Proveedores />} />
         <Route path="admin/ventas" element={<Ventas />} />
-        <Route path="admin/productos" element={<Productos />} />
         <Route path="admin/categoriasProductos" element={<Categorias />} />
 
 

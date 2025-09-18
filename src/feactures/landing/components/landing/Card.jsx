@@ -8,19 +8,19 @@ export const Card = ({img,text,descripcion, dato, styleImage }) => {
       <Link className="">
         <picture className="relative group overflow-hidden h-[400px]   block  rounded-[20px]">
           <img
-            className={`${styleImage} object-cover w-full h-[100%] group-hover:scale-[1.1] duration-200`}
+            className={`${styleImage} object-cover w-full h-[100%] group-hover:scale-[1.3] duration-200`}
             src={img}
             alt="img"
           />
 
           {/* texto */}
 
-          <h4 className="gradient-backdrop absolute z-20 top-2 left-3 text-white rounded-full font-primary ">
+          <h4 className="gradient-backdrop absolute z-20 top-2 left-3 text-white rounded-full font-primary p-[3px_15px] ">
             {text}
           </h4>
 
 
-          <div className="gradient-backdrop w-full flex absolute bottom-0 left-0">
+          <div className="gradient-backdrop w-full flex absolute bottom-0 left-0 p-[3px_10px]">
               <p className="  z-20 bottom-5 m-3 text-white line-clamp-2 w-[60%]">
               {descripcion }
               </p>
