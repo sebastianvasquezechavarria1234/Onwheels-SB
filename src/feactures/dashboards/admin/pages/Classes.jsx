@@ -139,11 +139,11 @@ const initialClases = [
 export const Classes = () => {
     const [clases, setClases] = useState(initialClases);
 
-    // selected + modalType: "details" | "edit" | "delete" | "add" | null
+    
     const [selected, setSelected] = useState(null);
     const [modalType, setModalType] = useState(null);
 
-    // estado para formulario de edición
+    
     const [editForm, setEditForm] = useState({
         ubicacion: "",
         direccion: "",
@@ -156,7 +156,7 @@ export const Classes = () => {
         descripcion: "",
     });
 
-    // estado para formulario de agregar (con datos quemados por defecto)
+    // dAtos quemados
     const [addForm, setAddForm] = useState({
         dia: "Lunes",
         horaInicio: "7:00 pm",
@@ -181,7 +181,7 @@ export const Classes = () => {
         setModalType(type);
 
         if (type === "add") {
-            // dejar datos quemados en el formulario de agregar
+          
             setAddForm({
                 dia: "Lunes",
                 horaInicio: "7:00 pm",
@@ -246,7 +246,7 @@ export const Classes = () => {
     };
 
     const saveAdd = () => {
-        // crear nueva clase con los campos solicitados
+     
         const newId = clases.length ? Math.max(...clases.map((c) => c.id)) + 1 : 1;
         const nuevaClase = {
             id: newId,
@@ -316,7 +316,7 @@ export const Classes = () => {
                         <p className="w-[15%] font-bold! opacity-80">Dirección</p>
                         <p className="w-[10%] font-bold! opacity-80">Día</p>
                         <p className="w-[15%] font-bold! opacity-80">Hora</p>
-                        <p className="w-[20%] font-bold! opacity-80">Cantidad de estudiantes</p>
+                        <p className="w-[20%] font-bold! opacity-80">Profesor</p>
                         <p className="w-[15%] font-bold! opacity-80">Nivel de la clase</p>
                         <p className="w-[15%] font-bold! opacity-80">Acciones</p>
                     </article>
@@ -331,7 +331,7 @@ export const Classes = () => {
                             <p className="w-[15%] line-clamp-1">{c.direccion}</p>
                             <p className="w-[10%] line-clamp-1">{c.dia}</p>
                             <p className="w-[15%] line-clamp-1">{c.hora}</p>
-                            <p className="w-[20%]">{c.cantidadEstudiantes}</p>
+                            <p className="w-[20%]">{c.instructor}</p>
                             <p className="w-[15%]">
                                 <span className="inline-flex items-center gap-[5px] px-[15px] py-[7px] rounded-full bg-orange-100 text-orange-700">
                                     <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
@@ -342,7 +342,7 @@ export const Classes = () => {
                             {/* Acciones: Ver, Editar, Eliminar */}
                             <div className="w-[15%] flex gap-[10px] items-center">
                                 <motion.span
-                                    className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
+                                    className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -561,7 +561,7 @@ export const Classes = () => {
                                 </div>
 
                                 <div className="flex gap-[10px]">
-                                    <label className="block mb-[20px] w-1/3">
+                                    <label className="block mb-[20px] w-1/1">
                                         <p className="translate-x-[25px]">Día:</p>
                                         <input
                                             name="dia"
@@ -570,16 +570,8 @@ export const Classes = () => {
                                             onChange={handleEditChange}
                                         />
                                     </label>
-                                    <label className="block mb-[20px] w-1/3">
-                                        <p className="translate-x-[25px]">Hora:</p>
-                                        <input
-                                            name="hora"
-                                            className="input w-full"
-                                            value={editForm.hora}
-                                            onChange={handleEditChange}
-                                        />
-                                    </label>
-                                    <label className="block mb-[20px] w-1/3">
+                                  
+                                    <label className="block mb-[20px] w-1/1">
                                         <p className="translate-x-[25px]">Nivel:</p>
                                         <input
                                             name="nivel"
@@ -646,7 +638,7 @@ export const Classes = () => {
     );
 };
 
-/* === Modal wrapper reutilizable (igual al ejemplo) === */
+/* === Modal  === */
 const ModalWrapper = ({ children, onClose }) => {
     return (
         <motion.div
