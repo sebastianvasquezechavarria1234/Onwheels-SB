@@ -10,7 +10,7 @@ import { Layout } from "../layout/Layout";
 export const Store = () => {
     return (
         <Layout>
-            <Animation />
+            {/* <Animation /> */}
             <Hero />
             <Grid />
 

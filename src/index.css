@@ -10,6 +10,9 @@
 
 
 
+
+
+
 body {
   color: #333;
 }
@@ -95,6 +98,7 @@ h4{
   font-size: 18px;
   border-radius: 50px;
   transition: all .2s;
+  width: 100%;
 }
 
 .input:focus{
@@ -549,4 +553,51 @@ input::placeholder {
 
 
 
-/*  */
+/* media screen landing*/
+
+
+@media screen and (max-width: 1450px){
+a,
+ p, 
+ .input{
+    font-size: 13px;
+  }
+
+   .lucide,
+  /* por si no tienen la clase, seleccionamos todos los SVG con atributo 'data-icon' */
+  svg[data-icon] {
+    inline-size: 15px !important; /* por compatibilidad con escritura en bloque */
+  }
+
+  h1{
+    font-size: 3.5rem;
+    line-height: 50px;
+  }
+  h4{
+    font-size: 16px;
+  }
+  
+}
+
+@media screen and (max-width: 800px){
+a,
+ p, 
+ .input{
+    font-size: 10px;
+  }
+
+   .lucide,
+  /* por si no tienen la clase, seleccionamos todos los SVG con atributo 'data-icon' */
+  svg[data-icon] {
+    inline-size: 12px !important; /* por compatibilidad con escritura en bloque */
+  }
+
+  h1{
+    font-size: 2.5rem;
+    line-height: 35px;
+  }
+  h4{
+    font-size: 14px;
+  }
+  
+}
