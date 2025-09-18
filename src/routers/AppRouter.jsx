@@ -23,7 +23,7 @@ import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
 import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
-import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
+// import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
 import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses";
 import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases";
@@ -33,6 +33,7 @@ import { SettingInstructor } from "../feactures/dashboards/instructor/pages/Sett
 import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
 import { Classes } from "../feactures/dashboards/admin/pages/Classes";
+import ProductCategory from "../feactures/dashboards/admin/pages/ProductsCategory";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -199,12 +200,12 @@ export const AppRouter = () => {
         {/* Dashboard Admin */}
         <Route path="admin/matriculas" element={<Matriculas />} />
         <Route path="admin/classes" element={<Classes />} />
+        <Route path="admin/productCategory" element={<ProductCategory />} />
         <Route path="admin/compras" element={<Compras />} />
         <Route path="admin/eventos" element={<Eventos />} />
         <Route path="admin/proveedores" element={<Proveedores />} />
         <Route path="admin/ventas" element={<Ventas />} />
         <Route path="admin/productos" element={<Productos />} />
-        <Route path="admin/categoriasProductos" element={<Categorias />} />
 
 
         {/* Dasboard Student */}
