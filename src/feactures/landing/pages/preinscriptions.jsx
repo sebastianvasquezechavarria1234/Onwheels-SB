@@ -28,8 +28,6 @@ const Preinscriptions = () => {
   })
 
   return (
-    <Layout>
-
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-white">
   
         <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-200 p-8">
@@ -420,7 +418,6 @@ const Preinscriptions = () => {
           </div>
         )}
       </div>
-    </Layout>
 
   )
 }

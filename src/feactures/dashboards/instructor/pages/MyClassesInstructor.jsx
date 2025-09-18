@@ -3,12 +3,7 @@ import { Layout } from "../../instructor/layout/layout";
 import { Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/**
- * MyClassesInstructor con modal animado igual al componente Table que mostraste.
- * - Usa AnimatePresence + ModalWrapper para animaciones limpias
- * - Mantiene tu botón con motion y llama a openView(c)
- * - Overlay clickeable y Escape para cerrar
- */
+
 
 const initialClases = [
 	{

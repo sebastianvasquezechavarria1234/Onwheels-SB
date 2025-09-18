@@ -3,14 +3,16 @@
   font-family: 'Poppins';
 
 }
+
+
+/* VARIABLES */
 :root{
   --color-blue: #1c1f42;
   --color-red: #cc2855;
 }
 
 
-
-
+/* STYLOS BODY */
 
 
 body {
@@ -78,15 +80,38 @@ h4{
   font-weight: 600px;
   font-size: 22px;
 }
-/* dasboard */
-.modal{
-  background: radial-gradient(rgba(0, 0, 0, 0.17), rgba(241, 241, 241, 0.745), rgb(255, 255, 255));
+
+
+select {
+  appearance: none;        /* estándar */
+  -webkit-appearance: none;/* Safari/Chrome */
+  -moz-appearance: none;   /* Firefox */
+  background: transparent; /* elimina fondo si tiene */
+  padding-right: 1rem;     /* espacio para que no choque el texto */
+  border: none;            /* opcional */
+  outline: none;
 }
+
+/* Ocultar flecha en IE / Edge (antiguos) */
+select::-ms-expand {
+  display: none;
+}
+
+/* si quieres mantener un estilo de caja */
+.select-wrap {
+  display: inline-block;
+  border: 1px dashed #ccc;
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+
+/* dasboard */
+
 
 .btn{
    font-family: 'Playfair-Display';
   padding: 18px 20px;
-  border-radius: 30px;
+  border-radius: 60px;
   font-size: 18px;
   cursor: pointer;
   transition: all .2s ease-in-out;

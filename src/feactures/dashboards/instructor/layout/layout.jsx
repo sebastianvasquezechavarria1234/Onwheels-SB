@@ -16,40 +16,40 @@ export const Layout = ({ children }) => {
 				<h2 className="mb-[20px] border-b pb-[30px] border-black/20 font-primary">
 					Instructor
 				</h2>
-        <div className="flex flex-col justify-between h-[83%]">
-          <ul className="">
-            <li>
-              <BtnSideBar title="Mi cuenta" link="../instructor/setting">
-                <Settings size={20} strokeWidth={1.5}/>
-                
-              </BtnSideBar>
-              
-            </li>
-            <li>
-              <BtnSideBar title="Mis estudiantes" link="../instructor/myStudent">
-                <Users size={20} className="text-black/80" strokeWidth={1.5}/>
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Mis clases" link="../instructor/myClasses">
-                <School size={20} className="text-black/70" strokeWidth={1.5}/>
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Mis compras" link="../instructor/myPurchases">
-                <ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
-                
-              </BtnSideBar>
-            </li>
-          </ul>
-          <ul>
-            <BtnLinkIcon title="Cerrar Dashboard" style="bg-[var(--color-blue)]! text-white pr-[25px]" styleIcon="bg-white!">
-              <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2}/>
-            </BtnLinkIcon>
-          </ul>
+				<div className="flex flex-col justify-between h-[83%]">
+					<ul className="">
+						<li>
+							<BtnSideBar title="Mi cuenta" link="../instructor/setting">
+								<Settings size={20} strokeWidth={1.5} />
 
-        </div>
-				
+							</BtnSideBar>
+
+						</li>
+						<li>
+							<BtnSideBar title="Mis estudiantes" link="../instructor/myStudent">
+								<Users size={20} className="text-black/80" strokeWidth={1.5} />
+							</BtnSideBar>
+						</li>
+						<li>
+							<BtnSideBar title="Mis clases" link="../instructor/myClasses">
+								<School size={20} className="text-black/70" strokeWidth={1.5} />
+							</BtnSideBar>
+						</li>
+						<li>
+							<BtnSideBar title="Mis compras" link="../instructor/myPurchases">
+								<ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
+
+							</BtnSideBar>
+						</li>
+					</ul>
+					<ul>
+						<BtnLinkIcon title="Cerrar Dashboard" style="bg-[var(--color-blue)]! text-white pr-[25px]" styleIcon="bg-white!">
+							<ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
+						</BtnLinkIcon>
+					</ul>
+
+				</div>
+
 			</nav>
 
 			{/* Contenido animado con entrada y salida mejoradas */}
@@ -77,7 +77,7 @@ export const Layout = ({ children }) => {
 				}}
 				style={{
 					height: "100%",
-					overflowY: "auto", // Scroll funcional
+					overflowY: "auto", 
 					transformStyle: "preserve-3d",
 				}}
 			>

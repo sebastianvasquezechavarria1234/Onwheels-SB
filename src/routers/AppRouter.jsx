@@ -31,6 +31,8 @@ import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent";
 import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/MyClassesInstructor";
 import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor";
 import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor";
+import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
+import { Classes } from "../feactures/dashboards/admin/pages/Classes";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -156,6 +158,23 @@ export const AppRouter = () => {
           }
         />
         <Route
+          path="productDetails"
+          element={
+            isLanding ? (
+              <motion.div
+                variants={blurVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <ProductDetails />
+              </motion.div>
+            ) : (
+              <ProductDetails />
+            )
+          }
+        />
+        <Route
           path="shoppingCart"
           element={
             isLanding ? (
@@ -179,6 +198,7 @@ export const AppRouter = () => {
 
         {/* Dashboard Admin */}
         <Route path="admin/matriculas" element={<Matriculas />} />
+        <Route path="admin/classes" element={<Classes />} />
         <Route path="admin/compras" element={<Compras />} />
         <Route path="admin/eventos" element={<Eventos />} />
         <Route path="admin/proveedores" element={<Proveedores />} />
