@@ -136,12 +136,14 @@ const initialClases = [
     },
 ];
 
-export const Classes = () => {
+export const Products = () => {
     const [clases, setClases] = useState(initialClases);
 
+    
     const [selected, setSelected] = useState(null);
     const [modalType, setModalType] = useState(null);
 
+    
     const [editForm, setEditForm] = useState({
         ubicacion: "",
         direccion: "",
@@ -154,16 +156,16 @@ export const Classes = () => {
         descripcion: "",
     });
 
-    // addForm vacío para que se vean los placeholders al abrir el modal de registro
+    // dAtos quemados
     const [addForm, setAddForm] = useState({
-        dia: "",
-        horaInicio: "",
-        horaFinal: "",
-        ubicacion: "",
-        direccion: "",
-        sede: "",
-        profesor: "",
-        nivel: "",
+        dia: "Lunes",
+        horaInicio: "7:00 pm",
+        horaFinal: "9:00 pm",
+        ubicacion: "Estadio",
+        direccion: "Calle 4 int 131",
+        sede: "VillaTiva",
+        profesor: "Sebastián Vásquez",
+        nivel: "Intermedio",
     });
 
     // cerrar con Escape
@@ -179,16 +181,16 @@ export const Classes = () => {
         setModalType(type);
 
         if (type === "add") {
-            // reseteo vacío para que aparezcan los placeholders
+          
             setAddForm({
-                dia: "",
-                horaInicio: "",
-                horaFinal: "",
-                ubicacion: "",
-                direccion: "",
-                sede: "",
-                profesor: "",
-                nivel: "",
+                dia: "Lunes",
+                horaInicio: "7:00 pm",
+                horaFinal: "9:00 pm",
+                ubicacion: "Estadio",
+                direccion: "Calle 4 int 131",
+                sede: "VillaTiva",
+                profesor: "Sebastián Vásquez",
+                nivel: "Intermedio",
             });
             setSelected(null);
             return;
@@ -244,6 +246,7 @@ export const Classes = () => {
     };
 
     const saveAdd = () => {
+     
         const newId = clases.length ? Math.max(...clases.map((c) => c.id)) + 1 : 1;
         const nuevaClase = {
             id: newId,
@@ -253,7 +256,7 @@ export const Classes = () => {
             hora: `${addForm.horaInicio} a ${addForm.horaFinal}`,
             nivel: addForm.nivel,
             cantidadEstudiantes: 0,
-            nombre: `Clase - ${addForm.dia || "sin día"}`,
+            nombre: `Clase - ${addForm.dia}`,
             instructor: addForm.profesor,
             descripcion: "",
             sede: addForm.sede,
@@ -266,7 +269,7 @@ export const Classes = () => {
         <Layout>
             <section className="dashboard__pages relative w-full overflow-y-scroll sidebar  h-screen">
                 <h2 className="dashboard__title font-primary  p-[30px] font-secundaria">
-                    Clases / Clases
+                    Compras / Productos
                 </h2>
 
                 <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
@@ -278,8 +281,7 @@ export const Classes = () => {
                                 <input
                                     className="input pl-[50px]!"
                                     type="text"
-                                    placeholder={'Por ejemplo: "Skate para principiantes"'}
-                                />
+                                    placeholder="Por ejem: ''" />
                             </div>
                         </label>
                         <label className="mb-[20px] block">
@@ -293,6 +295,7 @@ export const Classes = () => {
                                 </select>
                             </div>
                         </label>
+
                     </form>
 
                     <div className="">
@@ -388,7 +391,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.dia}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "Lunes"'}
                                         />
                                     </label>
 
@@ -399,7 +401,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.nivel}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "Principiante"'}
                                         />
                                     </label>
                                 </div>
@@ -412,7 +413,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.horaInicio}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "7:00 pm"'}
                                         />
                                     </label>
 
@@ -423,7 +423,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.horaFinal}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "9:00 pm"'}
                                         />
                                     </label>
                                 </div>
@@ -436,7 +435,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.ubicacion}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "Skate Park VillaTiva"'}
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
@@ -446,7 +444,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.direccion}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "Calle 4 int 131"'}
                                         />
                                     </label>
                                 </div>
@@ -459,7 +456,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.sede}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "VillaTiva"'}
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
@@ -469,7 +465,6 @@ export const Classes = () => {
                                             className="input w-full"
                                             value={addForm.profesor}
                                             onChange={handleAddChange}
-                                            placeholder={'Por ejemplo: "Sebastián Vásquez"'}
                                         />
                                     </label>
                                 </div>
@@ -669,4 +664,4 @@ const ModalWrapper = ({ children, onClose }) => {
     );
 };
 
-export default Classes;
+export default Products;

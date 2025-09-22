@@ -34,6 +34,10 @@ import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
 import { Classes } from "../feactures/dashboards/admin/pages/Classes";
 import ProductCategory from "../feactures/dashboards/admin/pages/ProductsCategory";
+import Products from "../feactures/dashboards/admin/pages/Products";
+import Roles from "../feactures/dashboards/admin/pages/Roles";
+import ClassLevels from "../feactures/dashboards/admin/pages/ClassLevels";
+import PreRegistrations from "../feactures/dashboards/admin/pages/PreRegistrations";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -200,7 +204,11 @@ export const AppRouter = () => {
         {/* Dashboard Admin */}
         <Route path="admin/matriculas" element={<Matriculas />} />
         <Route path="admin/classes" element={<Classes />} />
+        <Route path="admin/products" element={<Products />} />
+        <Route path="admin/roles" element={<Roles />} />
         <Route path="admin/productCategory" element={<ProductCategory />} />
+        <Route path="admin/classLevels" element={<ClassLevels />} />
+        <Route path="admin/preRegistrations" element={<PreRegistrations />} />
         <Route path="admin/compras" element={<Compras />} />
         <Route path="admin/eventos" element={<Eventos />} />
         <Route path="admin/proveedores" element={<Proveedores />} />

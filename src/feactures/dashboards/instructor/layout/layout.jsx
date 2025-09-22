@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
@@ -6,6 +6,23 @@ import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
 import { ArrowLeft, School, Settings, ShoppingBag, User, Users, X } from "lucide-react";
 
 export const Layout = ({ children }) => {
+	// estado y efecto para fecha y hora (copiado tal cual)
+	const [now, setNow] = useState(new Date());
+
+	useEffect(() => {
+		const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
+		return () => clearInterval(timer);
+	}, []);
+
+	const dateStr = now.toLocaleDateString("es-CO", {
+		weekday: "long",
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
+
+	const timeStr = now.toLocaleTimeString("es-CO");
+
 	return (
 		<main
 			className="relative w-full h-screen flex gap-[10px] overflow-hidden"
@@ -21,9 +38,7 @@ export const Layout = ({ children }) => {
 						<li>
 							<BtnSideBar title="Mi cuenta" link="../instructor/setting">
 								<Settings size={20} strokeWidth={1.5} />
-
 							</BtnSideBar>
-
 						</li>
 						<li>
 							<BtnSideBar title="Mis estudiantes" link="../instructor/myStudent">
@@ -38,18 +53,28 @@ export const Layout = ({ children }) => {
 						<li>
 							<BtnSideBar title="Mis compras" link="../instructor/myPurchases">
 								<ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
-
 							</BtnSideBar>
 						</li>
 					</ul>
-					<ul>
-						<BtnLinkIcon title="Cerrar Dashboard" style="bg-[var(--color-blue)]! text-white pr-[25px]" styleIcon="bg-white!">
+
+					{/* Footer movido (fecha, hora y botón) — exactamente igual en estilos */}
+					<ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 ">
+						<div className="flex flex-col gap-[10px] mb-[10px]">
+							<p className="text-sm capitalize">{dateStr}</p>
+							<p className="flex gap-[10px] items-center">
+								<span className="w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
+								{timeStr}
+							</p>
+						</div>
+						<BtnLinkIcon
+							title="Cerrar Dashboard"
+							style="bg-[var(--color-blue)]! text-white pr-[25px] w-full"
+							styleIcon="bg-white!"
+						>
 							<ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
 						</BtnLinkIcon>
 					</ul>
-
 				</div>
-
 			</nav>
 
 			{/* Contenido animado con entrada y salida mejoradas */}
@@ -77,7 +102,7 @@ export const Layout = ({ children }) => {
 				}}
 				style={{
 					height: "100%",
-					overflowY: "auto", 
+					overflowY: "auto",
 					transformStyle: "preserve-3d",
 				}}
 			>
