@@ -1,57 +1,74 @@
 import React from "react";
 import { Card } from "./Card";
 import { BtnLinkIcon } from "../BtnLinkIcon";
-import { ShirtIcon } from "lucide-react";
+import { ArrowRight, NotebookPen } from "lucide-react";
+import { BtnLink } from "../BtnLink";
+import "swiper/css";
 
 export const Grid = () => {
   return (
     <>
       {/* ================== SECCIÓN PRODUCTOS ================== */}
       <section className="max-w-[1400px] mx-auto p-20">
-        <h3 className="mb-[30px]">
-          Explora
-          <span className="opacity-90 mx-[15px] font-primary">
-            Nuestros productos
-          </span>
-          <span>Creados para la vida</span>
-          <span className="opacity-70 font-primary"> sobre ruedas...</span>
-        </h3>
+        <div className=" flex gap-[10px] justify-between">
+          <h3 className="mb-[30px]">
+            Explora
+            <span className="opacity-90 mx-[15px] font-primary">
+              Nuestros productos
+            </span>
+            <span>Creados para la vida</span>
+            <span className="opacity-70 font-primary"> sobre ruedas...</span>
+          </h3>
+
+          <div className="flex">
+            <BtnLink title={"Ver más"} style={"text-blue-800 "} />
+            <ArrowRight strokeWidth={1} className="text-blue-700" />
+          </div>
+        </div>
 
         <div className="grid grid-cols-3 gap-[20px]">
           <Card
-            img="./bg_hero_shop.jpg"
+            styleImage="scale-[0.7]  group-hover:scale-[0.8]!"
+            img="./bg_productosL.jpg"
             descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
             text="Camiseta para hombre"
             dato="$ 20.000"
           />
           <Card
-            img="./bg_hero_shop.jpg"
+            styleImage="scale-[0.7]  group-hover:scale-[0.8]!"
+            img="./bg_produstosL2.jpg"
             descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
             text="Camiseta para hombre"
             dato="$ 20.000"
           />
           <Card
-            img="./bg_hero_shop.jpg"
+            styleImage="scale-[0.7]  group-hover:scale-[0.8]!"
+            img="./bg_productosL.jpg"
             descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
             text="Camiseta para hombre"
             dato="$ 20.000"
           />
-        </div>
-        <div className="flex justify-end mt-[30px]">
-            <BtnLinkIcon title={"Ver más productos"} >
-                <ShirtIcon></ShirtIcon>
-            </BtnLinkIcon>
         </div>
       </section>
 
       {/* ================== SECCIÓN EVENTOS ================== */}
       <section className="bg-gray-200">
         <div className="max-w-[1400px] mx-auto p-20">
-          <h3 className="mb-[30px] ">Proximos eventos</h3>
+          <div className="flex gap-[10px] justify-between ">
+            <h3 className="mb-[30px]  ">
+              Proximos
+              <span className="font-primary"> eventos</span>
+            </h3>
+
+            <div className="flex gap-[5px]">
+              <BtnLink title={"Ver más"} style="text-blue-800" />
+              <ArrowRight strokeWidth={1} className="text-blue-700" />
+            </div>
+          </div>
 
           <div className="grid grid-cols-3 gap-[20px]">
             <Card
-              img="./bg_eventos.jpg"
+              img="./bg_eventosL.jpg"
               descripcion="Evento de skateboard en la ciudad de la eterna primavera"
               text="Próximos eventos :"
               dato="2/09/2025"
@@ -63,7 +80,7 @@ export const Grid = () => {
               dato="2/09/2025"
             />
             <Card
-              img="./bg_eventos.jpg"
+              img="./bg_eventosL3.jpg"
               descripcion="Evento de skateboard en la ciudad de la eterna primavera"
               text="Próximos eventos :"
               dato="2/09/2025"
@@ -73,36 +90,33 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN APRENDER ================== */}
-      <section className="max-w-[1400px] mx-auto h-[600px] grid grid-cols-2 gap-x-20 items-center p-[3rem]">
+      <section className="max-w-[1400px] mx-auto h-[600px] flex gap-x-20 items-center p-[3rem]">
         {/* Texto */}
-        <div className="max-w-[600px]">
+        <div className="w-[50%]">
           <h2 className="text-4xl font-bold mb-4">
-            ¿Te gustaría aprender con nosotros?
+            ¿Te <span className="font-primary"> gustaría</span>
+            <h2>aprender con</h2>
+            <span className="font-primary"> nosotros?</span>
           </h2>
-          <p className="text-black text-lg mb-4">
+          <h4 className="text-black text-lg mb-4 opacity-60">
             En Performance SB te ofrecemos clases profesionales, eventos
             emocionantes y los mejores productos para que vivas al máximo tu
             pasión por el skateboarding.
-          </p>
-          <button className="bg-[#C45151] px-6 py-3 text-white rounded-full hover:opacity-90 transition">
-            Preinscribirme
-          </button>
+          </h4>
+          <BtnLinkIcon title={"Preinscribete!"}>
+            <NotebookPen size={20} strokeWidth={2} color="white" />
+          </BtnLinkIcon>
         </div>
 
         {/* Grid de imágenes */}
-        <div className="grid grid-cols-4 gap-6 max-w-[800px] mx-auto">
+        <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[800px] mx-auto h-[500px]">
           <img
             className="col-span-2 row-span-3 object-cover rounded-lg w-full h-full"
-            src="./bg_eventos.jpg"
+            src="./bg_eventosL3.jpg"
             alt="img"
           />
           <img
-            className="col-span-2 row-span-1 object-cover rounded-lg w-full h-full"
-            src="./bg_hero_landing.jpg"
-            alt="img"
-          />
-          <img
-            className="col-span-1 row-span-3 object-cover rounded-lg w-full h-full"
+            className="col-span-1 row-span-2 object-cover rounded-lg w-full h-full"
             src="./bg_eventos.jpg"
             alt="img"
           />
@@ -113,6 +127,10 @@ export const Grid = () => {
           />
         </div>
       </section>
+
+      {/* ================== SECCIÓN REELS ================== */}
+    
+     
     </>
   );
 };
