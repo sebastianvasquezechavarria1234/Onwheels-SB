@@ -1,21 +1,19 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Layout } from "../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const initialRoles = [
-    { id: 1, nombre: "Administrador", descripcion: "Acceso total al sistema.", estado: true },
-    { id: 2, nombre: "Instructor", descripcion: "Imparte clases y gestiona contenidos.", estado: true },
-    { id: 3, nombre: "Estudiante", descripcion: "Acceso a cursos y materiales.", estado: true },
-];
-
 export const Roles = () => {
-    const [roles, setRoles] = useState(initialRoles);
+    const [roles, setRoles] = useState([]); // ahora viene de la API
     const [selected, setSelected] = useState(null);
     const [modalType, setModalType] = useState(null);
 
     const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", estado: true });
     const [addForm, setAddForm] = useState({ nombre: "", descripcion: "", estado: true });
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     // cerrar con Escape
     useEffect(() => {
@@ -25,6 +23,28 @@ export const Roles = () => {
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, []);
+
+    // fetch roles desde la API local (puerto 3000)
+    useEffect(() => {
+        fetchRoles();
+    }, []);
+
+    const fetchRoles = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // 
+            const res = await axios.get("http://localhost:3000/roles");
+            // 
+            const data = Array.isArray(res.data) ? res.data : res.data?.roles ?? [];
+            setRoles(data);
+        } catch (err) {
+            console.error("Error cargando roles:", err);
+            setError("No se pudieron cargar los roles. Revisa la API / CORS.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const openModal = (type, item) => {
         setModalType(type);
@@ -48,11 +68,13 @@ export const Roles = () => {
     };
 
     const confirmDelete = (id) => {
+        // Si prefieres hacer DELETE a la API, reemplaza esta parte con una llamada axios.delete(...)
         setRoles((prev) => prev.filter((it) => it.id !== id));
         closeModal();
     };
 
     const toggleEstado = (id) => {
+        // Si quieres persistir en la API, haz axios.put/patch aquí
         setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, estado: !r.estado } : r)));
     };
 
@@ -112,8 +134,12 @@ export const Roles = () => {
                         <p className="w-[15%] font-bold! opacity-80">Acciones</p>
                     </article>
 
+                    {/* Estado de carga / error */}
+                    {loading && <p className="mt-6">Cargando roles...</p>}
+                    {error && <p className="mt-6 text-red-600">{error}</p>}
+
                     {/* Lista de roles */}
-                    {roles.map((role) => (
+                    {!loading && !error && roles.map((role) => (
                         <article key={role.id} className="py-[18px] border-b border-black/20 flex items-center">
                             <p className="w-[30%] line-clamp-1">{role.nombre}</p>
                             <p className="w-[55%] line-clamp-2">{role.descripcion}</p>
@@ -162,7 +188,6 @@ export const Roles = () => {
 
                                 <label className="flex items-center gap-3 mb-[20px]">
                                     <input type="checkbox" name="estado" checked={!!addForm.estado} onChange={handleAddChange} />
-                                    
                                     <span>Estado (activo)</span>
                                 </label>
 

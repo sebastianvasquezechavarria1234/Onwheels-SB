@@ -3,7 +3,6 @@ import { Card } from "./Card";
 import { BtnLinkIcon } from "../BtnLinkIcon";
 import { ArrowRight, NotebookPen } from "lucide-react";
 import { BtnLink } from "../BtnLink";
-import "swiper/css";
 
 export const Grid = () => {
   return (
