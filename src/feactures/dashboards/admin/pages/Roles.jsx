@@ -24,7 +24,6 @@ export const Roles = () => {
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
-    // fetch roles desde la API local (puerto 3000)
     useEffect(() => {
         fetchRoles();
     }, []);
@@ -34,7 +33,7 @@ export const Roles = () => {
         setError(null);
         try {
             // 
-            const res = await axios.get("http://localhost:3000/roles");
+            const res = await axios.get("http://localhost:3000/getRoles");
             // 
             const data = Array.isArray(res.data) ? res.data : res.data?.roles ?? [];
             setRoles(data);
