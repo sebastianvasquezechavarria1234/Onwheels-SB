@@ -1,9 +1,8 @@
 import React from "react";
 import { Card } from "./Card";
 import { BtnLinkIcon } from "../BtnLinkIcon";
-import { ArrowRight, NotebookPen } from "lucide-react";
+import { ArrowRight, NotebookPen, Play } from "lucide-react";
 import { BtnLink } from "../BtnLink";
-import "swiper/css";
 
 export const Grid = () => {
   return (
@@ -129,8 +128,52 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN REELS ================== */}
-    
-     
+      <section className="max-w-[1300px] mx-auto bg-red-600 mt-[120px] ">
+        <h2>Nuestros mejores reels!</h2>
+        
+        <div className="grid grid-cols-3 gap-[15px]">
+           <article className="relative flex  h-[600px] rounded-[30px] overflow-hidden  cursor-pointer ">
+          <video className=" w-full h-full object-cover absolute { "src="./vd_landing1.mp4"></video>
+          {/* el gradient del video y todos estos son hermanos del video  */}
+          <div className="gradient__reels absolute w-full h-full left-0 top-0 z-10 block"></div>
+          <span className="w-[150px] h-[150px] bg-white/20 z-10 rounded-full backdrop-blur-[14px] border-1 border-white/20 flex flex-col justify-center items-center text-white absolute top-[50%] left-[50%] translate-[-50%]">
+        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
+          <p>Reproducir</p>
+          </span>
+        </article>
+
+
+        
+        <article className="relative flex  h-[600px] rounded-[30px] overflow-hidden  cursor-pointer ">
+          <video className=" w-full h-full object-cover absolute { "src="./vd_landing1.mp4"></video>
+          {/* el gradient del video y todos estos son hermanos del video  */}
+          <div className="gradient__reels absolute w-full h-full left-0 top-0 z-10 block"></div>
+          <span className="w-[150px] h-[150px] bg-white/20 z-10 rounded-full backdrop-blur-[14px] border-1 border-white/20 flex flex-col justify-center items-center text-white absolute top-[50%] left-[50%] translate-[-50%]">
+        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
+          <p>Reproducir</p>
+          </span>
+        </article>
+
+
+            <article className="relative flex  h-[600px] rounded-[30px] overflow-hidden  cursor-pointer ">
+          <video className=" w-full h-full object-cover absolute { "src="./vd_landing1.mp4"></video>
+          {/* el gradient del video y todos estos son hermanos del video  */}
+          <div className="gradient__reels absolute w-full h-full left-0 top-0 z-10 block"></div>
+          <span className="w-[150px] h-[150px] bg-white/20 z-10 rounded-full backdrop-blur-[14px] border-1 border-white/20 flex flex-col justify-center items-center text-white absolute top-[50%] left-[50%] translate-[-50%]">
+        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
+          <p>Reproducir</p>
+          </span>
+        </article>
+
+        </div>
+       
+      </section>
+
+      <section className="w-[400px] h-[600px] gradient__reels rounded-[40px] fixed ">
+        <div className="w-full h-full object-cover">
+            <video className="" src="./vd_landing1.mp4"></video>
+        </div>
+      </section>
     </>
   );
 };

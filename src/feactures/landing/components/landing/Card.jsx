@@ -34,6 +34,7 @@ export const Card = ({img,text,descripcion, dato, styleImage }) => {
         </picture>
 
       </Link>
+     
       
 
       
