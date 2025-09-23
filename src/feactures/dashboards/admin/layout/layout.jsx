@@ -29,8 +29,8 @@ export const Layout = ({ children }) => {
       style={{ perspective: "1200px" }}
     >
       {/* Sidebar */}
-      <nav className=" h-full w-[20%] p-[30px] border-r border-black/20  z-10 ">
-        <h2 className="mb-[20px] border-b pb-[30px] border-black/20 font-primary">
+      <nav className=" h-full w-[20%] p-[30px] border-r pb-[10px] border-black/20  z-10 max-2xl:p-[15px] ">
+        <h2 className="mb-[20px] border-b pb-[30px] border-black/20 font-primary max-2xl:pb-[15px] dashboard__title">
           Admin
         </h2>
         <div className="sidebar flex flex-col justify-between  overflow-y-scroll h-[85%]">
@@ -48,7 +48,7 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Roles" link="../instructor/myStudent">
+              <BtnSideBar title="Roles" link="../admin/roles">
                 <Shield size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -59,17 +59,17 @@ export const Layout = ({ children }) => {
           <h4 className="font-primary mb-[10px]">Compras:</h4>
           <ul className="pl-[0px]">
             <li>
-              <BtnSideBar title="Productos" link="../instructor/setting">
+              <BtnSideBar title="Productos" link="../admin/products">
                 <Shirt size={20} strokeWidth={1.5} />
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Categoria de productos" link="../instructor/myStudent">
+              <BtnSideBar title="Categoria de productos" link="../admin/productCategory">
                 <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Proveedores" link="../instructor/myStudent">
+              <BtnSideBar title="Proveedores" link="../admin/proveedores">
                 <Users size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -83,7 +83,7 @@ export const Layout = ({ children }) => {
           <h4 className="font-primary mb-[10px]">Eventos:</h4>
           <ul className="pl-[0px]">
             <li>
-              <BtnSideBar title="Eventos" link="../instructor/setting">
+              <BtnSideBar title="Eventos" link="../admin/eventos">
                 <Calendar size={20} strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -108,17 +108,17 @@ export const Layout = ({ children }) => {
           <h4 className="font-primary mb-[10px]">Clases:</h4>
           <ul className="pl-[0px]">
             <li>
-              <BtnSideBar title="Clases" link="../admin">
+              <BtnSideBar title="Clases" link="../admin/classes">
                 <Calendar size={20} strokeWidth={1.5} />
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Niveles de clases" link="../instructor/myStudent">
+              <BtnSideBar title="Niveles de clases" link="../admin/classLevels">
                 <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="PreInscrpciones" link="../instructor/myStudent">
+              <BtnSideBar title="PreInscrpciones" link="../admin/preRegistrations">
                 <UserPlus size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -135,7 +135,7 @@ export const Layout = ({ children }) => {
           </ul>
 
           {/* Footer */}
-          <ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 ">
+          <ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
             <div className="flex flex-col gap-[10px] mb-[10px]">
               <p className="text-sm capitalize">{dateStr}</p>
               <p className="flex gap-[10px] items-center">

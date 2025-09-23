@@ -269,7 +269,7 @@ export const Classes = () => {
                     Clases / Clases
                 </h2>
 
-                <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
+                <div className="flex justify-between items-center p-[0px_40px_0px_20px] mt-[80px] mb-[-40px]">
                     <form action="" className="flex gap-[10px]">
                         <label className="mb-[20px] block">
                             <p className="">Buscar clase:</p>
@@ -339,7 +339,7 @@ export const Classes = () => {
                             {/* Acciones: Ver, Editar, Eliminar */}
                             <div className="w-[15%] flex gap-[10px] items-center">
                                 <motion.span
-                                    className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
+                                    className="actions w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -349,7 +349,7 @@ export const Classes = () => {
                                 </motion.span>
 
                                 <motion.span
-                                    className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
+                                    className="actions w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -359,7 +359,7 @@ export const Classes = () => {
                                 </motion.span>
 
                                 <motion.span
-                                    className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
+                                    className="actions w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -382,7 +382,7 @@ export const Classes = () => {
                             <form className="">
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Día:</p>
+                                        <p>Día:</p>
                                         <input
                                             name="dia"
                                             className="input w-full"
@@ -393,7 +393,7 @@ export const Classes = () => {
                                     </label>
 
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Nivel de clase:</p>
+                                        <p>Nivel de clase:</p>
                                         <input
                                             name="nivel"
                                             className="input w-full"
@@ -406,7 +406,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Hora inicio:</p>
+                                        <p>Hora inicio:</p>
                                         <input
                                             name="horaInicio"
                                             className="input w-full"
@@ -417,7 +417,7 @@ export const Classes = () => {
                                     </label>
 
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Hora final:</p>
+                                        <p>Hora final:</p>
                                         <input
                                             name="horaFinal"
                                             className="input w-full"
@@ -430,7 +430,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Ubicación:</p>
+                                        <p>Ubicación:</p>
                                         <input
                                             name="ubicacion"
                                             className="input w-full"
@@ -440,7 +440,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Dirección:</p>
+                                        <p>Dirección:</p>
                                         <input
                                             name="direccion"
                                             className="input w-full"
@@ -453,7 +453,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Sede:</p>
+                                        <p>Sede:</p>
                                         <input
                                             name="sede"
                                             className="input w-full"
@@ -463,7 +463,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Profesor:</p>
+                                        <p>Profesor:</p>
                                         <input
                                             name="profesor"
                                             className="input w-full"
@@ -525,7 +525,7 @@ export const Classes = () => {
                             <form className="">
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Nombre:</p>
+                                        <p>Nombre:</p>
                                         <input
                                             name="nombre"
                                             className="input w-full"
@@ -534,7 +534,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Instructor:</p>
+                                        <p>Instructor:</p>
                                         <input
                                             name="instructor"
                                             className="input w-full"
@@ -546,7 +546,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Ubicación:</p>
+                                        <p>Ubicación:</p>
                                         <input
                                             name="ubicacion"
                                             className="input w-full"
@@ -555,7 +555,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Dirección:</p>
+                                        <p>Dirección:</p>
                                         <input
                                             name="direccion"
                                             className="input w-full"
@@ -567,7 +567,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/1">
-                                        <p className="translate-x-[25px]">Día:</p>
+                                        <p>Día:</p>
                                         <input
                                             name="dia"
                                             className="input w-full"
@@ -577,7 +577,7 @@ export const Classes = () => {
                                     </label>
                                   
                                     <label className="block mb-[20px] w-1/1">
-                                        <p className="translate-x-[25px]">Nivel:</p>
+                                        <p>Nivel:</p>
                                         <input
                                             name="nivel"
                                             className="input w-full"
@@ -589,7 +589,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Cantidad de estudiantes:</p>
+                                        <p>Cantidad de estudiantes:</p>
                                         <input
                                             name="cantidadEstudiantes"
                                             type="number"
@@ -599,7 +599,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Descripción:</p>
+                                        <p>Descripción:</p>
                                         <input
                                             name="descripcion"
                                             className="input w-full"
