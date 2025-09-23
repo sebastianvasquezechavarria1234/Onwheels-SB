@@ -1,13 +1,13 @@
 import './App.css'
-import { Home } from './feacture/landing/pages/Home'
-import { Routers } from './routers/Routers'
+import { Home } from './feactures/landing/pages/Home'
+import { AppRouter } from './routers/AppRouter'
+
 
 function App() {
 	return (
 		<>
-			<Routers />
-		
-			</>
+			<AppRouter />
+		</>
 	)
 }
 

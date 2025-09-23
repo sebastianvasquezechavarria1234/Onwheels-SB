@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { Home } from "../feacture/landing/pages/Home";
 import { Shop } from "../feacture/landing/pages/Store";
 import { Class } from "../feacture/landing/components/class/class";
+
 import Preinscriptions from "../feacture/landing/pages/preinscriptions";
 import Events from "../feacture/landing/events/events";
 import Sidebar from "../feacture/dashboard/layout-dashboard/sidebar";
@@ -21,6 +22,7 @@ import Register from "../feacture/landing/Auth/Register";
 
 
 
+
 export const Routers = () => {
     return(
         <Routes>
@@ -34,8 +36,6 @@ export const Routers = () => {
 
             
             <Route path="dashboard" element={<Estudiantes />}/>
-
-
             <Route path="/dashboard/estudiantes" element={<Estudiantes />}/>
             <Route path="/dashboard/productos" element={<Productos />}/>
             <Route path="/dashboard/categoria-productos" element={<Categorias />}/>
@@ -52,6 +52,7 @@ export const Routers = () => {
 
 
             
+
         </Routes>
 
     )
