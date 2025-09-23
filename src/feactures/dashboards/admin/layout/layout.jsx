@@ -4,7 +4,7 @@ import '../../hooks/dashboard.css'
 import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
-import { ArrowLeft, Calendar, ChartBarIncreasing, MapPinHouse, School, Settings, Shield, ShoppingBag, User, Users, X } from "lucide-react";
+import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, MapPinHouse, School, Settings, Shield, Shirt, ShoppingBag, User, UserPlus, Users, X } from "lucide-react";
 
 export const Layout = ({ children }) => {
   const [now, setNow] = useState(new Date());
@@ -34,6 +34,11 @@ export const Layout = ({ children }) => {
           Admin
         </h2>
         <div className="sidebar flex flex-col justify-between  overflow-y-scroll h-[85%]">
+          <li>
+            <BtnSideBar title="Dashboard" link="../instructor/setting">
+              <LayoutDashboard size={20} strokeWidth={1.5} />
+            </BtnSideBar>
+          </li>
           {/* configuracion */}
           <h4 className="font-primary mb-[10px]">Configuración:</h4>
           <ul className="pl-[0px]">
@@ -49,6 +54,31 @@ export const Layout = ({ children }) => {
             </li>
           </ul>
 
+
+          {/* compras */}
+          <h4 className="font-primary mb-[10px]">Compras:</h4>
+          <ul className="pl-[0px]">
+            <li>
+              <BtnSideBar title="Productos" link="../instructor/setting">
+                <Shirt size={20} strokeWidth={1.5} />
+              </BtnSideBar>
+            </li>
+            <li>
+              <BtnSideBar title="Categoria de productos" link="../instructor/myStudent">
+                <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
+              </BtnSideBar>
+            </li>
+            <li>
+              <BtnSideBar title="Proveedores" link="../instructor/myStudent">
+                <Users size={20} className="text-black/80" strokeWidth={1.5} />
+              </BtnSideBar>
+            </li>
+            <li>
+              <BtnSideBar title="Compras" link="../instructor/myStudent">
+                <ShoppingBag size={20} className="text-black/80" strokeWidth={1.5} />
+              </BtnSideBar>
+            </li>
+          </ul>
           {/* eventos */}
           <h4 className="font-primary mb-[10px]">Eventos:</h4>
           <ul className="pl-[0px]">
@@ -78,7 +108,7 @@ export const Layout = ({ children }) => {
           <h4 className="font-primary mb-[10px]">Clases:</h4>
           <ul className="pl-[0px]">
             <li>
-              <BtnSideBar title="Clases" link="../instructor/setting">
+              <BtnSideBar title="Clases" link="../admin">
                 <Calendar size={20} strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -89,7 +119,7 @@ export const Layout = ({ children }) => {
             </li>
             <li>
               <BtnSideBar title="PreInscrpciones" link="../instructor/myStudent">
-                <MapPinHouse size={20} className="text-black/80" strokeWidth={1.5} />
+                <UserPlus size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
             <li>
@@ -111,7 +141,7 @@ export const Layout = ({ children }) => {
               <p className="flex gap-[10px] items-center">
                 <span className="w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
                 {timeStr}
-                </p>
+              </p>
             </div>
             <BtnLinkIcon
               title="Cerrar Dashboard"
