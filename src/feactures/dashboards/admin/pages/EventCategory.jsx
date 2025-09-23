@@ -2,21 +2,23 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Eventos from "./eventos/eventos/eventos";
 
-const initialCategoryEvent = [
-    { id: 1, nombre: "Ilustración", descripcion: "Cursos y talleres de ilustración básica y avanzada." },
-    { id: 2, nombre: "Dibujo Figura", descripcion: "Enfoque en figura humana y proporciones." },
-    { id: 3, nombre: "Acuarela", descripcion: "Técnicas de acuarela para principiantes." },
-];
-
-export const EventCategory = () => {
-    const [categories, setCategories] = useState(initialCategoryEvent);
+/**
+ * EventCategory ahora recibe las categorías desde props:
+ *  <EventCategory categoriesFromApi={categories} />
+ */
+export const EventCategory = ({ categoriesFromApi = [] }) => {
+    const [categories, setCategories] = useState(categoriesFromApi);
     const [selected, setSelected] = useState(null);
     const [modalType, setModalType] = useState(null);
 
     const [editForm, setEditForm] = useState({ nombre: "", descripcion: "" });
     const [addForm, setAddForm] = useState({ nombre: "", descripcion: "" });
+
+    // sincronizar cuando cambian las props (vienen del componente que consume la API)
+    useEffect(() => {
+        setCategories(Array.isArray(categoriesFromApi) ? categoriesFromApi : []);
+    }, [categoriesFromApi]);
 
     // cerrar con Escape
     useEffect(() => {
