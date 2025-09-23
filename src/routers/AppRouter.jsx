@@ -20,7 +20,7 @@ import Register from "../feactures/Auth/pages/Register";
 import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
 import Eventos from "../feactures/dashboards/admin/pages/eventos/eventos/eventos";
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
-import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
+// import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 // import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
@@ -41,6 +41,7 @@ import Roles from "../feactures/dashboards/admin/pages/Roles";
 import ClassLevels from "../feactures/dashboards/admin/pages/ClassLevels";
 import PreRegistrations from "../feactures/dashboards/admin/pages/PreRegistrations";
 import EventCategory from "../feactures/dashboards/admin/pages/EventCategory";
+import Users from "../feactures/dashboards/admin/pages/Users";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -209,12 +210,13 @@ export const AppRouter = () => {
         <Route path="admin/classes" element={<Classes />} />
         <Route path="admin/products" element={<Products />} />
         <Route path="admin/roles" element={<Roles />} />
+        <Route path="admin/users" element={<Users />} />
         <Route path="admin/productCategory" element={<ProductCategory />} />
         <Route path="admin/classLevels" element={<ClassLevels />} />
         <Route path="admin/preRegistrations" element={<PreRegistrations />} />
         <Route path="admin/compras" element={<Compras />} />
         <Route path="admin/eventos" element={<Eventos />} />
-        <Route path="admin/proveedores" element={<Proveedores />} />
+        {/* <Route path="admin/proveedores" element={<Proveedores />} /> */}
         <Route path="admin/ventas" element={<Ventas />} />
         <Route path="admin/categoriasProductos" element={<Categorias />} />
         <Route path="admin/eventCategory" element={<EventCategory />} />

@@ -11,7 +11,7 @@ export default function Eventos() {
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/api/eventos"); // 👈 Ajusta tu endpoint
+        const res = await axios.get("http://localhost:4000/api/eventos"); // 👈 Ajusta si tu backend corre en otro puerto
         setEventos(res.data);
       } catch (err) {
         console.error("Error al cargar eventos:", err);
@@ -87,11 +87,15 @@ export default function Eventos() {
                       <td className="px-6 py-3">{evento.horaFin}</td>
                       <td className="px-6 py-3">{evento.descripcion}</td>
                       <td className="px-6 py-3">
-                        <img
-                          src={evento.imagen}
-                          alt={evento.nombreEvento}
-                          className="h-10 w-10 rounded object-cover"
-                        />
+                        {evento.imagen ? (
+                          <img
+                            src={evento.imagen}
+                            alt={evento.nombreEvento}
+                            className="h-10 w-10 rounded object-cover"
+                          />
+                        ) : (
+                          <span className="text-gray-400 italic">Sin imagen</span>
+                        )}
                       </td>
                       <td className="px-6 py-3">{evento.estado}</td>
                       <td className="px-6 py-3 flex gap-3 justify-center">
