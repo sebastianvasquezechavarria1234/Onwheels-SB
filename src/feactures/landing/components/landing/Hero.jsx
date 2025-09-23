@@ -14,8 +14,8 @@ export  const Hero = () =>{
             
             {/* Contenedor con texto y el degradado */}
             <div className=" gradient w-full h-full  left-0 top-0 absolute p-[100px] items-end flex text-white">
-                <div className="max-w-[1200px]">
-                    <h1 >Bienvenido a OnWheels-SB,
+                <div className="max-w-[60%]">
+                    <h1 >Bienvenido a OnWheels - SB,
                         <span className="font-primary">el spot donde el skate no es solo un deporte </span>, es un estilo de vida.
 
                     </h1>

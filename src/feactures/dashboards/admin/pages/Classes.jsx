@@ -139,11 +139,9 @@ const initialClases = [
 export const Classes = () => {
     const [clases, setClases] = useState(initialClases);
 
-    // selected + modalType: "details" | "edit" | "delete" | "add" | null
     const [selected, setSelected] = useState(null);
     const [modalType, setModalType] = useState(null);
 
-    // estado para formulario de edición
     const [editForm, setEditForm] = useState({
         ubicacion: "",
         direccion: "",
@@ -156,16 +154,16 @@ export const Classes = () => {
         descripcion: "",
     });
 
-    // estado para formulario de agregar (con datos quemados por defecto)
+    // addForm vacío para que se vean los placeholders al abrir el modal de registro
     const [addForm, setAddForm] = useState({
-        dia: "Lunes",
-        horaInicio: "7:00 pm",
-        horaFinal: "9:00 pm",
-        ubicacion: "Estadio",
-        direccion: "Calle 4 int 131",
-        sede: "VillaTiva",
-        profesor: "Sebastián Vásquez",
-        nivel: "Intermedio",
+        dia: "",
+        horaInicio: "",
+        horaFinal: "",
+        ubicacion: "",
+        direccion: "",
+        sede: "",
+        profesor: "",
+        nivel: "",
     });
 
     // cerrar con Escape
@@ -181,16 +179,16 @@ export const Classes = () => {
         setModalType(type);
 
         if (type === "add") {
-            // dejar datos quemados en el formulario de agregar
+            // reseteo vacío para que aparezcan los placeholders
             setAddForm({
-                dia: "Lunes",
-                horaInicio: "7:00 pm",
-                horaFinal: "9:00 pm",
-                ubicacion: "Estadio",
-                direccion: "Calle 4 int 131",
-                sede: "VillaTiva",
-                profesor: "Sebastián Vásquez",
-                nivel: "Intermedio",
+                dia: "",
+                horaInicio: "",
+                horaFinal: "",
+                ubicacion: "",
+                direccion: "",
+                sede: "",
+                profesor: "",
+                nivel: "",
             });
             setSelected(null);
             return;
@@ -213,12 +211,11 @@ export const Classes = () => {
         }
     };
 
-    const openView = (c) => openModal("details", c);
 
-    const closeModal = () => {
+    function closeModal() {
         setSelected(null);
         setModalType(null);
-    };
+    }
 
     const confirmDelete = (id) => {
         setClases((prev) => prev.filter((item) => item.id !== id));
@@ -246,7 +243,6 @@ export const Classes = () => {
     };
 
     const saveAdd = () => {
-        // crear nueva clase con los campos solicitados
         const newId = clases.length ? Math.max(...clases.map((c) => c.id)) + 1 : 1;
         const nuevaClase = {
             id: newId,
@@ -256,7 +252,7 @@ export const Classes = () => {
             hora: `${addForm.horaInicio} a ${addForm.horaFinal}`,
             nivel: addForm.nivel,
             cantidadEstudiantes: 0,
-            nombre: `Clase - ${addForm.dia}`,
+            nombre: `Clase - ${addForm.dia || "sin día"}`,
             instructor: addForm.profesor,
             descripcion: "",
             sede: addForm.sede,
@@ -272,7 +268,7 @@ export const Classes = () => {
                     Clases / Clases
                 </h2>
 
-                <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
+                <div className="flex justify-between items-center p-[0px_40px_0px_20px] mt-[80px] mb-[-40px]">
                     <form action="" className="flex gap-[10px]">
                         <label className="mb-[20px] block">
                             <p className="">Buscar clase:</p>
@@ -281,7 +277,8 @@ export const Classes = () => {
                                 <input
                                     className="input pl-[50px]!"
                                     type="text"
-                                    placeholder="Por ejem: ''" />
+                                    placeholder={'Por ejemplo: "Skate para principiantes"'}
+                                />
                             </div>
                         </label>
                         <label className="mb-[20px] block">
@@ -295,7 +292,6 @@ export const Classes = () => {
                                 </select>
                             </div>
                         </label>
-
                     </form>
 
                     <div className="">
@@ -316,7 +312,7 @@ export const Classes = () => {
                         <p className="w-[15%] font-bold! opacity-80">Dirección</p>
                         <p className="w-[10%] font-bold! opacity-80">Día</p>
                         <p className="w-[15%] font-bold! opacity-80">Hora</p>
-                        <p className="w-[20%] font-bold! opacity-80">Cantidad de estudiantes</p>
+                        <p className="w-[20%] font-bold! opacity-80">Profesor</p>
                         <p className="w-[15%] font-bold! opacity-80">Nivel de la clase</p>
                         <p className="w-[15%] font-bold! opacity-80">Acciones</p>
                     </article>
@@ -331,7 +327,7 @@ export const Classes = () => {
                             <p className="w-[15%] line-clamp-1">{c.direccion}</p>
                             <p className="w-[10%] line-clamp-1">{c.dia}</p>
                             <p className="w-[15%] line-clamp-1">{c.hora}</p>
-                            <p className="w-[20%]">{c.cantidadEstudiantes}</p>
+                            <p className="w-[20%]">{c.instructor}</p>
                             <p className="w-[15%]">
                                 <span className="inline-flex items-center gap-[5px] px-[15px] py-[7px] rounded-full bg-orange-100 text-orange-700">
                                     <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
@@ -342,7 +338,7 @@ export const Classes = () => {
                             {/* Acciones: Ver, Editar, Eliminar */}
                             <div className="w-[15%] flex gap-[10px] items-center">
                                 <motion.span
-                                    className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
+                                    className="actions w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -352,7 +348,7 @@ export const Classes = () => {
                                 </motion.span>
 
                                 <motion.span
-                                    className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
+                                    className="actions w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -362,7 +358,7 @@ export const Classes = () => {
                                 </motion.span>
 
                                 <motion.span
-                                    className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
+                                    className="actions w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.95 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -385,86 +381,94 @@ export const Classes = () => {
                             <form className="">
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Día:</p>
+                                        <p>Día:</p>
                                         <input
                                             name="dia"
                                             className="input w-full"
                                             value={addForm.dia}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "Lunes"'}
                                         />
                                     </label>
 
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Nivel de clase:</p>
+                                        <p>Nivel de clase:</p>
                                         <input
                                             name="nivel"
                                             className="input w-full"
                                             value={addForm.nivel}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "Principiante"'}
                                         />
                                     </label>
                                 </div>
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Hora inicio:</p>
+                                        <p>Hora inicio:</p>
                                         <input
                                             name="horaInicio"
                                             className="input w-full"
                                             value={addForm.horaInicio}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "7:00 pm"'}
                                         />
                                     </label>
 
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Hora final:</p>
+                                        <p>Hora final:</p>
                                         <input
                                             name="horaFinal"
                                             className="input w-full"
                                             value={addForm.horaFinal}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "9:00 pm"'}
                                         />
                                     </label>
                                 </div>
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Ubicación:</p>
+                                        <p>Ubicación:</p>
                                         <input
                                             name="ubicacion"
                                             className="input w-full"
                                             value={addForm.ubicacion}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "Skate Park VillaTiva"'}
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Dirección:</p>
+                                        <p>Dirección:</p>
                                         <input
                                             name="direccion"
                                             className="input w-full"
                                             value={addForm.direccion}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "Calle 4 int 131"'}
                                         />
                                     </label>
                                 </div>
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Sede:</p>
+                                        <p>Sede:</p>
                                         <input
                                             name="sede"
                                             className="input w-full"
                                             value={addForm.sede}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "VillaTiva"'}
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Profesor:</p>
+                                        <p>Profesor:</p>
                                         <input
                                             name="profesor"
                                             className="input w-full"
                                             value={addForm.profesor}
                                             onChange={handleAddChange}
+                                            placeholder={'Por ejemplo: "Sebastián Vásquez"'}
                                         />
                                     </label>
                                 </div>
@@ -520,7 +524,7 @@ export const Classes = () => {
                             <form className="">
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Nombre:</p>
+                                        <p>Nombre:</p>
                                         <input
                                             name="nombre"
                                             className="input w-full"
@@ -529,7 +533,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Instructor:</p>
+                                        <p>Instructor:</p>
                                         <input
                                             name="instructor"
                                             className="input w-full"
@@ -541,7 +545,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Ubicación:</p>
+                                        <p>Ubicación:</p>
                                         <input
                                             name="ubicacion"
                                             className="input w-full"
@@ -550,7 +554,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Dirección:</p>
+                                        <p>Dirección:</p>
                                         <input
                                             name="direccion"
                                             className="input w-full"
@@ -561,8 +565,8 @@ export const Classes = () => {
                                 </div>
 
                                 <div className="flex gap-[10px]">
-                                    <label className="block mb-[20px] w-1/3">
-                                        <p className="translate-x-[25px]">Día:</p>
+                                    <label className="block mb-[20px] w-1/1">
+                                        <p>Día:</p>
                                         <input
                                             name="dia"
                                             className="input w-full"
@@ -570,17 +574,9 @@ export const Classes = () => {
                                             onChange={handleEditChange}
                                         />
                                     </label>
-                                    <label className="block mb-[20px] w-1/3">
-                                        <p className="translate-x-[25px]">Hora:</p>
-                                        <input
-                                            name="hora"
-                                            className="input w-full"
-                                            value={editForm.hora}
-                                            onChange={handleEditChange}
-                                        />
-                                    </label>
-                                    <label className="block mb-[20px] w-1/3">
-                                        <p className="translate-x-[25px]">Nivel:</p>
+                                  
+                                    <label className="block mb-[20px] w-1/1">
+                                        <p>Nivel:</p>
                                         <input
                                             name="nivel"
                                             className="input w-full"
@@ -592,7 +588,7 @@ export const Classes = () => {
 
                                 <div className="flex gap-[10px]">
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Cantidad de estudiantes:</p>
+                                        <p>Cantidad de estudiantes:</p>
                                         <input
                                             name="cantidadEstudiantes"
                                             type="number"
@@ -602,7 +598,7 @@ export const Classes = () => {
                                         />
                                     </label>
                                     <label className="block mb-[20px] w-1/2">
-                                        <p className="translate-x-[25px]">Descripción:</p>
+                                        <p>Descripción:</p>
                                         <input
                                             name="descripcion"
                                             className="input w-full"
@@ -646,7 +642,7 @@ export const Classes = () => {
     );
 };
 
-/* === Modal wrapper reutilizable (igual al ejemplo) === */
+/* === Modal  === */
 const ModalWrapper = ({ children, onClose }) => {
     return (
         <motion.div

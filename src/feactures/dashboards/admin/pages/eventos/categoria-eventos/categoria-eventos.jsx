@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { Search, Plus, Eye, Pencil, Trash2 } from "lucide-react";
+<<<<<<< HEAD
 import Layout from "../../layout-dashboard/layout";
+=======
+import Layout from "../../../layout/layout";
+>>>>>>> 10c15a7470bd2fc235caf80fefaba0aebf1bce1d
 
 export default function CategoriasEventos() {
   const [modal, setModal] = useState({ type: null, data: null });

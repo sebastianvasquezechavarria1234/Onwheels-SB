@@ -39,10 +39,11 @@ export default function Categorias() {
             <h2 className="text-lg font-semibold text-gray-700">
               compras &gt; Categorías de Productos
             </h2>
+
           </div>
 
           {/* Barra de búsqueda y botón */}
-          <div className="flex justify-between items-center p-4">
+          <div className="flex justify-betwee items-center p-4">
             <div className="relative w-1/3">
               <input
                 type="text"

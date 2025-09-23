@@ -1,6 +1,6 @@
 import React from "react";
-import { Layout } from "../layout/Layout";
-import { article } from "framer-motion/client";
+
+
 import { Trash2 } from "lucide-react";
 
 export const CardProduct = () => {

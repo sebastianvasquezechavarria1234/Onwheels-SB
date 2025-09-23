@@ -13,7 +13,7 @@ export const BtnSideBar = ({ title, children, style, styleIcon, link }) => {
         `}
     >
       <span className={
-        `${styleIcon} BtnLinkIcon--icon w-[60px] h-[60px] flex justify-center items-center bg-gray-100 rounded-full border-1 border-gray-200`
+        `${styleIcon} BtnLinkIcon--icon w-[60px] h-[60px] flex justify-center items-center bg-gray-100 rounded-full border-1 border-gray-200 max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]`
       }>
         <span className="BtnLinkIcon--icon__svg">{children}</span>
         

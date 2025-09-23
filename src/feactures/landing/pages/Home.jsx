@@ -1,7 +1,7 @@
 import React from "react";
 import { Hero } from "../components/landing/Hero";
-import { Grid } from "../components/landing/grid";
 import { Layout } from "../layout/Layout";
+import { Grid } from "../components/landing/Grid";
 
 
 
