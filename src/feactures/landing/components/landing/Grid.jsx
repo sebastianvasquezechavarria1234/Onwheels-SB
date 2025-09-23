@@ -168,10 +168,10 @@ export const Grid = () => {
         </div>
        
       </section>
-
+      {/* Modal */}
       <section className="w-[400px] h-[600px] gradient__reels rounded-[40px] fixed ">
         <div className="w-full h-full object-cover">
-            <video className="" src="./vd_landing1.mp4"></video>
+            <video className="" src="./vd_landing1.mp4" ></video>
         </div>
       </section>
     </>
