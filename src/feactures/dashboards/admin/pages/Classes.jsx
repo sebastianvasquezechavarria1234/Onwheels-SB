@@ -211,12 +211,11 @@ export const Classes = () => {
         }
     };
 
-    const openView = (c) => openModal("details", c);
 
-    const closeModal = () => {
+    function closeModal() {
         setSelected(null);
         setModalType(null);
-    };
+    }
 
     const confirmDelete = (id) => {
         setClases((prev) => prev.filter((item) => item.id !== id));

@@ -1,9 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Search, Plus } from "lucide-react";
-import {Layout} from "../../../layout/layout";
-
+import { Layout } from "../../../layout/layout";
 
 export default function Proveedores() {
+  const [proveedores, setProveedores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+
+  useEffect(() => {
+    const fetchProveedores = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/proveedores"); // Ajusta al puerto de tu backend
+        const data = await res.json();
+        setProveedores(data);
+      } catch (error) {
+        console.error("Error al obtener proveedores:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProveedores();
+  }, []);
+
+  // Filtrar proveedores por nombre o NIT
+  const proveedoresFiltrados = proveedores.filter((prov) =>
+    prov.nombre_proveedor.toLowerCase().includes(busqueda.toLowerCase()) ||
+    prov.NIT_proveedor.toString().includes(busqueda)
+  );
+
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">
@@ -22,6 +47,8 @@ export default function Proveedores() {
               <input
                 type="text"
                 placeholder="Buscar proveedores..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -46,12 +73,33 @@ export default function Proveedores() {
                 </tr>
               </thead>
               <tbody>
-                {/* Ejemplo de fila vacía */}
-                <tr className="hover:bg-gray-50 transition">
-                  <td colSpan="6" className="text-center py-10 text-gray-400 italic">
-                    No hay proveedores registrados
-                  </td>
-                </tr>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-10 text-gray-400 italic">
+                      Cargando proveedores...
+                    </td>
+                  </tr>
+                ) : proveedoresFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-10 text-gray-400 italic">
+                      No hay proveedores registrados
+                    </td>
+                  </tr>
+                ) : (
+                  proveedoresFiltrados.map((prov) => (
+                    <tr key={prov.NIT_proveedor} className="hover:bg-gray-50 transition">
+                      <td className="px-6 py-3">{prov.NIT_proveedor}</td>
+                      <td className="px-6 py-3">{prov.nombre_proveedor}</td>
+                      <td className="px-6 py-3">{prov.email}</td>
+                      <td className="px-6 py-3">{prov.telefono}</td>
+                      <td className="px-6 py-3">{prov.direccion}</td>
+                      <td className="px-6 py-3 text-center">
+                        <button className="text-blue-600 hover:underline text-sm">Editar</button> |{" "}
+                        <button className="text-red-600 hover:underline text-sm">Eliminar</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
