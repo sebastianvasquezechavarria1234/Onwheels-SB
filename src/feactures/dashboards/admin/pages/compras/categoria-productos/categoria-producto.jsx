@@ -1,8 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Search, Plus } from "lucide-react";
-import {Layout} from "../../../layout/layout";
+import { Layout } from "../../../layout/layout";
 
 export default function Categorias() {
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  // 🔹 Consumir API al montar el componente
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/categorias"); // ajusta puerto/URL
+        const data = await res.json();
+        setCategorias(data);
+      } catch (err) {
+        console.error("Error cargando categorías:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategorias();
+  }, []);
+
+  // 🔹 Filtrar resultados con búsqueda
+  const categoriasFiltradas = categorias.filter((cat) =>
+    cat.nombre_categoria.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">
@@ -22,6 +48,8 @@ export default function Categorias() {
               <input
                 type="text"
                 placeholder="Buscar categorías..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -44,12 +72,44 @@ export default function Categorias() {
                 </tr>
               </thead>
               <tbody>
-                {/* Ejemplo de fila vacía */}
-                <tr className="hover:bg-gray-50 transition">
-                  <td colSpan="4" className="text-center py-10 text-gray-400 italic">
-                    No hay categorías registradas
-                  </td>
-                </tr>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="text-center py-10 text-gray-400 italic"
+                    >
+                      Cargando categorías...
+                    </td>
+                  </tr>
+                ) : categoriasFiltradas.length > 0 ? (
+                  categoriasFiltradas.map((cat) => (
+                    <tr
+                      key={cat.id_categoria}
+                      className="hover:bg-gray-50 transition"
+                    >
+                      <td className="px-6 py-3">{cat.id_categoria}</td>
+                      <td className="px-6 py-3">{cat.nombre_categoria}</td>
+                      <td className="px-6 py-3">{cat.descripcion}</td>
+                      <td className="px-6 py-3 text-center">
+                        <button className="text-blue-600 hover:underline text-xs mr-2">
+                          Editar
+                        </button>
+                        <button className="text-red-600 hover:underline text-xs">
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="text-center py-10 text-gray-400 italic"
+                    >
+                      No hay categorías registradas
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
