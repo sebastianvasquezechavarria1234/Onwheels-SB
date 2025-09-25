@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
 import {  AnimatePresence } from "framer-motion";
-import Layout from "../../layout-dashboard/layout";
+import Layout from "../layout/layout";
 import {
   getMatriculas,
   createMatricula,
   updateMatricula,
   deleteMatricula,
-} from "../../services/MatriculaService";
+} from "../services/matriculasservices";
 
 export default function Matriculas() {
   const [matriculas, setMatriculas] = useState([]);

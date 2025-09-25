@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Layout from "../../layout-dashboard/layout";
+import Layout from "../layout/layout";
 import { getClases, createClase, updateClase, deleteClase } from "../../services/ClassService";
 import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
 import {  AnimatePresence } from "framer-motion";
