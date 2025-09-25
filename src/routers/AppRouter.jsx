@@ -35,7 +35,7 @@ import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
 import Products from "../feactures/dashboards/admin/pages/compras/productos/Products";
 // import ClassLevels from "../feactures/dashboards/admin/pages/ClassLevels";
 import Users from "../feactures/dashboards/admin/pages/configuracion/usuarios/Users";
-import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
+// import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
 import MyClasses from "../feactures/dashboards/student/pages/MyClasses";
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles";
@@ -208,7 +208,7 @@ export const AppRouter = () => {
 
         {/* Dashboard Admin */}
         <Route path="admin/matriculas" element={<Matriculas />} />
-        <Route path="admin/classes" element={<Clases />} />
+        {/* <Route path="admin/classes" element={<Clases />} /> */}
         <Route path="admin/products" element={<Products />} />
         <Route path="admin/roles" element={<Roles/>} />
         <Route path="admin/users" element={<Users />} />
