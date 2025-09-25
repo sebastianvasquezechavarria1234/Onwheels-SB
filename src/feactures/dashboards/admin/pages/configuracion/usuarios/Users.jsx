@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Layout } from "../layout/layout";
+import { Layout } from "../../../layout/layout";
 import { Eye, Funnel, Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 

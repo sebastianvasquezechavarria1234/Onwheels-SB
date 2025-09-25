@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import Layout from "../../layout-dashboard/layout";
-import { getClases, createClase, updateClase, deleteClase } from "../../services/ClassService";
+
+import { getClases, createClase, updateClase, deleteClase } from "../../../services/classServices.js";
 import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
 import {  AnimatePresence } from "framer-motion";
+import { Layout } from "../../../layout/layout.jsx";
 
-export default function Clases() {
+function Clases() {
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -274,3 +275,4 @@ const ModalWrapper = ({ children, onClose }) => (
     <div className="absolute inset-0" onClick={onClose}></div>
   </motion.div>
 );
+export default Clases;

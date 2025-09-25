@@ -135,13 +135,13 @@ export const Layout = ({ children }) => {
           </ul>
 
           {/* Footer */}
-          <ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
+          <ul className="bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
             <div className="flex flex-col gap-[10px] mb-[10px]">
-              <p className="text-sm capitalize">{dateStr}</p>
+              {/* <p className="text-sm capitalize">{dateStr}</p>
               <p className="flex gap-[10px] items-center">
                 <span className="w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
                 {timeStr}
-              </p>
+              </p> */}
             </div>
             <BtnLinkIcon
               title="Cerrar Dashboard"

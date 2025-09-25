@@ -1,179 +1,250 @@
-import React, { useState } from "react";
-import { Search, Plus, Eye, Pencil, Trash2 } from "lucide-react";
-<<<<<<< HEAD
-import Layout from "../../layout-dashboard/layout";
-=======
-import Layout from "../../../layout/layout";
->>>>>>> 10c15a7470bd2fc235caf80fefaba0aebf1bce1d
+import React, { useEffect, useState } from "react";
+import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Layout } from "../../../layout/layout";
 
-export default function CategoriasEventos() {
-  const [modal, setModal] = useState({ type: null, data: null });
+/**
+ * EventCategory ahora recibe las categorías desde props:
+ *  <EventCategory categoriesFromApi={categories} />
+ */
+export const EventCategory = ({ categoriesFromApi = [] }) => {
+    const [categories, setCategories] = useState(categoriesFromApi);
+    const [selected, setSelected] = useState(null);
+    const [modalType, setModalType] = useState(null);
 
-  // Datos de ejemplo
-  const categorias = [
-    { id: 1, nombre: "Conciertos", descripcion: "Eventos musicales en vivo" },
-    { id: 2, nombre: "Deportes", descripcion: "Competiciones deportivas" },
-    { id: 3, nombre: "Conferencias", descripcion: "Charlas y congresos académicos" },
-  ];
+    const [editForm, setEditForm] = useState({ nombre: "", descripcion: "" });
+    const [addForm, setAddForm] = useState({ nombre: "", descripcion: "" });
 
-  return (
-    <Layout>
-      <div className="p-6 bg-gray-50 min-h-screen w-full">
-        <div className="bg-white rounded-2xl shadow-md border border-gray-200">
-          {/* Encabezado */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-700">
-              eventos &gt; Categorías de Eventos
-            </h2>
-          </div>
+    // sincronizar cuando cambian las props (vienen del componente que consume la API)
+    useEffect(() => {
+        setCategories(Array.isArray(categoriesFromApi) ? categoriesFromApi : []);
+    }, [categoriesFromApi]);
 
-          {/* Barra de búsqueda y botón */}
-          <div className="flex justify-between items-center p-4">
-            <div className="relative w-1/3">
-              <input
-                type="text"
-                placeholder="Buscar categorías..."
-                className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            </div>
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all">
-              <Plus className="h-4 w-4" />
-              Registrar nueva categoría
-            </button>
-          </div>
+    // cerrar con Escape
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === "Escape") closeModal();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
 
-          {/* Tabla */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
-                <tr>
-                  <th className="px-6 py-3">ID</th>
-                  <th className="px-6 py-3">Nombre</th>
-                  <th className="px-6 py-3">Descripción</th>
-                  <th className="px-6 py-3 text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categorias.map((cat) => (
-                  <tr
-                    key={cat.id}
-                    className="hover:bg-gray-50 border-b transition"
-                  >
-                    <td className="px-6 py-3">{cat.id}</td>
-                    <td className="px-6 py-3">{cat.nombre}</td>
-                    <td className="px-6 py-3">{cat.descripcion}</td>
-                    <td className="px-6 py-3 text-center flex justify-center gap-3">
-                      <button
-                        onClick={() => setModal({ type: "view", data: cat })}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => setModal({ type: "edit", data: cat })}
-                        className="text-green-600 hover:text-green-800"
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => setModal({ type: "delete", data: cat })}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+    const openModal = (type, item) => {
+        setModalType(type);
 
-          {/* Modales */}
-          {modal.type && (
-            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-              <div className="bg-white rounded-2xl shadow-lg w-96 p-6">
-                {/* Modal Ver */}
-                {modal.type === "view" && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-4">
-                      Detalles de Categoría
-                    </h3>
-                    <p>
-                      <strong>ID:</strong> {modal.data.id}
-                    </p>
-                    <p>
-                      <strong>Nombre:</strong> {modal.data.nombre}
-                    </p>
-                    <p>
-                      <strong>Descripción:</strong> {modal.data.descripcion}
-                    </p>
-                    <button
-                      className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-xl"
-                      onClick={() => setModal({ type: null, data: null })}
-                    >
-                      Cerrar
-                    </button>
-                  </>
-                )}
+        if (type === "add") {
+            setAddForm({ nombre: "", descripcion: "" });
+            setSelected(null);
+            return;
+        }
 
-                {/* Modal Editar */}
-                {modal.type === "edit" && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-4">
-                      Editar Categoría
-                    </h3>
-                    <input
-                      type="text"
-                      defaultValue={modal.data.nombre}
-                      className="w-full mb-3 p-2 border rounded-lg"
-                    />
-                    <textarea
-                      defaultValue={modal.data.descripcion}
-                      className="w-full mb-3 p-2 border rounded-lg"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button
-                        className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-xl"
-                        onClick={() => setModal({ type: null, data: null })}
-                      >
-                        Cancelar
-                      </button>
-                      <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl">
-                        Guardar
-                      </button>
+        setSelected(item ? { ...item } : null);
+
+        if (type === "edit" && item) {
+            setEditForm({ nombre: item.nombre || "", descripcion: item.descripcion || "" });
+        }
+    };
+
+    const closeModal = () => {
+        setSelected(null);
+        setModalType(null);
+    };
+
+    const confirmDelete = (id) => {
+        setCategories((prev) => prev.filter((it) => it.id !== id));
+        closeModal();
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const saveEdit = () => {
+        if (!selected) return closeModal();
+        setCategories((prev) => prev.map((it) => (it.id === selected.id ? { ...it, ...editForm } : it)));
+        closeModal();
+    };
+
+    const handleAddChange = (e) => {
+        const { name, value } = e.target;
+        setAddForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const saveAdd = () => {
+        const newId = categories.length ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
+        const newCategory = { id: newId, nombre: addForm.nombre || `Categoría ${newId}`, descripcion: addForm.descripcion || "" };
+        setCategories((prev) => [newCategory, ...prev]);
+        closeModal();
+    };
+
+    return (
+        <Layout>
+            <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
+                <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Eventos / Categorias de eventos</h2>
+
+                <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
+                    <form action="" className="flex gap-[10px]">
+                        <label className="mb-[20px] block">
+                            <p className="">Buscar categoría:</p>
+                            <div className="relative">
+                                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
+                                <input className="input pl-[50px]!" type="text" placeholder="Por ejem: 'Ilustración'" />
+                            </div>
+                        </label>
+                    </form>
+
+                    <div className="">
+                        <button className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]" onClick={() => openModal("add", null)}>
+                            <Plus size={20} strokeWidth={1.8} />
+                            Añadir categoría
+                        </button>
                     </div>
-                  </>
-                )}
+                </div>
 
-                {/* Modal Eliminar */}
-                {modal.type === "delete" && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-4 text-red-600">
-                      Eliminar Categoría
-                    </h3>
-                    <p>
-                      ¿Seguro que deseas eliminar la categoría{" "}
-                      <strong>{modal.data.nombre}</strong>?
-                    </p>
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button
-                        className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-xl"
-                        onClick={() => setModal({ type: null, data: null })}
-                      >
-                        Cancelar
-                      </button>
-                      <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl">
-                        Eliminar
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </Layout>
-  );
-}
+                <div className="p-[30px]">
+                    {/* Encabezados */}
+                    <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
+                        <p className="w-[30%] font-bold! opacity-80">Nombre</p>
+                        <p className="w-[55%] font-bold! opacity-80">Descripción</p>
+                        <p className="w-[15%] font-bold! opacity-80">Acciones</p>
+                    </article>
+
+                    {/* Lista de categorías */}
+                    {categories.map((cat) => (
+                        <article key={cat.id} className="py-[18px] border-b border-black/20 flex items-center">
+                            <p className="w-[30%] line-clamp-1">{cat.nombre}</p>
+                            <p className="w-[55%] line-clamp-2">{cat.descripcion}</p>
+
+                            {/* Acciones: Ver, Editar, Eliminar */}
+                            <div className="w-[15%] flex gap-[10px] items-center">
+                                <motion.span className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} onClick={() => openModal("details", cat)}>
+                                    <Eye size={22} strokeWidth={1.3} />
+                                </motion.span>
+
+                                <motion.span className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} onClick={() => openModal("edit", cat)}>
+                                    <Pencil size={22} strokeWidth={1.3} />
+                                </motion.span>
+
+                                <motion.span className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} onClick={() => openModal("delete", cat)}>
+                                    <Trash2 size={22} strokeWidth={1.3} />
+                                </motion.span>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+
+                {/* Modales */}
+                <AnimatePresence>
+                    {modalType === "add" && (
+                        <ModalWrapper onClose={closeModal}>
+                            <h3 className="font-primary text-center mb-[30px]">Agregar categoría</h3>
+
+                            <form>
+                                <label className="block mb-[20px]">
+                                    <p className="translate-x-[25px]">Nombre:</p>
+                                    <input name="nombre" className="input w-full" value={addForm.nombre} onChange={handleAddChange} />
+                                </label>
+
+                                <label className="block mb-[20px]">
+                                    <p className="translate-x-[25px]">Descripción:</p>
+                                    <textarea name="descripcion" className="input w-full h-[120px]" value={addForm.descripcion} onChange={handleAddChange} />
+                                </label>
+
+                                <div className="flex justify-end gap-[10px] mt-[20px]">
+                                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
+                                        Cancelar
+                                    </button>
+                                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveAdd}>
+                                        Guardar
+                                    </button>
+                                </div>
+                            </form>
+                        </ModalWrapper>
+                    )}
+
+                    {modalType === "details" && selected && (
+                        <ModalWrapper onClose={closeModal}>
+                            <h3 className="font-primary text-center mb-[30px]">Detalles de la categoría</h3>
+
+                            <div className="grid grid-cols-2 gap-[10px]">
+                                <div>
+                                    <p className="font-medium">Nombre:</p>
+                                    <p className="font-medium">Descripción:</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-700">{selected.nombre}</p>
+                                    <p className="text-gray-700">{selected.descripcion}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-[10px] mt-[30px]">
+                                <button className="btn bg-gray-200" onClick={closeModal}>
+                                    Cerrar
+                                </button>
+                            </div>
+                        </ModalWrapper>
+                    )}
+
+                    {modalType === "edit" && selected && (
+                        <ModalWrapper onClose={closeModal}>
+                            <h3 className="font-primary text-center mb-[30px]">Editar categoría</h3>
+
+                            <form>
+                                <label className="block mb-[20px]">
+                                    <p className="translate-x-[25px]">Nombre:</p>
+                                    <input name="nombre" className="input w-full" value={editForm.nombre} onChange={handleEditChange} />
+                                </label>
+
+                                <label className="block mb-[20px]">
+                                    <p className="translate-x-[25px]">Descripción:</p>
+                                    <textarea name="descripcion" className="input w-full h-[120px]" value={editForm.descripcion} onChange={handleEditChange} />
+                                </label>
+
+                                <div className="flex justify-end gap-[10px] mt-[20px]">
+                                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
+                                        Cancelar
+                                    </button>
+                                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveEdit}>
+                                        Guardar
+                                    </button>
+                                </div>
+                            </form>
+                        </ModalWrapper>
+                    )}
+
+                    {modalType === "delete" && selected && (
+                        <ModalWrapper onClose={closeModal}>
+                            <h3 className="font-primary text-center mb-[30px]">Eliminar categoría</h3>
+                            <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar <span className="font-bold">{selected.nombre}</span>? Esta acción es permanente.</p>
+                            <div className="flex justify-end gap-[10px] mt-[20px]">
+                                <button className="btn bg-gray-200" onClick={closeModal}>
+                                    Cancelar
+                                </button>
+                                <button className="btn bg-red-100 text-red-700" onClick={() => confirmDelete(selected.id)}>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </ModalWrapper>
+                    )}
+                </AnimatePresence>
+            </section>
+        </Layout>
+    );
+};
+
+/* === Modal  === */
+const ModalWrapper = ({ children, onClose }) => {
+    return (
+        <motion.div className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            {/* overlay clickeable con dim */}
+            <div className="absolute inset-0" onClick={onClose} />
+
+            <motion.div className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}>
+                {children}
+            </motion.div>
+        </motion.div>
+    );
+};
+
+export default EventCategory;
