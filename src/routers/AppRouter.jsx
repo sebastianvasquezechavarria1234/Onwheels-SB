@@ -17,7 +17,6 @@ import Login from "../feactures/Auth/pages/Login";
 import Register from "../feactures/Auth/pages/Register";
 
 // Dashboard
-import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
 import Eventos from "../feactures/dashboards/admin/pages/eventos/eventos/eventos";
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
 // import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
@@ -26,22 +25,24 @@ import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-pr
 // import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
 // import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
-import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses";
 import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases";
 import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent";
 import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/MyClassesInstructor";
 import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor";
 import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
-import { Classes } from "../feactures/dashboards/admin/pages/Classes";
-import ProductCategory from "../feactures/dashboards/admin/pages/ProductsCategory";
 
-import Products from "../feactures/dashboards/admin/pages/Products";
-import Roles from "../feactures/dashboards/admin/pages/Roles";
-import ClassLevels from "../feactures/dashboards/admin/pages/ClassLevels";
-import PreRegistrations from "../feactures/dashboards/admin/pages/PreRegistrations";
-import EventCategory from "../feactures/dashboards/admin/pages/EventCategory";
-import Users from "../feactures/dashboards/admin/pages/Users";
+import Products from "../feactures/dashboards/admin/pages/compras/productos/Products";
+// import ClassLevels from "../feactures/dashboards/admin/pages/ClassLevels";
+import Users from "../feactures/dashboards/admin/pages/configuracion/usuarios/Users";
+import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
+import MyClasses from "../feactures/dashboards/student/pages/MyClasses";
+import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
+import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles";
+import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
+import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
+import EventCategory from "../feactures/dashboards/admin/pages/eventos/categoria-eventos/categoria-eventos";
+import Preinscripciones from "../feactures/dashboards/admin/pages/clases/preinscripciones/PreRegistrations";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -207,19 +208,18 @@ export const AppRouter = () => {
 
         {/* Dashboard Admin */}
         <Route path="admin/matriculas" element={<Matriculas />} />
-        <Route path="admin/classes" element={<Classes />} />
+        <Route path="admin/classes" element={<Clases />} />
         <Route path="admin/products" element={<Products />} />
-        <Route path="admin/roles" element={<Roles />} />
+        <Route path="admin/roles" element={<Roles/>} />
         <Route path="admin/users" element={<Users />} />
-        <Route path="admin/productCategory" element={<ProductCategory />} />
-        <Route path="admin/classLevels" element={<ClassLevels />} />
-        <Route path="admin/preRegistrations" element={<PreRegistrations />} />
+        {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
+        <Route path="admin/preRegistrations" element={<Preinscripciones />} />
         <Route path="admin/compras" element={<Compras />} />
-        <Route path="admin/eventos" element={<Eventos />} />
-        {/* <Route path="admin/proveedores" element={<Proveedores />} /> */}
+         <Route path="admin/proveedores" element={<Proveedores />} />
         <Route path="admin/ventas" element={<Ventas />} />
         <Route path="admin/categoriasProductos" element={<Categorias />} />
         <Route path="admin/eventCategory" element={<EventCategory />} />
+        <Route path="admin/planclases" element={<PlanClasses/>} />
         
 
         {/* <Route path="admin/productos" element={<Productos />} /> */}
