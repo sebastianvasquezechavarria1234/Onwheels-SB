@@ -7,15 +7,15 @@ import { CreditCard } from "lucide-react";
 export const ShoppingCart = () => {
     return (
         <Layout>
-            <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px]">
-                <div className="w-[75%]">
-                    <h1 className="mb-[60px]">Carrito de <span className="font-primary">compras.</span></h1>
+            <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px] max-lg:flex-col">
+                <div className="w-[75%] max-lg:w-full">
+                    <h1 className="mb-[60px]">Carrito de compras.</h1>
                     <CardProduct />
                     <CardProduct />
                     <CardProduct />
 
                 </div>
-                <div className="w-[25%] pt-[110px] border-l border-black/60  border-dashed pl-[30px]">
+                <div className="w-[25%] pt-[110px] border-l border-black/20  pl-[30px] max-lg:w-full max-lg:border-none max-lg:pl-0">
 
                     <div className="sticky top-[200px]">
                         <div className="">
@@ -31,7 +31,7 @@ export const ShoppingCart = () => {
                                 <label className="mb-[20px] block">
                                     <p className="mb-[10px]">Ingrese una  instrucciones especiales de entrega a continuación:
                                     </p>
-                                    <textarea name="" id="" className="w-full h-[100px] block p-[18px] rounded-[30px] border-1 border-black/40  border-dashed"></textarea>
+                                    <textarea name="" id="" className="input"></textarea>
 
 
 
@@ -40,7 +40,7 @@ export const ShoppingCart = () => {
                             </form>
 
                         </div>
-                        <BtnLinkIcon title="Comprar productos" style="bg-[var(--color-blue)]! text-white w-full" styleIcon="bg-white!">
+                        <BtnLinkIcon title="Comprar productos" style="bg-[var(--color-blue)]! text-white " styleIcon="bg-white!">
                             <CreditCard className="text-[var(--color-blue)]!" />
 
                         </BtnLinkIcon>

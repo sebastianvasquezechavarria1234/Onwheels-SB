@@ -1,7 +1,6 @@
 // src/router/AppRouter.jsx
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
@@ -47,194 +46,48 @@ import Preinscripciones from "../feactures/dashboards/admin/pages/clases/preinsc
 export const AppRouter = () => {
   const location = useLocation();
 
-  // Rutas de la landing que tendrán animación
-  const landingRoutes = [
-    "/", "/store", "/class", "/events", "/preinscriptions", "/about", "/shoppingCart"
-  ];
-
-  const isLanding = landingRoutes.includes(location.pathname);
-
-  // Variants para el blur
-  const blurVariants = {
-    initial: { opacity: 0, filter: "blur(20px)" },
-    animate: { opacity: 1, filter: "blur(0px)", transition: { duration: 0.5 } },
-    exit: { opacity: 0, filter: "blur(20px)", transition: { duration: 0.3 } },
-  };
-
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* Landing con animación */}
-        <Route
-          index
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Home />
-              </motion.div>
-            ) : (
-              <Home />
-            )
-          }
-        />
-        <Route
-          path="store"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Store />
-              </motion.div>
-            ) : (
-              <Store />
-            )
-          }
-        />
-        <Route
-          path="class"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Class />
-              </motion.div>
-            ) : (
-              <Class />
-            )
-          }
-        />
-        <Route
-          path="events"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Events />
-              </motion.div>
-            ) : (
-              <Events />
-            )
-          }
-        />
-        <Route
-          path="preinscriptions"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Preinscriptions />
-              </motion.div>
-            ) : (
-              <Preinscriptions />
-            )
-          }
-        />
-        <Route
-          path="about"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <About />
-              </motion.div>
-            ) : (
-              <About />
-            )
-          }
-        />
-        <Route
-          path="productDetails"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <ProductDetails />
-              </motion.div>
-            ) : (
-              <ProductDetails />
-            )
-          }
-        />
-        <Route
-          path="shoppingCart"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <ShoppingCart />
-              </motion.div>
-            ) : (
-              <ShoppingCart />
-            )
-          }
-        />
+    <Routes location={location} key={location.pathname}>
+      {/* Landing (sin animación) */}
+      <Route index element={<Home />} />
+      <Route path="store" element={<Store />} />
+      <Route path="class" element={<Class />} />
+      <Route path="events" element={<Events />} />
+      <Route path="preinscriptions" element={<Preinscriptions />} />
+      <Route path="about" element={<About />} />
+      <Route path="productDetails" element={<ProductDetails />} />
+      <Route path="shoppingCart" element={<ShoppingCart />} />
 
-        {/* Auth  */}
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
+      {/* Auth  */}
+      <Route path="login" element={<Login />} />
+      <Route path="register" element={<Register />} />
 
-        {/* Dashboard Admin */}
-        <Route path="admin/matriculas" element={<Matriculas />} />
-        {/* <Route path="admin/classes" element={<Clases />} /> */}
-        <Route path="admin/products" element={<Products />} />
-        <Route path="admin/roles" element={<Roles/>} />
-        <Route path="admin/users" element={<Users />} />
-        {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
-        <Route path="admin/preRegistrations" element={<Preinscripciones />} />
-        <Route path="admin/compras" element={<Compras />} />
-         <Route path="admin/proveedores" element={<Proveedores />} />
-        <Route path="admin/ventas" element={<Ventas />} />
-        <Route path="admin/categoriasProductos" element={<Categorias />} />
-        <Route path="admin/eventCategory" element={<EventCategory />} />
-        <Route path="admin/planclases" element={<PlanClasses/>} />
-        
+      {/* Dashboard Admin */}
+      <Route path="admin/matriculas" element={<Matriculas />} />
+      {/* <Route path="admin/classes" element={<Clases />} /> */}
+      <Route path="admin/products" element={<Products />} />
+      <Route path="admin/roles" element={<Roles />} />
+      <Route path="admin/users" element={<Users />} />
+      {/* <Route path="admin/classLevels" element={<ClassEvent />} /> */}
+      <Route path="admin/preRegistrations" element={<Preinscripciones />} />
+      <Route path="admin/compras" element={<Compras />} />
+      <Route path="admin/proveedores" element={<Proveedores />} />
+      <Route path="admin/ventas" element={<Ventas />} />
+      <Route path="admin/categoriasProductos" element={<Categorias />} />
+      <Route path="admin/eventCategory" element={<EventCategory />} />
+      <Route path="admin/planclases" element={<PlanClasses/>} />
 
-        {/* <Route path="admin/productos" element={<Productos />} /> */}
+      {/* <Route path="admin/productos" element={<Productos />} /> */}
 
+      {/* Dashboard Student */}
+      <Route path="student/setting" element={<Setting />} />
+      <Route path="student/myClasses" element={<MyClasses />} />
+      <Route path="student/myPurchases" element={<MyPurchases />} />
 
-        {/* Dasboard Student */}
-        <Route path="student/setting" element={<Setting />} />
-        <Route path="student/myClasses" element={<MyClasses />} />
-        <Route path="student/myPurchases" element={<MyPurchases />} />
-
-        <Route path="instructor/setting" element={<SettingInstructor />} />
-        <Route path="instructor/myStudent" element={<MyStudent />} />
-        <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
-        <Route path="instructor/myPurchases" element={<MyPurchasesInstructor/>} />
-      </Routes>
-    </AnimatePresence>
+      <Route path="instructor/setting" element={<SettingInstructor />} />
+      <Route path="instructor/myStudent" element={<MyStudent />} />
+      <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
+      <Route path="instructor/myPurchases" element={<MyPurchasesInstructor/>} />
+    </Routes>
   );
 };

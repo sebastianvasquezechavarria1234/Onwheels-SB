@@ -6,7 +6,7 @@ import { BtnLinkIcon } from "../components/BtnLinkIcon";
 import { BtnLink } from "../components/BtnLink";
 
 // Header con modal (sheet) pulido y sin errores
-export const Header = () => {
+export const StudentHeader = () => {
   const [open, setOpen] = useState(false);
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -88,7 +88,7 @@ export const Header = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Onwheels-SB
+                Onwheels-SB student
               </h4>
             </Link>
           </li>
