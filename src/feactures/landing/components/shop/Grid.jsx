@@ -6,7 +6,7 @@ import { Funnel, Search } from "lucide-react";
 export const Grid = () => {
     return (
         <>
-            <section className="mt-[120px] max-w-[1500px] mx-auto p-[20px] max-md:p-[10px]">
+            <section className="mt-[120px] max-w-[1500px] mx-auto p-[20px] max-md:p-[10px] max-md:mt-[30px]">
 
                 
        

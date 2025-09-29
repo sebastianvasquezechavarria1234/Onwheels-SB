@@ -2,7 +2,7 @@
 import Footer from "../../layout/Footer";
 import { StudentHeader } from "./StudentHeader";
 
-export const Layout = ({ children }) => {
+export const StudentLayout = ({ children }) => {
   return (
     <main>
       <StudentHeader />

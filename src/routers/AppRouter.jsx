@@ -42,6 +42,18 @@ import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/ma
 import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
 import EventCategory from "../feactures/dashboards/admin/pages/eventos/categoria-eventos/categoria-eventos";
 import Preinscripciones from "../feactures/dashboards/admin/pages/clases/preinscripciones/PreRegistrations";
+import { StudentEvents } from "../feactures/landing/student/pages/StudentEvents";
+import { StudentStore } from "../feactures/landing/student/pages/StudentStore";
+import StudentClass from "../feactures/landing/student/pages/StudentClass";
+import { StudentAbout } from "../feactures/landing/student/pages/StudentAbout";
+import { StudentHome } from "../feactures/landing/student/pages/StudentHome";
+import { StudentShoppingCart } from "../feactures/landing/student/pages/StudentShoppingCart";
+import { InstructorHome } from "../feactures/landing/instructor/pages/InstructorHome";
+import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
+import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass";
+import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
+import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
+import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -84,10 +96,31 @@ export const AppRouter = () => {
       <Route path="student/myClasses" element={<MyClasses />} />
       <Route path="student/myPurchases" element={<MyPurchases />} />
 
+      <Route path="student/home" element={<StudentHome />} />
+      <Route path="student/events" element={<StudentEvents />} />
+      <Route path="student/store" element={<StudentStore />} />
+      <Route path="student/Class" element={<StudentClass />} />
+      <Route path="student/Abaut" element={<StudentAbout />} />
+      <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
+
+
+
+
+      {/* Dashboard Instructor */}
       <Route path="instructor/setting" element={<SettingInstructor />} />
       <Route path="instructor/myStudent" element={<MyStudent />} />
       <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
       <Route path="instructor/myPurchases" element={<MyPurchasesInstructor/>} />
+
+
+      <Route path="instructor/home" element={<InstructorHome />} />
+      <Route path="instructor/store" element={<InstructorStore />} />
+      <Route path="instructor/class" element={<InstructorClass />} />
+      <Route path="instructor/events" element={<InstructorEvents />} />
+      <Route path="instructor/abaut" element={<InstructorAbaut />} />
+      <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
+
+
     </Routes>
   );
 };

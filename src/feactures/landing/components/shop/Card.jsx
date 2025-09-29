@@ -8,7 +8,7 @@ export const Card = () => {
         <>
             <Link to="" className="group">
                 <picture className="relative w-full h-[430px] flex rounded-[30px] overflow-hidden max-md:h-[300px]">
-                    <img className="absolute -z-10 w-full h-full object-cover scale-[1.1]  group-hover:scale-[1] duration-300 brightness-80 group-hover:brightness-100" src=".//bg_hero_shop.jpg" alt="avatar" />
+                    <img className="absolute -z-10 w-full h-full object-cover scale-[1.1]  group-hover:scale-[1] duration-300 brightness-80 group-hover:brightness-100" src="/bg_hero_shop.jpg" alt="avatar" />
                     <h4 className="font-primary absolute top-[10px] left-[10px] bg-white p-[6px_15px] rounded-full">Camisa de hombre</h4>
 
                     {/* Gradient */}

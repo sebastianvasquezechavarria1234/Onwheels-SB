@@ -6,7 +6,7 @@ import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
 
 // Header con modal (sheet) pulido y sin errores
-export const StudentHeader = () => {
+export const InstructorHeader = () => {
   const [open, setOpen] = useState(false);
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -73,11 +73,11 @@ export const StudentHeader = () => {
   };
 
   const items = [
-    { title: "Inicio", to: "/student/home" },
-    { title: "Tienda", to: "/student/store" },
-    { title: "Clases", to: "/student/class" },
-    { title: "Eventos", to: "/student/events" },
-    { title: "Sobre nosotros", to: "/student/abaut" },
+    { title: "Inicio", to: "/instructor/home" },
+    { title: "Tienda", to: "/instructor/store" },
+    { title: "Clases", to: "/instructor/class" },
+    { title: "Eventos", to: "/instructor/events" },
+    { title: "Sobre nosotros", to: "/instructor/abaut" },
   ];
 
   return (
@@ -87,7 +87,7 @@ export const StudentHeader = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Onwheels-SB student
+                Onwheels-SB intructor
               </h4>
             </Link>
           </li>
@@ -103,7 +103,7 @@ export const StudentHeader = () => {
           <li>
             <BtnLinkIcon
               title="Carrito de compras"
-              link="../student/shoppingCart"
+              link="../instructor/shoppingCart"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >
@@ -124,7 +124,7 @@ export const StudentHeader = () => {
           <li>
             <BtnLinkIcon
               title="Mi cuenta"
-              link="../student/setting"
+              link="../instructor/setting"
               style="max-lg:bg-[transparent]! max-lg:text-white!"
               styleIcon="max-xl:bg-white!"
             >
@@ -132,7 +132,7 @@ export const StudentHeader = () => {
             </BtnLinkIcon>
           </li>
 
-          {/* Botón de menú (usando button nativo para asegurar onClick) */}
+      
           <li>
             <button
               type="button"
