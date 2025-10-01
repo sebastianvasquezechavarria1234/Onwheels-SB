@@ -88,17 +88,17 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Categoria de eventos" link="../instructor/myStudent">
+              <BtnSideBar title="Categoria de eventos" link="../admin/categoriasEventos">
                 <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Sedes" link="../instructor/myStudent">
+              <BtnSideBar title="Sedes" link="../admin/sedes">
                 <MapPinHouse size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Patrocinadores" link="../instructor/myStudent">
+              <BtnSideBar title="Patrocinadores" link="../admin/patrocinadores">
                 <Users size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -108,7 +108,7 @@ export const Layout = ({ children }) => {
           <h4 className="font-primary mb-[10px]">Clases:</h4>
           <ul className="pl-[0px]">
             <li>
-              <BtnSideBar title="Clases" link="../admin/classes">
+              <BtnSideBar title="Clases" link="../admin/clases">
                 <Calendar size={20} strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -128,7 +128,7 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Planes" link="../instructor/myStudent">
+              <BtnSideBar title="Planes" link="../instructor/planes">
                 <Users size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>

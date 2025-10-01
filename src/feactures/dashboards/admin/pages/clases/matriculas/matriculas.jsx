@@ -3,7 +3,7 @@ import { Search, Plus, Pencil, Trash2, X } from "lucide-react";
 
 import { Layout } from "../../../layout/layout";
 import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
- from "../../../services/matriculaService";
+ from "../../services/matriculaService";
 
  function Matriculas() {
   const [matriculas, setMatriculas] = useState([]);

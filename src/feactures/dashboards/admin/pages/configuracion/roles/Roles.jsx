@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getRoles } from "../../../services/RolesService";
+import { getRoles } from "../../services/RolesService";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]); // viene de la API
