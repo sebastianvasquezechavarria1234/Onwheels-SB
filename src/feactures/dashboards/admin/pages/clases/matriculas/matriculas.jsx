@@ -5,7 +5,9 @@ import { Layout } from "../../../layout/layout";
 import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
  from "../../services/matriculaService";
 
- function Matriculas() {
+//  function Matriculas() {
+  
+export const  Matriculas = () => {
   const [matriculas, setMatriculas] = useState([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -18,21 +20,21 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
     valor_matricula: "",
   });
   const [editId, setEditId] = useState(null);
-
+  
   // ✅ Cargar datos al iniciar
   useEffect(() => {
     fetchMatriculas();
   }, []);
-
+  
   const fetchMatriculas = async () => {
     const data = await getMatriculas();
     setMatriculas(data);
   };
-
+  
   // ✅ Manejo de inputs
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
-
+  
   // ✅ Guardar (crear/editar)
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,20 +46,20 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
     resetForm();
     fetchMatriculas();
   };
-
+  
   const handleEdit = (matricula) => {
     setForm(matricula);
     setEditId(matricula.id_matricula);
     setShowForm(true);
   };
-
+  
   const handleDelete = async (id) => {
     if (window.confirm("¿Seguro que deseas eliminar esta matrícula?")) {
       await deleteMatricula(id);
       fetchMatriculas();
     }
   };
-
+  
   const resetForm = () => {
     setForm({
       id_preinscripcion: "",
@@ -70,15 +72,13 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
     setEditId(null);
     setShowForm(false);
   };
-
+  
   // ✅ Filtro de búsqueda
   const filtered = matriculas.filter((m) =>
     Object.values(m).some((val) =>
       String(val).toLowerCase().includes(search.toLowerCase())
     )
   );
-
-export default function Matriculas() {
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">
