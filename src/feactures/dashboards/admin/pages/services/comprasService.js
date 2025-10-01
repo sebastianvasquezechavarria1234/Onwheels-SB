@@ -26,5 +26,3 @@ export const getComprasByProveedor = (nit) =>
 
 // Servicios de PRODUCTOS (con variantes)
 export const getProductos = () => api.get("/productos").then(res => res.data);
-export const getProductoConVariantes = (id) =>
-  api.get(`/productos/${id}`).then(res => res.data);

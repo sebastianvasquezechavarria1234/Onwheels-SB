@@ -5,7 +5,9 @@ import { Layout } from "../../../layout/layout";
 import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
  from "../../services/matriculaService";
 
- function Matriculas() {
+
+
+export default function Matriculas() {
   const [matriculas, setMatriculas] = useState([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -76,9 +78,7 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
     Object.values(m).some((val) =>
       String(val).toLowerCase().includes(search.toLowerCase())
     )
-  );
-
-export default function Matriculas() {
+  )
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">
@@ -361,5 +361,3 @@ const ModalWrapper = ({ children, onClose }) => (
     <div className="absolute inset-0" onClick={onClose}></div>
   </motion.div>
 );
-
-export default Matriculas;

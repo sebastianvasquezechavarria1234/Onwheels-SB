@@ -10,8 +10,12 @@ import {
   deleteCompra,
   updateCompraStatus,
   getComprasByProveedor,
-  getProductos
+  getProductos,
 } from "../../services/comprasService";
+
+import { getVariantes,
+  getColores,
+  getTallas} from "../../services/productosServices"
 
 export default function Compras() {
   const [compras, setCompras] = useState([]);
@@ -35,6 +39,8 @@ export default function Compras() {
   // Estado del selector de productos
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState({}); // { id_producto: { color: "", talla: "", qty: 0 } }
+  const [colores, setColores] = useState([]);
+  const [tallas, setTallas] = useState([]);
 
   // Historial del proveedor seleccionado
   const [historialProveedor, setHistorialProveedor] = useState([]);
@@ -207,8 +213,18 @@ export default function Compras() {
   };
 
   // === LÓGICA DE SELECCIÓN DE PRODUCTOS ===
-  const openProductSelector = () => {
+  const openProductSelector = async () => {
     setModal("selectProducto");
+    // Cargar colores y tallas
+    try {
+      const [coloresData, tallasData] = await Promise.all([getColores(), getTallas()]);
+      setColores(coloresData);
+      setTallas(tallasData);
+    } catch (err) {
+      console.error("Error cargando colores/tallas:", err);
+      showToast("Error al cargar colores y tallas", "error");
+    }
+
     // Inicializa selectedProducts con los productos ya en el formulario (para edición)
     const initialSelection = {};
     form.items.forEach(item => {
@@ -270,7 +286,13 @@ export default function Compras() {
     for (const [productId, selection] of Object.entries(selectedProducts)) {
       if (selection.qty > 0 && (selection.color || selection.talla)) {
         const product = productos.find(p => p.id_producto == productId);
-        const variante = product?.variantes?.find(v => v.id_color == selection.color && v.id_talla == selection.talla);
+        if (!product) continue;
+
+        // Buscar variante exacta (producto + color + talla)
+        const variante = product.variantes?.find(
+          v => v.id_color == selection.color && v.id_talla == selection.talla
+        );
+
         if (variante) {
           newItems.push({
             id_producto: parseInt(productId),
