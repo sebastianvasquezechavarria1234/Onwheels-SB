@@ -188,6 +188,7 @@ export const PlanClasses = () => {
             <ModalWrapper onClose={closeModal}>
               <h3 className="font-primary text-center mb-[30px]">Agregar plan</h3>
               <FormPlan
+              
                 form={addForm}
                 handleChange={handleAddChange}
                 onCancel={closeModal}
