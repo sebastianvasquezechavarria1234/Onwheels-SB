@@ -1,12 +1,11 @@
-import React from "react";
-import { Layout } from "../layout/Layout";
-import { CardProduct } from "../components/CardProduct";
-import { BtnLinkIcon } from "../components/BtnLinkIcon";
+import { StudentLayout } from "../layout/StudentLayout";
+import { CardProduct } from "../../components/CardProduct";
+import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { CreditCard } from "lucide-react";
 
-export const ShoppingCart = () => {
+export const StudentShoppingCart = () => {
     return (
-        <Layout>
+        <StudentLayout>
             <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px] max-lg:flex-col max-md:p-[10px] max-md:pt-[80px]">
                 <div className="w-[75%] max-lg:w-full">
                     <h2 className="mb-[60px] max-md:mb-[20px]">Carrito de compras.</h2>
@@ -49,6 +48,6 @@ export const ShoppingCart = () => {
                 </div>
 
             </section>
-        </Layout>
+        </StudentLayout>
     )
 }

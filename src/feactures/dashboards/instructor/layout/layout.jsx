@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
-import { ArrowLeft, School, Settings, ShoppingBag, User, Users, X } from "lucide-react";
+import { ArrowLeft, LogOut, School, Settings, ShoppingBag, User, Users, X } from "lucide-react";
 
 export const Layout = ({ children }) => {
 	// estado y efecto para fecha y hora (copiado tal cual)
@@ -55,9 +55,12 @@ export const Layout = ({ children }) => {
 								<ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
 							</BtnSideBar>
 						</li>
+						<BtnSideBar title="Cerrar session" link="/" styleIcon="bg-red-700" style="text-red-700">
+							<LogOut size={20} className="text-white " strokeWidth={2} />
+						</BtnSideBar>
 					</ul>
 
-					{/* Footer movido (fecha, hora y botón) — exactamente igual en estilos */}
+					{/* Footer  (fecha, hora y botón) */}
 					<ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 ">
 						<div className="flex flex-col gap-[10px] mb-[10px]">
 							<p className="text-sm capitalize">{dateStr}</p>
@@ -67,6 +70,7 @@ export const Layout = ({ children }) => {
 							</p>
 						</div>
 						<BtnLinkIcon
+							link="../instructor/home"
 							title="Cerrar Dashboard"
 							style="bg-[var(--color-blue)]! text-white pr-[25px] w-full"
 							styleIcon="bg-white!"

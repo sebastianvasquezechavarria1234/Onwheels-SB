@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../student/layout/layout";
-import { Eye } from "lucide-react";
+import { ArrowLeft, Eye, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
 
 
 
@@ -58,9 +59,16 @@ export const MyClasses = () => {
     return (
         <Layout>
             <section className="relative w-full bg-[var(--gray-bg-body)] side_bar">
-                <h2 className="font-primary sticky top-0 bg-[var(--gray-bg-body)] p-[30px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-secundaria">
-                    Mis clases
-                </h2>
+                <div className="flex justify-between items-center">
+                    <h2 className="font-primary sticky top-0 bg-[var(--gray-bg-body)] p-[30px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-secundaria">
+                        Mis clases
+                    </h2>
+
+                    <BtnLinkIcon title="Cotizar nueva clase" link="../student/class" style="bg-[var(--color-blue)]! text-white pr-[25px] m-[30px] max-md:pr-[15px]" styleIcon="bg-white!">
+                        <Phone className="text-[var(--color-blue)]" strokeWidth={1.5} size={20}/>
+                    </BtnLinkIcon>
+
+                </div>
 
                 <div className="p-[30px]">
                     {/* Encabezados */}

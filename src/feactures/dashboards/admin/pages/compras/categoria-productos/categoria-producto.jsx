@@ -6,7 +6,7 @@ import {
   createCategoria,
   updateCategoria,
   deleteCategoria,
-} from "../../../services/categoriasService";
+} from "../../services/categoriasService";
 
 export default function Categorias() {
   const [categorias, setCategorias] = useState([]);

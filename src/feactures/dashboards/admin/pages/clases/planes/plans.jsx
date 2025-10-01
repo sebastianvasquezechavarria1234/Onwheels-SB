@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
 import {  motion, AnimatePresence } from "framer-motion";
 import { Layout } from "../../../layout/layout";
-import { createPlan, deletePlan, getPlanes, updatePlan } from "../../../services/planclassServices";
+import { createPlan, deletePlan, getPlanes, updatePlan } from "../../services/planclassServices"
 
 export const PlanClasses = () => {
   const [planes, setPlanes] = useState([]);
@@ -23,7 +23,7 @@ export const PlanClasses = () => {
     descuento_porcentaje: "",
   });
 
-  // 🔄 Cargar planes desde la API
+  
   useEffect(() => {
     loadPlanes();
   }, []);
@@ -183,6 +183,7 @@ export const PlanClasses = () => {
             <ModalWrapper onClose={closeModal}>
               <h3 className="font-primary text-center mb-[30px]">Agregar plan</h3>
               <FormPlan
+              
                 form={addForm}
                 handleChange={handleAddChange}
                 onCancel={closeModal}

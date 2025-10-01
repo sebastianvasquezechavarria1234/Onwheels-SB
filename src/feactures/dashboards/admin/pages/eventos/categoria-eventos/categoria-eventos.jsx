@@ -1,250 +1,344 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "../../../layout/layout";
+import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
+import {createCategoriaEvento,
+  updateCategoriaEvento,
+  deleteCategoriaEvento,getCategoriasEventos} from "../../services/EventCategory"
 
-/**
- * EventCategory ahora recibe las categorías desde props:
- *  <EventCategory categoriesFromApi={categories} />
- */
-export const EventCategory = ({ categoriesFromApi = [] }) => {
-    const [categories, setCategories] = useState(categoriesFromApi);
-    const [selected, setSelected] = useState(null);
-    const [modalType, setModalType] = useState(null);
+export default function CategoriaEventos() {
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategoria, setSelectedCategoria] = useState(null);
+  const [modal, setModal] = useState(null); // "crear", "editar", "ver", "eliminar"
+  const [form, setForm] = useState({ nombre_categoria: "", descripcion: "", imagen: "" });
 
-    const [editForm, setEditForm] = useState({ nombre: "", descripcion: "" });
-    const [addForm, setAddForm] = useState({ nombre: "", descripcion: "" });
+  // 🔹 Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-    // sincronizar cuando cambian las props (vienen del componente que consume la API)
-    useEffect(() => {
-        setCategories(Array.isArray(categoriesFromApi) ? categoriesFromApi : []);
-    }, [categoriesFromApi]);
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentItems = categorias.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(categorias.length / itemsPerPage);
 
-    // cerrar con Escape
-    useEffect(() => {
-        const onKey = (e) => {
-            if (e.key === "Escape") closeModal();
-        };
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, []);
+  // 🔹 Cargar categorías
+  const fetchCategorias = async () => {
+    try {
+      const data = await getCategoriasEventos();
+      setCategorias(data);
+    } catch (err) {
+      console.error("Error al cargar categorías:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const openModal = (type, item) => {
-        setModalType(type);
+  useEffect(() => {
+    fetchCategorias();
+  }, []);
 
-        if (type === "add") {
-            setAddForm({ nombre: "", descripcion: "" });
-            setSelected(null);
-            return;
-        }
+  // 🔹 Abrir modal
+  const openModal = (type, categoria = null) => {
+    setModal(type);
+    setSelectedCategoria(categoria);
+    setForm(
+      categoria || { nombre_categoria: "", descripcion: "", imagen: "" }
+    );
+  };
 
-        setSelected(item ? { ...item } : null);
+  // 🔹 Cerrar modal
+  const closeModal = () => {
+    setModal(null);
+    setSelectedCategoria(null);
+    setForm({ nombre_categoria: "", descripcion: "", imagen: "" });
+  };
 
-        if (type === "edit" && item) {
-            setEditForm({ nombre: item.nombre || "", descripcion: item.descripcion || "" });
-        }
-    };
+  // 🔹 Crear o editar
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (modal === "crear") {
+        await createCategoriaEvento(form);
+      } else if (modal === "editar") {
+        await updateCategoriaEvento(selectedCategoria.id_categoria_evento, form);
+      }
+      fetchCategorias();
+      closeModal();
+    } catch (err) {
+      console.error("Error al guardar:", err);
+    }
+  };
 
-    const closeModal = () => {
-        setSelected(null);
-        setModalType(null);
-    };
+  // 🔹 Eliminar
+  const handleDelete = async () => {
+    try {
+      await deleteCategoriaEvento(selectedCategoria.id_categoria_evento);
+      fetchCategorias();
+      closeModal();
+    } catch (err) {
+      console.error("Error al eliminar:", err);
+    }
+  };
 
-    const confirmDelete = (id) => {
-        setCategories((prev) => prev.filter((it) => it.id !== id));
-        closeModal();
-    };
+  return (
+    <Layout>
+      <div className="p-6 bg-gray-50 min-h-screen w-full">
+        <div className="bg-white rounded-2xl shadow-md border border-gray-200">
+          {/* Encabezado */}
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-700">
+              Eventos &gt; Categorías de Eventos
+            </h2>
+          </div>
 
-    const handleEditChange = (e) => {
-        const { name, value } = e.target;
-        setEditForm((prev) => ({ ...prev, [name]: value }));
-    };
+          {/* Barra de búsqueda y botón */}
+          <div className="flex justify-between items-center p-4">
+            <div className="relative w-1/3">
+              <input
+                type="text"
+                placeholder="Buscar categorías..."
+                className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            </div>
+            <button
+              onClick={() => openModal("crear")}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all"
+            >
+              <Plus className="h-4 w-4" />
+              Registrar nueva categoría
+            </button>
+          </div>
 
-    const saveEdit = () => {
-        if (!selected) return closeModal();
-        setCategories((prev) => prev.map((it) => (it.id === selected.id ? { ...it, ...editForm } : it)));
-        closeModal();
-    };
-
-    const handleAddChange = (e) => {
-        const { name, value } = e.target;
-        setAddForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const saveAdd = () => {
-        const newId = categories.length ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
-        const newCategory = { id: newId, nombre: addForm.nombre || `Categoría ${newId}`, descripcion: addForm.descripcion || "" };
-        setCategories((prev) => [newCategory, ...prev]);
-        closeModal();
-    };
-
-    return (
-        <Layout>
-            <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
-                <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Eventos / Categorias de eventos</h2>
-
-                <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-                    <form action="" className="flex gap-[10px]">
-                        <label className="mb-[20px] block">
-                            <p className="">Buscar categoría:</p>
-                            <div className="relative">
-                                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                                <input className="input pl-[50px]!" type="text" placeholder="Por ejem: 'Ilustración'" />
-                            </div>
-                        </label>
-                    </form>
-
-                    <div className="">
-                        <button className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]" onClick={() => openModal("add", null)}>
-                            <Plus size={20} strokeWidth={1.8} />
-                            Añadir categoría
+          {/* Tabla */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left text-gray-600">
+              <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
+                <tr>
+                  <th className="px-6 py-3">ID</th>
+                  <th className="px-6 py-3">Nombre</th>
+                  <th className="px-6 py-3">Descripción</th>
+                  <th className="px-6 py-3">Imagen</th>
+                  <th className="px-6 py-3 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-10 text-gray-400 italic">
+                      Cargando...
+                    </td>
+                  </tr>
+                ) : currentItems.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-10 text-gray-400 italic">
+                      No hay categorías registradas
+                    </td>
+                  </tr>
+                ) : (
+                  currentItems.map((c) => (
+                    <tr
+                      key={c.id_categoria_evento}
+                      className="hover:bg-gray-50 transition border-b"
+                    >
+                      <td className="px-6 py-3">{c.id_categoria_evento}</td>
+                      <td className="px-6 py-3">{c.nombre_categoria}</td>
+                      <td className="px-6 py-3">{c.descripcion}</td>
+                      <td className="px-6 py-3">
+                        {c.imagen ? (
+                          <img
+                            src={c.imagen}
+                            alt={c.nombre_categoria}
+                            className="w-12 h-12 object-cover rounded-md border"
+                          />
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td className="px-6 py-3 flex justify-center gap-3">
+                        <button
+                          onClick={() => openModal("ver", c)}
+                          className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
+                        >
+                          <Eye className="h-4 w-4" />
                         </button>
-                    </div>
-                </div>
+                        <button
+                          onClick={() => openModal("editar", c)}
+                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => openModal("eliminar", c)}
+                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-                <div className="p-[30px]">
-                    {/* Encabezados */}
-                    <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-                        <p className="w-[30%] font-bold! opacity-80">Nombre</p>
-                        <p className="w-[55%] font-bold! opacity-80">Descripción</p>
-                        <p className="w-[15%] font-bold! opacity-80">Acciones</p>
-                    </article>
+          {/* 🔹 Paginación */}
+          <div className="flex justify-center items-center gap-2 py-4">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="px-3 py-1 border rounded-lg disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <span className="text-sm">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="px-3 py-1 border rounded-lg disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      </div>
 
-                    {/* Lista de categorías */}
-                    {categories.map((cat) => (
-                        <article key={cat.id} className="py-[18px] border-b border-black/20 flex items-center">
-                            <p className="w-[30%] line-clamp-1">{cat.nombre}</p>
-                            <p className="w-[55%] line-clamp-2">{cat.descripcion}</p>
+      {/* 🔹 Modal Crear/Editar */}
+      {(modal === "crear" || modal === "editar") && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-96">
+            <h3 className="text-lg font-semibold mb-4">
+              {modal === "crear" ? "Registrar Categoría" : "Editar Categoría"}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium">Nombre</label>
+                <input
+                  type="text"
+                  value={form.nombre_categoria}
+                  onChange={(e) =>
+                    setForm({ ...form, nombre_categoria: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Descripción</label>
+                <textarea
+                  value={form.descripcion}
+                  onChange={(e) =>
+                    setForm({ ...form, descripcion: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  rows="3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Imagen (URL)</label>
+                <input
+                  type="text"
+                  value={form.imagen}
+                  onChange={(e) =>
+                    setForm({ ...form, imagen: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-                            {/* Acciones: Ver, Editar, Eliminar */}
-                            <div className="w-[15%] flex gap-[10px] items-center">
-                                <motion.span className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} onClick={() => openModal("details", cat)}>
-                                    <Eye size={22} strokeWidth={1.3} />
-                                </motion.span>
+      {/* 🔹 Modal Ver Detalles */}
+      {modal === "ver" && selectedCategoria && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-96">
+            <h3 className="text-lg font-semibold mb-4">Detalles de Categoría</h3>
+            <p><strong>ID:</strong> {selectedCategoria.id_categoria_evento}</p>
+            <p><strong>Nombre:</strong> {selectedCategoria.nombre_categoria}</p>
+            <p><strong>Descripción:</strong> {selectedCategoria.descripcion}</p>
+            {selectedCategoria.imagen && (
+              <img
+                src={selectedCategoria.imagen}
+                alt={selectedCategoria.nombre_categoria}
+                className="w-full h-40 object-cover rounded-lg border mt-2"
+              />
+            )}
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-                                <motion.span className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} onClick={() => openModal("edit", cat)}>
-                                    <Pencil size={22} strokeWidth={1.3} />
-                                </motion.span>
+      {/* 🔹 Modal Eliminar */}
+      {modal === "eliminar" && selectedCategoria && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-96">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">Eliminar Categoría</h3>
+            <p>
+              ¿Estás seguro que deseas eliminar la categoría{" "}
+              <strong>{selectedCategoria.nombre_categoria}</strong>?
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Layout>
+  );
+}
 
-                                <motion.span className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} onClick={() => openModal("delete", cat)}>
-                                    <Trash2 size={22} strokeWidth={1.3} />
-                                </motion.span>
-                            </div>
-                        </article>
-                    ))}
-                </div>
 
-                {/* Modales */}
-                <AnimatePresence>
-                    {modalType === "add" && (
-                        <ModalWrapper onClose={closeModal}>
-                            <h3 className="font-primary text-center mb-[30px]">Agregar categoría</h3>
 
-                            <form>
-                                <label className="block mb-[20px]">
-                                    <p className="translate-x-[25px]">Nombre:</p>
-                                    <input name="nombre" className="input w-full" value={addForm.nombre} onChange={handleAddChange} />
-                                </label>
 
-                                <label className="block mb-[20px]">
-                                    <p className="translate-x-[25px]">Descripción:</p>
-                                    <textarea name="descripcion" className="input w-full h-[120px]" value={addForm.descripcion} onChange={handleAddChange} />
-                                </label>
 
-                                <div className="flex justify-end gap-[10px] mt-[20px]">
-                                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
-                                        Cancelar
-                                    </button>
-                                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveAdd}>
-                                        Guardar
-                                    </button>
-                                </div>
-                            </form>
-                        </ModalWrapper>
-                    )}
 
-                    {modalType === "details" && selected && (
-                        <ModalWrapper onClose={closeModal}>
-                            <h3 className="font-primary text-center mb-[30px]">Detalles de la categoría</h3>
 
-                            <div className="grid grid-cols-2 gap-[10px]">
-                                <div>
-                                    <p className="font-medium">Nombre:</p>
-                                    <p className="font-medium">Descripción:</p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-700">{selected.nombre}</p>
-                                    <p className="text-gray-700">{selected.descripcion}</p>
-                                </div>
-                            </div>
 
-                            <div className="flex justify-end gap-[10px] mt-[30px]">
-                                <button className="btn bg-gray-200" onClick={closeModal}>
-                                    Cerrar
-                                </button>
-                            </div>
-                        </ModalWrapper>
-                    )}
 
-                    {modalType === "edit" && selected && (
-                        <ModalWrapper onClose={closeModal}>
-                            <h3 className="font-primary text-center mb-[30px]">Editar categoría</h3>
 
-                            <form>
-                                <label className="block mb-[20px]">
-                                    <p className="translate-x-[25px]">Nombre:</p>
-                                    <input name="nombre" className="input w-full" value={editForm.nombre} onChange={handleEditChange} />
-                                </label>
 
-                                <label className="block mb-[20px]">
-                                    <p className="translate-x-[25px]">Descripción:</p>
-                                    <textarea name="descripcion" className="input w-full h-[120px]" value={editForm.descripcion} onChange={handleEditChange} />
-                                </label>
 
-                                <div className="flex justify-end gap-[10px] mt-[20px]">
-                                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
-                                        Cancelar
-                                    </button>
-                                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveEdit}>
-                                        Guardar
-                                    </button>
-                                </div>
-                            </form>
-                        </ModalWrapper>
-                    )}
 
-                    {modalType === "delete" && selected && (
-                        <ModalWrapper onClose={closeModal}>
-                            <h3 className="font-primary text-center mb-[30px]">Eliminar categoría</h3>
-                            <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar <span className="font-bold">{selected.nombre}</span>? Esta acción es permanente.</p>
-                            <div className="flex justify-end gap-[10px] mt-[20px]">
-                                <button className="btn bg-gray-200" onClick={closeModal}>
-                                    Cancelar
-                                </button>
-                                <button className="btn bg-red-100 text-red-700" onClick={() => confirmDelete(selected.id)}>
-                                    Eliminar
-                                </button>
-                            </div>
-                        </ModalWrapper>
-                    )}
-                </AnimatePresence>
-            </section>
-        </Layout>
-    );
-};
 
-/* === Modal  === */
-const ModalWrapper = ({ children, onClose }) => {
-    return (
-        <motion.div className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-            {/* overlay clickeable con dim */}
-            <div className="absolute inset-0" onClick={onClose} />
 
-            <motion.div className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}>
-                {children}
-            </motion.div>
-        </motion.div>
-    );
-};
 
-export default EventCategory;
+
+
+
