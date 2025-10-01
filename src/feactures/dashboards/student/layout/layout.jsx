@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
-import { ArrowLeft, School, Settings, ShoppingBag, User, Users, X } from "lucide-react";
+import { ArrowLeft, LogOut, School, Settings, ShoppingBag, User, Users, X } from "lucide-react";
 
 export const Layout = ({ children }) => {
   const [now, setNow] = useState(new Date());
@@ -50,6 +50,11 @@ export const Layout = ({ children }) => {
                 <ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
               </BtnSideBar>
             </li>
+            <li>
+              <BtnSideBar title="Cerrar session" link="/" styleIcon="bg-red-700" style="text-red-700">
+                <LogOut size={20} className="text-white " strokeWidth={2} />
+              </BtnSideBar>
+            </li>
           </ul>
 
           {/* Footer movido (fecha, hora y botón) — exactamente igual en estilos */}
@@ -61,7 +66,7 @@ export const Layout = ({ children }) => {
                 {timeStr}
               </p>
             </div>
-            <BtnLinkIcon title="Cerrar Dashboard" style="bg-[var(--color-blue)]! text-white pr-[25px] w-full" styleIcon="bg-white!">
+            <BtnLinkIcon link="../student/home" title="Cerrar Dashboard" style="bg-[var(--color-blue)]! text-white pr-[25px] w-full" styleIcon="bg-white!">
               <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2}/>
             </BtnLinkIcon>
           </ul>

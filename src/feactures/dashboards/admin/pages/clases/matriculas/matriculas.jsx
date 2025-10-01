@@ -78,6 +78,7 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
     )
   );
 
+export default function Matriculas() {
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">
@@ -89,7 +90,7 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
             </h2>
           </div>
 
-          {/* Barra de búsqueda y botón */}
+          {/* Barra búsqueda + botón */}
           <div className="flex justify-between items-center p-4">
             <div className="relative w-1/3">
               <input
@@ -101,10 +102,7 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             </div>
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all"
-            >
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all">
               <Plus className="h-4 w-4" />
               Registrar nueva matrícula
             </button>
@@ -126,47 +124,12 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
                 </tr>
               </thead>
               <tbody>
-                {filtered.length > 0 ? (
-                  filtered.map((m) => (
-                    <tr
-                      key={m.id_matricula}
-                      className="hover:bg-gray-50 transition"
-                    >
-                      <td className="px-6 py-3">{m.id_matricula}</td>
-                      <td className="px-6 py-3">{m.id_preinscripcion}</td>
-                      <td className="px-6 py-3">{m.id_clase}</td>
-                      <td className="px-6 py-3">{m.id_plan}</td>
-                      <td className="px-6 py-3">
-                        {new Date(m.fecha_matricula).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-3">{m.valor_matricula}</td>
-                      <td className="px-6 py-3">{m.id_metodo_pago}</td>
-                      <td className="px-6 py-3 text-center flex gap-2 justify-center">
-                        <button
-                          onClick={() => handleEdit(m)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(m.id_matricula)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr className="hover:bg-gray-50 transition">
-                    <td
-                      colSpan="8"
-                      className="text-center py-10 text-gray-400 italic"
-                    >
-                      No hay matrículas registradas
-                    </td>
-                  </tr>
-                )}
+                {/* Ejemplo de fila vacía */}
+                <tr className="hover:bg-gray-50 transition">
+                  <td colSpan="8" className="text-center py-10 text-gray-400 italic">
+                    No hay matrículas registradas
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -260,8 +223,143 @@ import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
           </div>
         )}
       </div>
+
+      {/* Modales */}
+      <AnimatePresence>
+        {modalType === "add" && (
+          <ModalWrapper onClose={closeModal}>
+            <h3 className="font-bold mb-4">Nueva Matrícula</h3>
+            <form>
+              <input
+                name="id_preinscripcion"
+                value={addForm.id_preinscripcion}
+                onChange={(e) => handleChange(e, setAddForm)}
+                className="input w-full mb-2"
+                placeholder="Preinscripción"
+              />
+              <input
+                name="id_clase"
+                value={addForm.id_clase}
+                onChange={(e) => handleChange(e, setAddForm)}
+                className="input w-full mb-2"
+                placeholder="Clase"
+              />
+              <input
+                name="id_plan"
+                value={addForm.id_plan}
+                onChange={(e) => handleChange(e, setAddForm)}
+                className="input w-full mb-2"
+                placeholder="Plan"
+              />
+              <input
+                type="date"
+                name="fecha_matricula"
+                value={addForm.fecha_matricula}
+                onChange={(e) => handleChange(e, setAddForm)}
+                className="input w-full mb-2"
+              />
+              <input
+                type="number"
+                name="valor_matricula"
+                value={addForm.valor_matricula}
+                onChange={(e) => handleChange(e, setAddForm)}
+                className="input w-full mb-2"
+                placeholder="Valor matrícula"
+              />
+              <input
+                name="id_metodo_pago"
+                value={addForm.id_metodo_pago}
+                onChange={(e) => handleChange(e, setAddForm)}
+                className="input w-full mb-2"
+                placeholder="Método de pago"
+              />
+              <button
+                type="button"
+                className="btn bg-blue-500 text-white"
+                onClick={saveAdd}
+              >
+                Guardar
+              </button>
+            </form>
+          </ModalWrapper>
+        )}
+
+        {modalType === "edit" && selected && (
+          <ModalWrapper onClose={closeModal}>
+            <h3 className="font-bold mb-4">Editar Matrícula</h3>
+            <form>
+              <input
+                name="valor_matricula"
+                value={editForm.valor_matricula}
+                onChange={(e) => handleChange(e, setEditForm)}
+                className="input w-full mb-2"
+              />
+              <button
+                type="button"
+                className="btn bg-blue-500 text-white"
+                onClick={saveEdit}
+              >
+                Guardar cambios
+              </button>
+            </form>
+          </ModalWrapper>
+        )}
+
+        {modalType === "delete" && selected && (
+          <ModalWrapper onClose={closeModal}>
+            <h3 className="font-bold mb-4">Eliminar Matrícula</h3>
+            <p>
+              ¿Seguro que deseas eliminar la matrícula{" "}
+              <b>{selected.id_matricula}</b>?
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button className="btn bg-gray-200" onClick={closeModal}>
+                Cancelar
+              </button>
+              <button
+                className="btn bg-red-500 text-white"
+                onClick={() => confirmDelete(selected.id_matricula)}
+              >
+                Eliminar
+              </button>
+            </div>
+          </ModalWrapper>
+        )}
+
+        {modalType === "details" && selected && (
+          <ModalWrapper onClose={closeModal}>
+            <h3 className="font-bold mb-4">Detalles Matrícula</h3>
+            <pre className="bg-gray-100 p-4 rounded">
+              {JSON.stringify(selected, null, 2)}
+            </pre>
+            <button className="btn bg-gray-200 mt-4" onClick={closeModal}>
+              Cerrar
+            </button>
+          </ModalWrapper>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 }
+
+/* === Modal Wrapper === */
+const ModalWrapper = ({ children, onClose }) => (
+  <motion.div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+  >
+    <motion.div
+      className="bg-white p-6 rounded-2xl shadow-xl w-[90%] max-w-lg relative"
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.9, opacity: 0 }}
+    >
+      {children}
+    </motion.div>
+    <div className="absolute inset-0" onClick={onClose}></div>
+  </motion.div>
+);
 
 export default Matriculas;

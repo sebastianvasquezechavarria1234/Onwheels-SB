@@ -1,17 +1,16 @@
-import React from "react";
-import { Hero } from "../components/abaut/Hero";
-import { Layout } from "../layout/Layout";
+import { Hero } from "../../components/abaut/Hero";
+import { StudentLayout } from "../layout/StudentLayout";
 
 
-export const About = () => {
+export const StudentAbout = () => {
     return (
-        <Layout>
+        <StudentLayout>
 
             <Hero />
             <section className="mt-[120px] max-w-[1500px] mx-auto p-[20px] max-lg:mt-[60px]">
                 <section className="mt-[20px] flex items-center gap-[40px] max-lg:flex-col ">
                     <picture className="clip w-[50%] h-[650px] max-lg:w-full max-lg:h-[80vw]">
-                        <img className="  w-full h-full object-cover brightness-70" src=" ./animation-3.jpg" alt="" />
+                        <img className="  w-full h-full object-cover brightness-70" src="/animation-3.jpg" alt="imagen mision" />
 
                     </picture>
 
@@ -47,7 +46,7 @@ export const About = () => {
 
                     </div>
                     <picture className="clip w-[50%] h-[650px] max-lg:w-full max-lg:h-[80vw]">
-                        <img className="  w-full h-full object-cover brightness-70" src=" ./animation-2.jpg" alt="" />
+                        <img className="  w-full h-full object-cover brightness-70" src="/animation-1.jpg" alt="imagen visison" />
 
                     </picture>
 
@@ -56,7 +55,7 @@ export const About = () => {
 
                 </section>
             </section>
-        </Layout>
+        </StudentLayout>
 
 
     )

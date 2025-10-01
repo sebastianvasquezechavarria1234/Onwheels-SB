@@ -622,15 +622,18 @@ a,
 @media screen and (max-width: 800px){
 a,
  p, 
- .input{
+ .input,
+ .btn{
     font-size: 10px;
   }
 
+
    .lucide,
   /* por si no tienen la clase, seleccionamos todos los SVG con atributo 'data-icon' */
-  svg[data-icon] {
+  svg[data-icon]{
     inline-size: 12px !important; /* por compatibilidad con escritura en bloque */
   }
+  
 
   h1{
     font-size: 2.5rem;
