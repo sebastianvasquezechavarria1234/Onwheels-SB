@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Layout } from "../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
-import {  AnimatePresence } from "framer-motion";
-import {
-  getPlanes,
-  createPlan,
-  updatePlan,
-  deletePlan,
-} from "../services/planClassServices";
+import {  motion, AnimatePresence } from "framer-motion";
+import { Layout } from "../../../layout/layout";
+import { createPlan, deletePlan, getPlanes, updatePlan } from "../../../services/planclassServices";
 
 export const PlanClasses = () => {
   const [planes, setPlanes] = useState([]);

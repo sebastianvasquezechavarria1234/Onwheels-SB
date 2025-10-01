@@ -43,7 +43,7 @@ export const Layout = ({ children }) => {
           <h4 className="font-primary mb-[10px]">Configuración:</h4>
           <ul className="pl-[0px]">
             <li>
-              <BtnSideBar title="Usuarios" link="../instructor/setting">
+              <BtnSideBar title="Usuarios" link="../admin/users">
                 <Users size={20} strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -64,7 +64,7 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Categoria de productos" link="../admin/productCategory">
+              <BtnSideBar title="Categoria de productos" link="../admin/categoriasProductos">
                 <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
               </BtnSideBar>
             </li>
@@ -74,7 +74,7 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Compras" link="../instructor/myStudent">
+              <BtnSideBar title="Compras" link="../admin/compras">
                 <ShoppingBag size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -123,7 +123,7 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Matriculas" link="../instructor/myStudent">
+              <BtnSideBar title="Matriculas" link="../admin/matriculas">
                 <Users size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
@@ -135,13 +135,13 @@ export const Layout = ({ children }) => {
           </ul>
 
           {/* Footer */}
-          <ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
+          <ul className="bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
             <div className="flex flex-col gap-[10px] mb-[10px]">
-              <p className="text-sm capitalize">{dateStr}</p>
+              {/* <p className="text-sm capitalize">{dateStr}</p>
               <p className="flex gap-[10px] items-center">
                 <span className="w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
                 {timeStr}
-              </p>
+              </p> */}
             </div>
             <BtnLinkIcon
               title="Cerrar Dashboard"

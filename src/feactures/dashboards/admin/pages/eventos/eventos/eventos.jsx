@@ -11,7 +11,7 @@ export default function Eventos() {
   useEffect(() => {
     const fetchEventos = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/api/eventos"); // 👈 Ajusta si tu backend corre en otro puerto
+        const res = await axios.get("http://localhost:3000/api/eventos"); // 👈 Ajusta si tu backend corre en otro puerto
         setEventos(res.data);
       } catch (err) {
         console.error("Error al cargar eventos:", err);

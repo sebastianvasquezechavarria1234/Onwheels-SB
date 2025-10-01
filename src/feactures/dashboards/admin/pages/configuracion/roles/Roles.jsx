@@ -1,17 +1,16 @@
-// admin/pages/configuracion/Roles.jsx
 import React, { useEffect, useState } from "react";
-import { getRoles /*, createRole, updateRole, deleteRole */ } from "../services/RolesService";
-import { Layout } from "../layout/layout";
+import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getRoles } from "../../../services/RolesService";
 
-export const Roles = () => {
+const Roles = () => {
   const [roles, setRoles] = useState([]); // viene de la API
   const [selected, setSelected] = useState(null);
   const [modalType, setModalType] = useState(null);
 
-  const [editForm, setEditForm] = useState({ nombre: "", descripcion: "", estado: true });
-  const [addForm, setAddForm] = useState({ nombre: "", descripcion: "", estado: true });
+  const [editForm, setEditForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
+  const [addForm, setAddForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -49,7 +48,7 @@ export const Roles = () => {
     setModalType(type);
 
     if (type === "add") {
-      setAddForm({ nombre: "", descripcion: "", estado: true });
+      setAddForm({ nombre_rol: "", descripcion: "", estado: true });
       setSelected(null);
       return;
     }
@@ -57,7 +56,7 @@ export const Roles = () => {
     setSelected(item ? { ...item } : null);
 
     if (type === "edit" && item) {
-      setEditForm({ nombre: item.nombre || "", descripcion: item.descripcion || "", estado: !!item.estado });
+      setEditForm({ nombre_rol: item.nombre_rol || "", descripcion: item.descripcion || "", estado: !!item.estado });
     }
   };
 
@@ -109,7 +108,7 @@ export const Roles = () => {
     const newId = roles.length ? Math.max(...roles.map((c) => +c.id)) + 1 : 1;
     const newRole = {
       id: newId,
-      nombre: addForm.nombre || `Rol ${newId}`,
+      nombre_rol: addForm.nombre_rol || `Rol ${newId}`,
       descripcion: addForm.descripcion || "",
       estado: typeof addForm.estado === "boolean" ? addForm.estado : true,
     };
@@ -162,7 +161,7 @@ export const Roles = () => {
             !error &&
             roles.map((role) => (
               <article key={role.id} className="py-[18px] border-b border-black/20 flex items-center">
-                <p className="w-[30%] line-clamp-1">{role.nombre}</p>
+                <p className="w-[30%] line-clamp-1">{role.nombre_rol}</p>
                 <p className="w-[55%] line-clamp-2">{role.descripcion}</p>
 
                 <p className="w-[15%]">
@@ -222,8 +221,8 @@ export const Roles = () => {
 
               <form>
                 <label className="block mb-[20px]">
-                  <p className="translate-x-[25px]">Nombre:</p>
-                  <input name="nombre" className="input w-full" value={addForm.nombre} onChange={handleAddChange} />
+                  <p className="translate-x-[25px]">Nombre</p>
+                  <input name="nombre_rol" className="input w-full" value={addForm.nombre_rol} onChange={handleAddChange} />
                 </label>
 
                 <label className="block mb-[20px]">
@@ -260,7 +259,7 @@ export const Roles = () => {
                   <p className="font-medium">Estado:</p>
                 </div>
                 <div>
-                  <p className="text-gray-700">{selected.nombre}</p>
+                  <p className="text-gray-700">{selected.nombre_rol}</p>
                   <p className="text-gray-700">{selected.descripcion}</p>
                   <p className="text-gray-700">{selected.estado ? "Activo" : "Inactivo"}</p>
                 </div>
@@ -282,7 +281,7 @@ export const Roles = () => {
               <form>
                 <label className="block mb-[20px]">
                   <p className="translate-x-[25px]">Nombre:</p>
-                  <input name="nombre" className="input w-full" value={editForm.nombre} onChange={handleEditChange} />
+                  <input name="nombre_rol" className="input w-full" value={editForm.nombre_rol} onChange={handleEditChange} />
                 </label>
 
                 <label className="block mb-[20px]">
@@ -312,7 +311,7 @@ export const Roles = () => {
             <ModalWrapper onClose={closeModal}>
               <h3 className="font-primary text-center mb-[30px]">Eliminar rol</h3>
               <p className="text-gray-600 mb-4">
-                ¿Estás seguro que deseas eliminar <span className="font-bold">{selected.nombre}</span>? Esta acción es permanente.
+                ¿Estás seguro que deseas eliminar <span className="font-bold">{selected.nombre_rol}</span>? Esta acción es permanente.
               </p>
               <div className="flex justify-end gap-[10px] mt-[20px]">
                 <button className="btn bg-gray-200" onClick={closeModal}>

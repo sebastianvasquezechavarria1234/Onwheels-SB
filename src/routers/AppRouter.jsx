@@ -1,7 +1,6 @@
 // src/router/AppRouter.jsx
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
@@ -17,7 +16,6 @@ import Login from "../feactures/Auth/pages/Login";
 import Register from "../feactures/Auth/pages/Register";
 
 // Dashboard
-import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
 import Eventos from "../feactures/dashboards/admin/pages/eventos/eventos/eventos";
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
 // import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
@@ -26,215 +24,103 @@ import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-pr
 // import Productos from "../feactures/dashboards/admin/pages/compras/productos/productos";
 // import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
-import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses";
 import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases";
 import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent";
 import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/MyClassesInstructor";
 import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor";
 import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
-import { Classes } from "../feactures/dashboards/admin/pages/Classes";
-import ProductCategory from "../feactures/dashboards/admin/pages/ProductsCategory";
 
-import Products from "../feactures/dashboards/admin/pages/Products";
-import Roles from "../feactures/dashboards/admin/pages/Roles";
-import ClassLevels from "../feactures/dashboards/admin/pages/ClassLevels";
-import PreRegistrations from "../feactures/dashboards/admin/pages/PreRegistrations";
-import EventCategory from "../feactures/dashboards/admin/pages/EventCategory";
-import Users from "../feactures/dashboards/admin/pages/Users";
+import Products from "../feactures/dashboards/admin/pages/compras/productos/Products";
+// import ClassLevels from "../feactures/dashboards/admin/pages/ClassLevels";
+import Users from "../feactures/dashboards/admin/pages/configuracion/usuarios/Users";
+// import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
+import MyClasses from "../feactures/dashboards/student/pages/MyClasses";
+import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
+import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles";
+import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
+import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
+import EventCategory from "../feactures/dashboards/admin/pages/eventos/categoria-eventos/categoria-eventos";
+import Preinscripciones from "../feactures/dashboards/admin/pages/clases/preinscripciones/PreRegistrations";
+import { StudentEvents } from "../feactures/landing/student/pages/StudentEvents";
+import { StudentStore } from "../feactures/landing/student/pages/StudentStore";
+import StudentClass from "../feactures/landing/student/pages/StudentClass";
+import { StudentAbout } from "../feactures/landing/student/pages/StudentAbout";
+import { StudentHome } from "../feactures/landing/student/pages/StudentHome";
+import { StudentShoppingCart } from "../feactures/landing/student/pages/StudentShoppingCart";
+import { InstructorHome } from "../feactures/landing/instructor/pages/InstructorHome";
+import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
+import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass";
+import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
+import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
+import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
 
 export const AppRouter = () => {
   const location = useLocation();
 
-  // Rutas de la landing que tendrán animación
-  const landingRoutes = [
-    "/", "/store", "/class", "/events", "/preinscriptions", "/about", "/shoppingCart"
-  ];
-
-  const isLanding = landingRoutes.includes(location.pathname);
-
-  // Variants para el blur
-  const blurVariants = {
-    initial: { opacity: 0, filter: "blur(20px)" },
-    animate: { opacity: 1, filter: "blur(0px)", transition: { duration: 0.5 } },
-    exit: { opacity: 0, filter: "blur(20px)", transition: { duration: 0.3 } },
-  };
-
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* Landing con animación */}
-        <Route
-          index
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Home />
-              </motion.div>
-            ) : (
-              <Home />
-            )
-          }
-        />
-        <Route
-          path="store"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Store />
-              </motion.div>
-            ) : (
-              <Store />
-            )
-          }
-        />
-        <Route
-          path="class"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Class />
-              </motion.div>
-            ) : (
-              <Class />
-            )
-          }
-        />
-        <Route
-          path="events"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Events />
-              </motion.div>
-            ) : (
-              <Events />
-            )
-          }
-        />
-        <Route
-          path="preinscriptions"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <Preinscriptions />
-              </motion.div>
-            ) : (
-              <Preinscriptions />
-            )
-          }
-        />
-        <Route
-          path="about"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <About />
-              </motion.div>
-            ) : (
-              <About />
-            )
-          }
-        />
-        <Route
-          path="productDetails"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <ProductDetails />
-              </motion.div>
-            ) : (
-              <ProductDetails />
-            )
-          }
-        />
-        <Route
-          path="shoppingCart"
-          element={
-            isLanding ? (
-              <motion.div
-                variants={blurVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <ShoppingCart />
-              </motion.div>
-            ) : (
-              <ShoppingCart />
-            )
-          }
-        />
+    <Routes location={location} key={location.pathname}>
+      {/* Landing (sin animación) */}
+      <Route index element={<Home />} />
+      <Route path="store" element={<Store />} />
+      <Route path="class" element={<Class />} />
+      <Route path="events" element={<Events />} />
+      <Route path="preinscriptions" element={<Preinscriptions />} />
+      <Route path="about" element={<About />} />
+      <Route path="productDetails" element={<ProductDetails />} />
+      <Route path="shoppingCart" element={<ShoppingCart />} />
 
-        {/* Auth  */}
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
+      {/* Auth  */}
+      <Route path="login" element={<Login />} />
+      <Route path="register" element={<Register />} />
 
-        {/* Dashboard Admin */}
-        <Route path="admin/matriculas" element={<Matriculas />} />
-        <Route path="admin/classes" element={<Classes />} />
-        <Route path="admin/products" element={<Products />} />
-        <Route path="admin/roles" element={<Roles />} />
-        <Route path="admin/users" element={<Users />} />
-        <Route path="admin/productCategory" element={<ProductCategory />} />
-        <Route path="admin/classLevels" element={<ClassLevels />} />
-        <Route path="admin/preRegistrations" element={<PreRegistrations />} />
-        <Route path="admin/compras" element={<Compras />} />
-        <Route path="admin/eventos" element={<Eventos />} />
-        {/* <Route path="admin/proveedores" element={<Proveedores />} /> */}
-        <Route path="admin/ventas" element={<Ventas />} />
-        <Route path="admin/categoriasProductos" element={<Categorias />} />
-        <Route path="admin/eventCategory" element={<EventCategory />} />
-        
+      {/* Dashboard Admin */}
+      <Route path="admin/matriculas" element={<Matriculas />} />
+      {/* <Route path="admin/classes" element={<Clases />} /> */}
+      <Route path="admin/products" element={<Products />} />
+      <Route path="admin/roles" element={<Roles />} />
+      <Route path="admin/users" element={<Users />} />
+      {/* <Route path="admin/classLevels" element={<ClassEvent />} /> */}
+      <Route path="admin/preRegistrations" element={<Preinscripciones />} />
+      <Route path="admin/compras" element={<Compras />} />
+      <Route path="admin/proveedores" element={<Proveedores />} />
+      <Route path="admin/ventas" element={<Ventas />} />
+      <Route path="admin/categoriasProductos" element={<Categorias />} />
+      <Route path="admin/eventCategory" element={<EventCategory />} />
+      <Route path="admin/planclases" element={<PlanClasses/>} />
 
-        {/* <Route path="admin/productos" element={<Productos />} /> */}
+      {/* <Route path="admin/productos" element={<Productos />} /> */}
+
+      {/* Dashboard Student */}
+      <Route path="student/setting" element={<Setting />} />
+      <Route path="student/myClasses" element={<MyClasses />} />
+      <Route path="student/myPurchases" element={<MyPurchases />} />
+
+      <Route path="student/home" element={<StudentHome />} />
+      <Route path="student/events" element={<StudentEvents />} />
+      <Route path="student/store" element={<StudentStore />} />
+      <Route path="student/Class" element={<StudentClass />} />
+      <Route path="student/Abaut" element={<StudentAbout />} />
+      <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
 
 
-        {/* Dasboard Student */}
-        <Route path="student/setting" element={<Setting />} />
-        <Route path="student/myClasses" element={<MyClasses />} />
-        <Route path="student/myPurchases" element={<MyPurchases />} />
 
-        <Route path="instructor/setting" element={<SettingInstructor />} />
-        <Route path="instructor/myStudent" element={<MyStudent />} />
-        <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
-        <Route path="instructor/myPurchases" element={<MyPurchasesInstructor/>} />
-      </Routes>
-    </AnimatePresence>
+
+      {/* Dashboard Instructor */}
+      <Route path="instructor/setting" element={<SettingInstructor />} />
+      <Route path="instructor/myStudent" element={<MyStudent />} />
+      <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
+      <Route path="instructor/myPurchases" element={<MyPurchasesInstructor/>} />
+
+
+      <Route path="instructor/home" element={<InstructorHome />} />
+      <Route path="instructor/store" element={<InstructorStore />} />
+      <Route path="instructor/class" element={<InstructorClass />} />
+      <Route path="instructor/events" element={<InstructorEvents />} />
+      <Route path="instructor/abaut" element={<InstructorAbaut />} />
+      <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
+
+
+    </Routes>
   );
 };

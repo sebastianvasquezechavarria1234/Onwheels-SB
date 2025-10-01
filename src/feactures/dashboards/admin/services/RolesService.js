@@ -2,17 +2,20 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000", // cambia si tu API usa otra ruta o puerto
-  // timeout: 5000,
+  baseURL: "http://localhost:3000/api", // apunta a tu prefijo de rutas
 });
 
 // Obtener lista de roles
 export const getRoles = async () => {
-  const res = await api.get("/getRoles"); // o '/roles' según tu backend
+  const res = await api.get("/roles"); 
   return Array.isArray(res.data) ? res.data : res.data?.roles ?? [];
 };
 
-// (opcional) otros helpers CRUD para cuando quieras persistir
+// Crear rol
 export const createRole = (payload) => api.post("/roles", payload);
+
+// Actualizar rol
 export const updateRole = (id, payload) => api.put(`/roles/${id}`, payload);
+
+// Eliminar rol
 export const deleteRole = (id) => api.delete(`/roles/${id}`);

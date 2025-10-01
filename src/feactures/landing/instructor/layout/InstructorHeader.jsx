@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Menu, ShoppingCart, User, X } from "lucide-react";
+import { LogOut, Menu, ShoppingCart, User, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BtnLinkIcon } from "../components/BtnLinkIcon";
-import { BtnLink } from "../components/BtnLink";
+import { BtnLinkIcon } from "../../components/BtnLinkIcon";
+import { BtnLink } from "../../components/BtnLink";
 
 // Header con modal (sheet) pulido y sin errores
-export const Header = () => {
+export const InstructorHeader = () => {
   const [open, setOpen] = useState(false);
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -73,12 +73,11 @@ export const Header = () => {
   };
 
   const items = [
-    { title: "Inicio", to: "/" },
-    { title: "Tienda", to: "/store" },
-    { title: "Clases", to: "/class" },
-    { title: "Eventos", to: "/events" },
-    { title: "Pre-inscripciones", to: "/preinscriptions" },
-    { title: "Sobre nosotros", to: "/about" },
+    { title: "Inicio", to: "/instructor/home" },
+    { title: "Tienda", to: "/instructor/store" },
+    { title: "Clases", to: "/instructor/class" },
+    { title: "Eventos", to: "/instructor/events" },
+    { title: "Sobre nosotros", to: "/instructor/abaut" },
   ];
 
   return (
@@ -88,7 +87,7 @@ export const Header = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Onwheels-SB
+                Onwheels-SB intructor
               </h4>
             </Link>
           </li>
@@ -104,18 +103,28 @@ export const Header = () => {
           <li>
             <BtnLinkIcon
               title="Carrito de compras"
-              link="../shoppingCart"
+              link="../instructor/shoppingCart"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >
               <ShoppingCart color="black" strokeWidth={1.5} size={20} />
             </BtnLinkIcon>
           </li>
+          <li>
+            <BtnLinkIcon
+              title="Cerrar session"
+              link="/"
+              style="bg-[transparent]! text-white! max-xl:hidden"
+              styleIcon="bg-white!"
+            >
+              <LogOut color="black" strokeWidth={1.8} size={20} />
+            </BtnLinkIcon>
+          </li>
 
           <li>
             <BtnLinkIcon
-              title="Iniciar sesión"
-              link="../login#"
+              title="Mi cuenta"
+              link="../instructor/setting"
               style="max-lg:bg-[transparent]! max-lg:text-white!"
               styleIcon="max-xl:bg-white!"
             >
@@ -123,7 +132,7 @@ export const Header = () => {
             </BtnLinkIcon>
           </li>
 
-          {/* Botón de menú (usando button nativo para asegurar onClick) */}
+      
           <li>
             <button
               type="button"
