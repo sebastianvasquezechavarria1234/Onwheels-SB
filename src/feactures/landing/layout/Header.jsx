@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ShoppingCart, User, X } from "lucide-react";
+import { Menu, ShoppingCart, User, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../components/BtnLinkIcon";
@@ -134,7 +134,7 @@ export const Header = () => {
               className="hidden! max-xl:flex! bg-white p-[1px_8px_1px_1px] rounded-full justify-center items-center gap-[3px] cursor-pointer"
             >
               <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <User className="text-white" strokeWidth={1.5} size={20} />
+                <Menu className="text-white" strokeWidth={1.5} size={20} />
 
               </span>
               <h4 className="text-black">Menu</h4>

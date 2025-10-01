@@ -60,7 +60,7 @@ export const Layout = ({ children }) => {
 						</BtnSideBar>
 					</ul>
 
-					{/* Footer movido (fecha, hora y botón) */}
+					{/* Footer  (fecha, hora y botón) */}
 					<ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 ">
 						<div className="flex flex-col gap-[10px] mb-[10px]">
 							<p className="text-sm capitalize">{dateStr}</p>

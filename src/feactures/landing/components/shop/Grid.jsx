@@ -63,14 +63,6 @@ export const Grid = () => {
 
                         <div className="grid grid-cols-3 gap-[20px] max-2xl:gap-[10px] max-xl:grid-cols-2">
                             <Card></Card>
-                            <Card></Card>
-                            <Card></Card>
-                            <Card></Card>
-                            <Card></Card>
-                            <Card></Card>
-                            <Card></Card>
-                            <Card></Card>
-
                         </div>
 
                     </div>
