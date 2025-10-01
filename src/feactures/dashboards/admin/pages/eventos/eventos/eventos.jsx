@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
 import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   getEventos,
   getCategorias,
@@ -128,44 +129,53 @@ export default function Eventos() {
 
   return (
     <Layout>
-      <div className="p-6 bg-gray-50 min-h-screen w-full">
-        <div className="bg-white rounded-2xl shadow-md border border-gray-200">
-          {/* Encabezado */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-700">
-              Eventos &gt; Gestión de Eventos
-            </h2>
-          </div>
+      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
+        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">
+          Eventos &gt; Gestión de Eventos
+        </h2>
 
-          {/* Barra búsqueda */}
-          <div className="flex justify-between items-center p-4">
-            <div className="relative w-1/3">
-              <input
-                type="text"
-                placeholder="Buscar eventos..."
-                className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            </div>
+        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
+          <form action="" className="flex gap-[10px]">
+            <label className="mb-[20px] block">
+              <p className="">Buscar eventos:</p>
+              <div className="relative">
+                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
+                <input
+                  type="text"
+                  placeholder="Buscar eventos..."
+                  className="input pl-[50px]!"
+                />
+              </div>
+            </label>
+          </form>
+
+          <div>
             <button
               onClick={() => openModal("crear")}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all"
+              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
             >
-              <Plus className="h-4 w-4" /> Registrar nuevo evento
+              <Plus className="h-4 w-4" />
+              Registrar nuevo evento
             </button>
           </div>
+        </div>
 
-          {/* Tabla */}
+        <div className="p-[30px]">
+          {/* Encabezados estilo Roles (sin mayúsculas forzadas, sin sombra extra) */}
+          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
+            <p className="w-[30%] font-bold! opacity-80">Nombre</p>
+            <p className="w-[20%] font-bold! opacity-80">Categoría</p>
+            <p className="w-[20%] font-bold! opacity-80">Patrocinador</p>
+            <p className="w-[15%] font-bold! opacity-80">Sede</p>
+            <p className="w-[15%] font-bold! opacity-80">Fecha</p>
+            <p className="w-[15%] font-bold! opacity-80">Acciones</p>
+          </article>
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-600">
-              <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
+              <thead className="">
                 <tr>
-                  <th className="px-6 py-3">Nombre</th>
-                  <th className="px-6 py-3">Categoría</th>
-                  <th className="px-6 py-3">Patrocinador</th>
-                  <th className="px-6 py-3">Sede</th>
-                  <th className="px-6 py-3">Fecha</th>
-                  <th className="px-6 py-3 text-center">Acciones</th>
+                  <th className="px-6 py-3 hidden">--</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,7 +192,7 @@ export default function Eventos() {
                   <tr>
                     <td
                       colSpan="6"
-                      className="text-center py-10 text-gray-400 italic"
+                      className="text-center py-10 italic text-red-700"
                     >
                       No hay eventos registrados
                     </td>
@@ -191,33 +201,29 @@ export default function Eventos() {
                   currentItems.map((e) => (
                     <tr
                       key={e.id_evento}
-                      className="hover:bg-gray-50 transition border-b"
+                      className="border-b border-black/20"
                     >
-                      <td className="px-6 py-3">{e.nombre_evento}</td>
-                      <td className="px-6 py-3">
-                        {getNombreCategoria(e.id_categoria_evento)}
-                      </td>
-                      <td className="px-6 py-3">
-                        {getNombrePatrocinador(e.id_patrocinador)}
-                      </td>
-                      <td className="px-6 py-3">{getNombreSede(e.id_sede)}</td>
-                      <td className="px-6 py-3">{e.fecha_evento}</td>
-                      <td className="px-6 py-3 flex justify-center gap-3">
+                      <td className="px-6 py-[18px] w-[30%] line-clamp-1">{e.nombre_evento}</td>
+                      <td className="px-6 py-[18px] w-[20%] line-clamp-1">{getNombreCategoria(e.id_categoria_evento)}</td>
+                      <td className="px-6 py-[18px] w-[20%] line-clamp-1">{getNombrePatrocinador(e.id_patrocinador)}</td>
+                      <td className="px-6 py-[18px] w-[15%] line-clamp-1">{getNombreSede(e.id_sede)}</td>
+                      <td className="px-6 py-[18px] w-[15%]">{e.fecha_evento}</td>
+                      <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
                         <button
                           onClick={() => openModal("ver", e)}
-                          className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
+                          className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => openModal("editar", e)}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
+                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => openModal("eliminar", e)}
-                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -230,271 +236,299 @@ export default function Eventos() {
           </div>
 
           {/* Paginación */}
-          <div className="flex justify-center items-center gap-2 py-4">
+          <div className="flex justify-center items-center gap-2 py-4 italic">
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-50"
+              className="btn cursor-pointer bg-gray-200"
             >
               Anterior
             </button>
-            <span className="text-sm">
-              Página {currentPage} de {totalPages}
+            <span className="text-[18px]">
+              Página <span className="text-blue-700">{currentPage}</span> de {totalPages}
             </span>
             <button
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-50"
+              className="btn cursor-pointer bg-gray-200"
             >
               Siguiente
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Modal Crear/Editar */}
-      {(modal === "crear" || modal === "editar") && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">
-              {modal === "crear" ? "Registrar Evento" : "Editar Evento"}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium">Nombre</label>
-                <input
-                  type="text"
-                  value={form.nombre_evento}
-                  onChange={(e) =>
-                    setForm({ ...form, nombre_evento: e.target.value })
-                  }
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Categoría</label>
-                <select
-                  value={form.id_categoria_evento}
-                  onChange={(e) =>
-                    setForm({ ...form, id_categoria_evento: e.target.value })
-                  }
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                  required
-                >
-                  <option value="">Seleccione...</option>
-                  {categorias.map((c) => (
-                    <option
-                      key={c.id_categoria_evento}
-                      value={c.id_categoria_evento}
+        {/* Modales: Crear/Editar */}
+        <AnimatePresence>
+          {(modal === "crear" || modal === "editar") && (
+            <motion.div
+              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="absolute inset-0" onClick={closeModal} />
+
+              <motion.div
+                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+              >
+                <h3 className="font-primary text-center mb-[30px]">
+                  {modal === "crear" ? "Registrar Evento" : "Editar Evento"}
+                </h3>
+
+                {/* --- FORM: ahora en grid 2 columnas --- */}
+                <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-[16px]">
+                  {/* Nombre - Col 1 */}
+                  <label className="block col-span-1">
+                    <p className="">Nombre</p>
+                    <input
+                      type="text"
+                      value={form.nombre_evento}
+                      onChange={(e) => setForm({ ...form, nombre_evento: e.target.value })}
+                      className="input w-full"
+                      required
+                    />
+                  </label>
+
+                  {/* Categoría - Col 2 */}
+                  <label className="block col-span-1">
+                    <p className="">Categoría</p>
+                    <select
+                      value={form.id_categoria_evento}
+                      onChange={(e) => setForm({ ...form, id_categoria_evento: e.target.value })}
+                      className="input w-full"
+                      required
                     >
-                      {c.nombre_categoria}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Patrocinador</label>
-                <select
-                  value={form.id_patrocinador}
-                  onChange={(e) =>
-                    setForm({ ...form, id_patrocinador: e.target.value })
-                  }
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                  required
-                >
-                  <option value="">Seleccione...</option>
-                  {patrocinadores.map((p) => (
-                    <option key={p.id_patrocinador} value={p.id_patrocinador}>
-                      {p.nombre_patrocinador}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Sede</label>
-                <select
-                  value={form.id_sede}
-                  onChange={(e) => setForm({ ...form, id_sede: e.target.value })}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                  required
-                >
-                  <option value="">Seleccione...</option>
-                  {sedes.map((s) => (
-                    <option key={s.id_sede} value={s.id_sede}>
-                      {s.nombre_sede}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Fecha</label>
-                <input
-                  type="date"
-                  value={form.fecha_evento}
-                  onChange={(e) =>
-                    setForm({ ...form, fecha_evento: e.target.value })
-                  }
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                  required
-                />
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium">Hora inicio</label>
-                  <input
-                    type="time"
-                    value={form.hora_inicio}
-                    onChange={(e) =>
-                      setForm({ ...form, hora_inicio: e.target.value })
-                    }
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium">Hora fin</label>
-                  <input
-                    type="time"
-                    value={form.hora_aproximada_fin}
-                    onChange={(e) =>
-                      setForm({ ...form, hora_aproximada_fin: e.target.value })
-                    }
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Descripción</label>
-                <textarea
-                  value={form.descripcion}
-                  onChange={(e) =>
-                    setForm({ ...form, descripcion: e.target.value })
-                  }
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Imagen</label>
-                <input
-                  type="text"
-                  value={form.imagen_evento}
-                  onChange={(e) =>
-                    setForm({ ...form, imagen_evento: e.target.value })
-                  }
-                  placeholder="URL de la imagen"
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Estado</label>
-                <select
-                  value={form.estado}
-                  onChange={(e) => setForm({ ...form, estado: e.target.value })}
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                      <option value="">Seleccione...</option>
+                      {categorias.map((c) => (
+                        <option key={c.id_categoria_evento} value={c.id_categoria_evento}>
+                          {c.nombre_categoria}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-      {/* Modal Ver */}
-      {modal === "ver" && selected && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Detalles del Evento</h3>
-            <p>
-              <strong>Nombre:</strong> {selected.nombre_evento}
-            </p>
-            <p>
-              <strong>Categoría:</strong>{" "}
-              {getNombreCategoria(selected.id_categoria_evento)}
-            </p>
-            <p>
-              <strong>Patrocinador:</strong>{" "}
-              {getNombrePatrocinador(selected.id_patrocinador)}
-            </p>
-            <p>
-              <strong>Sede:</strong> {getNombreSede(selected.id_sede)}
-            </p>
-            <p>
-              <strong>Fecha:</strong> {selected.fecha_evento}
-            </p>
-            <p>
-              <strong>Hora inicio:</strong> {selected.hora_inicio}
-            </p>
-            <p>
-              <strong>Hora fin:</strong> {selected.hora_aproximada_fin}
-            </p>
-            <p>
-              <strong>Descripción:</strong> {selected.descripcion}
-            </p>
-            {selected.imagen_evento && (
-              <img
-                src={selected.imagen_evento}
-                alt="Evento"
-                className="w-full h-40 object-cover rounded-lg mt-2"
-              />
-            )}
-            <p className="mt-2">
-              <strong>Estado:</strong> {selected.estado}
-            </p>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  {/* Patrocinador - Col 1 */}
+                  <label className="block col-span-1">
+                    <p className="">Patrocinador</p>
+                    <select
+                      value={form.id_patrocinador}
+                      onChange={(e) => setForm({ ...form, id_patrocinador: e.target.value })}
+                      className="input w-full"
+                      required
+                    >
+                      <option value="">Seleccione...</option>
+                      {patrocinadores.map((p) => (
+                        <option key={p.id_patrocinador} value={p.id_patrocinador}>
+                          {p.nombre_patrocinador}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-      {/* Modal Eliminar */}
-      {modal === "eliminar" && selected && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Confirmar eliminación</h3>
-            <p>
-              ¿Seguro que deseas eliminar el evento{" "}
-              <strong>{selected.nombre_evento}</strong>?
-            </p>
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                  {/* Sede - Col 2 */}
+                  <label className="block col-span-1">
+                    <p className="">Sede</p>
+                    <select
+                      value={form.id_sede}
+                      onChange={(e) => setForm({ ...form, id_sede: e.target.value })}
+                      className="input w-full"
+                      required
+                    >
+                      <option value="">Seleccione...</option>
+                      {sedes.map((s) => (
+                        <option key={s.id_sede} value={s.id_sede}>
+                          {s.nombre_sede}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {/* Fecha - Col 1 */}
+                  <label className="block col-span-1">
+                    <p className="">Fecha</p>
+                    <input
+                      type="date"
+                      value={form.fecha_evento}
+                      onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
+                      className="input w-full"
+                      required
+                    />
+                  </label>
+
+                  {/* Estado - Col 2 */}
+                  <label className="block col-span-1">
+                    <p className="">Estado</p>
+                    <select
+                      value={form.estado}
+                      onChange={(e) => setForm({ ...form, estado: e.target.value })}
+                      className="input w-full"
+                    >
+                      <option value="activo">Activo</option>
+                      <option value="inactivo">Inactivo</option>
+                    </select>
+                  </label>
+
+                  {/* Hora inicio - Col 1 */}
+                  <label className="block col-span-1">
+                    <p className="mb-[8px]">Hora inicio</p>
+                    <input
+                      type="time"
+                      value={form.hora_inicio}
+                      onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+                      className="input w-full"
+                    />
+                  </label>
+
+                  {/* Hora fin - Col 2 */}
+                  <label className="block col-span-1">
+                    <p className="mb-[8px]">Hora fin</p>
+                    <input
+                      type="time"
+                      value={form.hora_aproximada_fin}
+                      onChange={(e) => setForm({ ...form, hora_aproximada_fin: e.target.value })}
+                      className="input w-full"
+                    />
+                  </label>
+
+                  {/* Descripción - ocupa 2 columnas */}
+                  <label className="block col-span-2">
+                    <p className="">Descripción</p>
+                    <textarea
+                      value={form.descripcion}
+                      onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                      className="input w-full h-[120px]"
+                    />
+                  </label>
+
+                  {/* Imagen - ocupa 2 columnas */}
+                  <label className="block col-span-2">
+                    <p className="">Imagen</p>
+                    <input
+                      type="text"
+                      value={form.imagen_evento}
+                      onChange={(e) => setForm({ ...form, imagen_evento: e.target.value })}
+                      placeholder="URL de la imagen"
+                      className="input w-full"
+                    />
+                  </label>
+
+                  {/* botones - ocupa 2 columnas */}
+                  <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
+                    <button type="button" onClick={closeModal} className="btn bg-gray-200">
+                      Cancelar
+                    </button>
+                    <button type="submit" className="btn bg-blue-100 text-blue-700">
+                      Guardar
+                    </button>
+                  </div>
+                </form>
+                {/* --- FIN FORM --- */}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal Ver */}
+        <AnimatePresence>
+          {modal === "ver" && selected && (
+            <motion.div
+              className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="absolute inset-0" onClick={closeModal} />
+              <motion.div
+                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
               >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                <h3 className="font-primary text-center mb-[30px]">Detalles del Evento</h3>
+
+                <div className="grid grid-cols-2 gap-[10px]">
+                  <div>
+                    <p className="font-medium">Nombre:</p>
+                    <p className="font-medium">Categoría:</p>
+                    <p className="font-medium">Patrocinador:</p>
+                    <p className="font-medium">Sede:</p>
+                    <p className="font-medium">Fecha:</p>
+                    <p className="font-medium">Hora inicio:</p>
+                    <p className="font-medium">Hora fin:</p>
+                    <p className="font-medium">Descripción:</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-700">{selected.nombre_evento}</p>
+                    <p className="text-gray-700">{getNombreCategoria(selected.id_categoria_evento)}</p>
+                    <p className="text-gray-700">{getNombrePatrocinador(selected.id_patrocinador)}</p>
+                    <p className="text-gray-700">{getNombreSede(selected.id_sede)}</p>
+                    <p className="text-gray-700">{selected.fecha_evento}</p>
+                    <p className="text-gray-700">{selected.hora_inicio}</p>
+                    <p className="text-gray-700">{selected.hora_aproximada_fin}</p>
+                    <p className="text-gray-700">{selected.descripcion}</p>
+                  </div>
+                </div>
+
+                {selected.imagen_evento && (
+                  <img src={selected.imagen_evento} alt="Evento" className="w-full h-40 object-cover rounded-lg mt-2" />
+                )}
+
+                <p className="mt-2 text-gray-600">
+                  <strong>Estado:</strong> {selected.estado}
+                </p>
+
+                <div className="flex justify-end gap-[10px] mt-[30px]">
+                  <button onClick={closeModal} className="btn bg-gray-200">
+                    Cerrar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal Eliminar */}
+        <AnimatePresence>
+          {modal === "eliminar" && selected && (
+            <motion.div
+              className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="absolute inset-0" onClick={closeModal} />
+              <motion.div
+                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
               >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <h3 className="font-primary text-center mb-[30px]">Confirmar eliminación</h3>
+                <p className="text-gray-600 mb-4">
+                  ¿Seguro que deseas eliminar el evento <span className="font-bold">{selected.nombre_evento}</span>?
+                </p>
+                <div className="flex justify-end gap-[10px] mt-[20px]">
+                  <button onClick={closeModal} className="btn bg-gray-200">
+                    Cancelar
+                  </button>
+                  <button onClick={handleDelete} className="btn bg-red-100 text-red-700">
+                    Eliminar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
     </Layout>
   );
 }

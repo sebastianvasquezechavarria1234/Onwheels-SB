@@ -221,12 +221,12 @@ const Roles = () => {
 
               <form>
                 <label className="block mb-[20px]">
-                  <p className="translate-x-[25px]">Nombre</p>
+                  <p className="">Nombre</p>
                   <input name="nombre_rol" className="input w-full" value={addForm.nombre_rol} onChange={handleAddChange} />
                 </label>
 
                 <label className="block mb-[20px]">
-                  <p className="translate-x-[25px]">Descripción:</p>
+                  <p className="">Descripción:</p>
                   <textarea name="descripcion" className="input w-full h-[120px]" value={addForm.descripcion} onChange={handleAddChange} />
                 </label>
 
@@ -280,12 +280,12 @@ const Roles = () => {
 
               <form>
                 <label className="block mb-[20px]">
-                  <p className="translate-x-[25px]">Nombre:</p>
+                  <p className="">Nombre:</p>
                   <input name="nombre_rol" className="input w-full" value={editForm.nombre_rol} onChange={handleEditChange} />
                 </label>
 
                 <label className="block mb-[20px]">
-                  <p className="translate-x-[25px]">Descripción:</p>
+                  <p className="">Descripción:</p>
                   <textarea name="descripcion" className="input w-full h-[120px]" value={editForm.descripcion} onChange={handleEditChange} />
                 </label>
 
