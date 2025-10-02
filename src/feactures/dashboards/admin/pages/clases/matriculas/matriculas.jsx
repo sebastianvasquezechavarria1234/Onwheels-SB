@@ -5,11 +5,9 @@ import { Layout } from "../../../layout/layout";
 import { createMatricula, deleteMatricula, getMatriculas, updateMatricula }
  from "../../services/matriculaService";
 
-
 //  function Matriculas() {
   
-export const  Matriculas = () => {
->>>>>>> 34529f4e2107efe18af7b705238f74111e180863
+export const  matriculas = () => {
   const [matriculas, setMatriculas] = useState([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -80,9 +78,7 @@ export const  Matriculas = () => {
     Object.values(m).some((val) =>
       String(val).toLowerCase().includes(search.toLowerCase())
     )
-
   );
->>>>>>> 34529f4e2107efe18af7b705238f74111e180863
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">

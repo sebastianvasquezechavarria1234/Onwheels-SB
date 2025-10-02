@@ -11,9 +11,11 @@ import {
   updateCompraStatus,
   getComprasByProveedor,
   getProductos,
+  
 } from "../../services/comprasService";
 
-import { getVariantes,
+
+import {
   getColores,
   getTallas} from "../../services/productosServices"
 
