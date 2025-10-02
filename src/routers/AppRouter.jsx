@@ -61,6 +61,8 @@ import { InstructorEvents } from "../feactures/landing/instructor/pages/Instruct
 import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
 import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
 import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
+import { Dashboard } from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
+
 
 const AppRouter = () => {
   const location = useLocation();
@@ -104,6 +106,7 @@ const AppRouter = () => {
         <Route path="register" element={<Register />} />
 
         {/* Dashboard Admin */}
+        <Route path="admin/dashboard" element={<Dashboard />} />
         <Route path="admin/matriculas" element={<Matriculas />} />
         <Route path="admin/products" element={<Products />} />
         <Route path="admin/roles" element={<Roles />} />
@@ -119,6 +122,8 @@ const AppRouter = () => {
         <Route path="admin/patrocinadores" element={<Patrocinadores />} />
         <Route path="admin/sedes" element={<Sedes />} />
         <Route path="admin/clases" element={<Clases />} />
+        <Route path="admin/plans" element={<PlanClasses />} />
+        {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
 
         {/* Dashboard Student */}
         <Route path="student/setting" element={<Setting />} />
