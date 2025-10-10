@@ -1,8 +1,81 @@
-import React from "react"; 
-import { Search, Plus } from "lucide-react";
-import {Layout} from "../../../layout/layout";
+import React, { useState } from "react";
+import { Search, Plus, X } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { Layout } from "../../../layout/layout";
 
-export default function Matriculas() {
+function Matriculas() {
+  // Estados
+  const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    id_preinscripcion: "",
+    id_clase: "",
+    id_plan: "",
+    id_metodo_pago: "",
+    fecha_matricula: "",
+    valor_matricula: "",
+  });
+  const [editId, setEditId] = useState(null);
+
+  const [modalType, setModalType] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [addForm, setAddForm] = useState({
+    id_preinscripcion: "",
+    id_clase: "",
+    id_plan: "",
+    id_metodo_pago: "",
+    fecha_matricula: "",
+    valor_matricula: "",
+  });
+  const [editForm, setEditForm] = useState({
+    valor_matricula: "",
+  });
+
+  // Funciones
+  const handleChange = (e, setter = setForm) => {
+    const { name, value } = e.target;
+    setter((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Guardando matrícula:", form);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setForm({
+      id_preinscripcion: "",
+      id_clase: "",
+      id_plan: "",
+      id_metodo_pago: "",
+      fecha_matricula: "",
+      valor_matricula: "",
+    });
+    setEditId(null);
+    setShowForm(false);
+  };
+
+  const closeModal = () => {
+    setModalType(null);
+    setSelected(null);
+  };
+
+  const saveAdd = () => {
+    console.log("Nueva matrícula:", addForm);
+    closeModal();
+  };
+
+  const saveEdit = () => {
+    console.log("Editar matrícula:", editForm);
+    closeModal();
+  };
+
+  const confirmDelete = (id) => {
+    console.log("Eliminar matrícula:", id);
+    closeModal();
+  };
+
   return (
     <Layout>
       <div className="p-6 bg-gray-50 min-h-screen w-full">
@@ -26,7 +99,10 @@ export default function Matriculas() {
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             </div>
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all">
+            <button
+              onClick={() => setModalType("add")}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all"
+            >
               <Plus className="h-4 w-4" />
               Registrar nueva matrícula
             </button>
@@ -48,7 +124,6 @@ export default function Matriculas() {
                 </tr>
               </thead>
               <tbody>
-                {/* Ejemplo de fila vacía */}
                 <tr className="hover:bg-gray-50 transition">
                   <td colSpan="8" className="text-center py-10 text-gray-400 italic">
                     No hay matrículas registradas
@@ -59,7 +134,7 @@ export default function Matriculas() {
           </div>
         </div>
 
-        {/* Modal/Formulario */}
+        {/* Formulario emergente */}
         {showForm && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <div className="bg-white rounded-2xl shadow-lg w-1/2 p-6 relative">
