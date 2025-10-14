@@ -44,6 +44,26 @@ import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/My
 import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor";
 import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor";
 
+// Landing Student
+import { StudentEvents } from "../feactures/landing/student/pages/StudentEvents";
+import { StudentStore } from "../feactures/landing/student/pages/StudentStore";
+import StudentClass from "../feactures/landing/student/pages/StudentClass";
+import { StudentAbout } from "../feactures/landing/student/pages/StudentAbout";
+import { StudentHome } from "../feactures/landing/student/pages/StudentHome";
+import { StudentShoppingCart } from "../feactures/landing/student/pages/StudentShoppingCart";
+
+// Landing Instructor
+import { InstructorHome } from "../feactures/landing/instructor/pages/InstructorHome";
+// import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorStore";
+import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass";
+import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
+// import { InstructorAbout } from "../feactures/landing/instructor/pages/InstructorAbout";
+import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
+import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
+import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
+import { Dashboard } from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
+
+
 const AppRouter = () => {
   const location = useLocation();
 
@@ -151,7 +171,8 @@ const AppRouter = () => {
         <Route path="register" element={<Register />} />
 
         {/* Dashboard Admin */}
-        {/* <Route path="admin/matriculas" element={<Matriculas/>} /> */}
+        <Route path="admin/dashboard" element={<Dashboard />} />
+        <Route path="admin/matriculas" element={<Matriculas />} />
         <Route path="admin/products" element={<Products />} />
         <Route path="admin/roles" element={<Roles />} />
         <Route path="admin/classLevels" element={<ClassLevels />} />
@@ -167,6 +188,8 @@ const AppRouter = () => {
         <Route path="admin/patrocinadores" element={<Patrocinadores />} />
         <Route path="admin/sedes" element={<Sedes />} />
         <Route path="admin/clases" element={<Clases />} />
+        <Route path="admin/plans" element={<PlanClasses />} />
+        {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
 
         {/* Dashboard Student */}
         <Route path="student/setting" element={<Setting />} />

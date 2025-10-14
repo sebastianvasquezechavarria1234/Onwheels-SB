@@ -1,6 +1,7 @@
-// src/feactures/dashboards/admin/pages/compras/productos/Products.jsx
+// src/feactures/dashboards/admin/pages/compras/productos/Products.styled.fixed.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Eye, Pen, } from "lucide-react";
+import { X, Plus, Trash2, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   getProductos,
@@ -399,129 +400,87 @@ export default function Productos() {
 
   return (
     <Layout>
-   <div className="min-h-screen bg-gray-50 p-8">
-  <div className="max-w-6xl mx-auto">
+      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
+        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Productos &gt; Gestión de Productos</h2>
 
-    {/* Encabezado */}
-    <div className="flex items-center justify-between mb-4">
-      <h1 className="text-sm font-light text-gray-700 ">
-       Gestión de Productos
-      </h1>
-    </div>
-
-    {/* Buscador y botón */}
-    <div className="flex items-center justify-between mb-8">
-      <input
-        type="text"
-        placeholder=" Buscar productos..."
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        className="w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-      />
-      <button
-        onClick={() => openProductModal(null)}
-        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-full transition-colors duration-200 flex items-center gap-2"
-      >
-        <Plus size={16} /> Registrar nuevo producto
-      </button>
-    </div>
-
-          {/* Tabla productos */}
-         <div className="overflow-hidden border border-gray-200 rounded-lg">
-  <table className="w-full text-sm">
-    <thead className="bg-gray-50">
-      <tr>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">ID</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Nombre</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Descripción</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Categoría</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Precio compra</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Precio venta</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">% Ganancia</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Descuento</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Estado</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Imagen</th>
-        <th className="px-4 py-3 text-left font-medium text-gray-500">Acciones</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-gray-100 bg-white">
-      {productosActuales.map((p) => (
-        <tr key={p.id_producto} className="hover:bg-gray-50">
-          <td className="px-4 py-3">{p.id_producto}</td>
-          <td className="px-4 py-3">{p.nombre_producto}</td>
-          <td className="px-4 py-3">{p.descripcion}</td>
-          <td className="px-4 py-3">
-            {categorias.find((c) => c.id_categoria === p.id_categoria)?.nombre_categoria || ""}
-          </td>
-          <td className="px-4 py-3">${Number(p.precio_compra || 0).toFixed(2)}</td>
-          <td className="px-4 py-3">${Number(p.precio || 0).toFixed(2)}</td>
-          <td className="px-4 py-3">{p.porcentaje_ganancia}%</td>
-          <td className="px-4 py-3">{p.descuento_producto}%</td>
-          <td className="px-4 py-3">
-            <span
-              className={`px-2 py-1 rounded text-xs font-medium ${
-                p.estado === "activo"
-                  ?  "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {p.estado}
-            </span>
-          </td>
-          <td className="px-4 py-3">
-            {p.imagen_producto ? (
-              <img
-                src={p.imagen_producto}
-                alt={p.nombre_producto}
-                className="w-12 h-12 object-cover rounded"
+        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[40px] items-center">
+          <div className="w-1/3">
+            <div className="relative">
+              <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="input !pl-[50px] w-full p-2"
               />
-            ) : (
-              <span className="text-gray-400 italic">Sin imagen</span>
-            )}
-          </td>
-          <td className="px-4 py-3">
-            <div className="flex gap-2">
-              <button
-                onClick={() => openProductModal(p)}
-                className="p-2 bg-green-100 text-green-700 rounded hover:bg-green-200"
-                title="Ver"
-              >
-                <Eye size={16} />
-              </button>
-              <button
-                onClick={() => openProductModal(p)}
-                className="p-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
-                title="Editar"
-              >
-                <Pen size={16} />
-              </button>
-              <button
-                onClick={() => handleDeleteProducto(p.id_producto)}
-                className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200"
-                title="Eliminar"
-              >
-                <Trash2 size={16}/>
-              </button>
             </div>
-          </td>
-        </tr>
-      ))}
-      {productosActuales.length === 0 && (
-        <tr>
-          <td colSpan="11" className="px-4 py-10 text-center text-gray-500">
-            No hay productos registrados
-          </td>
-        </tr>
-      )}
-    </tbody>
-  </table>
-</div>
- {/* Paginación */}
+          </div>
+
+          <div>
+            <button
+              onClick={() => openProductModal(null)}
+              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
+            >
+              <Plus size={16} /> Registrar nuevo producto
+            </button>
+          </div>
+        </div>
+
+        {/* Tabla productos */}
+        <div className="p-[30px]">
+          <article className="font-semibold italic mt-[20px] flex items-center border-b border-black/20 pb-[12px]">
+            <p className="w-[6%] font-bold opacity-80">ID</p>
+            <p className="w-[20%] font-bold opacity-80">Nombre</p>
+            <p className="w-[22%] font-bold opacity-80">Descripción</p>
+            <p className="w-[12%] font-bold opacity-80">Categoría</p>
+            <p className="w-[8%] font-bold opacity-80">Precio C.</p>
+            <p className="w-[8%] font-bold opacity-80">Precio V.</p>
+            <p className="w-[6%] font-bold opacity-80">%G</p>
+            <p className="w-[6%] font-bold opacity-80">Desc</p>
+            <p className="w-[6%] font-bold opacity-80">Estado</p>
+            <p className="w-[10%] font-bold opacity-80">Acciones</p>
+          </article>
+
+          <div className="overflow-x-auto mt-4">
+            <table className="w-full text-sm text-left text-gray-600">
+              <tbody>
+                {productosActuales.map((p) => (
+                  <tr key={p.id_producto} className="py-[18px] border-b border-black/20 hover:bg-gray-50">
+                    <td className="px-6 py-[18px] w-[6%]">{p.id_producto}</td>
+                    <td className="px-6 py-[18px] w-[20%] line-clamp-1">{p.nombre_producto}</td>
+                    <td className="px-6 py-[18px] w-[22%] line-clamp-2">{p.descripcion}</td>
+                    <td className="px-6 py-[18px] w-[12%]">{categorias.find((c) => c.id_categoria === p.id_categoria)?.nombre_categoria || ""}</td>
+                    <td className="px-6 py-[18px] w-[8%]">${Number(p.precio_compra || 0).toFixed(2)}</td>
+                    <td className="px-6 py-[18px] w-[8%]">${Number(p.precio || 0).toFixed(2)}</td>
+                    <td className="px-6 py-[18px] w-[6%]">{p.porcentaje_ganancia}%</td>
+                    <td className="px-6 py-[18px] w-[6%]">{p.descuento_producto}%</td>
+                    <td className="px-6 py-[18px] w-[6%]"><span className={`px-2 py-1 rounded-full text-xs font-medium ${p.estado === "activo" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{p.estado}</span></td>
+                    <td className="px-6 py-[18px] w-[10%]">
+                      <div className="flex gap-[14px] items-center justify-center">
+                        <button onClick={() => openProductModal(p)} className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md">👁</button>
+                        <button onClick={() => openProductModal(p)} className="w-[45px] h-[45px] bg-yellow-100 text-yellow-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-yellow-200 shadow-md">✏️</button>
+                        <button onClick={() => handleDeleteProducto(p.id_producto)} className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md">🗑</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {productosActuales.length === 0 && (
+                  <tr>
+                    <td colSpan="11" className="px-6 py-10 text-center text-gray-400 italic">No hay productos registrados</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Paginación */}
           <div className="flex justify-center mt-4 gap-2">
             <button
               disabled={paginaActual === 1}
               onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
-              className="px-3 py-1 rounded-lg border"
+              className="btn bg-gray-200"
             >
               Anterior
             </button>
@@ -529,392 +488,396 @@ export default function Productos() {
             <button
               disabled={paginaActual === totalPaginas}
               onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
-              className="px-3 py-1 rounded-lg border"
+              className="btn bg-gray-200"
             >
               Siguiente
             </button>
           </div>
-
-          {/* MODAL PRODUCTO (CREAR / EDITAR / VER) */}
-          {isProductModalOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-white/5 backdrop-blur-md z-40 p-4">
-              <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {productForm.id_producto ? "Editar Producto" : "Crear Nuevo Producto"}
-                    </h2>
-                    <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                      <X size={24} />
-                    </button>
-                  </div>
-
-                  {/* formulario */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
-                      <input
-                        name="nombre_producto"
-                        value={productForm.nombre_producto}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder="Nombre del producto"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
-                      <select
-                        name="id_categoria"
-                        value={productForm.id_categoria}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      >
-                        <option value="">Seleccionar categoría</option>
-                        {categorias.map((c) => (
-                          <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Precio compra</label>
-                      <input
-                        name="precio_compra"
-                        type="number"
-                        step="0.01"
-                        value={productForm.precio_compra}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Precio venta *</label>
-                      <input
-                        name="precio"
-                        type="number"
-                        step="0.01"
-                        value={productForm.precio}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">% Ganancia</label>
-                      <input
-                        name="porcentaje_ganancia"
-                        type="number"
-                        step="0.01"
-                        value={productForm.porcentaje_ganancia}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">% Descuento</label>
-                      <input
-                        name="descuento_producto"
-                        type="number"
-                        step="0.01"
-                        value={productForm.descuento_producto}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-                      <textarea
-                        name="descripcion"
-                        value={productForm.descripcion}
-                        onChange={handleProductChange}
-                        className="w-full px-2 py-2 border border-gray-300 rounded-sm"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Imagen (URL)</label>
-                      <input
-                        name="imagen_producto"
-                        value={productForm.imagen_producto}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        placeholder="https://..."
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                      <select
-                        name="estado"
-                        value={productForm.estado}
-                        onChange={handleProductChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                      >
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* tabla variantes dentro del modal producto */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Variantes</h3>
-                      <button
-                        onClick={() => {
-                          setCurrentVariant({ color: "#2563eb", tallas: [{ talla: "", cantidad: "" }] });
-                          setIsVariantModalOpen(true);
-                        }}
-                        className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2"
-                      >
-                        <Plus size={14} /> Añadir variante
-                      </button>
-                    </div>
-
-                    {variants.length > 0 ? (
-                      <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <table className="w-full">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Talla</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {variants.map((variant, idx) => (
-                              <tr key={idx} className="hover:bg-gray-50">
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: variant.codigo_hex || variant.nombre_color || variant.color }} />
-                                    <span className="text-sm text-gray-600">{variant.codigo_hex || variant.nombre_color || variant.color}</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className="text-sm font-medium text-gray-900">{variant.nombre_talla || variant.talla}</span>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className="text-sm text-gray-600">{variant.stock ?? variant.cantidad}</span>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <button
-                                    onClick={() => removeVariant(variant)}
-                                    className="text-red-600 hover:text-red-800 transition-colors"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        <p className="text-gray-500">No hay variantes añadidas aún</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => setIsProductModalOpen(false)}
-                      className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={saveProduct}
-                      className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
-                    >
-                      Guardar producto
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* MODAL VARIANTE (SUBMODAL SOBRE PRODUCT MODAL) */}
-          {isVariantModalOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-white/6 backdrop-blur-lg z-50 p-4">
-              <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">Añadir Variante</h2>
-                    <button onClick={() => setIsVariantModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                      <X size={24} />
-                    </button>
-                  </div>
-
-                  {/* Color picker */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Color *</label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="color"
-                        value={currentVariant.color}
-                        onChange={(e) => handleVariantChange("color", e.target.value)}
-                        className="w-12 h-12 rounded border border-gray-300 cursor-pointer"
-                      />
-                      <span className="text-sm text-gray-600 font-mono">{currentVariant.color}</span>
-
-                      <select
-                        className="ml-4 px-3 py-2 border rounded"
-                        value=""
-                        onChange={(e) => {
-                          const col = colores.find((c) => String(c.id_color) === String(e.target.value));
-                          if (col) handleVariantChange("color", col.codigo_hex || col.hex || col.codigo || currentVariant.color);
-                        }}
-                      >
-                        <option value="">Colores del catálogo</option>
-                        {colores.map((c) => (
-                          <option key={c.id_color} value={c.id_color}>{c.nombre_color} {c.codigo_hex ? `(${c.codigo_hex})` : ""}</option>
-                        ))}
-                      </select>
-
-                      <button
-                        onClick={() => setIsCreateColorOpen(true)}
-                        className="px-2 py-1 bg-gray-200 rounded"
-                        title="Crear color rápido"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* tallas dinámicas */}
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Tallas</h3>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={addTalla}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded-lg transition-colors duration-200 flex items-center gap-1 text-sm"
-                        >
-                          <Plus size={14} /> Agregar talla
-                        </button>
-                        <select
-                          className="px-3 py-2 border rounded"
-                          value=""
-                          onChange={(e) => {
-                            const selectedId = e.target.value;
-                            if (!selectedId) return;
-                            const t = tallas.find((tt) => String(tt.id_talla) === String(selectedId));
-                            if (t) {
-                              setCurrentVariant((prev) => ({ ...prev, tallas: [...prev.tallas, { talla: t.nombre_talla, cantidad: "" }] }));
-                            }
-                            e.target.value = "";
-                          }}
-                        >
-                          <option value="">Tallas disponibles</option>
-                          {tallas.map((t) => (
-                            <option key={t.id_talla} value={t.id_talla}>{t.nombre_talla}</option>
-                          ))}
-                        </select>
-
-                        <button onClick={() => setIsCreateTallaOpen(true)} className="px-2 py-1 bg-gray-200 rounded">+</button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {currentVariant.tallas.map((talla, index) => (
-                        <div key={index} className="flex gap-3 items-end">
-                          <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Talla</label>
-                            <input
-                              type="text"
-                              value={talla.talla}
-                              onChange={(e) => handleTallaChange(index, "talla", e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Ej: XL, S, 38"
-                            />
-                          </div>
-                          <div className="w-28">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={talla.cantidad}
-                              onChange={(e) => handleTallaChange(index, "cantidad", e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="0"
-                            />
-                          </div>
-                          {currentVariant.tallas.length > 1 && (
-                            <button onClick={() => removeTalla(index)} className="text-red-600 hover:text-red-800 mb-1">
-                              <Trash2 size={20} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3">
-                    <button onClick={() => setIsVariantModalOpen(false)} className="px-4 py-2 border rounded">Cancelar</button>
-                    <button onClick={saveVariant} className="px-4 py-2 bg-green-600 text-white rounded">Guardar variante</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SUBMODAL CREAR COLOR (encima de variante modal) */}
-          {isCreateColorOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-white/8 backdrop-blur-xl z-60 p-4">
-              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm">
-                <h3 className="font-semibold mb-2">Crear color rápido</h3>
-                <input
-                  type="text"
-                  placeholder="Nombre color"
-                  value={newColorName}
-                  onChange={(e) => setNewColorName(e.target.value)}
-                  className="w-full border p-2 mb-2 rounded"
-                />
-                <div className="flex items-center gap-2 mb-4">
-                  <input type="color" value={newColorHex} onChange={(e) => setNewColorHex(e.target.value)} className="w-12 h-12 p-0 border rounded" />
-                  <input readOnly value={newColorHex} className="w-full border p-2 rounded" />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button onClick={() => { setIsCreateColorOpen(false); setNewColorName(""); setNewColorHex("#ff0000"); }} className="px-3 py-1 bg-gray-300 rounded">Cancelar</button>
-                  <button onClick={handleCreateColor} className="px-3 py-1 bg-blue-600 text-white rounded">Crear</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SUBMODAL CREAR TALLA (encima de variante modal) */}
-          {isCreateTallaOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-white/8 backdrop-blur-xl z-60 p-4">
-              <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm">
-                <h3 className="font-semibold mb-2">Crear talla rápida</h3>
-                <input
-                  type="text"
-                  placeholder="Nombre talla"
-                  value={newTallaName}
-                  onChange={(e) => setNewTallaName(e.target.value)}
-                  className="w-full border p-2 mb-4 rounded"
-                />
-                <div className="flex justify-end gap-2">
-                  <button onClick={() => { setIsCreateTallaOpen(false); setNewTallaName(""); }} className="px-3 py-1 bg-gray-300 rounded">Cancelar</button>
-                  <button onClick={handleCreateTalla} className="px-3 py-1 bg-blue-600 text-white rounded">Crear</button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+
+        {/* MODAL PRODUCTO (CREAR / EDITAR / VER) */}
+        <AnimatePresence>
+        {isProductModalOpen && (
+          <motion.div className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} role="dialog" aria-modal="true">
+            <div className="absolute inset-0" onClick={() => setIsProductModalOpen(false)} />
+            <motion.div className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-4xl max-h-[92vh] overflow-y-auto" initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">{productForm.id_producto ? "Editar Producto" : "Crear Nuevo Producto"}</h2>
+                <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* formulario */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                  <input
+                    name="nombre_producto"
+                    value={productForm.nombre_producto}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="Nombre del producto"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
+                  <select
+                    name="id_categoria"
+                    value={productForm.id_categoria}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                  >
+                    <option value="">Seleccionar categoría</option>
+                    {categorias.map((c) => (
+                      <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Precio compra</label>
+                  <input
+                    name="precio_compra"
+                    type="number"
+                    step="0.01"
+                    value={productForm.precio_compra}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Precio venta *</label>
+                  <input
+                    name="precio"
+                    type="number"
+                    step="0.01"
+                    value={productForm.precio}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">% Ganancia</label>
+                  <input
+                    name="porcentaje_ganancia"
+                    type="number"
+                    step="0.01"
+                    value={productForm.porcentaje_ganancia}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">% Descuento</label>
+                  <input
+                    name="descuento_producto"
+                    type="number"
+                    step="0.01"
+                    value={productForm.descuento_producto}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                  <textarea
+                    name="descripcion"
+                    value={productForm.descripcion}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Imagen (URL)</label>
+                  <input
+                    name="imagen_producto"
+                    value={productForm.imagen_producto}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                  <select
+                    name="estado"
+                    value={productForm.estado}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                  >
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* tabla variantes dentro del modal producto */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Variantes</h3>
+                  <button
+                    onClick={() => {
+                      setCurrentVariant({ color: "#2563eb", tallas: [{ talla: "", cantidad: "" }] });
+                      setIsVariantModalOpen(true);
+                    }}
+                    className="btn bg-blue-100 text-blue-700 flex items-center gap-2 px-4 py-2"
+                  >
+                    <Plus size={14} /> Añadir variante
+                  </button>
+                </div>
+
+                {variants.length > 0 ? (
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Talla</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {variants.map((variant, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: variant.codigo_hex || variant.nombre_color || variant.color }} />
+                                <span className="text-sm text-gray-600">{variant.codigo_hex || variant.nombre_color || variant.color}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-gray-900">{variant.nombre_talla || variant.talla}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm text-gray-600">{variant.stock ?? variant.cantidad}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => removeVariant(variant)}
+                                className="text-red-600 hover:text-red-800 transition-colors flex items-center justify-center h-8 w-8"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-[18px] p-8 text-center">
+                    <p className="text-gray-500">No hay variantes añadidas aún</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setIsProductModalOpen(false)}
+                  className="btn bg-gray-200 px-6 py-3"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={saveProduct}
+                  className="btn bg-blue-100 text-blue-700 px-6 py-3"
+                >
+                  Guardar producto
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* MODAL VARIANTE (SUBMODAL SOBRE PRODUCT MODAL) */}
+        <AnimatePresence>
+        {isVariantModalOpen && (
+          <motion.div className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} role="dialog" aria-modal="true">
+            <div className="absolute inset-0" onClick={() => setIsVariantModalOpen(false)} />
+            <motion.div className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-2xl overflow-y-auto" initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Añadir Variante</h2>
+                <button onClick={() => setIsVariantModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Color picker */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Color *</label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="color"
+                    value={currentVariant.color}
+                    onChange={(e) => handleVariantChange("color", e.target.value)}
+                    className="input w-1/2 p-2 border rounded-lg cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-600 font-mono">{currentVariant.color}</span>
+
+                  <select
+                    className="ml-4 input w-1/2 p-2 border rounded-lg"
+                    value=""
+                    onChange={(e) => {
+                      const col = colores.find((c) => String(c.id_color) === String(e.target.value));
+                      if (col) handleVariantChange("color", col.codigo_hex || col.hex || col.codigo || currentVariant.color);
+                    }}
+                  >
+                    <option value="">Colores del catálogo</option>
+                    {colores.map((c) => (
+                      <option key={c.id_color} value={c.id_color}>{c.nombre_color} {c.codigo_hex ? `(${c.codigo_hex})` : ""}</option>
+                    ))}
+                  </select>
+
+                  <button
+                    onClick={() => setIsCreateColorOpen(true)}
+                    className="w-10 h-10 border rounded-lg flex items-center justify-center"
+                    title="Crear color rápido"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* tallas dinámicas */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Tallas</h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={addTalla}
+                      className="input px-3 py-2 bg-blue-100 text-blue-700 border rounded-lg flex items-center gap-1 text-sm"
+                    >
+                      <Plus size={14} /> Agregar talla
+                    </button>
+                    <select
+                      className="px-3 py-2 border rounded"
+                      value=""
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        if (!selectedId) return;
+                        const t = tallas.find((tt) => String(tt.id_talla) === String(selectedId));
+                        if (t) {
+                          setCurrentVariant((prev) => ({ ...prev, tallas: [...prev.tallas, { talla: t.nombre_talla, cantidad: "" }] }));
+                        }
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="">Tallas disponibles</option>
+                      {tallas.map((t) => (
+                        <option key={t.id_talla} value={t.id_talla}>{t.nombre_talla}</option>
+                      ))}
+                    </select>
+
+                    <button onClick={() => setIsCreateTallaOpen(true)} className="w-10 h-10 border rounded-lg flex items-center justify-center">+</button>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {currentVariant.tallas.map((talla, index) => (
+                    <div key={index} className="flex gap-3 items-end">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Talla</label>
+                        <input
+                          type="text"
+                          value={talla.talla}
+                          onChange={(e) => handleTallaChange(index, "talla", e.target.value)}
+                          className="input w-full p-2 border rounded-lg"
+                          placeholder="Ej: XL, S, 38"
+                        />
+                      </div>
+                      <div className="w-28">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={talla.cantidad}
+                          onChange={(e) => handleTallaChange(index, "cantidad", e.target.value)}
+                          className="input w-full p-2 border rounded-lg"
+                          placeholder="0"
+                        />
+                      </div>
+                      {currentVariant.tallas.length > 1 && (
+                        <button onClick={() => removeTalla(index)} className="text-red-600 hover:text-red-800 mb-1 flex items-center justify-center h-8 w-8">
+                          <Trash2 size={20} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setIsVariantModalOpen(false)} className="btn bg-gray-200 px-4 py-2">Cancelar</button>
+                <button onClick={saveVariant} className="btn bg-blue-100 text-blue-700 px-4 py-2">Guardar variante</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* SUBMODAL CREAR COLOR (encima de variante modal) */}
+        <AnimatePresence>
+        {isCreateColorOpen && (
+          <motion.div className="fixed inset-0 flex items-center justify-center bg-white/8 backdrop-blur-xl z-60 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm" initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
+              <h3 className="font-semibold mb-2">Crear color rápido</h3>
+              <input
+                type="text"
+                placeholder="Nombre color"
+                value={newColorName}
+                onChange={(e) => setNewColorName(e.target.value)}
+                className="input w-full p-2 mb-2"
+              />
+              <div className="flex items-center gap-2 mb-4">
+                <input type="color" value={newColorHex} onChange={(e) => setNewColorHex(e.target.value)} className="w-12 h-12 p-0 border rounded" />
+                <input readOnly value={newColorHex} className="input w-full p-2" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => { setIsCreateColorOpen(false); setNewColorName(""); setNewColorHex("#ff0000"); }} className="btn bg-gray-200 px-3 py-1">Cancelar</button>
+                <button onClick={handleCreateColor} className="btn bg-blue-100 text-blue-700 px-3 py-1">Crear</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* SUBMODAL CREAR TALLA (encima de variante modal) */}
+        <AnimatePresence>
+        {isCreateTallaOpen && (
+          <motion.div className="fixed inset-0 flex items-center justify-center bg-white/8 backdrop-blur-xl z-60 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm" initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
+              <h3 className="font-semibold mb-2">Crear talla rápida</h3>
+              <input
+                type="text"
+                placeholder="Nombre talla"
+                value={newTallaName}
+                onChange={(e) => setNewTallaName(e.target.value)}
+                className="input w-full p-2 mb-4"
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => { setIsCreateTallaOpen(false); setNewTallaName(""); }} className="btn bg-gray-200 px-3 py-1">Cancelar</button>
+                <button onClick={handleCreateTalla} className="btn bg-blue-100 text-blue-700 px-3 py-1">Crear</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        </AnimatePresence>
+      </section>
     </Layout>
   );
 }
