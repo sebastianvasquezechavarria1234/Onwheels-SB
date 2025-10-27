@@ -6,6 +6,7 @@ import * as preinsService from "../../services/preinscripcionesService";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 
+
 export default function Preinscripciones() {
   const [preinscripciones, setPreinscripciones] = useState([]);
   const [loading, setLoading] = useState(true);

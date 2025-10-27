@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Pencil, Trash2, X, Eye } from "lucide-react";
 import { Layout } from "../../../layout/layout";
-import { motion, AnimatePresence } from "framer-motion";
+import {  AnimatePresence } from "framer-motion";
 import {
   createMatricula,
   deleteMatricula,
@@ -12,7 +12,7 @@ import {
 const Matriculas = () => {
   const [matriculas, setMatriculas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
 
   const [search, setSearch] = useState("");
   const [modalType, setModalType] = useState(null); // "add" | "edit" | "delete" | "details"
@@ -133,7 +133,7 @@ const Matriculas = () => {
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages]);
+  }, [currentPage, totalPages]);
 
   return (
     <Layout>
