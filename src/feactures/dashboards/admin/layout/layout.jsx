@@ -35,7 +35,7 @@ export const Layout = ({ children }) => {
         </h2>
         <div className="sidebar flex flex-col justify-between  overflow-y-scroll h-[85%]">
           <li>
-            <BtnSideBar title="Dashboard" link="../instructor/setting">
+            <BtnSideBar title="Dashboard" link="../admin/dashboard">
               <LayoutDashboard size={20} strokeWidth={1.5} />
             </BtnSideBar>
           </li>
@@ -128,7 +128,7 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
-              <BtnSideBar title="Planes" link="../instructor/planes">
+              <BtnSideBar title="Planes" link="../admin/plans">
                 <Users size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>

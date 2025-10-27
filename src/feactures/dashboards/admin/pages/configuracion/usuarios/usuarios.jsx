@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
-import {Layout} from "../../../layout/layout";
+import { Layout } from "../../../layout/layout";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   getUsuarios,
   createUsuario,
@@ -14,7 +15,7 @@ export default function Usuarios() {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [showModal, setShowModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
+  const [modal, setModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
   const [selectedUsuario, setSelectedUsuario] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -30,73 +31,75 @@ export default function Usuarios() {
     id_rol: "",
   });
 
-  // 🔹 Cargar usuarios y roles
+  const [search, setSearch] = useState("");
+
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Cargar usuarios y roles
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [dataUsuarios, dataRoles] = await Promise.all([getUsuarios(), getRoles()]);
+      setUsuarios(dataUsuarios);
+      setRoles(dataRoles);
+    } catch (err) {
+      console.error("Error cargando datos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const dataUsuarios = await getUsuarios();
-        const dataRoles = await getRoles();
-        setUsuarios(dataUsuarios);
-        setRoles(dataRoles);
-      } catch (err) {
-        console.error("Error cargando datos:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
-  // 🔹 Manejar cambios en el formulario
+  // Manejar cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🔹 Crear
+  // Crear
   const handleCreate = async () => {
     try {
       await createUsuario(formData);
-      const updated = await getUsuarios();
-      setUsuarios(updated);
-      setShowModal(null);
+      await fetchData();
+      closeModal();
     } catch (err) {
       console.error("Error creando usuario:", err);
     }
   };
 
-  // 🔹 Editar
+  // Editar
   const handleEdit = async () => {
     try {
       await updateUsuario(selectedUsuario.id_usuario, formData);
-      const updated = await getUsuarios();
-      setUsuarios(updated);
-      setShowModal(null);
+      await fetchData();
+      closeModal();
     } catch (err) {
       console.error("Error editando usuario:", err);
     }
   };
 
-  // 🔹 Eliminar
+  // Eliminar
   const handleDelete = async () => {
     try {
       await deleteUsuario(selectedUsuario.id_usuario);
-      setUsuarios(usuarios.filter((u) => u.id_usuario !== selectedUsuario.id_usuario));
-      setShowModal(null);
+      await fetchData();
+      closeModal();
     } catch (err) {
       console.error("Error eliminando usuario:", err);
     }
   };
 
-  // 🔹 Abrir modal
+  // Abrir modal
   const openModal = (type, usuario = null) => {
-    setShowModal(type);
-    if (usuario) {
-      setSelectedUsuario(usuario);
-      if (type === "editar") {
-        setFormData(usuario);
-      }
-    } else {
+    setModal(type);
+    setSelectedUsuario(usuario);
+    if (usuario && type === "editar") setFormData(usuario);
+    if (!usuario) {
       setFormData({
         documento: "",
         tipo_documento: "",
@@ -112,94 +115,141 @@ export default function Usuarios() {
     }
   };
 
+  const closeModal = () => {
+    setModal(null);
+    setSelectedUsuario(null);
+    setFormData({
+      documento: "",
+      tipo_documento: "",
+      nombre_completo: "",
+      email: "",
+      telefono: "",
+      fecha_nacimiento: "",
+      direccion: "",
+      contraseña: "",
+      tipo_genero: "",
+      id_rol: "",
+    });
+  };
+
   const getRolNombre = (idRol) => {
     const rol = roles.find((r) => r.id_rol === idRol);
     return rol ? rol.nombre_rol : "Sin rol";
   };
 
+  // Filtrado por búsqueda
+  const usuariosFiltrados = usuarios.filter((u) =>
+    u.nombre_completo?.toLowerCase().includes(search.toLowerCase()) ||
+    u.email?.toLowerCase().includes(search.toLowerCase()) ||
+    String(u.documento).includes(search)
+  );
+
+  // Paginación derivada
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentItems = usuariosFiltrados.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.max(1, Math.ceil(usuariosFiltrados.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
   return (
     <Layout>
-      <div className="p-6 bg-gray-50 min-h-screen w-full">
-        <div className="bg-white rounded-2xl shadow-md border border-gray-200">
-          {/* Encabezado */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-700">
-              Usuarios &gt; Registro de Usuarios
-            </h2>
-          </div>
+      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
+        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Usuarios &gt; Registro de Usuarios</h2>
 
-          {/* Barra de búsqueda y botón */}
-          <div className="flex justify-between items-center p-4">
-            <div className="relative w-1/3">
-              <input
-                type="text"
-                placeholder="Buscar usuarios..."
-                className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            </div>
+        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
+          <form action="" className="flex gap-[10px]">
+            <label className="mb-[20px] block">
+              <p className="">Buscar usuarios:</p>
+              <div className="relative">
+                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                  placeholder="Ej: Documento, Nombre o email"
+                  className="input pl-[50px]!"
+                />
+              </div>
+            </label>
+          </form>
+
+          <div>
             <button
               onClick={() => openModal("crear")}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all"
+              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
             >
               <Plus className="h-4 w-4" />
               Registrar nuevo usuario
             </button>
           </div>
+        </div>
 
-          {/* Tabla */}
+        <div className="p-[30px]">
+          {/* Encabezados estilo Roles */}
+          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
+            <p className="w-[10%] font-bold! opacity-80">ID</p>
+            <p className="w-[30%] font-bold! opacity-80">Nombre Completo</p>
+            <p className="w-[20%] font-bold! opacity-80">Email</p>
+            <p className="w-[15%] font-bold! opacity-80">Teléfono</p>
+            <p className="w-[15%] font-bold! opacity-80">Rol</p>
+            <p className="w-[10%] font-bold! opacity-80">Acciones</p>
+          </article>
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-600">
-              <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
+              <thead>
                 <tr>
-                  <th className="px-6 py-3">ID</th>
-                  <th className="px-6 py-3">Nombre Completo</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">Teléfono</th>
-                  <th className="px-6 py-3">Rol</th>
-                  <th className="px-6 py-3 text-center">Acciones</th>
+                  <th className="hidden" />
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-10 text-gray-400 italic">
-                      Cargando...
-                    </td>
+                    <td colSpan="6" className="text-center py-10 text-gray-400 italic">Cargando...</td>
                   </tr>
-                ) : usuarios.length === 0 ? (
+                ) : usuariosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-10 text-gray-400 italic">
-                      No hay usuarios registrados
-                    </td>
+                    <td colSpan="6" className="text-center py-10 italic text-red-700">No hay usuarios registrados</td>
                   </tr>
                 ) : (
-                  usuarios.map((u) => (
-                    <tr key={u.id_usuario} className="hover:bg-gray-50 transition border-b">
-                      <td className="px-6 py-3">{u.id_usuario}</td>
-                      <td className="px-6 py-3">{u.nombre_completo}</td>
-                      <td className="px-6 py-3">{u.email}</td>
-                      <td className="px-6 py-3">{u.telefono}</td>
-                      <td className="px-6 py-3">{getRolNombre(u.id_rol)}</td>
-                      <td className="px-6 py-3 flex justify-center gap-3">
-                        <button
+                  currentItems.map((u) => (
+                    <tr key={u.id_usuario} className="py-[18px] border-b border-black/20">
+                      <td className="px-6 py-[18px] w-[10%]">{u.id_usuario}</td>
+                      <td className="px-6 py-[18px] w-[30%] line-clamp-1">{u.nombre_completo}</td>
+                      <td className="px-6 py-[18px] w-[20%] line-clamp-1">{u.email}</td>
+                      <td className="px-6 py-[18px] w-[15%]">{u.telefono}</td>
+                      <td className="px-6 py-[18px] w-[15%]">{getRolNombre(u.id_rol)}</td>
+
+                      <td className="px-6 py-[18px] w-[10%] flex gap-[10px] items-center justify-center">
+                        <motion.button
                           onClick={() => openModal("ver", u)}
-                          className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition"
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
                         >
                           <Eye className="h-4 w-4" />
-                        </button>
-                        <button
+                        </motion.button>
+
+                        <motion.button
                           onClick={() => openModal("editar", u)}
-                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
                         >
                           <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
+                        </motion.button>
+
+                        <motion.button
                           onClick={() => openModal("eliminar", u)}
-                          className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition"
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </motion.button>
                       </td>
                     </tr>
                   ))
@@ -207,201 +257,258 @@ export default function Usuarios() {
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
 
-      {/* ===== MODALES ===== */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 relative">
+          {/* Paginación */}
+          <div className="flex justify-center items-center gap-2 py-4 italic">
             <button
-              onClick={() => setShowModal(null)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="btn cursor-pointer bg-gray-200"
             >
-              ✖
+              Anterior
             </button>
 
-            {/* Crear / Editar */}
-            {(showModal === "crear" || showModal === "editar") && (
-              <>
-                <h3 className="text-lg font-semibold mb-4 text-gray-700">
-                  {showModal === "crear" ? "Registrar Usuario" : "Editar Usuario"}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm text-gray-600">Documento</label>
+            <span className="text-[18px]">Página <span className="text-blue-700">{currentPage}</span> de {totalPages}</span>
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="btn cursor-pointer bg-gray-200"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+
+        {/* Modales */}
+        <AnimatePresence>
+          {(modal === "crear" || modal === "editar") && (
+            <motion.div
+              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="absolute inset-0" onClick={closeModal} />
+
+              <motion.div
+                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="font-primary text-center mb-[30px]">{modal === "crear" ? "Registrar Usuario" : "Editar Usuario"}</h3>
+
+                <form onSubmit={(e) => { e.preventDefault(); modal === "crear" ? handleCreate() : handleEdit(); }} className="grid grid-cols-2 gap-[16px]">
+                  <label className="block col-span-1">
+                    <p className="">Documento</p>
                     <input
                       type="text"
                       name="documento"
                       value={formData.documento}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="Ej: 900123456"
+                      required
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Tipo Documento</label>
+                  </label>
+
+                  <label className="block col-span-1">
+                    <p className="">Tipo Documento</p>
                     <input
                       type="text"
                       name="tipo_documento"
                       value={formData.tipo_documento}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="Ej: CC, CE"
                     />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-sm text-gray-600">Nombre Completo</label>
+                  </label>
+
+                  <label className="block col-span-2">
+                    <p className="">Nombre Completo</p>
                     <input
                       type="text"
                       name="nombre_completo"
                       value={formData.nombre_completo}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="Ej: Juan Pérez"
+                      required
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Email</label>
+                  </label>
+
+                  <label className="block col-span-1">
+                    <p className="">Email</p>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="Ej: correo@dominio.com"
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Teléfono</label>
+                  </label>
+
+                  <label className="block col-span-1">
+                    <p className="">Teléfono</p>
                     <input
                       type="text"
                       name="telefono"
                       value={formData.telefono}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="Ej: +57 300 123 4567"
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Fecha Nacimiento</label>
+                  </label>
+
+                  <label className="block col-span-1">
+                    <p className="">Fecha Nacimiento</p>
                     <input
                       type="date"
                       name="fecha_nacimiento"
                       value={formData.fecha_nacimiento}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Dirección</label>
+                  </label>
+
+                  <label className="block col-span-1">
+                    <p className="">Dirección</p>
                     <input
                       type="text"
                       name="direccion"
                       value={formData.direccion}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="Ej: Calle 123 #45-67"
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Contraseña</label>
+                  </label>
+
+                  <label className="block col-span-1">
+                    <p className="">Contraseña</p>
                     <input
                       type="password"
                       name="contraseña"
                       value={formData.contraseña}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="********"
                     />
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Género</label>
+                  </label>
+
+                  <label className="block col-span-1">
+                    <p className="">Género</p>
                     <input
                       type="text"
                       name="tipo_genero"
                       value={formData.tipo_genero}
                       onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
+                      className="input w-full"
+                      placeholder="Ej: Masculino / Femenino"
                     />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-sm text-gray-600">Rol</label>
-                    <select
-                      name="id_rol"
-                      value={formData.id_rol}
-                      onChange={handleChange}
-                      className="w-full border rounded-lg px-3 py-2"
-                    >
+                  </label>
+
+                  <label className="block col-span-2">
+                    <p className="">Rol</p>
+                    <select name="id_rol" value={formData.id_rol} onChange={handleChange} className="input w-full">
                       <option value="">Seleccione un rol</option>
                       {roles.map((r) => (
-                        <option key={r.id_rol} value={r.id_rol}>
-                          {r.nombre_rol}
-                        </option>
+                        <option key={r.id_rol} value={r.id_rol}>{r.nombre_rol}</option>
                       ))}
                     </select>
+                  </label>
+
+                  <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
+                    <button type="button" onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
+                    <button type="submit" className="btn bg-blue-100 text-blue-700">{modal === "crear" ? "Guardar" : "Actualizar"}</button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {modal === "ver" && selectedUsuario && (
+            <motion.div
+              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="absolute inset-0" onClick={closeModal} />
+
+              <motion.div
+                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="font-primary text-center mb-[30px]">Detalles del Usuario</h3>
+                <div className="grid grid-cols-2 gap-[10px]">
+                  <div>
+                    <p className="font-medium">ID:</p>
+                    <p className="font-medium">Documento:</p>
+                    <p className="font-medium">Nombre:</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-700">{selectedUsuario.id_usuario}</p>
+                    <p className="text-gray-700">{selectedUsuario.documento}</p>
+                    <p className="text-gray-700">{selectedUsuario.nombre_completo}</p>
                   </div>
                 </div>
-                <div className="mt-6 flex justify-end gap-2">
-                  <button
-                    onClick={() => setShowModal(null)}
-                    className="px-4 py-2 bg-gray-300 rounded-lg"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={showModal === "crear" ? handleCreate : handleEdit}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-                  >
-                    {showModal === "crear" ? "Guardar" : "Actualizar"}
-                  </button>
-                </div>
-              </>
-            )}
 
-            {/* Ver Detalles */}
-            {showModal === "ver" && selectedUsuario && (
-              <>
-                <h3 className="text-lg font-semibold mb-4 text-gray-700">
-                  Detalles del Usuario
-                </h3>
-                <div className="space-y-2 text-sm text-gray-700">
-                  <p><strong>ID:</strong> {selectedUsuario.id_usuario}</p>
-                  <p><strong>Documento:</strong> {selectedUsuario.documento}</p>
-                  <p><strong>Tipo Documento:</strong> {selectedUsuario.tipo_documento}</p>
-                  <p><strong>Nombre:</strong> {selectedUsuario.nombre_completo}</p>
-                  <p><strong>Email:</strong> {selectedUsuario.email}</p>
-                  <p><strong>Teléfono:</strong> {selectedUsuario.telefono}</p>
-                  <p><strong>Fecha Nacimiento:</strong> {selectedUsuario.fecha_nacimiento}</p>
-                  <p><strong>Dirección:</strong> {selectedUsuario.direccion}</p>
-                  <p><strong>Género:</strong> {selectedUsuario.tipo_genero}</p>
-                  <p><strong>Rol:</strong> {getRolNombre(selectedUsuario.id_rol)}</p>
+                <div className="mt-4">
+                  <p className="font-medium">Email:</p>
+                  <p className="text-gray-700">{selectedUsuario.email}</p>
                 </div>
-              </>
-            )}
 
-            {/* Eliminar */}
-            {showModal === "eliminar" && selectedUsuario && (
-              <>
-                <h3 className="text-lg font-semibold mb-4 text-gray-700">
-                  Confirmar Eliminación
-                </h3>
-                <p className="text-sm text-gray-600 mb-6">
-                  ¿Seguro que deseas eliminar al usuario{" "}
-                  <strong>{selectedUsuario.nombre_completo}</strong>?
-                </p>
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setShowModal(null)}
-                    className="px-4 py-2 bg-gray-300 rounded-lg"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg"
-                  >
-                    Eliminar
-                  </button>
+                <div className="mt-4">
+                  <p className="font-medium">Teléfono:</p>
+                  <p className="text-gray-700">{selectedUsuario.telefono}</p>
                 </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+
+                <div className="flex justify-end gap-[10px] mt-[30px]">
+                  <button onClick={closeModal} className="btn bg-gray-200">Cerrar</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {modal === "eliminar" && selectedUsuario && (
+            <motion.div
+              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="absolute inset-0" onClick={closeModal} />
+
+              <motion.div
+                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="font-primary text-center mb-[30px] text-red-600">Eliminar Usuario</h3>
+                <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar al usuario <strong>{selectedUsuario.nombre_completo}</strong>?</p>
+                <div className="flex justify-end gap-[10px] mt-[20px]">
+                  <button onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
+                  <button onClick={handleDelete} className="btn bg-red-100 text-red-700">Eliminar</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
     </Layout>
   );
 }
