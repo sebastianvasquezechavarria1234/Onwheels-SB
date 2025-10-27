@@ -15,7 +15,7 @@ export const Grid = () => {
   return (
     <>
       {/* ================== SECCIÓN PRODUCTOS ================== */}
-      <section className="max-w-[1400px] mx-auto p-20">
+      <section className="Products max-w-[1400px] mx-auto p-20">
         <div className="flex gap-[10px] justify-between">
           <h3 className="mb-[30px]">
             Explora

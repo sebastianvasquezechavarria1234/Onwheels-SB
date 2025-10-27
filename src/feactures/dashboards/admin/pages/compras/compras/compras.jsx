@@ -334,7 +334,7 @@ export default function Compras() {
       <div className="p-6 bg-gray-50 min-h-screen w-full">
         {/* Encabezado */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-lg font-bold">>Gestión de compras</h1>
+          <h1 className="text-lg font-bold">Gestión de compras</h1>
           <button
             onClick={() => openModal("crear")}
             className="px-8 py-3 rounded-2xl font-semibold shadow-md bg-[#3b10f0] text-white"

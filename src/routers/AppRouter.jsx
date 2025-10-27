@@ -54,11 +54,13 @@ import { StudentShoppingCart } from "../feactures/landing/student/pages/StudentS
 
 // Landing Instructor
 import { InstructorHome } from "../feactures/landing/instructor/pages/InstructorHome";
-import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorStore";
+// import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorStore";
 import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass";
 import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
-import { InstructorAbout } from "../feactures/landing/instructor/pages/InstructorAbout";
+// import { InstructorAbout } from "../feactures/landing/instructor/pages/InstructorAbout";
 import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
+import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
+import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
 
 const AppRouter = () => {
   const location = useLocation();
@@ -138,7 +140,7 @@ const AppRouter = () => {
         <Route path="instructor/store" element={<InstructorStore />} />
         <Route path="instructor/class" element={<InstructorClass />} />
         <Route path="instructor/events" element={<InstructorEvents />} />
-        <Route path="instructor/about" element={<InstructorAbout />} />
+        <Route path="instructor/about" element={<InstructorAbaut />} />
         <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
       </Routes>
     </AnimatePresence>

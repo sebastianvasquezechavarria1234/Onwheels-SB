@@ -644,3 +644,10 @@ a,
   }
   
 }
+
+@media screen and (max-width: 470px) {
+  .Products .grid {
+    grid-template-columns: 1fr;
+  }
+}
+  
