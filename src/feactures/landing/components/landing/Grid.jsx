@@ -15,8 +15,8 @@ export const Grid = () => {
   return (
     <>
       {/* ================== SECCIÓN PRODUCTOS ================== */}
-      <section className="Products max-w-[1400px] mx-auto p-20">
-        <div className="flex gap-[10px] justify-between">
+      <section className="Products max-w-[1400px] mx-auto p-[20px] max-md:p-[10px] mt-[60px]">
+        <div className="flex gap-[10px] justify-between max-md:flex-col max-md:gap-0">
           <h3 className="mb-[30px]">
             Explora
             <span className="opacity-90 mx-[15px] font-primary">
@@ -30,7 +30,8 @@ export const Grid = () => {
             <ArrowRight strokeWidth={1} className="text-blue-700" />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-[20px]">
+
+        <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px] ">
           <Card
             styleImage="scale-[0.7] group-hover:scale-[0.8]!"
             img="./bg_productosL.jpg"
@@ -56,9 +57,9 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN EVENTOS ================== */}
-      <section className="bg-gray-200">
-        <div className="max-w-[1400px] mx-auto p-20">
-          <div className="flex gap-[10px] justify-between ">
+      <section className="bg-gray-200 mt-[60px]">
+        <div className="max-w-[1400px] mx-auto p-20 max-md: p-[20px]" >
+          <div className="flex gap-[10px] justify-between max-md:flex-col max-md:gap-0 ">
             <h3 className="mb-[30px]">
               Proximos
               <span className="font-primary"> eventos</span>
@@ -68,7 +69,7 @@ export const Grid = () => {
               <ArrowRight strokeWidth={1} className="text-blue-700" />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-[20px]">
+          <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px]">
             <Card
               img="./bg_eventosL.jpg"
               descripcion="Evento de skateboard en la ciudad de la eterna primavera"
@@ -92,9 +93,9 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN APRENDER ================== */}
-      <section className="max-w-[1400px] mx-auto h-[600px] flex gap-x-20 items-center p-[3rem]">
+      <section className="max-w-[1400px] mt-[60px] mx-auto h-[600px] flex gap-x-20 items-center p-[3rem] max-lg:flex-col max-md:p-[10px] max-md:gap-[25px]">
         {/* Texto */}
-        <div className="w-[50%]">
+        <div className="w-[50%] max-lg:w-full">
           <h2 className="text-4xl font-bold mb-4">
             ¿Te <span className="font-primary"> gustaría</span>
             <h2>aprender con</h2>
@@ -110,7 +111,7 @@ export const Grid = () => {
           </BtnLinkIcon>
         </div>
         {/* Grid de imágenes */}
-        <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[800px] mx-auto h-[500px]">
+        <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[800px] mx-auto h-[500px] max-md:h-[60vw] max-md:gap-[10px]">
           <img
             className="col-span-2 row-span-3 object-cover rounded-lg w-full h-full"
             src="./bg_eventosL3.jpg"
@@ -130,9 +131,9 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN REELS ================== */}
-      <section className="max-w-[1600px] mx-auto mt-[120px] px-4">
-        <h2 className="text-2xl font-bold mb-6">¡Nuestros mejores reels!</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+      <section className="max-w-[1600px] mx-auto mt-[120px] px-4 max-md:p-[30px]  ">
+        <h2 className="text-2xl font-bold mb-6 text-center">¡Nuestros mejores reels!</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 max-md:gap-[10px] ">
           {videos.map((video, i) => (
             <article
               key={i}
