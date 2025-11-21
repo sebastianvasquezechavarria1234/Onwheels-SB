@@ -87,7 +87,7 @@ export const StudentHeader = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Onwheels-SB student
+                Performance-SB student
               </h4>
             </Link>
           </li>
@@ -223,7 +223,7 @@ export const StudentHeader = () => {
 
                 <div className="mt-6 flex items-center gap-3 justify-end">
                   <BtnLink link="../login#" style="text-[14px]!" title="Iniciar sesión" />
-                  <BtnLink link="../store#" style="text-[14px]!" title="Tienda" />
+                  <BtnLink link="../store#" style="text-[14px]!" title="Tienda" />sebastian vas
                 </div>
               </motion.div>
             </motion.div>

@@ -1,5 +1,5 @@
 import { InstructorLayout } from "../layout/InstructorLayout";
-import { CardProduct } from "../../components/CardProduct";
+import  CardProduct  from "../../components/CardProduct";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { CreditCard } from "lucide-react";
 

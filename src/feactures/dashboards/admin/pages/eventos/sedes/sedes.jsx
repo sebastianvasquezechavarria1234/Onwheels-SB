@@ -139,7 +139,7 @@ export default function Sedes() {
           </article>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
+            <table className="w-full text-left text-gray-600">
               <thead className="">
                 <tr><th className="hidden" /></tr>
               </thead>
@@ -163,7 +163,7 @@ export default function Sedes() {
                       <td className="px-6 py-[18px] w-[25%] line-clamp-1">{s.nombre_sede}</td>
                       <td className="px-6 py-[18px] w-[30%] line-clamp-2">{s.direccion}</td>
                       <td className="px-6 py-[18px] w-[15%]">{s.ciudad}</td>
-                      <td className="px-6 py-[18px] w-[10%]">{s.telefono_sede}</td>
+                      <td className="px-6 py-[18px] w-[10%]">{s.telefono}</td>
 
                       <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
                         <motion.button

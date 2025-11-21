@@ -61,8 +61,9 @@ import { InstructorEvents } from "../feactures/landing/instructor/pages/Instruct
 import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
 import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
 import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
-import { Dashboard } from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
+import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
 
+ import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
 
 const AppRouter = () => {
   const location = useLocation();
@@ -92,6 +93,9 @@ const AppRouter = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         {/* Landing */}
+       
+<Route path="recover" element={<RecoverPassword />} />
+
         <Route index element={withAnimation(Home)} />
         <Route path="store" element={withAnimation(Store)} />
         <Route path="class" element={withAnimation(Class)} />
