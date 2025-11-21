@@ -1,21 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Pencil, Trash2, X, Eye } from "lucide-react";
 import { Layout } from "../../../layout/layout";
-import {  AnimatePresence } from "framer-motion";
-import {
-  createMatricula,
-  deleteMatricula,
-  getMatriculas,
-  updateMatricula,
-} from "../../services/matriculaService";
+import { AnimatePresence, motion } from "framer-motion";
 
 const Matriculas = () => {
-  const [matriculas, setMatriculas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // UN DATO "quemado" en la tabla
+  const [matriculas, setMatriculas] = useState([
+    {
+      id_matricula: "M-0001",
+      id_preinscripcion: "P-12345",
+      id_clase: "10",
+      id_plan: "2",
+      id_metodo_pago: "Tarjeta",
+      fecha_matricula: "2025-11-01",
+      valor_matricula: 50000,
+    },
+  ]);
+
+  const [loading, setLoading] = useState(false);
   const [, setError] = useState(null);
 
   const [search, setSearch] = useState("");
-  const [modalType, setModalType] = useState(null); // "add" | "edit" | "delete" | "details"
+  const [modalType, setModalType] = useState(null); // "add" | "edit" | "delete" | "details" | "addPlanClase"
   const [selected, setSelected] = useState(null);
 
   const [form, setForm] = useState({
@@ -27,27 +33,19 @@ const Matriculas = () => {
     valor_matricula: "",
   });
 
+  // Form para el modal nuevo (añadir plan y clase)
+  const [formAddPC, setFormAddPC] = useState({
+    id_plan: "",
+    id_clase: "",
+  });
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    fetchMatriculas();
+    // no hay fetch real, dato quemado
   }, []);
-
-  const fetchMatriculas = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getMatriculas();
-      setMatriculas(data || []);
-    } catch (err) {
-      console.error(err);
-      setError("No se pudieron cargar las matrículas. Revisa la API / CORS.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openModal = (type, item = null) => {
     setModalType(type);
@@ -74,6 +72,13 @@ const Matriculas = () => {
         valor_matricula: item.valor_matricula || "",
       });
     }
+
+    if (type === "addPlanClase" && item) {
+      setFormAddPC({
+        id_plan: item.id_plan || "",
+        id_clase: item.id_clase || "",
+      });
+    }
   };
 
   const closeModal = () => {
@@ -82,39 +87,67 @@ const Matriculas = () => {
   };
 
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleChangePC = (e) => setFormAddPC((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (modalType === "add") {
-        await createMatricula(form);
+        const newItem = {
+          ...form,
+          id_matricula: `M-${Math.floor(Math.random() * 9000) + 1000}`,
+          valor_matricula: Number(form.valor_matricula) || 0,
+        };
+        setMatriculas((p) => [newItem, ...p]);
       } else if (modalType === "edit" && selected) {
-        await updateMatricula(selected.id_matricula, form);
+        setMatriculas((p) =>
+          p.map((it) =>
+            it.id_matricula === selected.id_matricula
+              ? { ...it, ...form, valor_matricula: Number(form.valor_matricula) || it.valor_matricula }
+              : it
+          )
+        );
       }
-      await fetchMatriculas();
       closeModal();
     } catch (err) {
       console.error(err);
-      setError("Error al guardar la matrícula.");
+      setError("Error al guardar la matrícula (local).");
     }
+  };
+
+  const handleAddPlanClase = (e) => {
+    e.preventDefault();
+    if (!selected) return;
+
+    setMatriculas((p) =>
+      p.map((it) =>
+        it.id_matricula === selected.id_matricula
+          ? {
+              ...it,
+              id_plan: formAddPC.id_plan || it.id_plan,
+              id_clase: formAddPC.id_clase || it.id_clase,
+            }
+          : it
+      )
+    );
+
+    closeModal();
   };
 
   const handleDelete = async (id) => {
     try {
-      await deleteMatricula(id);
-      await fetchMatriculas();
+      setMatriculas((p) => p.filter((it) => it.id_matricula !== id));
       closeModal();
     } catch (err) {
       console.error(err);
-      setError("Error al eliminar la matrícula.");
+      setError("Error al eliminar la matrícula (local).");
     }
   };
 
-  // Filtrado antes de paginación
+  // Filtrado antes de paginación (QUITÉ id_preinscripcion del filtro)
   const filtered = matriculas.filter((m) =>
     [
       m.id_matricula,
-      m.id_preinscripcion,
       m.id_clase,
       m.id_plan,
       m.fecha_matricula,
@@ -169,10 +202,9 @@ const Matriculas = () => {
         </div>
 
         <div className="p-[30px]">
-          {/* Encabezados */}
+          {/* Encabezados (quitada Preinscripción) */}
           <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
             <p className="w-[12%] font-bold! opacity-80">ID Matrícula</p>
-            <p className="w-[14%] font-bold! opacity-80">Preinscripción</p>
             <p className="w-[14%] font-bold! opacity-80">Clase</p>
             <p className="w-[12%] font-bold! opacity-80">Plan</p>
             <p className="w-[14%] font-bold! opacity-80">Fecha</p>
@@ -199,7 +231,6 @@ const Matriculas = () => {
                   currentItems.map((m) => (
                     <tr key={m.id_matricula} className="py-[18px] border-b border-black/20 flex items-center">
                       <td className="px-6 py-[18px] w-[12%]">{m.id_matricula}</td>
-                      <td className="px-6 py-[18px] w-[14%] line-clamp-1">{m.id_preinscripcion}</td>
                       <td className="px-6 py-[18px] w-[14%] line-clamp-1">{m.id_clase}</td>
                       <td className="px-6 py-[18px] w-[12%]">{m.id_plan}</td>
                       <td className="px-6 py-[18px] w-[14%]">{m.fecha_matricula}</td>
@@ -223,6 +254,16 @@ const Matriculas = () => {
                           className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
                         >
                           <Pencil className="h-4 w-4" />
+                        </motion.button>
+
+                        {/* NUEVO BOTÓN + (misma estética que los demás) */}
+                        <motion.button
+                          onClick={() => openModal("addPlanClase", m)}
+                          whileHover={{ scale: 1.08 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="w-[45px] h-[45px] bg-purple-100 text-purple-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-purple-300 shadow-md"
+                        >
+                          <Plus className="h-4 w-4" />
                         </motion.button>
 
                         <motion.button
@@ -303,7 +344,7 @@ const Matriculas = () => {
 
                 <label className="block col-span-1">
                   <p className="">ID Método Pago</p>
-                  <input name="id_metodo_pago" className="input w-full" value={form.id_metodo_pago} onChange={handleChange} placeholder="Ej: 1" required />
+                  <input name="id_metodo_pago" className="input w-full" value={form.id_metodo_pago} onChange={handleChange} placeholder="Ej: Tarjeta" required />
                 </label>
 
                 <label className="block col-span-1">
@@ -429,6 +470,47 @@ const Matriculas = () => {
               <div className="flex justify-end gap-[10px] mt-[20px]">
                 <button className="btn bg-gray-200" onClick={closeModal}>Cerrar</button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* MODAL NUEVO: addPlanClase */}
+        {modalType === "addPlanClase" && selected && (
+          <motion.div
+            className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <div className="absolute inset-0" onClick={closeModal} />
+
+            <motion.div
+              className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 18 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-primary text-center mb-[30px]">Agregar Plan y Clase</h3>
+
+              <form onSubmit={handleAddPlanClase} className="grid grid-cols-2 gap-[16px]">
+                <label className="block col-span-1">
+                  <p className="">ID Plan</p>
+                  <input name="id_plan" className="input w-full" value={formAddPC.id_plan} onChange={handleChangePC} placeholder="Ej: 2" required />
+                </label>
+
+                <label className="block col-span-1">
+                  <p className="">ID Clase</p>
+                  <input name="id_clase" className="input w-full" value={formAddPC.id_clase} onChange={handleChangePC} placeholder="Ej: 10" required />
+                </label>
+
+                <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
+                  <button type="button" onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
+                  <button type="submit" className="btn bg-blue-100 text-blue-700">Añadir</button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}
