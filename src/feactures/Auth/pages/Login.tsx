@@ -1,50 +1,56 @@
-import type React from "react"
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import axios from "axios"
-
-const routeByRole: Record<string, string> = {
-  administrador: "/admin/dashboard",
-  estudiante: "/student/setting",
-  instructor: "/instructor/setting",
-  Usuario: "/home"
-}
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const payload = {
         email,
         contrasena: password // backend espera este campo
+      };
+
+      const response = await fetch("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const usuario = data.user;
+
+        // Guardamos usuario en localStorage
+        localStorage.setItem("user", JSON.stringify(usuario));
+
+        // Redirigimos según el rol
+        if (usuario.rol === "administrador") {
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      } else {
+        setError(data.message || "Error en el inicio de sesión");
       }
-
-      const response = await axios.post("http://localhost:3000/api/auth/login", payload)
-      const usuario = response.data.user
-
-      // Guardamos usuario en localStorage
-      localStorage.setItem("user", JSON.stringify(usuario))
-
-      // Redirigimos según el rol
-      const destination = routeByRole[usuario.rol] || "/home"
-      navigate(destination, { replace: true })
-    } catch (err: any) {
-      console.error("Login error:", err)
-      if (err.response?.data?.message) setError(err.response.data.message)
-      else setError("Error al conectarse al servidor")
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Error al conectarse al servidor. Asegúrate de que el backend esté corriendo en http://localhost:3000");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
@@ -134,7 +140,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

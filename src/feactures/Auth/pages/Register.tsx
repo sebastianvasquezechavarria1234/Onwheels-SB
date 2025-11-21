@@ -1,6 +1,5 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import axios from "axios"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -9,72 +8,86 @@ const Register = () => {
     phone: "",
     password: "",
     confirmPassword: "",
-  })
+  });
 
-  const [errors, setErrors] = useState({ passwordMatch: "" })
-  const [serverMsg, setServerMsg] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const navigate = useNavigate()
+  const [errors, setErrors] = useState({ passwordMatch: "" });
+  const [serverMsg, setServerMsg] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
 
     // VALIDACIÓN EN TIEMPO REAL
     if (name === "password" || name === "confirmPassword") {
       if (name === "password" && formData.confirmPassword !== "") {
         setErrors({
           passwordMatch: value !== formData.confirmPassword ? "Las contraseñas no coinciden" : ""
-        })
+        });
       } else if (name === "confirmPassword") {
         setErrors({
           passwordMatch: value !== formData.password ? "Las contraseñas no coinciden" : ""
-        })
+        });
       }
     }
-  }
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setServerMsg(null)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setServerMsg(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setErrors({ passwordMatch: "Las contraseñas no coinciden" })
-      return
+      setErrors({ passwordMatch: "Las contraseñas no coinciden" });
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
 
     try {
       const payload = {
         nombre: formData.fullName,
-        email: formData.email,
+        email: formData.email.toLowerCase(), // Convertir a minúsculas como lo espera el backend
         telefono: formData.phone || null,
         contrasena: formData.password, // backend espera este campo
+      };
+
+      // Apuntando al endpoint correcto en puerto 3000
+      const response = await fetch("http://localhost:3000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setServerMsg(data.message || "Registro exitoso");
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          password: "",
+          confirmPassword: "",
+        });
+        setErrors({ passwordMatch: "" });
+
+        // Redirigir después de un breve delay para mostrar el mensaje
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
+      } else {
+        setServerMsg(data.message || "Error en el registro");
       }
-
-      // Apuntando al endpoint correcto
-      const res = await axios.post("http://localhost:3000/api/auth/register", payload)
-
-      setServerMsg(res.data.message || "Registro exitoso")
-      setFormData({
-        fullName: "",
-        email: "",
-        phone: "",
-        password: "",
-        confirmPassword: "",
-      })
-      setErrors({ passwordMatch: "" })
-
-      navigate("/login")
-    } catch (err: any) {
-      console.error("Error al registrar usuario:", err)
-      if (err.response?.data?.message) setServerMsg(err.response.data.message)
-      else setServerMsg("No se pudo conectar con el servidor")
+    } catch (err) {
+      console.error("Error al registrar usuario:", err);
+      setServerMsg("No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:3000");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
@@ -149,6 +162,7 @@ const Register = () => {
                     placeholder="Contraseña"
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
                     required
+                    minLength="6"
                   />
                 </div>
 
@@ -165,6 +179,7 @@ const Register = () => {
                     placeholder="Confirmar contraseña"
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
                     required
+                    minLength="6"
                   />
                   {errors.passwordMatch && (
                     <p className="text-red-600 text-sm mt-1">{errors.passwordMatch}</p>
@@ -216,7 +231,7 @@ const Register = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Register
+export default Register;
