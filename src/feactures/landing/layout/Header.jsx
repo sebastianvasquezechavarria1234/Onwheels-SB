@@ -75,9 +75,9 @@ export const Header = () => {
   const items = [
     { title: "Inicio", to: "/" },
     { title: "Tienda", to: "/store" },
-    { title: "Clases", to: "/class" },
+    { title: "Formación", to: "/class" },
     { title: "Eventos", to: "/events" },
-    { title: "Pre-inscripciones", to: "/preinscriptions" },
+    { title: "Pre-inscribirme", to: "/preinscriptions" },
     { title: "Sobre nosotros", to: "/about" },
   ];
 
