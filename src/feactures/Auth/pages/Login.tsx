@@ -1,3 +1,4 @@
+// Login.tsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -16,7 +17,7 @@ const Login = () => {
     try {
       const payload = {
         email,
-        contrasena: password // backend espera este campo
+        contrasena: password
       };
 
       const response = await fetch("http://localhost:3000/api/auth/login", {
@@ -35,10 +36,17 @@ const Login = () => {
         // Guardamos usuario en localStorage
         localStorage.setItem("user", JSON.stringify(usuario));
 
-        // Redirigimos según el rol
-        if (usuario.rol === "administrador") {
+        // Redirigir según el rol (manejando mayúsculas/minúsculas)
+        const rolNormalizado = usuario.rol ? usuario.rol.toLowerCase() : 'usuario';
+
+        if (rolNormalizado === "administrador") {
           navigate("/admin/dashboard", { replace: true });
+        } else if (rolNormalizado === "estudiante") {
+          navigate("/student/setting", { replace: true });
+        } else if (rolNormalizado === "instructor") {
+          navigate("/instructor/setting", { replace: true });
         } else {
+          // Si es "Usuario" o null, ir a /home
           navigate("/", { replace: true });
         }
       } else {
