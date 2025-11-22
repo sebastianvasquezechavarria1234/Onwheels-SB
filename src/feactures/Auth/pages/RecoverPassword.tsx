@@ -1,30 +1,45 @@
+// src/feactures/Auth/pages/RecoverPassword.tsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../../../services/api";
+
 export const RecoverPassword = () => {
     const [email, setEmail] = useState("");
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        e.stopPropagation();
         setError("");
         setMessage("");
+        setLoading(true);
 
         if (!email.includes("@")) {
             setError("El correo ingresado no es válido.");
+            setLoading(false);
             return;
         }
 
-        setLoading(true);
+        try {
+            const response = await api.post("/auth/request-password-reset", {
+                email: email.trim()
+            });
 
-        // 🔹 Simulación del envío del correo
-        setTimeout(() => {
+            setMessage(response.data.message);
+            
+            // Redirigir después de 3 segundos
+            setTimeout(() => {
+                navigate("/login");
+            }, 3000);
+        } catch (err) {
+            console.error("Recover password error:", err);
+            setError(err.response?.data?.message || "Error al procesar la solicitud");
+        } finally {
             setLoading(false);
-            setMessage(
-                "Se ha enviado un correo con instrucciones para recuperar tu contraseña."
-            );
-        }, 1500);
+        }
     };
 
     return (
@@ -71,6 +86,7 @@ export const RecoverPassword = () => {
                                         placeholder="Ingresa tu correo aquí"
                                         className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
                                         required
+                                        disabled={loading}
                                     />
                                 </div>
 

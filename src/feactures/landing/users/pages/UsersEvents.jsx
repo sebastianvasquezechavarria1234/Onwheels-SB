@@ -1,12 +1,11 @@
 import React from "react";
-
 import { CalendarDays, MapPin } from "lucide-react";
-import { InstructorLayout } from "../layout/InstructorLayout";
+import { UsersLayout } from "../layout/UsersLayout";
 
 
-export const InstructorEvents = () => {
+export const UsersEvents = () => {
   return(
-    <InstructorLayout>
+    <UsersLayout>
       <div className="min-h-screen flex flex-col mt-4">
         <section
           className="h-[400px] flex items-center bg-cover bg-center text-white"
@@ -205,6 +204,6 @@ export const InstructorEvents = () => {
 </section>
 
       </div>
-    </InstructorLayout>
+    </UsersLayout>
   )
 }

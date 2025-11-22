@@ -64,6 +64,12 @@ import { InstructorAbaut } from "../feactures/landing/instructor/pages/Instructo
 import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
 
  import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
+import { UsersHome } from "../feactures/landing/users/pages/UsersHome";
+import { UsersStore } from "../feactures/landing/users/pages/UsersStore";
+import { UsersClass } from "../feactures/landing/users/pages/UsersClass";
+import { UsersEvents } from "../feactures/landing/users/pages/UsersEvents";
+import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut";
+import { ResetPassword } from "../feactures/Auth/pages/ResetPassword";
 
 const AppRouter = () => {
   const location = useLocation();
@@ -108,6 +114,7 @@ const AppRouter = () => {
         {/* Auth */}
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="reset-password" element={<ResetPassword />} />
 
         {/* Dashboard Admin */}
         <Route path="admin/dashboard" element={<Dashboard />} />
@@ -137,7 +144,7 @@ const AppRouter = () => {
         <Route path="student/events" element={<StudentEvents />} />
         <Route path="student/store" element={<StudentStore />} />
         <Route path="student/class" element={<StudentClass />} />
-        <Route path="student/about" element={<StudentAbout />} />
+        <Route path="student/abaut" element={<StudentAbout />} />
         <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
 
         {/* Dashboard Instructor */}
@@ -149,8 +156,18 @@ const AppRouter = () => {
         <Route path="instructor/store" element={<InstructorStore />} />
         <Route path="instructor/class" element={<InstructorClass />} />
         <Route path="instructor/events" element={<InstructorEvents />} />
-        <Route path="instructor/about" element={<InstructorAbaut />} />
+        <Route path="instructor/abaut" element={<InstructorAbaut />} />
+        
         <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
+        
+        
+        
+        {/* Users */}
+        <Route path="users/home" element={<UsersHome />} />
+        <Route path="users/store" element={<UsersStore />} />
+        <Route path="users/class" element={<UsersClass />} />
+        <Route path="users/events" element={<UsersEvents />} />
+        <Route path="users/abaut" element={<UsersAbaut />} />
       </Routes>
     </AnimatePresence>
   );

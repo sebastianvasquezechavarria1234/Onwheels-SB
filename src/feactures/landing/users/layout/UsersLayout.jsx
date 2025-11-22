@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Footer from "../../layout/Footer";
-import { InstructorHeader } from "./InstructorHeader";
+import { UsersHeader } from "./UsersHeader";
 
-export const InstructorLayout = ({ children }) => {
+export const UsersLayout = ({ children }) => {
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
@@ -11,16 +11,16 @@ export const InstructorLayout = ({ children }) => {
     if (userData) {
       try {
         const user = JSON.parse(userData);
-        setUserName(user.nombre || 'Instructor');
+        setUserName(user.nombre || 'Usuario');
       } catch (error) {
-        console.error('Error parsing user ', error);
+        console.error('Error parsing user data:', error);
       }
     }
   }, []);
 
   return (
     <main className="min-h-screen flex flex-col">
-      <InstructorHeader />
+      <UsersHeader />
       
       <div className="flex-grow">
         {children}
@@ -30,10 +30,10 @@ export const InstructorLayout = ({ children }) => {
       
       {/* Sticky welcome message at bottom right */}
       {userName && (
-        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg px-4 py-2 z-50 border border-gray-200">
-          <h2 className="text-sm font-medium text-gray-800">
-            Bienvenido: <span className="font-bold text-blue-800">{userName}</span>
-          </h2>
+        <div className="fixed bottom-4 right-4 bg-white backdrop-blur-[16px] rounded-full p-[4px_18px] ">
+          <p className="text-gray-800 font-bold!">
+            Bienvenido: <span className="italic">{userName}</span>
+          </p>
         </div>
       )}
     </main>

@@ -6,7 +6,7 @@ import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
 
 // Header con modal (sheet) pulido y sin errores
-export const InstructorHeader = () => {
+export const UsersHeader = () => {
   const [open, setOpen] = useState(false);
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -83,11 +83,11 @@ export const InstructorHeader = () => {
   };
 
   const items = [
-    { title: "Inicio", to: "/instructor/home" },
-    { title: "Tienda", to: "/instructor/store" },
-    { title: "Clases", to: "/instructor/class" },
-    { title: "Eventos", to: "/instructor/events" },
-    { title: "Sobre nosotros", to: "/instructor/abaut" },
+    { title: "Inicio", to: "/users/home" },
+    { title: "Tienda", to: "/users/store" },
+    { title: "Clases", to: "/users/class" },
+    { title: "Eventos", to: "/users/events" },
+    { title: "Sobre nosotros", to: "/users/abaut" },
   ];
 
   return (
@@ -97,7 +97,7 @@ export const InstructorHeader = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB intructor
+                Performance-SB Users
               </h4>
             </Link>
           </li>
@@ -159,6 +159,7 @@ export const InstructorHeader = () => {
             >
               <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
                 <Menu className="text-white" strokeWidth={1.5} size={20} />
+
               </span>
               <h4 className="text-black">Menu</h4>
             </button>

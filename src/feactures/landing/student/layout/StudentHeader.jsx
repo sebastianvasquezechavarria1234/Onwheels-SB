@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LogOut, Menu, ShoppingCart, User, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
@@ -11,6 +11,7 @@ export const StudentHeader = () => {
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
   const modalRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Bloqueo de scroll cuando modal abierto
@@ -55,6 +56,15 @@ export const StudentHeader = () => {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+
+  const handleLogout = () => {
+    // Eliminar token y usuario del localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirigir a login
+    navigate('/login');
+  };
 
   const overlayVariants = {
     hidden: { opacity: 0 },
@@ -110,15 +120,20 @@ export const StudentHeader = () => {
               <ShoppingCart color="black" strokeWidth={1.5} size={20} />
             </BtnLinkIcon>
           </li>
+          
+          {/* BOTÓN DE CERRAR SESIÓN CON LOS ESTILOS ORIGINALES */}
           <li>
-            <BtnLinkIcon
-              title="Cerrar session"
-              link="/"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              className="bg-[transparent] text-white max-xl:hidden flex items-center"
+              aria-label="Cerrar sesión"
             >
-              <LogOut color="black" strokeWidth={1.8} size={20} />
-            </BtnLinkIcon>
+              <div className="bg-white rounded-full p-[3px]">
+                <LogOut color="black" strokeWidth={1.8} size={20} />
+              </div>
+            </button>
           </li>
 
           <li>
@@ -144,7 +159,6 @@ export const StudentHeader = () => {
             >
               <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
                 <Menu className="text-white" strokeWidth={1.5} size={20} />
-
               </span>
               <h4 className="text-black">Menu</h4>
             </button>
@@ -222,8 +236,17 @@ export const StudentHeader = () => {
                 </nav>
 
                 <div className="mt-6 flex items-center gap-3 justify-end">
-                  <BtnLink link="../login#" style="text-[14px]!" title="Iniciar sesión" />
-                  <BtnLink link="../store#" style="text-[14px]!" title="Tienda" />sebastian vas
+                  {/* BOTÓN DE CERRAR SESIÓN EN EL MODAL CON ESTILOS CONSISTENTES */}
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setOpen(false);
+                    }}
+                    className="bg-[var(--color-blue)] text-white px-4 py-2 rounded-lg text-[14px] hover:bg-blue-700 transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
+                  <BtnLink link="../store#" style="text-[14px]!" title="Tienda" />
                 </div>
               </motion.div>
             </motion.div>

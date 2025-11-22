@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import '../../hooks/dashboard.css'
 
 import { motion } from "framer-motion";
@@ -8,6 +9,7 @@ import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, MapPinHouse, 
 
 export const Layout = ({ children }) => {
   const [now, setNow] = useState(new Date());
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
@@ -22,6 +24,15 @@ export const Layout = ({ children }) => {
   });
 
   const timeStr = now.toLocaleTimeString("es-CO");
+
+  const handleLogout = () => {
+    // Eliminar token y usuario del localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirigir a login
+    navigate('/login');
+  };
 
   return (
     <main
@@ -143,14 +154,18 @@ export const Layout = ({ children }) => {
                 {timeStr}
               </p> */}
             </div>
-            <BtnLinkIcon
-              title="Cerrar Dashboard"
-              style="bg-[var(--color-blue)]! text-white pr-[25px] w-full"
-              styleIcon="bg-white!"
+            {/* BOTÓN DE CERRAR SESIÓN MODIFICADO */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="bg-[var(--color-blue)]! text-white pr-[25px] w-full flex items-center gap-[10px] p-[10px] rounded-lg hover:bg-blue-700 transition-colors"
+              aria-label="Cerrar sesión"
             >
-              <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
-            </BtnLinkIcon>
-
+              <div className="bg-white rounded-full p-[3px]">
+                <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} size={20} />
+              </div>
+              <span className="font-medium">Cerrar sesión</span>
+            </button>
           </ul>
 
         </div>

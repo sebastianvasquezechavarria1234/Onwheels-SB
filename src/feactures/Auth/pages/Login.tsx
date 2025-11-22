@@ -1,6 +1,7 @@
-// Login.tsx
-import { useState } from "react";
+// src/feactures/Auth/pages/Login.tsx
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../../../services/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -9,52 +10,77 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Manejar errores globales para evitar recargas
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (loading) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [loading]);
+
   const handleSubmit = async (e) => {
+    // ✅ PREVENCIÓN MÁXIMA DE RECARGA
     e.preventDefault();
+    e.stopPropagation();
+    
     setError("");
     setLoading(true);
 
     try {
-      const payload = {
-        email,
-        contrasena: password
-      };
+      // ✅ Validación previa para evitar llamadas innecesarias
+      if (!email || !password) {
+        setError("Por favor completa todos los campos");
+        setLoading(false);
+        return;
+      }
 
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      const response = await api.post("/auth/login", {
+        email: email.trim(),
+        contrasena: password
       });
 
-      const data = await response.json();
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      if (response.ok) {
-        const usuario = data.user;
-
-        // Guardamos usuario en localStorage
-        localStorage.setItem("user", JSON.stringify(usuario));
-
-        // Redirigir según el rol (manejando mayúsculas/minúsculas)
-        const rolNormalizado = usuario.rol ? usuario.rol.toLowerCase() : 'usuario';
-
-        if (rolNormalizado === "administrador") {
-          navigate("/admin/dashboard", { replace: true });
-        } else if (rolNormalizado === "estudiante") {
-          navigate("/student/setting", { replace: true });
-        } else if (rolNormalizado === "instructor") {
-          navigate("/instructor/setting", { replace: true });
-        } else {
-          // Si es "Usuario" o null, ir a /home
-          navigate("/", { replace: true });
-        }
+      const rol = response.data.user.rol?.toLowerCase() || "usuario";
+      
+      if (rol === "administrador") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (rol === "estudiante") {
+        navigate("/student/setting", { replace: true });
+      } else if (rol === "instructor") {
+        navigate("/instructor/setting", { replace: true });
       } else {
-        setError(data.message || "Error en el inicio de sesión");
+        navigate("/users/home", { replace: true });
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Error al conectarse al servidor. Asegúrate de que el backend esté corriendo en http://localhost:3000");
+      
+      // ✅ MANEJO SEGURO DE ERRORES SIN RECARGA
+      let errorMessage = "Error en el inicio de sesión";
+      
+      if (err.response) {
+        errorMessage = err.response.data.message || "Credenciales incorrectas";
+      } else if (err.message === 'Network Error') {
+        errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión";
+      } else if (err.request) {
+        errorMessage = "El servidor no respondió. Intenta nuevamente";
+      }
+      
+      setError(errorMessage);
+      
+      // ✅ SCROLL SUAVE AL MENSAJE DE ERROR
+      setTimeout(() => {
+        const errorElement = document.querySelector('.login-error-message');
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     } finally {
       setLoading(false);
     }
@@ -84,7 +110,8 @@ const Login = () => {
           {/* Formulario */}
           <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center bg-slate-50">
             <div className="max-w-md mx-auto w-full">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              {/* ✅ FORM CON ON_SUBMIT EXPLÍCITO */}
+              <form onSubmit={handleSubmit} noValidate className="space-y-6">
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -97,6 +124,8 @@ const Login = () => {
                     placeholder="Ingresa tu correo aquí"
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
                     required
+                    disabled={loading}
+                    autoComplete="email"
                   />
                 </div>
 
@@ -111,18 +140,15 @@ const Login = () => {
                     placeholder="Ingresa tu contraseña"
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
                     required
+                    disabled={loading}
+                    autoComplete="current-password"
                   />
                 </div>
 
+                {/* ✅ MENSAJE DE ERROR CON CLASE ESPECÍFICA PARA SCROLL */}
                 {error && (
-                  <div>
-                    <p className="text-red-600">{error}</p>
-                    <Link
-                      to="/recover"
-                      className="block mt-2 text-sm text-blue-700 hover:text-blue-900 underline"
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
+                  <div className="login-error-message bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg animate-shake">
+                    <p className="text-red-700 text-sm font-medium">{error}</p>
                   </div>
                 )}
 
@@ -130,9 +156,26 @@ const Login = () => {
                   type="submit"
                   disabled={loading}
                   className={`w-full ${loading ? "opacity-70 cursor-wait" : "hover:bg-red-600"} bg-blue-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl`}
+                  onClick={(e) => {
+                    // ✅ PREVENCIÓN EXTRA EN EL BOTÓN
+                    e.stopPropagation();
+                  }}
                 >
                   {loading ? "Iniciando..." : "Iniciar Sesión"}
                 </button>
+
+                <div className="text-center mt-2">
+                  <Link
+                    to="/recover"
+                    className="text-sm text-blue-700 hover:text-blue-900 underline"
+                    onClick={(e) => {
+                      // ✅ PREVENCIÓN AL HACER CLIC EN EL LINK
+                      e.stopPropagation();
+                    }}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
 
                 <p className="text-slate-600 mb-8 text-center">
                   ¿No tienes una cuenta?{" "}
