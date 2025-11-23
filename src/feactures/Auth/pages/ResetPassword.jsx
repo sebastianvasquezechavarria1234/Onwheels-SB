@@ -15,11 +15,25 @@ export const ResetPassword = () => {
     const location = useLocation();
 
     useEffect(() => {
-        // Obtener token y email de los parámetros de URL
         const params = new URLSearchParams(location.search);
         const tokenParam = params.get('token');
-        const emailParam = params.get('email');
+        let emailParam = params.get('email');
         
+        // MEJOR MANEJO DE DECODIFICACIÓN DE EMAIL
+        if (emailParam) {
+            try {
+                // Reemplazar %40 por @ y luego decodificar
+                emailParam = emailParam.replace(/%40/g, '@');
+                // Decodificar cualquier otro carácter especial
+                emailParam = decodeURIComponent(emailParam);
+                console.log('📧 Email decodificado correctamente:', emailParam);
+            } catch (e) {
+                console.log('⚠️ Error decodificando email, usando valor directo:', e);
+                // Si falla la decodificación, usar el valor directo
+                emailParam = emailParam.replace(/%40/g, '@');
+            }
+        }
+
         if (!tokenParam || !emailParam) {
             setError("Enlace inválido o expirado");
             setTimeout(() => navigate("/login"), 3000);
@@ -27,7 +41,11 @@ export const ResetPassword = () => {
         }
         
         setToken(tokenParam);
-        setEmail(decodeURIComponent(emailParam));
+        setEmail(emailParam);
+        
+        // DEBUG: Ver qué token y email recibimos
+        console.log('📋 Token recibido:', tokenParam);
+        console.log('📧 Email final recibido:', emailParam);
     }, [location, navigate]);
 
     const handleSubmit = async (e) => {
@@ -50,20 +68,47 @@ export const ResetPassword = () => {
         }
 
         try {
+            console.log('📤 Enviando solicitud de reset con:');
+            console.log('Token:', token);
+            console.log('Email:', email);
+            console.log('Nueva contraseña:', '*'.repeat(password.length));
+
+            // ✅ ENVIAR EMAIL JUNTO CON EL TOKEN
             const response = await api.post("/auth/reset-password", {
                 token,
-                newPassword: password
+                newPassword: password,
+                email: email // ✅ INCLUIR EL EMAIL
             });
 
-            setMessage(response.data.message);
+            console.log('✅ Respuesta del servidor:', response.data);
+            setMessage(response.data.message || 'Contraseña actualizada correctamente');
             
             // Redirigir después de 3 segundos
             setTimeout(() => {
                 navigate("/login");
             }, 3000);
         } catch (err) {
-            console.error("Reset password error:", err);
-            setError(err.response?.data?.message || "Error al restablecer la contraseña");
+            console.error("❌ Reset password error completo:", err);
+            console.log('❌ Respuesta del servidor:', err.response?.data);
+            
+            let errorMessage = "Error al restablecer la contraseña";
+            
+            if (err.response) {
+                // Errores del servidor
+                errorMessage = err.response.data.message || errorMessage;
+                
+                // Detectar específicamente token expirado/inválido
+                if (err.response.data.message?.includes('expirado') || 
+                    err.response.data.message?.includes('inválido') ||
+                    err.response.data.message?.includes('no coincide')) {
+                    errorMessage = "El enlace ha expirado o es inválido. Por favor, solicita uno nuevo.";
+                }
+            } else if (err.request) {
+                // Errores de red
+                errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+            }
+            
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -100,7 +145,7 @@ export const ResetPassword = () => {
                                 <div className="text-center mb-6">
                                     <h1 className="text-2xl font-bold text-slate-800">Cambia tu contraseña</h1>
                                     <p className="text-slate-600 mt-2">
-                                        Ingresa tu nueva contraseña para {email ? email : "tu cuenta"}
+                                        Ingresa tu nueva contraseña para <span className="font-medium">{email ? email : "tu cuenta"}</span>
                                     </p>
                                 </div>
 
@@ -143,10 +188,14 @@ export const ResetPassword = () => {
                                 </div>
 
                                 {error && (
-                                    <p className="text-red-600 text-center">{error}</p>
+                                    <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg">
+                                        <p className="text-red-700 text-sm font-medium">{error}</p>
+                                    </div>
                                 )}
                                 {message && (
-                                    <p className="text-green-700 text-center">{message}</p>
+                                    <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg">
+                                        <p className="text-green-700 text-sm font-medium">{message}</p>
+                                    </div>
                                 )}
 
                                 <button
