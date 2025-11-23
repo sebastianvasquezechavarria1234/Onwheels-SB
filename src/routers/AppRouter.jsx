@@ -2,6 +2,7 @@
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import ProtectedRoute from "./protectedRoute";
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
@@ -63,12 +64,15 @@ import { InstructorStore } from "../feactures/landing/instructor/pages/Instructo
 import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
 import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
 
- import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
+// Landing Users
 import { UsersHome } from "../feactures/landing/users/pages/UsersHome";
 import { UsersStore } from "../feactures/landing/users/pages/UsersStore";
 import { UsersClass } from "../feactures/landing/users/pages/UsersClass";
 import { UsersEvents } from "../feactures/landing/users/pages/UsersEvents";
 import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut";
+
+// Auth extras
+import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
 import { ResetPassword } from "../feactures/Auth/pages/ResetPassword";
 
 const AppRouter = () => {
@@ -99,8 +103,8 @@ const AppRouter = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         {/* Landing */}
-       
-<Route path="recover" element={<RecoverPassword />} />
+        <Route path="recover" element={<RecoverPassword />} />
+        <Route path="reset-password" element={<ResetPassword />} />
 
         <Route index element={withAnimation(Home)} />
         <Route path="store" element={withAnimation(Store)} />
@@ -114,60 +118,65 @@ const AppRouter = () => {
         {/* Auth */}
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
-        <Route path="reset-password" element={<ResetPassword />} />
 
-        {/* Dashboard Admin */}
-        <Route path="admin/dashboard" element={<Dashboard />} />
-        <Route path="admin/matriculas" element={<Matriculas />} />
-        <Route path="admin/products" element={<Products />} />
-        <Route path="admin/roles" element={<Roles />} />
-        <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
-        <Route path="admin/compras" element={<Compras />} />
-        <Route path="admin/proveedores" element={<Proveedores />} />
-        {/* <Route path="admin/ventas" element={<Ventas />} /> */}
-        <Route path="admin/categoriasProductos" element={<Categorias />} />
-        <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
-        <Route path="admin/planclases" element={<PlanClasses />} />
-        <Route path="admin/users" element={<Usuarios />} />
-        <Route path="admin/eventos" element={<Eventos />} />
-        <Route path="admin/patrocinadores" element={<Patrocinadores />} />
-        <Route path="admin/sedes" element={<Sedes />} />
-        <Route path="admin/clases" element={<Clases />} />
-        <Route path="admin/plans" element={<PlanClasses />} />
-        {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
+        {/* Dashboard Admin - PROTEGIDAS */}
+        <Route element={<ProtectedRoute allowedRoles={["administrador"]} />}>
+          <Route path="admin/dashboard" element={<Dashboard />} />
+          <Route path="admin/matriculas" element={<Matriculas />} />
+          <Route path="admin/products" element={<Products />} />
+          <Route path="admin/roles" element={<Roles />} />
+          <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
+          <Route path="admin/compras" element={<Compras />} />
+          <Route path="admin/proveedores" element={<Proveedores />} />
+          {/* <Route path="admin/ventas" element={<Ventas />} /> */}
+          <Route path="admin/categoriasProductos" element={<Categorias />} />
+          <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
+          <Route path="admin/planclases" element={<PlanClasses />} />
+          <Route path="admin/users" element={<Usuarios />} />
+          <Route path="admin/eventos" element={<Eventos />} />
+          <Route path="admin/patrocinadores" element={<Patrocinadores />} />
+          <Route path="admin/sedes" element={<Sedes />} />
+          <Route path="admin/clases" element={<Clases />} />
+          <Route path="admin/plans" element={<PlanClasses />} />
+          {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
+        </Route>
 
-        {/* Dashboard Student */}
-        <Route path="student/setting" element={<Setting />} />
-        <Route path="student/myClasses" element={<MyClasses />} />
-        <Route path="student/myPurchases" element={<MyPurchases />} />
-        <Route path="student/home" element={<StudentHome />} />
-        <Route path="student/events" element={<StudentEvents />} />
-        <Route path="student/store" element={<StudentStore />} />
-        <Route path="student/class" element={<StudentClass />} />
-        <Route path="student/abaut" element={<StudentAbout />} />
-        <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
+        {/* Dashboard Student - PROTEGIDAS */}
+        <Route element={<ProtectedRoute allowedRoles={["estudiante"]} />}>
+          <Route path="student/setting" element={<Setting />} />
+          <Route path="student/myClasses" element={<MyClasses />} />
+          <Route path="student/myPurchases" element={<MyPurchases />} />
+          <Route path="student/home" element={<StudentHome />} />
+          <Route path="student/events" element={<StudentEvents />} />
+          <Route path="student/store" element={<StudentStore />} />
+          <Route path="student/class" element={<StudentClass />} />
+          <Route path="student/abaut" element={<StudentAbout />} />
+          <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
+        </Route>
 
-        {/* Dashboard Instructor */}
-        <Route path="instructor/setting" element={<SettingInstructor />} />
-        <Route path="instructor/myStudent" element={<MyStudent />} />
-        <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
-        <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
-        <Route path="instructor/home" element={<InstructorHome />} />
-        <Route path="instructor/store" element={<InstructorStore />} />
-        <Route path="instructor/class" element={<InstructorClass />} />
-        <Route path="instructor/events" element={<InstructorEvents />} />
-        <Route path="instructor/abaut" element={<InstructorAbaut />} />
-        
-        <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
-        
-        
-        
-        {/* Users */}
-        <Route path="users/home" element={<UsersHome />} />
-        <Route path="users/store" element={<UsersStore />} />
-        <Route path="users/class" element={<UsersClass />} />
-        <Route path="users/events" element={<UsersEvents />} />
-        <Route path="users/abaut" element={<UsersAbaut />} />
+        {/* Dashboard Instructor - PROTEGIDAS */}
+        <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
+          <Route path="instructor/setting" element={<SettingInstructor />} />
+          <Route path="instructor/myStudent" element={<MyStudent />} />
+          <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
+          <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
+          <Route path="instructor/home" element={<InstructorHome />} />
+          <Route path="instructor/store" element={<InstructorStore />} />
+          <Route path="instructor/class" element={<InstructorClass />} />
+          <Route path="instructor/events" element={<InstructorEvents />} />
+          <Route path="instructor/abaut" element={<InstructorAbaut />} />
+          
+          <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
+        </Route>
+
+        {/* Users - PROTEGIDAS */}
+        <Route element={<ProtectedRoute allowedRoles={["cliente", "usuario"]} />}>
+          <Route path="users/home" element={<UsersHome />} />
+          <Route path="users/store" element={<UsersStore />} />
+          <Route path="users/class" element={<UsersClass />} />
+          <Route path="users/events" element={<UsersEvents />} />
+          <Route path="users/abaut" element={<UsersAbaut />} />
+        </Route>
       </Routes>
     </AnimatePresence>
   );

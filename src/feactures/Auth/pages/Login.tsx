@@ -9,45 +9,38 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
-  // Manejar errores globales para evitar recargas
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (loading) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [loading]);
+    // Limpiar el error después de 5 segundos si no hay nueva interacción
+    if (error && formSubmitted) {
+      const timer = setTimeout(() => {
+        setError("");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, formSubmitted]);
 
   const handleSubmit = async (e) => {
-    // ✅ PREVENCIÓN MÁXIMA DE RECARGA
-    e.preventDefault();
+    e.preventDefault(); // ✅ Esto previene la recarga de página
     e.stopPropagation();
-    
+    setFormSubmitted(true);
     setError("");
     setLoading(true);
 
     try {
-      // ✅ Validación previa para evitar llamadas innecesarias
-      if (!email || !password) {
-        setError("Por favor completa todos los campos");
-        setLoading(false);
-        return;
-      }
-
       const response = await api.post("/auth/login", {
-        email: email.trim(),
+        email,
         contrasena: password
       });
 
+      // Guardar token y usuario
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      const rol = response.data.user.rol?.toLowerCase() || "usuario";
+      // Redirigir según rol
+      const roles = response.data.user.roles || [];
+      const rol = roles[0]?.toLowerCase() || "cliente";
       
       if (rol === "administrador") {
         navigate("/admin/dashboard", { replace: true });
@@ -60,29 +53,20 @@ const Login = () => {
       }
     } catch (err) {
       console.error("Login error:", err);
-      
-      // ✅ MANEJO SEGURO DE ERRORES SIN RECARGA
-      let errorMessage = "Error en el inicio de sesión";
-      
+      // ✅ Manejo de errores sin recargar la página
       if (err.response) {
-        errorMessage = err.response.data.message || "Credenciales incorrectas";
-      } else if (err.message === 'Network Error') {
-        errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión";
+        // Errores del servidor (401, 400, etc.)
+        setError(err.response.data.message || "Credenciales incorrectas");
       } else if (err.request) {
-        errorMessage = "El servidor no respondió. Intenta nuevamente";
+        // Errores de red (no hay respuesta del servidor)
+        setError("No se pudo conectar con el servidor. Verifica tu conexión a internet");
+      } else {
+        // Otros errores
+        setError("Error al procesar la solicitud");
       }
-      
-      setError(errorMessage);
-      
-      // ✅ SCROLL SUAVE AL MENSAJE DE ERROR
-      setTimeout(() => {
-        const errorElement = document.querySelector('.login-error-message');
-        if (errorElement) {
-          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
     } finally {
       setLoading(false);
+      setFormSubmitted(false);
     }
   };
 
@@ -110,8 +94,7 @@ const Login = () => {
           {/* Formulario */}
           <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center bg-slate-50">
             <div className="max-w-md mx-auto w-full">
-              {/* ✅ FORM CON ON_SUBMIT EXPLÍCITO */}
-              <form onSubmit={handleSubmit} noValidate className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -125,7 +108,6 @@ const Login = () => {
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
                     required
                     disabled={loading}
-                    autoComplete="email"
                   />
                 </div>
 
@@ -141,13 +123,11 @@ const Login = () => {
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
                     required
                     disabled={loading}
-                    autoComplete="current-password"
                   />
                 </div>
 
-                {/* ✅ MENSAJE DE ERROR CON CLASE ESPECÍFICA PARA SCROLL */}
                 {error && (
-                  <div className="login-error-message bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg animate-shake">
+                  <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-r-lg">
                     <p className="text-red-700 text-sm font-medium">{error}</p>
                   </div>
                 )}
@@ -156,22 +136,14 @@ const Login = () => {
                   type="submit"
                   disabled={loading}
                   className={`w-full ${loading ? "opacity-70 cursor-wait" : "hover:bg-red-600"} bg-blue-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl`}
-                  onClick={(e) => {
-                    // ✅ PREVENCIÓN EXTRA EN EL BOTÓN
-                    e.stopPropagation();
-                  }}
                 >
                   {loading ? "Iniciando..." : "Iniciar Sesión"}
                 </button>
 
-                <div className="text-center mt-2">
+                <div className="text-center">
                   <Link
                     to="/recover"
                     className="text-sm text-blue-700 hover:text-blue-900 underline"
-                    onClick={(e) => {
-                      // ✅ PREVENCIÓN AL HACER CLIC EN EL LINK
-                      e.stopPropagation();
-                    }}
                   >
                     ¿Olvidaste tu contraseña?
                   </Link>
