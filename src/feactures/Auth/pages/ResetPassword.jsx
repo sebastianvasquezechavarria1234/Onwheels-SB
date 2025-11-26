@@ -143,8 +143,7 @@ export const ResetPassword = () => {
                         <div className="max-w-md mx-auto w-full">
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="text-center mb-6">
-                                    <h1 className="text-2xl font-bold text-slate-800">Cambia tu contraseña</h1>
-                                    <p className="text-slate-600 mt-2">
+                                   <p className="text-slate-600 mt-2">
                                         Ingresa tu nueva contraseña para <span className="font-medium">{email ? email : "tu cuenta"}</span>
                                     </p>
                                 </div>
@@ -208,10 +207,10 @@ export const ResetPassword = () => {
                                     {loading ? "Guardando..." : "Guardar nueva contraseña"}
                                 </button>
 
-                                <p className="text-slate-600 mb-8 text-center mt-6">
+                                <p className="text-slate-600 ">
                                     <Link
                                         to="/login"
-                                        className="text-blue-800 hover:text-red-600 font-medium transition-colors"
+                                        className="underline text-blue-800 hover:text-red-600 font-medium transition-colors"
                                     >
                                         Volver al inicio de sesión
                                     </Link>

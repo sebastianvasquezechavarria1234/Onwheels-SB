@@ -74,6 +74,7 @@ import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut";
 // Auth extras
 import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
 import { ResetPassword } from "../feactures/Auth/pages/ResetPassword";
+import { StudentCheckout } from "../feactures/landing/student/pages/StudentCheckout";
 
 const AppRouter = () => {
   const location = useLocation();
@@ -152,6 +153,7 @@ const AppRouter = () => {
           <Route path="student/class" element={<StudentClass />} />
           <Route path="student/abaut" element={<StudentAbout />} />
           <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
+          <Route path="student/checkout" element={<StudentCheckout />} />
         </Route>
 
         {/* Dashboard Instructor - PROTEGIDAS */}

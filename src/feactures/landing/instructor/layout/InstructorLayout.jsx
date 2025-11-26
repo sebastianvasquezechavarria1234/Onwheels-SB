@@ -30,10 +30,10 @@ export const InstructorLayout = ({ children }) => {
       
       {/* Sticky welcome message at bottom right */}
       {userName && (
-        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg px-4 py-2 z-50 border border-gray-200">
-          <h2 className="text-sm font-medium text-gray-800">
-            Bienvenido: <span className="font-bold text-blue-800">{userName}</span>
-          </h2>
+         <div className="fixed bottom-4 right-4 bg-white backdrop-blur-[16px] rounded-full p-[4px_18px] ">
+          <p className="text-gray-800 font-bold!">
+            Bienvenido: <span className="italic">{userName}</span>
+          </p>
         </div>
       )}
     </main>

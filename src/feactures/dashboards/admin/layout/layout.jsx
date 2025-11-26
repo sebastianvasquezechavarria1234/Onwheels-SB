@@ -158,11 +158,11 @@ export const Layout = ({ children }) => {
             <button
               type="button"
               onClick={handleLogout}
-              className="bg-[var(--color-blue)]! text-white pr-[25px] w-full flex items-center gap-[10px] p-[10px] rounded-lg hover:bg-blue-700 transition-colors"
+              className="cursor-pointer bg-[var(--color-blue)] text-white w-full inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
               aria-label="Cerrar sesión"
             >
-              <div className="bg-white rounded-full p-[3px]">
-                <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} size={20} />
+              <div className="w-[60px] h-[60px] flex justify-center items-center bg-white rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                <ArrowLeft className="text-black" strokeWidth={2} size={20} />
               </div>
               <span className="font-medium">Cerrar sesión</span>
             </button>

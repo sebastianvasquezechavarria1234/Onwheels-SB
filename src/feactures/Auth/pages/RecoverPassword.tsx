@@ -91,7 +91,7 @@ export const RecoverPassword = () => {
                                 </div>
 
                                 {error && (
-                                    <p className="text-red-600 text-center">{error}</p>
+                                    <p className="text-red-700 text-center">{error}</p>
                                 )}
                                 {message && (
                                     <p className="text-green-700 text-center">{message}</p>
@@ -107,10 +107,10 @@ export const RecoverPassword = () => {
                                     {loading ? "Enviando..." : "Enviar correo"}
                                 </button>
 
-                                <p className="text-slate-600 mb-8 text-center mt-6">
+                                <p className="text-slate-600 mt-[0px]">
                                     <Link
                                         to="/login"
-                                        className="text-blue-800 hover:text-red-600 font-medium transition-colors"
+                                        className="underline text-blue-800 hover:text-red-600 font-medium transition-colors"
                                     >
                                         Volver al inicio de sesión
                                     </Link>

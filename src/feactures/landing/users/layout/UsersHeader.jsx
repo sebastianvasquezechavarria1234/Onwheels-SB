@@ -121,30 +121,32 @@ export const UsersHeader = () => {
             </BtnLinkIcon>
           </li>
           
+          
+
+          <li>
+            <BtnLinkIcon
+              title="Mi cuenta"
+              link="../instructor/setting"
+              style="bg-[transparent]! text-white! max-xl:hidden"
+              styleIcon="bg-white!"
+            >
+              <User className="text-black" strokeWidth={1.8} size={20} />
+            </BtnLinkIcon>
+          </li>
           {/* BOTÓN DE CERRAR SESIÓN CON LOS ESTILOS ORIGINALES */}
           <li>
             <button
               type="button"
               onClick={handleLogout}
               title="Cerrar sesión"
-              className="bg-[transparent] text-white max-xl:hidden flex items-center"
+              className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
               aria-label="Cerrar sesión"
             >
-              <div className="bg-white rounded-full p-[3px]">
-                <LogOut color="black" strokeWidth={1.8} size={20} />
+              <div className=" w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                <LogOut color="white" strokeWidth={1.8} size={20} />
               </div>
+              <p>Cerrar seccion</p>
             </button>
-          </li>
-
-          <li>
-            <BtnLinkIcon
-              title="Mi cuenta"
-              link="../instructor/setting"
-              style="max-lg:bg-[transparent]! max-lg:text-white!"
-              styleIcon="max-xl:bg-white!"
-            >
-              <User className="text-white max-xl:text-black" strokeWidth={1.5} size={20} />
-            </BtnLinkIcon>
           </li>
 
       
