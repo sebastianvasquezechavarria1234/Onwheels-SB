@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Search, Plus } from "lucide-react";
 import { Layout } from "../../../layout/layout";
+import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getCategorias,
@@ -9,89 +9,154 @@ import {
   deleteCategoria,
 } from "../../services/categoriasService";
 
-export default function Categorias() {
+export default function CategoriaProductos() {
   const [categorias, setCategorias] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [modalType, setModalType] = useState(null);
+  const [editForm, setEditForm] = useState({ nombre_categoria: "", descripcion: "" });
+  const [addForm, setAddForm] = useState({ nombre_categoria: "", descripcion: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-
-  // 🔹 Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // 🔹 Estados modales
-  const [modal, setModal] = useState(null); // "crear" | "editar" | "eliminar"
-  const [form, setForm] = useState({ nombre_categoria: "", descripcion: "" });
-  const [selected, setSelected] = useState(null);
+  // Notificación
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
-  // 🔹 Cargar categorías
-  const cargarCategorias = async () => {
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+  };
+
+  // Cerrar modal con Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    fetchCategorias();
+  }, []);
+
+  const fetchCategorias = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
       const data = await getCategorias();
-      setCategorias(data);
+      setCategorias(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error cargando categorías:", err);
+      setError("No se pudieron cargar las categorías.");
+      showNotification("Error al cargar categorías", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    cargarCategorias();
-  }, []);
-
-  // Abrir modal (crear, editar, eliminar)
-  const openModal = (type, cat = null) => {
-    setModal(type);
-    setSelected(cat);
-    setForm(
-      cat || {
-        nombre_categoria: "",
-        descripcion: "",
-      }
-    );
+  const openModal = (type, item = null) => {
+    setModalType(type);
+    if (type === "add") {
+      setAddForm({ nombre_categoria: "", descripcion: "" });
+      setSelected(null);
+    } else if (type === "edit" && item) {
+      setSelected(item);
+      setEditForm({
+        nombre_categoria: item.nombre_categoria || "",
+        descripcion: item.descripcion || "",
+      });
+    } else {
+      setSelected(item);
+    }
   };
 
   const closeModal = () => {
-    setModal(null);
     setSelected(null);
-    setForm({ nombre_categoria: "", descripcion: "" });
+    setModalType(null);
   };
 
-  const handleGuardar = async (e) => {
-    e && e.preventDefault();
+  const handleAddChange = (e) => {
+    const { name, value } = e.target;
+    setAddForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const saveAdd = async () => {
+    const payload = {
+      nombre_categoria: addForm.nombre_categoria.trim(),
+      descripcion: addForm.descripcion.trim(),
+    };
+    if (!payload.nombre_categoria) {
+      showNotification("El nombre de la categoría es obligatorio", "error");
+      return;
+    }
     try {
-      if (modal === "crear") {
-        await createCategoria(form);
-      } else if (modal === "editar") {
-        await updateCategoria(selected.id_categoria, form);
-      }
-      await cargarCategorias();
+      const newCategoria = await createCategoria(payload);
+      setCategorias((prev) => [newCategoria, ...prev]);
       closeModal();
+      showNotification("Categoría creada con éxito");
     } catch (err) {
       console.error(err);
+      showNotification("Error al crear la categoría", "error");
     }
   };
 
-  const handleEliminar = async () => {
+  const saveEdit = async () => {
+    if (!selected) return closeModal();
+    const payload = {
+      nombre_categoria: editForm.nombre_categoria.trim(),
+      descripcion: editForm.descripcion.trim(),
+    };
+    if (!payload.nombre_categoria) {
+      showNotification("El nombre de la categoría es obligatorio", "error");
+      return;
+    }
+    try {
+      await updateCategoria(selected.id_categoria, payload);
+      setCategorias((prev) =>
+        prev.map((c) =>
+          c.id_categoria === selected.id_categoria ? { ...c, ...payload } : c
+        )
+      );
+      closeModal();
+      showNotification("Categoría actualizada con éxito");
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al actualizar la categoría", "error");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!selected) return;
     try {
       await deleteCategoria(selected.id_categoria);
-      await cargarCategorias();
+      setCategorias((prev) =>
+        prev.filter((c) => c.id_categoria !== selected.id_categoria)
+      );
       closeModal();
+      showNotification("Categoría eliminada con éxito");
     } catch (err) {
       console.error(err);
+      showNotification("Error al eliminar la categoría", "error");
     }
   };
 
-  const categoriasFiltradas = categorias.filter((cat) =>
-    cat.nombre_categoria?.toLowerCase().includes(search.toLowerCase())
+  // Filtrado y paginación
+  const categoriasFiltradas = categorias.filter((c) =>
+    c.nombre_categoria?.toLowerCase().includes(search.toLowerCase())
   );
-
-  // Paginación derivada
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = categoriasFiltradas.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.max(1, Math.ceil(categoriasFiltradas.length / itemsPerPage));
+  const currentItems = categoriasFiltradas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -99,222 +164,322 @@ export default function Categorias() {
 
   return (
     <Layout>
-      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
-        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">
-          compras &gt; Categorías de Productos
-        </h2>
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Categorías de Productos</h2>
 
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-          <form action="" className="flex gap-[10px]">
-            <label className="mb-[20px] block">
-              <p className="">Buscar categorías:</p>
-              <div className="relative">
-                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Ej: Ropa, Skates, Accesorios"
-                  className="input pl-[50px]!"
-                />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
               </div>
-            </label>
-          </form>
-
-          <div>
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                type="text"
+                placeholder="Buscar categoría (ej: Electrónica)"
+              />
+            </div>
             <button
-              onClick={() => openModal("crear")}
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
+              onClick={() => openModal("add")}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus className="h-4 w-4" />
-              Registrar nueva categoría
+              <Plus size={18} />
+              Añadir Categoría
             </button>
           </div>
-        </div>
 
-        <div className="p-[30px]">
-          {/* Encabezados estilo Roles */}
-          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[10%] font-bold! opacity-80">ID</p>
-            <p className="w-[30%] font-bold! opacity-80">Nombre categoría</p>
-            <p className="w-[35%] font-bold! opacity-80">Descripción</p>
-            <p className="w-[25%] font-bold! opacity-80">Acciones</p>
-          </article>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead>
-                <tr>
-                  <th className="hidden" />
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <td colSpan="4" className="text-center py-10 text-gray-400 italic">
-                      Cargando categorías...
-                    </td>
+                    <th className="px-6 py-3 w-1/3">Nombre</th>
+                    <th className="px-6 py-3 w-2/3">Descripción</th>
+                    <th className="px-6 py-3 w-1/6">Acciones</th>
                   </tr>
-                ) : categoriasFiltradas.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="text-center py-10 italic text-red-700">
-                      No hay categorías registradas
-                    </td>
-                  </tr>
-                ) : (
-                  currentItems.map((cat) => (
-                    <tr key={cat.id_categoria} className="py-[18px] border-b border-black/20">
-                      <td className="px-6 py-[18px] w-[10%]">{cat.id_categoria}</td>
-                      <td className="px-6 py-[18px] w-[30%] line-clamp-1">{cat.nombre_categoria}</td>
-                      <td className="px-6 py-[18px] w-[35%] line-clamp-2">{cat.descripcion || '-'}</td>
-
-                      <td className="px-6 py-[18px] w-[25%] flex gap-[10px] items-center justify-center">
-                        <motion.button
-                          onClick={() => openModal("editar", cat)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                          aria-label={`Editar ${cat.nombre_categoria}`}
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 20h9" />
-                          </svg>
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("eliminar", cat)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                          aria-label={`Eliminar ${cat.nombre_categoria}`}
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M3 6h18" />
-                          </svg>
-                        </motion.button>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
+                        Cargando categorías...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-red-600">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500 italic">
+                        No se encontraron categorías.
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((categoria) => (
+                      <tr key={categoria.id_categoria} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{categoria.nombre_categoria}</td>
+                        <td className="px-6 py-4 text-gray-600 line-clamp-2">
+                          {categoria.descripcion || "— Sin descripción —"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("details", categoria)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("edit", categoria)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("delete", categoria)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Paginación */}
-          <div className="flex justify-center items-center gap-2 py-4 italic">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Anterior
-            </button>
-
-            <span className="text-[18px]">
-              Página <span className="text-blue-700">{currentPage}</span> de {totalPages}
-            </span>
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Siguiente
-            </button>
-          </div>
+          {categoriasFiltradas.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6 py-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Notificación Toast */}
+        <AnimatePresence>
+          {notification.show && (
+            <motion.div
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              transition={{ duration: 0.3 }}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
+                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+              }`}
+            >
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Modales */}
         <AnimatePresence>
-          {(modal === "crear" || modal === "editar") && (
+          {modalType && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">
-                  {modal === "crear" ? "Registrar Categoría" : "Editar Categoría"}
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
+                  {modalType === "add"
+                    ? "Añadir Categoría"
+                    : modalType === "edit"
+                    ? "Editar Categoría"
+                    : modalType === "details"
+                    ? "Detalles de la Categoría"
+                    : "Eliminar Categoría"}
                 </h3>
 
-                <form onSubmit={handleGuardar} className="grid grid-cols-2 gap-[16px]">
-                  <label className="block col-span-1">
-                    <p className="">Nombre</p>
-                    <input
-                      type="text"
-                      value={form.nombre_categoria}
-                      onChange={(e) => setForm({ ...form, nombre_categoria: e.target.value })}
-                      className="input w-full"
-                      placeholder="Ej: Ropa y Accesorios"
-                      required
-                    />
-                  </label>
+                {modalType === "add" && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <input
+                        name="nombre_categoria"
+                        value={addForm.nombre_categoria}
+                        onChange={handleAddChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Electrónica"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={addForm.descripcion}
+                        onChange={handleAddChange}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Breve descripción de la categoría"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveAdd}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </form>
+                )}
 
-                  <label className="block col-span-1">
-                    <p className="">Descripción</p>
-                    <input
-                      type="text"
-                      value={form.descripcion}
-                      onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                      className="input w-full"
-                      placeholder="Ej: Camisetas, gorras y accesorios relacionados"
-                    />
-                  </label>
+                {modalType === "edit" && selected && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <input
+                        name="nombre_categoria"
+                        value={editForm.nombre_categoria}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Ropa"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={editForm.descripcion}
+                        onChange={handleEditChange}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Actualice la descripción"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveEdit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  </form>
+                )}
 
-                  <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
-                    <button type="button" onClick={closeModal} className="btn bg-gray-200">
-                      Cancelar
-                    </button>
-                    <button type="submit" className="btn bg-blue-100 text-blue-700">
-                      Guardar
-                    </button>
+                {modalType === "details" && selected && (
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nombre:</span>
+                      <span>{selected.nombre_categoria}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Descripción:</span>
+                      <span className="text-right">{selected.descripcion || "— Sin descripción —"}</span>
+                    </div>
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
                   </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
+                )}
 
-          {modal === "eliminar" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px] text-red-600">Eliminar Categoría</h3>
-                <p className="text-gray-600 mb-4">
-                  ¿Estás seguro que deseas eliminar la categoría <strong>{selected.nombre_categoria}</strong>?
-                </p>
-                <div className="flex justify-end gap-[10px] mt-[20px]">
-                  <button onClick={closeModal} className="btn bg-gray-200">
-                    Cancelar
-                  </button>
-                  <button onClick={handleEliminar} className="btn bg-red-100 text-red-700">
-                    Eliminar
-                  </button>
-                </div>
+                {modalType === "delete" && selected && (
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-700">
+                      ¿Está seguro de eliminar la categoría{" "}
+                      <span className="font-bold text-red-600">{selected.nombre_categoria}</span>?
+                      <br />
+                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                    </p>
+                    <div className="flex justify-center gap-3 pt-2">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={confirmDelete}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}

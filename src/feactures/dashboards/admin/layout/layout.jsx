@@ -190,3 +190,4 @@ export const Layout = ({ children }) => {
     </main>
   );
 };
+Layout.jsx
