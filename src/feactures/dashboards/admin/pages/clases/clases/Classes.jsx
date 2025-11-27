@@ -1,549 +1,941 @@
-import React, { useEffect, useState } from "react";
-import { getClases, createClase, updateClase, deleteClase } from "../../services/classServices.js";
-import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Layout } from "../../../layout/layout.jsx";
+// src/feactures/dashboards/admin/pages/clases/clases/Clases.jsx
+import React, { useEffect, useState, useCallback } from "react";
+import { Layout } from "../../../layout/layout";
+import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  getClases,
+  createClase,
+  updateClase,
+  deleteClase,
+  getNiveles,
+  getSedes,
+  getInstructores
+} from "../../services/clasesService";
 
-function Clases() {
+export const Clases = () => {
   const [clases, setClases] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [niveles, setNiveles] = useState([]);
+  const [sedes, setSedes] = useState([]);
+  const [instructores, setInstructores] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [selected, setSelected] = useState(null);
-  const [modalType, setModalType] = useState(null);
-
-  const [addForm, setAddForm] = useState({
+  const [modal, setModal] = useState(null);
+  const [selectedClase, setSelectedClase] = useState(null);
+  const [formData, setFormData] = useState({
     id_nivel: "",
     id_sede: "",
-    id_instructor: "",
+    instructores: [],
+    instructorTemporal: "",
     cupo_maximo: "",
     dia_semana: "",
     descripcion: "",
     estado: "Disponible",
     hora_inicio: "",
-    hora_fin: "",
+    hora_fin: ""
   });
+  const [search, setSearch] = useState("");
 
-  const [editForm, setEditForm] = useState({ ...addForm });
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  //cargaclases
-  useEffect(() => {
-    fetchClases();
-  }, []);
+  // Notificación
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
-  const fetchClases = async () => {
-    setLoading(true);
-    setError(null);
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+  };
+
+  // Cargar datos
+  const fetchData = useCallback(async () => {
     try {
-      const data = await getClases();
-      setClases(data);
+      setLoading(true);
+      setError(null);
+      const [clasesData, nivelesData, sedesData, instructoresData] = await Promise.all([
+        getClases(),
+        getNiveles(),
+        getSedes(),
+        getInstructores()
+      ]);
+      setClases(Array.isArray(clasesData) ? clasesData : []);
+      setNiveles(Array.isArray(nivelesData) ? nivelesData : []);
+      setSedes(Array.isArray(sedesData) ? sedesData : []);
+      setInstructores(Array.isArray(instructoresData) ? instructoresData : []);
     } catch (err) {
-      console.error(err);
-      setError("Error al cargar clases. Revisa la API.");
+      console.error("Error cargando datos:", err);
+      setError("Error al cargar los datos.");
+      showNotification("Error al cargar datos", "error");
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Manejar cambios
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  //* ---------- CRUD ---------- *//
-  const saveAdd = async () => {
+  // CRUD
+  const handleCreate = async () => {
     try {
-      const res = await createClase(addForm);
-      setClases((prev) => [res, ...prev]);
+      if (!formData.id_nivel || !formData.id_sede || formData.instructores.length === 0) {
+        showNotification("Nivel, sede e instructores son obligatorios", "error");
+        return;
+      }
+
+      const id_nivel = parseInt(formData.id_nivel);
+      const id_sede = parseInt(formData.id_sede);
+
+      if (isNaN(id_nivel) || isNaN(id_sede)) {
+        showNotification("Nivel y sede deben ser números válidos", "error");
+        return;
+      }
+
+      const payload = {
+        id_nivel,
+        id_sede,
+        instructores: formData.instructores.map(i => ({
+          ...i,
+          id_instructor: parseInt(i.id_instructor)
+        })),
+        cupo_maximo: formData.cupo_maximo ? parseInt(formData.cupo_maximo) : null,
+        dia_semana: formData.dia_semana,
+        descripcion: formData.descripcion,
+        estado: formData.estado,
+        hora_inicio: formData.hora_inicio,
+        hora_fin: formData.hora_fin
+      };
+
+      await createClase(payload);
+      await fetchData();
       closeModal();
+      showNotification("Clase creada con éxito");
     } catch (err) {
       console.error("Error creando clase:", err);
+      const msg = err.response?.data?.mensaje || "Error creando clase";
+      showNotification(msg, "error");
     }
   };
 
-  const saveEdit = async () => {
-    if (!selected) return;
+  const handleEdit = async () => {
     try {
-      const res = await updateClase(selected.id_clase, editForm);
-      setClases((prev) =>
-        prev.map((c) => (c.id_clase === selected.id_clase ? { ...c, ...editForm } : c))
-      );
+      if (!selectedClase) return;
+
+      const id_nivel = parseInt(formData.id_nivel);
+      const id_sede = parseInt(formData.id_sede);
+
+      if (isNaN(id_nivel) || isNaN(id_sede)) {
+        showNotification("Nivel y sede deben ser números válidos", "error");
+        return;
+      }
+
+      const payload = {
+        id_nivel,
+        id_sede,
+        instructores: formData.instructores.map(i => ({
+          ...i,
+          id_instructor: parseInt(i.id_instructor)
+        })),
+        cupo_maximo: formData.cupo_maximo ? parseInt(formData.cupo_maximo) : null,
+        dia_semana: formData.dia_semana,
+        descripcion: formData.descripcion,
+        estado: formData.estado,
+        hora_inicio: formData.hora_inicio,
+        hora_fin: formData.hora_fin
+      };
+
+      await updateClase(selectedClase.id_clase, payload);
+      await fetchData();
       closeModal();
+      showNotification("Clase actualizada con éxito");
     } catch (err) {
-      console.error("Error actualizando clase:", err);
+      console.error("Error editando clase:", err);
+      const msg = err.response?.data?.mensaje || "Error editando clase";
+      showNotification(msg, "error");
     }
   };
 
-  const confirmDelete = async (id) => {
+  const handleDelete = async () => {
     try {
-      await deleteClase(id);
-      setClases((prev) => prev.filter((c) => c.id_clase !== id));
+      if (!selectedClase) return;
+      await deleteClase(selectedClase.id_clase);
+      await fetchData();
       closeModal();
+      showNotification("Clase eliminada con éxito");
     } catch (err) {
       console.error("Error eliminando clase:", err);
+      const msg = err.response?.data?.mensaje || "Error eliminando clase";
+      showNotification(msg, "error");
     }
   };
 
-  //* ---------- Modal helpers ---------- *//
-  const openModal = (type, item) => {
-    setModalType(type);
-    if (type === "add") {
-      setAddForm({
+  // Modal
+  const openModal = (type, clase = null) => {
+    setModal(type);
+    setSelectedClase(clase);
+    if (clase && type === "editar") {
+      setFormData({
+        id_nivel: clase.id_nivel.toString(),
+        id_sede: clase.id_sede.toString(),
+        instructores: clase.instructores || [],
+        instructorTemporal: "",
+        cupo_maximo: clase.cupo_maximo?.toString() || "",
+        dia_semana: clase.dia_semana || "",
+        descripcion: clase.descripcion || "",
+        estado: clase.estado || "Disponible",
+        hora_inicio: clase.hora_inicio || "",
+        hora_fin: clase.hora_fin || ""
+      });
+    } else {
+      setFormData({
         id_nivel: "",
         id_sede: "",
-        id_instructor: "",
+        instructores: [],
+        instructorTemporal: "",
         cupo_maximo: "",
         dia_semana: "",
         descripcion: "",
         estado: "Disponible",
         hora_inicio: "",
-        hora_fin: "",
+        hora_fin: ""
       });
-      setSelected(null);
-      return;
-    }
-    if (item) {
-      setSelected(item);
-      setEditForm({ ...item });
     }
   };
 
   const closeModal = () => {
-    setSelected(null);
-    setModalType(null);
+    setModal(null);
+    setSelectedClase(null);
+    setFormData({
+      id_nivel: "",
+      id_sede: "",
+      instructores: [],
+      instructorTemporal: "",
+      cupo_maximo: "",
+      dia_semana: "",
+      descripcion: "",
+      estado: "Disponible",
+      hora_inicio: "",
+      hora_fin: ""
+    });
   };
 
-  const handleChange = (e, formSetter) => {
-    const { name, value, type, checked } = e.target;
-    formSetter((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  // Agregar instructor desde select
+  const handleAgregarInstructor = () => {
+    const idInstructor = formData.instructorTemporal;
+    if (!idInstructor) return;
+
+    const instructorExistente = formData.instructores.find(i => i.id_instructor == idInstructor);
+    if (instructorExistente) return;
+
+    const instructor = instructores.find(i => i.id_instructor == idInstructor);
+    if (!instructor) return;
+
+    setFormData(prev => ({
+      ...prev,
+      instructores: [...prev.instructores, { id_instructor: parseInt(idInstructor), rol_instructor: "Principal" }],
+      instructorTemporal: ""
+    }));
   };
 
-  // búsqueda
-  const [search, setSearch] = useState("");
-
-  // paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  // Eliminar instructor
+  const handleEliminarInstructor = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      instructores: prev.instructores.filter((_, i) => i !== index)
+    }));
+  };
 
   // Filtrado y paginación
-  const clasesFiltradas = clases.filter((c) => 
-    c.descripcion?.toLowerCase().includes(search.toLowerCase()) ||
-    c.id_nivel?.toString().includes(search.toLowerCase()) ||
-    c.id_sede?.toString().includes(search.toLowerCase())
+  const clasesFiltradas = clases.filter(c =>
+    (c.descripcion || "").toLowerCase().includes(search.toLowerCase()) ||
+    (c.nombre_nivel || "").toLowerCase().includes(search.toLowerCase()) ||
+    (c.nombre_sede || "").toLowerCase().includes(search.toLowerCase()) ||
+    (c.instructores || []).some(i => i.nombre_instructor?.toLowerCase().includes(search.toLowerCase()))
   );
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = clasesFiltradas.slice(indexOfFirst, indexOfLast);
+
   const totalPages = Math.max(1, Math.ceil(clasesFiltradas.length / itemsPerPage));
+  const currentItems = clasesFiltradas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
+  }, [currentPage, totalPages]);
 
   return (
     <Layout>
-      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
-        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Configuracion / Clases</h2>
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Gestión de Clases</h2>
 
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-          <form action="" className="flex gap-[10px]">
-            <label className="mb-[20px] block">
-              <p className="">Buscar Clase:</p>
-              <div className="relative">
-                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  className="input pl-[50px]!"
-                  type="text"
-                  placeholder="Por ejem: 'Yoga'"
-                />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
               </div>
-            </label>
-          </form>
-
-          <div className="">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                placeholder="Buscar clases (Descripción, Nivel, Sede, Instructor)"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              />
+            </div>
             <button
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
-              onClick={() => openModal("add", null)}
+              onClick={() => openModal("crear")}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus size={20} strokeWidth={1.8} />
-              Añadir clase
+              <Plus size={18} />
+              Crear Clase
             </button>
           </div>
-        </div>
 
-        <div className="p-[30px]">
-          {/* Encabezados estilo Clases */}
-          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[8%] font-bold! opacity-80">ID</p>
-            <p className="w-[10%] font-bold! opacity-80">Nivel</p>
-            <p className="w-[10%] font-bold! opacity-80">Sede</p>
-            <p className="w-[10%] font-bold! opacity-80">Instructor</p>
-            <p className="w-[8%] font-bold! opacity-80">Cupo</p>
-            <p className="w-[10%] font-bold! opacity-80">Día</p>
-            <p className="w-[12%] font-bold! opacity-80">Horario</p>
-            <p className="w-[20%] font-bold! opacity-80">Descripción</p>
-            <p className="w-[8%] font-bold! opacity-80">Estado</p>
-            <p className="w-[4%] font-bold! opacity-80">Acciones</p>
-          </article>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead>
-                <tr><th className="hidden" /></tr>
-              </thead>
-
-              <tbody>
-                {loading ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <td colSpan="10" className="text-center py-10 text-gray-400 italic">Cargando clases...</td>
+                    <th className="px-6 py-3 w-[5%]">ID</th>
+                    <th className="px-6 py-3 w-[10%]">Nivel</th>
+                    <th className="px-6 py-3 w-[10%]">Sede</th>
+                    <th className="px-6 py-3 w-[30%]">Instructores</th>
+                    <th className="px-6 py-3 w-[8%]">Cupo</th>
+                    <th className="px-6 py-3 w-[10%]">Día</th>
+                    <th className="px-6 py-3 w-[12%]">Horario</th>
+                    <th className="px-6 py-3 w-[10%]">Estado</th>
+                    <th className="px-6 py-3 w-[5%]">Acciones</th>
                   </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan="10" className="text-center py-10 italic text-red-700">{error}</td>
-                  </tr>
-                ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="10" className="text-center py-10 italic text-red-700">No hay clases registradas</td>
-                  </tr>
-                ) : (
-                  currentItems.map((clase) => (
-                    <tr key={clase.id_clase} className="py-[18px] border-b border-black/20 flex items-center">
-                      <td className="px-6 py-[18px] w-[8%]">{clase.id_clase}</td>
-                      <td className="px-6 py-[18px] w-[10%]">{clase.id_nivel}</td>
-                      <td className="px-6 py-[18px] w-[10%]">{clase.id_sede}</td>
-                      <td className="px-6 py-[18px] w-[10%]">{clase.id_instructor}</td>
-                      <td className="px-6 py-[18px] w-[8%]">{clase.cupo_maximo}</td>
-                      <td className="px-6 py-[18px] w-[10%]">{clase.dia_semana}</td>
-                      <td className="px-6 py-[18px] w-[12%]">{clase.hora_inicio} - {clase.hora_fin}</td>
-                      <td className="px-6 py-[18px] w-[20%] line-clamp-2">{clase.descripcion}</td>
-
-                      <td className="px-6 py-[18px] w-[8%]">
-                        <span
-                          className={`px-[15px] py-[7px] rounded-full inline-flex items-center gap-[10px] cursor-pointer ${
-                            clase.estado === "Disponible" ? "bg-green-100 text-green-700 border border-green-200" : "bg-red-100 text-red-700 border border-red-200"
-                          }`}
-                        >
-                          <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
-                          {clase.estado}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-[18px] w-[4%] flex gap-[10px] items-center justify-center">
-                        <motion.button
-                          onClick={() => openModal("details", clase)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("edit", clase)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("delete", clase)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </motion.button>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                        Cargando clases...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-8 text-center text-red-600">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-8 text-center text-gray-500 italic">
+                        No hay clases registradas.
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((c) => (
+                      <tr key={c.id_clase} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4">{c.id_clase}</td>
+                        <td className="px-6 py-4">{c.nombre_nivel || "—"}</td>
+                        <td className="px-6 py-4">{c.nombre_sede || "—"}</td>
+                        <td className="px-6 py-4">
+                          {c.instructores && c.instructores.length > 0 ? (
+                            <div className="space-y-1">
+                              {c.instructores.map((inst, idx) => (
+                                <div key={idx} className="text-sm">
+                                  {inst.nombre_instructor}
+                                  {inst.rol_instructor && inst.rol_instructor !== 'Principal' && ` (${inst.rol_instructor})`}
+                                </div>
+                              ))}
+                            </div>
+                          ) : "—"}
+                        </td>
+                        <td className="px-6 py-4">{c.cupo_maximo || "—"}</td>
+                        <td className="px-6 py-4">{c.dia_semana || "—"}</td>
+                        <td className="px-6 py-4">
+                          {c.hora_inicio && c.hora_fin ? `${c.hora_inicio} - ${c.hora_fin}` : "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs ${c.estado === "Disponible"
+                              ? "bg-green-100 text-green-800"
+                              : c.estado === "Ocupado"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                            {c.estado}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("ver", c)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("editar", c)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("eliminar", c)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Paginación (siempre visible) */}
-          <div className="flex justify-center items-center gap-2 py-4 italic">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Anterior
-            </button>
-
-            <span className="text-[18px]">Página <span className="text-blue-700">{currentPage}</span> de {totalPages}</span>
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Siguiente
-            </button>
-          </div>
+          {clasesFiltradas.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6 py-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Notificación */}
+        <AnimatePresence>
+          {notification.show && (
+            <motion.div
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              transition={{ duration: 0.3 }}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
+            >
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Modales */}
         <AnimatePresence>
-          {/* Add */}
-          {modalType === "add" && (
+          {modal && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">Agregar clase</h3>
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
+                  {modal === "crear"
+                    ? "Crear Clase"
+                    : modal === "editar"
+                      ? "Editar Clase"
+                      : modal === "ver"
+                        ? "Detalles de la Clase"
+                        : "Eliminar Clase"}
+                </h3>
 
-                <form>
-                  <label className="block mb-[20px]">
-                    <p className="">Descripción</p>
-                    <input name="descripcion" className="input w-full" value={addForm.descripcion} onChange={(e) => handleChange(e, setAddForm)} placeholder="Ej: Clase de Yoga" />
-                  </label>
-
-                  <div className="grid grid-cols-2 gap-[20px] mb-[20px]">
-                    <label className="block">
-                      <p className="">Nivel</p>
-                      <input name="id_nivel" className="input w-full" value={addForm.id_nivel} onChange={(e) => handleChange(e, setAddForm)} placeholder="Ej: 1" />
-                    </label>
-
-                    <label className="block">
-                      <p className="">Sede</p>
-                      <input name="id_sede" className="input w-full" value={addForm.id_sede} onChange={(e) => handleChange(e, setAddForm)} placeholder="Ej: 1" />
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-[20px] mb-[20px]">
-                    <label className="block">
-                      <p className="">Instructor</p>
-                      <input name="id_instructor" className="input w-full" value={addForm.id_instructor} onChange={(e) => handleChange(e, setAddForm)} placeholder="Ej: 1" />
-                    </label>
-
-                    <label className="block">
-                      <p className="">Cupo Máximo</p>
-                      <input name="cupo_maximo" className="input w-full" value={addForm.cupo_maximo} onChange={(e) => handleChange(e, setAddForm)} placeholder="Ej: 20" />
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-[20px] mb-[20px]">
-                    <label className="block">
-                      <p className="">Día de la Semana</p>
-                      <input name="dia_semana" className="input w-full" value={addForm.dia_semana} onChange={(e) => handleChange(e, setAddForm)} placeholder="Ej: Lunes" />
-                    </label>
-
-                    <label className="block">
-                      <p className="">Horario</p>
-                      <div className="grid grid-cols-2 gap-[10px]">
-                        <input name="hora_inicio" className="input" value={addForm.hora_inicio} onChange={(e) => handleChange(e, setAddForm)} placeholder="Inicio" type="time" />
-                        <input name="hora_fin" className="input" value={addForm.hora_fin} onChange={(e) => handleChange(e, setAddForm)} placeholder="Fin" type="time" />
+                {modal === "crear" && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        rows="2"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Clase de skate para principiantes"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nivel *</label>
+                        <select
+                          name="id_nivel"
+                          value={formData.id_nivel}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          required
+                        >
+                          <option value="">Seleccionar nivel</option>
+                          {niveles.map(n => (
+                            <option key={n.id_nivel} value={n.id_nivel}>
+                              {n.nombre_nivel}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    </label>
-                  </div>
-
-                  <label className="block mb-[20px]">
-                    <p className="">Estado</p>
-                    <select name="estado" className="input w-full" value={addForm.estado} onChange={(e) => handleChange(e, setAddForm)}>
-                      <option value="Disponible">Disponible</option>
-                      <option value="Ocupado">Ocupado</option>
-                      <option value="Cancelado">Cancelado</option>
-                    </select>
-                  </label>
-
-                  <div className="flex justify-end gap-[10px] mt-[20px]">
-                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
-                      Cancelar
-                    </button>
-                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveAdd}>
-                      Guardar
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Details */}
-          {modalType === "details" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Detalles de la clase</h3>
-
-                <div className="grid grid-cols-2 gap-[10px]">
-                  <div>
-                    <p className="font-medium">ID:</p>
-                    <p className="font-medium">Nivel:</p>
-                    <p className="font-medium">Sede:</p>
-                    <p className="font-medium">Instructor:</p>
-                    <p className="font-medium">Cupo Máximo:</p>
-                    <p className="font-medium">Día de la Semana:</p>
-                    <p className="font-medium">Horario:</p>
-                    <p className="font-medium">Descripción:</p>
-                    <p className="font-medium">Estado:</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-700">{selected.id_clase}</p>
-                    <p className="text-gray-700">{selected.id_nivel}</p>
-                    <p className="text-gray-700">{selected.id_sede}</p>
-                    <p className="text-gray-700">{selected.id_instructor}</p>
-                    <p className="text-gray-700">{selected.cupo_maximo}</p>
-                    <p className="text-gray-700">{selected.dia_semana}</p>
-                    <p className="text-gray-700">{selected.hora_inicio} - {selected.hora_fin}</p>
-                    <p className="text-gray-700">{selected.descripcion}</p>
-                    <p className="text-gray-700">{selected.estado}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-[10px] mt-[30px]">
-                  <button className="btn bg-gray-200" onClick={closeModal}>
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Edit */}
-          {modalType === "edit" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Editar clase</h3>
-
-                <form>
-                  <label className="block mb-[20px]">
-                    <p className="">Descripción</p>
-                    <input name="descripcion" className="input w-full" value={editForm.descripcion} onChange={(e) => handleChange(e, setEditForm)} placeholder="Ej: Clase de Yoga" />
-                  </label>
-
-                  <div className="grid grid-cols-2 gap-[20px] mb-[20px]">
-                    <label className="block">
-                      <p className="">Nivel</p>
-                      <input name="id_nivel" className="input w-full" value={editForm.id_nivel} onChange={(e) => handleChange(e, setEditForm)} placeholder="Ej: 1" />
-                    </label>
-
-                    <label className="block">
-                      <p className="">Sede</p>
-                      <input name="id_sede" className="input w-full" value={editForm.id_sede} onChange={(e) => handleChange(e, setEditForm)} placeholder="Ej: 1" />
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-[20px] mb-[20px]">
-                    <label className="block">
-                      <p className="">Instructor</p>
-                      <input name="id_instructor" className="input w-full" value={editForm.id_instructor} onChange={(e) => handleChange(e, setEditForm)} placeholder="Ej: 1" />
-                    </label>
-
-                    <label className="block">
-                      <p className="">Cupo Máximo</p>
-                      <input name="cupo_maximo" className="input w-full" value={editForm.cupo_maximo} onChange={(e) => handleChange(e, setEditForm)} placeholder="Ej: 20" />
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-[20px] mb-[20px]">
-                    <label className="block">
-                      <p className="">Día de la Semana</p>
-                      <input name="dia_semana" className="input w-full" value={editForm.dia_semana} onChange={(e) => handleChange(e, setEditForm)} placeholder="Ej: Lunes" />
-                    </label>
-
-                    <label className="block">
-                      <p className="">Horario</p>
-                      <div className="grid grid-cols-2 gap-[10px]">
-                        <input name="hora_inicio" className="input" value={editForm.hora_inicio} onChange={(e) => handleChange(e, setEditForm)} placeholder="Inicio" type="time" />
-                        <input name="hora_fin" className="input" value={editForm.hora_fin} onChange={(e) => handleChange(e, setEditForm)} placeholder="Fin" type="time" />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sede *</label>
+                        <select
+                          name="id_sede"
+                          value={formData.id_sede}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          required
+                        >
+                          <option value="">Seleccionar sede</option>
+                          {sedes.map(s => (
+                            <option key={s.id_sede} value={s.id_sede}>
+                              {s.nombre_sede}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    </label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Instructores *</label>
+                      <div className="space-y-2">
+                        {formData.instructores.length === 0 ? (
+                          <div className="text-gray-500 text-sm italic">No hay instructores asignados</div>
+                        ) : (
+                          formData.instructores.map((inst, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <span>
+                                {instructores.find(i => i.id_instructor == inst.id_instructor)?.nombre_completo || 'Instructor desconocido'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleEliminarInstructor(index)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                        <div className="flex gap-2">
+                          <select
+                            value={formData.instructorTemporal || ""}
+                            onChange={handleChange}
+                            name="instructorTemporal"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Seleccionar instructor</option>
+                            {instructores
+                              .filter(inst => !formData.instructores.some(i => i.id_instructor == inst.id_instructor))
+                              .map(inst => (
+                                <option key={inst.id_instructor} value={inst.id_instructor}>
+                                  {inst.nombre_completo}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={handleAgregarInstructor}
+                            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            Agregar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Cupo Máximo</label>
+                        <input
+                          type="number"
+                          name="cupo_maximo"
+                          value={formData.cupo_maximo}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: 15"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Día de la Semana</label>
+                        <select
+                          name="dia_semana"
+                          value={formData.dia_semana}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        >
+                          <option value="">Seleccionar día</option>
+                          <option value="Lunes">Lunes</option>
+                          <option value="Martes">Martes</option>
+                          <option value="Miércoles">Miércoles</option>
+                          <option value="Jueves">Jueves</option>
+                          <option value="Viernes">Viernes</option>
+                          <option value="Sábado">Sábado</option>
+                          <option value="Domingo">Domingo</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Hora Inicio</label>
+                        <input
+                          type="time"
+                          name="hora_inicio"
+                          value={formData.hora_inicio}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Hora Fin</label>
+                        <input
+                          type="time"
+                          name="hora_fin"
+                          value={formData.hora_fin}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                      <select
+                        name="estado"
+                        value={formData.estado}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      >
+                        <option value="Disponible">Disponible</option>
+                        <option value="Ocupado">Ocupado</option>
+                        <option value="Cancelado">Cancelado</option>
+                      </select>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCreate}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Crear
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {modal === "editar" && selectedClase && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        rows="2"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Clase de skate para principiantes"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nivel *</label>
+                        <select
+                          name="id_nivel"
+                          value={formData.id_nivel}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          required
+                        >
+                          <option value="">Seleccionar nivel</option>
+                          {niveles.map(n => (
+                            <option key={n.id_nivel} value={n.id_nivel}>
+                              {n.nombre_nivel}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sede *</label>
+                        <select
+                          name="id_sede"
+                          value={formData.id_sede}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          required
+                        >
+                          <option value="">Seleccionar sede</option>
+                          {sedes.map(s => (
+                            <option key={s.id_sede} value={s.id_sede}>
+                              {s.nombre_sede}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Instructores *</label>
+                      <div className="space-y-2">
+                        {formData.instructores.length === 0 ? (
+                          <div className="text-gray-500 text-sm italic">No hay instructores asignados</div>
+                        ) : (
+                          formData.instructores.map((inst, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <span>
+                                {instructores.find(i => i.id_instructor == inst.id_instructor)?.nombre_completo || 'Instructor desconocido'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleEliminarInstructor(index)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                        <div className="flex gap-2">
+                          <select
+                            value={formData.instructorTemporal || ""}
+                            onChange={handleChange}
+                            name="instructorTemporal"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Seleccionar instructor</option>
+                            {instructores
+                              .filter(inst => !formData.instructores.some(i => i.id_instructor == inst.id_instructor))
+                              .map(inst => (
+                                <option key={inst.id_instructor} value={inst.id_instructor}>
+                                  {inst.nombre_completo}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={handleAgregarInstructor}
+                            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            Agregar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Cupo Máximo</label>
+                        <input
+                          type="number"
+                          name="cupo_maximo"
+                          value={formData.cupo_maximo}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: 15"
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Día de la Semana</label>
+                        <select
+                          name="dia_semana"
+                          value={formData.dia_semana}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        >
+                          <option value="">Seleccionar día</option>
+                          <option value="Lunes">Lunes</option>
+                          <option value="Martes">Martes</option>
+                          <option value="Miércoles">Miércoles</option>
+                          <option value="Jueves">Jueves</option>
+                          <option value="Viernes">Viernes</option>
+                          <option value="Sábado">Sábado</option>
+                          <option value="Domingo">Domingo</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Hora Inicio</label>
+                        <input
+                          type="time"
+                          name="hora_inicio"
+                          value={formData.hora_inicio}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Hora Fin</label>
+                        <input
+                          type="time"
+                          name="hora_fin"
+                          value={formData.hora_fin}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                      <select
+                        name="estado"
+                        value={formData.estado}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      >
+                        <option value="Disponible">Disponible</option>
+                        <option value="Ocupado">Ocupado</option>
+                        <option value="Cancelado">Cancelado</option>
+                      </select>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {modal === "ver" && selectedClase && (
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-medium">ID:</span>
+                      <span>{selectedClase.id_clase}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nivel:</span>
+                      <span>{selectedClase.nombre_nivel || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Sede:</span>
+                      <span>{selectedClase.nombre_sede || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Instructores:</span>
+                      <div className="text-right">
+                        {selectedClase.instructores && selectedClase.instructores.length > 0 ? (
+                          <div className="space-y-1">
+                            {selectedClase.instructores.map((inst, idx) => (
+                              <div key={idx}>
+                                {inst.nombre_instructor}
+                                {inst.rol_instructor && inst.rol_instructor !== 'Principal' && ` (${inst.rol_instructor})`}
+                              </div>
+                            ))}
+                          </div>
+                        ) : "—"}
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Cupo Máximo:</span>
+                      <span>{selectedClase.cupo_maximo || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Día:</span>
+                      <span>{selectedClase.dia_semana || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Horario:</span>
+                      <span>{selectedClase.hora_inicio && selectedClase.hora_fin ? `${selectedClase.hora_inicio} - ${selectedClase.hora_fin}` : "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Descripción:</span>
+                      <span>{selectedClase.descripcion || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Estado:</span>
+                      <span className={`font-medium ${selectedClase.estado === "Disponible" ? "text-green-600" :
+                          selectedClase.estado === "Ocupado" ? "text-yellow-600" : "text-red-600"
+                        }`}>
+                        {selectedClase.estado}
+                      </span>
+                    </div>
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
                   </div>
+                )}
 
-                  <label className="block mb-[20px]">
-                    <p className="">Estado</p>
-                    <select name="estado" className="input w-full" value={editForm.estado} onChange={(e) => handleChange(e, setEditForm)}>
-                      <option value="Disponible">Disponible</option>
-                      <option value="Ocupado">Ocupado</option>
-                      <option value="Cancelado">Cancelado</option>
-                    </select>
-                  </label>
-
-                  <div className="flex justify-end gap-[10px] mt-[20px]">
-                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
-                      Cancelar
-                    </button>
-                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveEdit}>
-                      Guardar
-                    </button>
+                {modal === "eliminar" && selectedClase && (
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-700">
+                      ¿Está seguro de eliminar la clase{" "}
+                      <span className="font-bold text-red-600">{selectedClase.descripcion}</span>?
+                      <br />
+                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                    </p>
+                    <div className="flex justify-center gap-3 pt-2">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Delete */}
-          {modalType === "delete" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Eliminar clase</h3>
-                <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar <span className="font-bold">{selected?.descripcion}</span>? Esta acción es permanente.</p>
-                <div className="flex justify-end gap-[10px] mt-[20px]">
-                  <button className="btn bg-gray-200" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button className="btn bg-red-100 text-red-700" onClick={() => confirmDelete(selected.id_clase)}>
-                    Eliminar
-                  </button>
-                </div>
+                )}
               </motion.div>
             </motion.div>
           )}
@@ -551,6 +943,6 @@ function Clases() {
       </section>
     </Layout>
   );
-}
+};
 
 export default Clases;

@@ -1,37 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
-import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { getRoles } from "../../services/RolesService";
+import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { AnimatePresence } from "framer-motion"; 
+import { getRoles, createRole, updateRole, deleteRole } from "../../services/RolesService";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
   const [selected, setSelected] = useState(null);
   const [modalType, setModalType] = useState(null);
-
   const [editForm, setEditForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
   const [addForm, setAddForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // búsqueda
   const [search, setSearch] = useState("");
-
-  // paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // cerrar con Escape
+  // Notificación
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" }); // type: 'success' | 'error'
+
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+  };
+
+  // Cerrar modal con Escape
   useEffect(() => {
-    const onKey = (e) => {
+    const handleKeyDown = (e) => {
       if (e.key === "Escape") closeModal();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // cargar roles
   useEffect(() => {
     fetchRoles();
   }, []);
@@ -41,26 +42,30 @@ const Roles = () => {
     setError(null);
     try {
       const data = await getRoles();
-      setRoles(data || []);
+      setRoles(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error cargando roles:", err);
-      setError("No se pudieron cargar los roles. Revisa la API / CORS.");
+      setError("No se pudieron cargar los roles.");
+      showNotification("Error al cargar roles", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- Modales ---------------- */
-  const openModal = (type, item) => {
+  const openModal = (type, item = null) => {
     setModalType(type);
     if (type === "add") {
       setAddForm({ nombre_rol: "", descripcion: "", estado: true });
       setSelected(null);
-      return;
-    }
-    setSelected(item ? { ...item } : null);
-    if (type === "edit" && item) {
-      setEditForm({ nombre_rol: item.nombre_rol || "", descripcion: item.descripcion || "", estado: !!item.estado });
+    } else if (type === "edit" && item) {
+      setSelected(item);
+      setEditForm({
+        nombre_rol: item.nombre_rol || "",
+        descripcion: item.descripcion || "",
+        estado: !!item.estado,
+      });
+    } else {
+      setSelected(item);
     }
   };
 
@@ -69,14 +74,9 @@ const Roles = () => {
     setModalType(null);
   };
 
-  /* ---------------- CRUD local (in-memory) ---------------- */
-  const confirmDelete = (id) => {
-    setRoles((prev) => prev.filter((it) => it.id !== id));
-    closeModal();
-  };
-
-  const toggleEstado = (id) => {
-    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, estado: !r.estado } : r)));
+  const handleAddChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setAddForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleEditChange = (e) => {
@@ -84,35 +84,93 @@ const Roles = () => {
     setEditForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const saveEdit = () => {
+  const saveAdd = async () => {
+    try {
+      const payload = {
+        nombre_rol: addForm.nombre_rol.trim(),
+        descripcion: addForm.descripcion.trim(),
+        estado: addForm.estado,
+      };
+      if (!payload.nombre_rol) {
+        showNotification("El nombre del rol es obligatorio", "error");
+        return;
+      }
+      const newRole = await createRole(payload);
+      setRoles((prev) => [newRole, ...prev]);
+      closeModal();
+      showNotification("Rol creado con éxito");
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al crear el rol", "error");
+    }
+  };
+
+  const saveEdit = async () => {
     if (!selected) return closeModal();
-    setRoles((prev) => prev.map((it) => (it.id === selected.id ? { ...it, ...editForm } : it)));
-    closeModal();
+    try {
+      const payload = {
+        nombre_rol: editForm.nombre_rol.trim(),
+        descripcion: editForm.descripcion.trim(),
+        estado: editForm.estado,
+      };
+      if (!payload.nombre_rol) {
+        showNotification("El nombre del rol es obligatorio", "error");
+        return;
+      }
+      await updateRole(selected.id_rol || selected.id, payload);
+      setRoles((prev) =>
+        prev.map((r) =>
+          (r.id_rol || r.id) === (selected.id_rol || selected.id) ? { ...r, ...payload } : r
+        )
+      );
+      closeModal();
+      showNotification("Rol actualizado con éxito");
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al actualizar el rol", "error");
+    }
   };
 
-  const handleAddChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setAddForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  const confirmDelete = async () => {
+    if (!selected) return;
+    try {
+      await deleteRole(selected.id_rol || selected.id);
+      setRoles((prev) =>
+        prev.filter((r) => (r.id_rol || r.id) !== (selected.id_rol || selected.id))
+      );
+      closeModal();
+      showNotification("Rol eliminado con éxito");
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al eliminar el rol", "error");
+    }
   };
 
-  const saveAdd = () => {
-    const newId = roles.length ? Math.max(...roles.map((c) => +c.id)) + 1 : 1;
-    const newRole = {
-      id: newId,
-      nombre_rol: addForm.nombre_rol || `Rol ${newId}`,
-      descripcion: addForm.descripcion || "",
-      estado: typeof addForm.estado === "boolean" ? addForm.estado : true,
-    };
-    setRoles((prev) => [newRole, ...prev]);
-    closeModal();
+  const toggleEstado = async (role) => {
+    const newEstado = !role.estado;
+    try {
+      await updateRole(role.id_rol || role.id, { ...role, estado: newEstado });
+      setRoles((prev) =>
+        prev.map((r) =>
+          (r.id_rol || r.id) === (role.id_rol || role.id) ? { ...r, estado: newEstado } : r
+        )
+      );
+      showNotification(`Rol ${newEstado ? "activado" : "desactivado"} con éxito`);
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al cambiar el estado", "error");
+    }
   };
 
   // Filtrado y paginación
-  const rolesFiltrados = roles.filter((r) => r.nombre_rol?.toLowerCase().includes(search.toLowerCase()));
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = rolesFiltrados.slice(indexOfFirst, indexOfLast);
+  const rolesFiltrados = roles.filter((r) =>
+    r.nombre_rol?.toLowerCase().includes(search.toLowerCase())
+  );
   const totalPages = Math.max(1, Math.ceil(rolesFiltrados.length / itemsPerPage));
+  const currentItems = rolesFiltrados.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -120,314 +178,364 @@ const Roles = () => {
 
   return (
     <Layout>
-      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
-        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Configuracion / Roles</h2>
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Roles</h2>
 
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-          <form action="" className="flex gap-[10px]">
-            <label className="mb-[20px] block">
-              <p className="">Buscar Rol:</p>
-              <div className="relative">
-                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  className="input pl-[50px]!"
-                  type="text"
-                  placeholder="Por ejem: 'Administrador'"
-                />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
               </div>
-            </label>
-          </form>
-
-          <div className="">
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                type="text"
+                placeholder="Buscar rol (ej: Administrador)"
+              />
+            </div>
             <button
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
-              onClick={() => openModal("add", null)}
+              onClick={() => openModal("add")}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus size={20} strokeWidth={1.8} />
-              Añadir rol
+              <Plus size={18} />
+              Añadir Rol
             </button>
           </div>
-        </div>
 
-        <div className="p-[30px]">
-          {/* Encabezados estilo Roles (igual que ejemplo) */}
-          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[30%] font-bold! opacity-80">Nombre</p>
-            <p className="w-[55%] font-bold! opacity-80">Descripción</p>
-            <p className="w-[15%] font-bold! opacity-80">Estado</p>
-            <p className="w-[15%] font-bold! opacity-80">Acciones</p>
-          </article>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead>
-                <tr><th className="hidden" /></tr>
-              </thead>
-
-              <tbody>
-                {loading ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <td colSpan="4" className="text-center py-10 text-gray-400 italic">Cargando roles...</td>
+                    <th className="px-6 py-3 w-1/3">Nombre</th>
+                    <th className="px-6 py-3 w-1/2">Descripción</th>
+                    <th className="px-6 py-3 w-1/6">Estado</th>
+                    <th className="px-6 py-3 w-1/6">Acciones</th>
                   </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan="4" className="text-center py-10 italic text-red-700">{error}</td>
-                  </tr>
-                ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="text-center py-10 italic text-red-700">No hay roles registrados</td>
-                  </tr>
-                ) : (
-                  currentItems.map((role) => (
-                    <tr key={role.id} className="py-[18px] border-b border-black/20 flex items-center">
-                      <td className="px-6 py-[18px] w-[30%]">{role.nombre_rol}</td>
-                      <td className="px-6 py-[18px] w-[55%] line-clamp-2">{role.descripcion}</td>
-
-                      <td className="px-6 py-[18px] w-[15%]">
-                        <span
-                          onClick={() => toggleEstado(role.id)}
-                          className={`px-[15px] py-[7px] rounded-full inline-flex items-center gap-[10px] cursor-pointer ${
-                            role.estado ? "bg-green-100 text-green-700 border border-green-200" : "bg-red-100 text-red-700 border border-red-200"
-                          }`}
-                        >
-                          <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
-                          {role.estado ? "Activo" : "Inactivo"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
-                        <motion.button
-                          onClick={() => openModal("details", role)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("edit", role)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("delete", role)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </motion.button>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                        Cargando roles...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-8 text-center text-red-600">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500 italic">
+                        No se encontraron roles.
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((role) => (
+                      <tr key={role.id_rol || role.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{role.nombre_rol}</td>
+                        <td className="px-6 py-4 text-gray-600 line-clamp-2">{role.descripcion || "— Sin descripción —"}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            onClick={() => toggleEstado(role)}
+                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition ${
+                              role.estado
+                                ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                : "bg-red-100 text-red-800 hover:bg-red-200"
+                            }`}
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                role.estado ? "bg-green-600" : "bg-red-600"
+                              }`}
+                            ></span>
+                            {role.estado ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("details", role)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("edit", role)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("delete", role)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Paginación (siempre visible) */}
-          <div className="flex justify-center items-center gap-2 py-4 italic">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Anterior
-            </button>
-
-            <span className="text-[18px]">Página <span className="text-blue-700">{currentPage}</span> de {totalPages}</span>
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Siguiente
-            </button>
-          </div>
+          {rolesFiltrados.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6 py-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Notificación Toast */}
+        <AnimatePresence>
+          {notification.show && (
+            <motion.div
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              transition={{ duration: 0.3 }}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
+                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+              }`}
+            >
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Modales */}
         <AnimatePresence>
-          {/* Add */}
-          {modalType === "add" && (
+          {modalType && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">Agregar rol</h3>
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
 
-                <form>
-                  <label className="block mb-[20px]">
-                    <p className="">Nombre</p>
-                    <input name="nombre_rol" className="input w-full" value={addForm.nombre_rol} onChange={handleAddChange} placeholder="Ej: Administrador" />
-                  </label>
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
+                  {modalType === "add"
+                    ? "Añadir Rol"
+                    : modalType === "edit"
+                    ? "Editar Rol"
+                    : modalType === "details"
+                    ? "Detalles del Rol"
+                    : "Eliminar Rol"}
+                </h3>
 
-                  <label className="block mb-[20px]">
-                    <p className="">Descripción:</p>
-                    <textarea name="descripcion" className="input w-full h-[120px]" value={addForm.descripcion} onChange={handleAddChange} placeholder="Ej: Permite acceso completo al sistema" />
-                  </label>
+                {modalType === "add" && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <input
+                        name="nombre_rol"
+                        value={addForm.nombre_rol}
+                        onChange={handleAddChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Administrador"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={addForm.descripcion}
+                        onChange={handleAddChange}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Breve descripción del rol"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="estado"
+                        checked={!!addForm.estado}
+                        onChange={handleAddChange}
+                        className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">Activo</label>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveAdd}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </form>
+                )}
 
-                  <label className="flex items-center gap-3 mb-[20px]">
-                    <input type="checkbox" name="estado" checked={!!addForm.estado} onChange={handleAddChange} />
-                    <span>Estado (activo)</span>
-                  </label>
+                {modalType === "edit" && selected && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <input
+                        name="nombre_rol"
+                        value={editForm.nombre_rol}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Editor"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={editForm.descripcion}
+                        onChange={handleEditChange}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Actualice la descripción"
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="estado"
+                        checked={!!editForm.estado}
+                        onChange={handleEditChange}
+                        className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label className="ml-2 text-sm text-gray-700">Activo</label>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveEdit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  </form>
+                )}
 
-                  <div className="flex justify-end gap-[10px] mt-[20px]">
-                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
-                      Cancelar
-                    </button>
-                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveAdd}>
-                      Guardar
-                    </button>
+                {modalType === "details" && selected && (
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nombre:</span>
+                      <span>{selected.nombre_rol}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Descripción:</span>
+                      <span className="text-right">{selected.descripcion || "— Sin descripción —"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Estado:</span>
+                      <span className={selected.estado ? "text-green-600" : "text-red-600"}>
+                        {selected.estado ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
                   </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
+                )}
 
-          {/* Details */}
-          {modalType === "details" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Detalles del rol</h3>
-
-                <div className="grid grid-cols-2 gap-[10px]">
-                  <div>
-                    <p className="font-medium">Nombre:</p>
-                    <p className="font-medium">Descripción:</p>
-                    <p className="font-medium">Estado:</p>
+                {modalType === "delete" && selected && (
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-700">
+                      ¿Está seguro de eliminar el rol{" "}
+                      <span className="font-bold text-red-600">{selected.nombre_rol}</span>?
+                      <br />
+                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                    </p>
+                    <div className="flex justify-center gap-3 pt-2">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={confirmDelete}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-700">{selected.nombre_rol}</p>
-                    <p className="text-gray-700">{selected.descripcion}</p>
-                    <p className="text-gray-700">{selected.estado ? "Activo" : "Inactivo"}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-[10px] mt-[30px]">
-                  <button className="btn bg-gray-200" onClick={closeModal}>
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Edit */}
-          {modalType === "edit" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Editar rol</h3>
-
-                <form>
-                  <label className="block mb-[20px]">
-                    <p className="">Nombre</p>
-                    <input name="nombre_rol" className="input w-full" value={editForm.nombre_rol} onChange={handleEditChange} placeholder="Ej: Administrador" />
-                  </label>
-
-                  <label className="block mb-[20px]">
-                    <p className="">Descripción:</p>
-                    <textarea name="descripcion" className="input w-full h-[120px]" value={editForm.descripcion} onChange={handleEditChange} placeholder="Ej: Permite acceso completo al sistema" />
-                  </label>
-
-                  <label className="flex items-center gap-3 mb-[20px]">
-                    <input type="checkbox" name="estado" checked={!!editForm.estado} onChange={handleEditChange} />
-                    <span>Estado (activo)</span>
-                  </label>
-
-                  <div className="flex justify-end gap-[10px] mt-[20px]">
-                    <button type="button" className="btn bg-gray-200" onClick={closeModal}>
-                      Cancelar
-                    </button>
-                    <button type="button" className="btn bg-blue-100 text-blue-700" onClick={saveEdit}>
-                      Guardar
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Delete */}
-          {modalType === "delete" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Eliminar rol</h3>
-                <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar <span className="font-bold">{selected?.nombre_rol}</span>? Esta acción es permanente.</p>
-                <div className="flex justify-end gap-[10px] mt-[20px]">
-                  <button className="btn bg-gray-200" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button className="btn bg-red-100 text-red-700" onClick={() => confirmDelete(selected.id)}>
-                    Eliminar
-                  </button>
-                </div>
+                )}
               </motion.div>
             </motion.div>
           )}

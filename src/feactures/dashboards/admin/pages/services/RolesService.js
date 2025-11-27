@@ -1,21 +1,24 @@
-// admin/services/rolesService.js
+// src/services/RolesService.js (CORRECTO)
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:3000/api", // apunta a tu prefijo de rutas
-});
+const API_URL = "http://localhost:3000/api/roles";
 
-// Obtener lista de roles
 export const getRoles = async () => {
-  const res = await api.get("/roles"); 
-  return Array.isArray(res.data) ? res.data : res.data?.roles ?? [];
+  const response = await axios.get(API_URL);
+  return response.data;
 };
 
-// Crear rol
-export const createRole = (payload) => api.post("/roles", payload);
+export const createRole = async (rolData) => {
+  const response = await axios.post(API_URL, rolData);
+  return response.data;
+};
 
-// Actualizar rol
-export const updateRole = (id, payload) => api.put(`/roles/${id}`, payload);
+export const updateRole = async (id, rolData) => {
+  const response = await axios.put(`${API_URL}/${id}`, rolData);
+  return response.data;
+};
 
-// Eliminar rol
-export const deleteRole = (id) => api.delete(`/roles/${id}`);
+export const deleteRole = async (id) => {
+  const response = await axios.delete(`${API_URL}/${id}`);
+  return response.data;
+};

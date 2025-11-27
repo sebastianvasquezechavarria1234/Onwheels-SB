@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, Plus, Pencil, Trash2, X, Eye } from "lucide-react";
 import { Layout } from "../../../layout/layout";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion"
 
 const Matriculas = () => {
   // UN DATO "quemado" en la tabla

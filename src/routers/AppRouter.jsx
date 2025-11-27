@@ -1,7 +1,8 @@
-// src/router/AppRouter.jsx
+
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";  
+
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
@@ -17,6 +18,7 @@ import Login from "../feactures/Auth/pages/Login";
 import Register from "../feactures/Auth/pages/Register";
 
 // Dashboard admin
+
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
 // import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
@@ -24,6 +26,8 @@ import Products from "../feactures/dashboards/admin/pages/compras/productos/Prod
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles";
 import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
+import Estudiantes from "../feactures/dashboards/admin/pages/clases/estudiantes/students";
+import Instructores from "../feactures/dashboards/admin/pages/clases/instructores/Instructores";
 import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
 import PreinscripcionesAdmin from "../feactures/dashboards/admin/pages/clases/preinscripciones/PreRegistrations";
 import Usuarios from "../feactures/dashboards/admin/pages/configuracion/usuarios/usuarios";
@@ -32,6 +36,7 @@ import CategoriaEventos from "../feactures/dashboards/admin/pages/eventos/catego
 import Patrocinadores from "../feactures/dashboards/admin/pages/eventos/patrocinadores/patrocinadores";
 import Sedes from "../feactures/dashboards/admin/pages/eventos/sedes/sedes";
 import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
+import ClassLevels from "../feactures/dashboards/admin/pages/clases/niveles/ClassLevels"
 
 // Dashboard student
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
@@ -127,7 +132,9 @@ const AppRouter = () => {
         <Route path="admin/sedes" element={<Sedes />} />
         <Route path="admin/clases" element={<Clases />} />
         <Route path="admin/plans" element={<PlanClasses />} />
-        {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
+        <Route path="admin/instructores" element={<Instructores />} />
+       <Route path="admin/classLevels" element={<ClassLevels />} />
+        <Route path="admin/estudiantes" element={<Estudiantes/>} />
 
         {/* Dashboard Student */}
         <Route path="student/setting" element={<Setting />} />
