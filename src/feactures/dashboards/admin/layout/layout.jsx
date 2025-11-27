@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import '../../hooks/dashboard.css'
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
@@ -7,11 +8,31 @@ import { motion } from "framer-motion";
 
 export const Layout = ({ children }) => {
   const [, setNow] = useState(new Date());
+  const [now, setNow] = useState(new Date());
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const dateStr = now.toLocaleDateString("es-CO", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const timeStr = now.toLocaleTimeString("es-CO");
+
+  const handleLogout = () => {
+    // Eliminar token y usuario del localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirigir a login
+    navigate('/login');
+  };
 
   return (
     <main
@@ -145,6 +166,18 @@ export const Layout = ({ children }) => {
             >
               <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
             </BtnLinkIcon>
+            {/* BOTÓN DE CERRAR SESIÓN MODIFICADO */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="cursor-pointer bg-[var(--color-blue)] text-white w-full inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
+              aria-label="Cerrar sesión"
+            >
+              <div className="w-[60px] h-[60px] flex justify-center items-center bg-white rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                <ArrowLeft className="text-black" strokeWidth={2} size={20} />
+              </div>
+              <span className="font-medium">Cerrar sesión</span>
+            </button>
           </ul>
         </div>
       </nav>

@@ -198,9 +198,9 @@ const Register = () => {
                   <p className="text-center mt-2 text-sm text-gray-700">{serverMsg}</p>
                 )}
 
-                <p className="text-slate-600 text-center mb-8 mt-4">
+                <p className="text-slate-600 mb-8 mt-4">
                   ¿Ya tienes una cuenta?{" "}
-                  <Link to="/login" className="text-blue-800 hover:text-red-600 font-medium">
+                  <Link to="/login" className="underline text-blue-800 hover:text-red-600 font-medium">
                     Iniciar sesión
                   </Link>
                 </p>
@@ -211,22 +211,22 @@ const Register = () => {
 
           {/* Imagen derecha */}
           <div className="lg:w-1/2 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-800/30 to-transparent"></div>
-
-            <div className="relative z-10 text-center">
-              <h2 className="text-3xl font-bold mb-4">Registrate</h2>
-
-              <div className="w-80 h-80 mx-auto mb-6 relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-800 to-blue-900 rounded-full opacity-20"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="w-32 h-32 bg-slate-700 rounded-2xl shadow-xl flex items-center justify-center">
-                    <div className="w-16 h-16 bg-blue-700 rounded-lg"></div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-800/30 to-transparent"></div>
+                        <div className="relative z-10 text-center">
+                            <h2 className="text-3xl font-bold mb-4">Recuperar contraseña</h2>
+                            <div className="w-80 h-80 mx-auto mb-6 relative">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-800 to-blue-900 rounded-full opacity-20"></div>
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                    <div className="w-32 h-32 bg-slate-700 rounded-2xl shadow-xl flex items-center justify-center">
+                                        <div className="w-16 h-16 bg-blue-700 rounded-lg"></div>
+                                    </div>
+                                </div>
+                                <div className="absolute top-20 right-20 w-8 h-8 bg-white rounded opacity-80"></div>
+                                <div className="absolute bottom-20 left-20 w-6 h-6 bg-red-500 rounded-full"></div>
+                                <div className="absolute top-32 left-16 w-4 h-4 bg-white rounded-full opacity-60"></div>
+                            </div>
+                        </div>
+                    </div>
 
         </div>
       </div>

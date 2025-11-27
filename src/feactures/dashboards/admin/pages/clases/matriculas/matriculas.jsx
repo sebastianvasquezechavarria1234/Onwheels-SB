@@ -204,12 +204,11 @@ const Matriculas = () => {
         <div className="p-[30px]">
           {/* Encabezados (quitada Preinscripción) */}
           <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[12%] font-bold! opacity-80">ID Matrícula</p>
-            <p className="w-[14%] font-bold! opacity-80">Clase</p>
-            <p className="w-[12%] font-bold! opacity-80">Plan</p>
-            <p className="w-[14%] font-bold! opacity-80">Fecha</p>
-            <p className="w-[12%] font-bold! opacity-80">Valor</p>
-            <p className="w-[12%] font-bold! opacity-80">Método Pago</p>
+            <p className="w-[12%] font-bold! opacity-80">Nombre:</p>
+            <p className="w-[14%] font-bold! opacity-80">Correo:</p>
+            <p className="w-[12%] font-bold! opacity-80">Telefono:</p>
+            <p className="w-[14%] font-bold! opacity-80">Plan:</p>
+            <p className="w-[12%] font-bold! opacity-80">Estado</p>
             <p className="w-[10%] font-bold! opacity-80">Acciones</p>
           </article>
 
@@ -237,7 +236,7 @@ const Matriculas = () => {
                       <td className="px-6 py-[18px] w-[12%]">${m.valor_matricula}</td>
                       <td className="px-6 py-[18px] w-[12%]">{m.id_metodo_pago}</td>
 
-                      <td className="px-6 py-[18px] w-[10%] flex gap-[10px] items-center justify-center">
+                      <td className="px-6 py-[18px] w-[20%] flex gap-[10px] items-center justify-center">
                         <motion.button
                           onClick={() => openModal("details", m)}
                           whileHover={{ scale: 1.08 }}

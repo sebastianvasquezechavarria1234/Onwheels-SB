@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Footer from "../../layout/Footer";
-import { StudentHeader } from "./StudentHeader";
+import { UsersHeader } from "./UsersHeader";
 
-export const StudentLayout = ({ children }) => {
+export const UsersLayout = ({ children }) => {
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
@@ -11,16 +11,16 @@ export const StudentLayout = ({ children }) => {
     if (userData) {
       try {
         const user = JSON.parse(userData);
-        setUserName(user.nombre || 'Estudiante');
+        setUserName(user.nombre || 'Usuario');
       } catch (error) {
-        console.error('Error parsing user ', error);
+        console.error('Error parsing user data:', error);
       }
     }
   }, []);
 
   return (
     <main className="min-h-screen flex flex-col">
-      <StudentHeader />
+      <UsersHeader />
       
       <div className="flex-grow">
         {children}
