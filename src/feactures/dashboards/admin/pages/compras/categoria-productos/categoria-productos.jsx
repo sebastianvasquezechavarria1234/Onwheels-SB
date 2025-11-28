@@ -2,14 +2,19 @@ import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getRoles, createRole, updateRole, deleteRole } from "../../services/RolesService";
+import {
+  getCategorias,
+  createCategoria,
+  updateCategoria,
+  deleteCategoria,
+} from "../../services/categoriasService";
 
-const Roles = () => {
-  const [roles, setRoles] = useState([]);
+export default function CategoriaProductos() {
+  const [categorias, setCategorias] = useState([]);
   const [selected, setSelected] = useState(null);
   const [modalType, setModalType] = useState(null);
-  const [editForm, setEditForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
-  const [addForm, setAddForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
+  const [editForm, setEditForm] = useState({ nombre_categoria: "", descripcion: "" });
+  const [addForm, setAddForm] = useState({ nombre_categoria: "", descripcion: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -17,7 +22,7 @@ const Roles = () => {
   const itemsPerPage = 5;
 
   // Notificación
-  const [notification, setNotification] = useState({ show: false, message: "", type: "success" }); // type: 'success' | 'error'
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -34,19 +39,19 @@ const Roles = () => {
   }, []);
 
   useEffect(() => {
-    fetchRoles();
+    fetchCategorias();
   }, []);
 
-  const fetchRoles = async () => {
+  const fetchCategorias = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getRoles();
-      setRoles(Array.isArray(data) ? data : []);
+      const data = await getCategorias();
+      setCategorias(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error cargando roles:", err);
-      setError("No se pudieron cargar los roles.");
-      showNotification("Error al cargar roles", "error");
+      console.error("Error cargando categorías:", err);
+      setError("No se pudieron cargar las categorías.");
+      showNotification("Error al cargar categorías", "error");
     } finally {
       setLoading(false);
     }
@@ -55,14 +60,13 @@ const Roles = () => {
   const openModal = (type, item = null) => {
     setModalType(type);
     if (type === "add") {
-      setAddForm({ nombre_rol: "", descripcion: "", estado: true });
+      setAddForm({ nombre_categoria: "", descripcion: "" });
       setSelected(null);
     } else if (type === "edit" && item) {
       setSelected(item);
       setEditForm({
-        nombre_rol: item.nombre_rol || "",
+        nombre_categoria: item.nombre_categoria || "",
         descripcion: item.descripcion || "",
-        estado: !!item.estado,
       });
     } else {
       setSelected(item);
@@ -75,99 +79,81 @@ const Roles = () => {
   };
 
   const handleAddChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setAddForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    const { name, value } = e.target;
+    setAddForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleEditChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const saveAdd = async () => {
+    const payload = {
+      nombre_categoria: addForm.nombre_categoria.trim(),
+      descripcion: addForm.descripcion.trim(),
+    };
+    if (!payload.nombre_categoria) {
+      showNotification("El nombre de la categoría es obligatorio", "error");
+      return;
+    }
     try {
-      const payload = {
-        nombre_rol: addForm.nombre_rol.trim(),
-        descripcion: addForm.descripcion.trim(),
-        estado: addForm.estado,
-      };
-      if (!payload.nombre_rol) {
-        showNotification("El nombre del rol es obligatorio", "error");
-        return;
-      }
-      const newRole = await createRole(payload);
-      setRoles((prev) => [newRole, ...prev]);
+      const newCategoria = await createCategoria(payload);
+      setCategorias((prev) => [newCategoria, ...prev]);
       closeModal();
-      showNotification("Rol creado con éxito");
+      showNotification("Categoría creada con éxito");
     } catch (err) {
       console.error(err);
-      showNotification("Error al crear el rol", "error");
+      showNotification("Error al crear la categoría", "error");
     }
   };
 
   const saveEdit = async () => {
     if (!selected) return closeModal();
+    const payload = {
+      nombre_categoria: editForm.nombre_categoria.trim(),
+      descripcion: editForm.descripcion.trim(),
+    };
+    if (!payload.nombre_categoria) {
+      showNotification("El nombre de la categoría es obligatorio", "error");
+      return;
+    }
     try {
-      const payload = {
-        nombre_rol: editForm.nombre_rol.trim(),
-        descripcion: editForm.descripcion.trim(),
-        estado: editForm.estado,
-      };
-      if (!payload.nombre_rol) {
-        showNotification("El nombre del rol es obligatorio", "error");
-        return;
-      }
-      await updateRole(selected.id_rol || selected.id, payload);
-      setRoles((prev) =>
-        prev.map((r) =>
-          (r.id_rol || r.id) === (selected.id_rol || selected.id) ? { ...r, ...payload } : r
+      await updateCategoria(selected.id_categoria, payload);
+      setCategorias((prev) =>
+        prev.map((c) =>
+          c.id_categoria === selected.id_categoria ? { ...c, ...payload } : c
         )
       );
       closeModal();
-      showNotification("Rol actualizado con éxito");
+      showNotification("Categoría actualizada con éxito");
     } catch (err) {
       console.error(err);
-      showNotification("Error al actualizar el rol", "error");
+      showNotification("Error al actualizar la categoría", "error");
     }
   };
 
   const confirmDelete = async () => {
     if (!selected) return;
     try {
-      await deleteRole(selected.id_rol || selected.id);
-      setRoles((prev) =>
-        prev.filter((r) => (r.id_rol || r.id) !== (selected.id_rol || selected.id))
+      await deleteCategoria(selected.id_categoria);
+      setCategorias((prev) =>
+        prev.filter((c) => c.id_categoria !== selected.id_categoria)
       );
       closeModal();
-      showNotification("Rol eliminado con éxito");
+      showNotification("Categoría eliminada con éxito");
     } catch (err) {
       console.error(err);
-      showNotification("Error al eliminar el rol", "error");
-    }
-  };
-
-  const toggleEstado = async (role) => {
-    const newEstado = !role.estado;
-    try {
-      await updateRole(role.id_rol || role.id, { ...role, estado: newEstado });
-      setRoles((prev) =>
-        prev.map((r) =>
-          (r.id_rol || r.id) === (role.id_rol || role.id) ? { ...r, estado: newEstado } : r
-        )
-      );
-      showNotification(`Rol ${newEstado ? "activado" : "desactivado"} con éxito`);
-    } catch (err) {
-      console.error(err);
-      showNotification("Error al cambiar el estado", "error");
+      showNotification("Error al eliminar la categoría", "error");
     }
   };
 
   // Filtrado y paginación
-  const rolesFiltrados = roles.filter((r) =>
-    r.nombre_rol?.toLowerCase().includes(search.toLowerCase())
+  const categoriasFiltradas = categorias.filter((c) =>
+    c.nombre_categoria?.toLowerCase().includes(search.toLowerCase())
   );
-  const totalPages = Math.max(1, Math.ceil(rolesFiltrados.length / itemsPerPage));
-  const currentItems = rolesFiltrados.slice(
+  const totalPages = Math.max(1, Math.ceil(categoriasFiltradas.length / itemsPerPage));
+  const currentItems = categoriasFiltradas.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -180,7 +166,7 @@ const Roles = () => {
     <Layout>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Roles</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Categorías de Productos</h2>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="relative w-full md:w-96">
@@ -195,7 +181,7 @@ const Roles = () => {
                 }}
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 type="text"
-                placeholder="Buscar rol (ej: Administrador)"
+                placeholder="Buscar categoría (ej: Electrónica)"
               />
             </div>
             <button
@@ -203,7 +189,7 @@ const Roles = () => {
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
               <Plus size={18} />
-              Añadir Rol
+              Añadir Categoría
             </button>
           </div>
 
@@ -213,58 +199,42 @@ const Roles = () => {
                 <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
                     <th className="px-6 py-3 w-1/3">Nombre</th>
-                    <th className="px-6 py-3 w-1/2">Descripción</th>
-                    <th className="px-6 py-3 w-1/6">Estado</th>
+                    <th className="px-6 py-3 w-2/3">Descripción</th>
                     <th className="px-6 py-3 w-1/6">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                        Cargando roles...
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
+                        Cargando categorías...
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-red-600">
+                      <td colSpan="3" className="px-6 py-8 text-center text-red-600">
                         {error}
                       </td>
                     </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-gray-500 italic">
-                        No se encontraron roles.
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500 italic">
+                        No se encontraron categorías.
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((role) => (
-                      <tr key={role.id_rol || role.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-medium">{role.nombre_rol}</td>
-                        <td className="px-6 py-4 text-gray-600 line-clamp-2">{role.descripcion || "— Sin descripción —"}</td>
-                        <td className="px-6 py-4">
-                          <span
-                            onClick={() => toggleEstado(role)}
-                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition ${
-                              role.estado
-                                ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                : "bg-red-100 text-red-800 hover:bg-red-200"
-                            }`}
-                          >
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                role.estado ? "bg-green-600" : "bg-red-600"
-                              }`}
-                            ></span>
-                            {role.estado ? "Activo" : "Inactivo"}
-                          </span>
+                    currentItems.map((categoria) => (
+                      <tr key={categoria.id_categoria} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{categoria.nombre_categoria}</td>
+                        <td className="px-6 py-4 text-gray-600 line-clamp-2">
+                          {categoria.descripcion || "— Sin descripción —"}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("details", role)}
+                              onClick={() => openModal("details", categoria)}
                               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
                               title="Ver detalles"
                             >
@@ -273,7 +243,7 @@ const Roles = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("edit", role)}
+                              onClick={() => openModal("edit", categoria)}
                               className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
                               title="Editar"
                             >
@@ -282,7 +252,7 @@ const Roles = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("delete", role)}
+                              onClick={() => openModal("delete", categoria)}
                               className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
                               title="Eliminar"
                             >
@@ -298,7 +268,7 @@ const Roles = () => {
             </div>
           </div>
 
-          {rolesFiltrados.length > 0 && (
+          {categoriasFiltradas.length > 0 && (
             <div className="flex justify-center items-center gap-2 mt-6 py-4">
               <button
                 disabled={currentPage === 1}
@@ -373,12 +343,12 @@ const Roles = () => {
 
                 <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
                   {modalType === "add"
-                    ? "Añadir Rol"
+                    ? "Añadir Categoría"
                     : modalType === "edit"
-                    ? "Editar Rol"
+                    ? "Editar Categoría"
                     : modalType === "details"
-                    ? "Detalles del Rol"
-                    : "Eliminar Rol"}
+                    ? "Detalles de la Categoría"
+                    : "Eliminar Categoría"}
                 </h3>
 
                 {modalType === "add" && (
@@ -386,11 +356,11 @@ const Roles = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                       <input
-                        name="nombre_rol"
-                        value={addForm.nombre_rol}
+                        name="nombre_categoria"
+                        value={addForm.nombre_categoria}
                         onChange={handleAddChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Administrador"
+                        placeholder="Ej: Electrónica"
                       />
                     </div>
                     <div>
@@ -401,18 +371,8 @@ const Roles = () => {
                         onChange={handleAddChange}
                         rows="3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Breve descripción del rol"
+                        placeholder="Breve descripción de la categoría"
                       />
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="estado"
-                        checked={!!addForm.estado}
-                        onChange={handleAddChange}
-                        className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                      />
-                      <label className="ml-2 text-sm text-gray-700">Activo</label>
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <button
@@ -438,11 +398,11 @@ const Roles = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                       <input
-                        name="nombre_rol"
-                        value={editForm.nombre_rol}
+                        name="nombre_categoria"
+                        value={editForm.nombre_categoria}
                         onChange={handleEditChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Editor"
+                        placeholder="Ej: Ropa"
                       />
                     </div>
                     <div>
@@ -455,16 +415,6 @@ const Roles = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="Actualice la descripción"
                       />
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="estado"
-                        checked={!!editForm.estado}
-                        onChange={handleEditChange}
-                        className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                      />
-                      <label className="ml-2 text-sm text-gray-700">Activo</label>
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <button
@@ -489,17 +439,11 @@ const Roles = () => {
                   <div className="space-y-3 text-gray-700">
                     <div className="flex justify-between">
                       <span className="font-medium">Nombre:</span>
-                      <span>{selected.nombre_rol}</span>
+                      <span>{selected.nombre_categoria}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Descripción:</span>
                       <span className="text-right">{selected.descripcion || "— Sin descripción —"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Estado:</span>
-                      <span className={selected.estado ? "text-green-600" : "text-red-600"}>
-                        {selected.estado ? "Activo" : "Inactivo"}
-                      </span>
                     </div>
                     <div className="flex justify-center pt-4">
                       <button
@@ -515,8 +459,8 @@ const Roles = () => {
                 {modalType === "delete" && selected && (
                   <div className="text-center space-y-4">
                     <p className="text-gray-700">
-                      ¿Está seguro de eliminar el rol{" "}
-                      <span className="font-bold text-red-600">{selected.nombre_rol}</span>?
+                      ¿Está seguro de eliminar la categoría{" "}
+                      <span className="font-bold text-red-600">{selected.nombre_categoria}</span>?
                       <br />
                       <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
                     </p>
@@ -543,6 +487,4 @@ const Roles = () => {
       </section>
     </Layout>
   );
-};
-
-export default Roles;
+}

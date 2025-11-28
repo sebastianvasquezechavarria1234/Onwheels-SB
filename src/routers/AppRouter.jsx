@@ -19,7 +19,7 @@ import Register from "../feactures/Auth/pages/Register";
 // Dashboard admin
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
 // import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
-import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
+// import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import Products from "../feactures/dashboards/admin/pages/compras/productos/Products";
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles";
@@ -59,9 +59,12 @@ import { InstructorClass } from "../feactures/landing/instructor/pages/Instructo
 import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
 // import { InstructorAbout } from "../feactures/landing/instructor/pages/InstructorAbout";
 import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
-import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
-import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
+// import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
+// import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
 import { Dashboard } from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
+import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
+import Events from "../feactures/landing/pages/Events";
+import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos";
 
 
 const AppRouter = () => {
@@ -120,9 +123,9 @@ const AppRouter = () => {
           element={
             isLanding ? (
               <motion.div variants={blurVariants} initial="initial" animate="animate" exit="exit">
-                <Eventos />
+                <Events/>
               </motion.div>
-            ) : <Eventos />
+            ) : <Events />
           }
         />
         <Route
@@ -180,7 +183,7 @@ const AppRouter = () => {
         <Route path="admin/compras" element={<Compras />} />
         <Route path="admin/proveedores" element={<Proveedores />} />
         {/* <Route path="admin/ventas" element={<Ventas />} /> */}
-        <Route path="admin/categoriasProductos" element={<Categorias />} />
+        <Route path="admin/categoriasProductos" element={<CategoriaProductos/>} />
         <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
         <Route path="admin/planclases" element={<PlanClasses />} />
         <Route path="admin/users" element={<Usuarios />} />
