@@ -75,9 +75,9 @@ export const Header = () => {
   const items = [
     { title: "Inicio", to: "/" },
     { title: "Tienda", to: "/store" },
-    { title: "Clases", to: "/class" },
+    { title: "Formación", to: "/class" },
     { title: "Eventos", to: "/events" },
-    { title: "Pre-inscripciones", to: "/preinscriptions" },
+    { title: "Pre-inscribirme", to: "/preinscriptions" },
     { title: "Sobre nosotros", to: "/about" },
   ];
 
@@ -88,7 +88,7 @@ export const Header = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Onwheels-SB
+                Performance-SB
               </h4>
             </Link>
           </li>

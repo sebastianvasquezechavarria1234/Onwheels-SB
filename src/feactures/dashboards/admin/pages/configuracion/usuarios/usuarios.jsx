@@ -1,19 +1,23 @@
+// src/pages/usuarios/Usuarios.jsx
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Layout } from "../../../layout/layout";
-import { Search, Plus, Pencil, Trash2, Eye, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { AnimatePresence } from "framer-motion"; 
 import {
   getUsuarios,
   createUsuario,
   updateUsuario,
   deleteUsuario,
 } from "../../services/usuariosServices";
-import { getRoles } from "../../services/RolesService";
+import { getRoles } from "../../services/rolesService"; // ✅ Corregido: minúscula en el nombre del archivo
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [modal, setModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
   const [selectedUsuario, setSelectedUsuario] = useState(null);
   const [formData, setFormData] = useState({
@@ -24,9 +28,7 @@ export default function Usuarios() {
     email: "",
     telefono: "",
     fecha_nacimiento: "",
-    direccion: "",
-    contraseña: "",
-    tipo_genero: "",
+    contrasena: "",
     id_rol: "",
 
     // Campos adicionales (solo si aplica)
@@ -46,6 +48,7 @@ export default function Usuarios() {
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
+  // Cerrar modal con Escape
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") closeModal();
@@ -54,15 +57,18 @@ export default function Usuarios() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Cargar usuarios y roles
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [dataUsuarios, dataRoles] = await Promise.all([getUsuarios(), getRoles()]);
-      setUsuarios(dataUsuarios || []);
-      setRoles(dataRoles || []);
+      setUsuarios(Array.isArray(dataUsuarios) ? dataUsuarios : []);
+      setRoles(Array.isArray(dataRoles) ? dataRoles : []);
     } catch (err) {
       console.error("Error cargando datos:", err);
-      showNotification("Error al cargar usuarios o roles", "error");
+      setError("Error al cargar los datos. Verifica la conexión con el backend.");
+      showNotification("Error al cargar usuarios", "error");
     } finally {
       setLoading(false);
     }
@@ -70,6 +76,7 @@ export default function Usuarios() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = (e) => {
@@ -80,9 +87,10 @@ export default function Usuarios() {
     }));
   };
 
-  const getRolNombre = (idRol) => {
-    const rol = roles.find((r) => r.id_rol === idRol);
-    return rol ? rol.nombre_rol : "Sin rol";
+  // ✅ Función corregida: recibe un array de roles y devuelve los nombres
+  const getRolNombres = (rolesArr) => {
+    if (!rolesArr || rolesArr.length === 0) return "Sin rol";
+    return rolesArr.map((r) => r.nombre_rol).join(", ");
   };
 
   const isEstudiante = (idRol) => {
@@ -97,35 +105,21 @@ export default function Usuarios() {
 
   const handleCreate = async () => {
     try {
-      if (!formData.nombre_completo || !formData.email) {
-        showNotification("Nombre y email son obligatorios", "error");
+      // validaciones mínimas
+      if (!formData.nombre_completo.trim() || !formData.email.trim() || !formData.contrasena.trim()) {
+        showNotification("Nombre completo, email y contraseña son obligatorios", "error");
         return;
       }
 
-      // Preparar payload para enviar al backend
       const payload = {
-        // Campos base
         documento: formData.documento || null,
         tipo_documento: formData.tipo_documento || null,
         nombre_completo: formData.nombre_completo,
         email: formData.email,
         telefono: formData.telefono || null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
-        direccion: formData.direccion || null,
-        contraseña: formData.contraseña || "default123", // O manejar en backend
-        tipo_genero: formData.tipo_genero || null,
-        id_rol: formData.id_rol,
-
-        // Campos adicionales (el backend debe manejarlos)
-        ...(isInstructor(formData.id_rol) && {
-          tipo_usuario: "instructor",
-          años_experiencia: formData.años_experiencia || null,
-          estado_instructor: formData.estado_instructor,
-        }),
-        ...(isEstudiante(formData.id_rol) && {
-          tipo_usuario: "estudiante",
-          estado_estudiante: formData.estado_estudiante,
-        }),
+        contrasena: formData.contrasena,
+        id_rol: formData.id_rol ? Number(formData.id_rol) : null,
       };
 
       await createUsuario(payload);
@@ -134,15 +128,18 @@ export default function Usuarios() {
       showNotification("Usuario creado con éxito");
     } catch (err) {
       console.error("Error creando usuario:", err);
-      showNotification("Error al crear usuario", "error");
+      const errorMessage = err.response?.data?.mensaje || "Error creando usuario";
+      showNotification(errorMessage, "error");
     }
   };
 
   const handleEdit = async () => {
     try {
       if (!selectedUsuario) return;
-      if (!formData.nombre_completo || !formData.email) {
-        showNotification("Nombre y email son obligatorios", "error");
+
+      // Validación básica
+      if (!formData.nombre_completo.trim() || !formData.email.trim()) {
+        showNotification("Nombre completo y email son obligatorios", "error");
         return;
       }
 
@@ -153,20 +150,9 @@ export default function Usuarios() {
         email: formData.email,
         telefono: formData.telefono || null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
-        direccion: formData.direccion || null,
-        contraseña: formData.contraseña || null,
-        tipo_genero: formData.tipo_genero || null,
-        id_rol: formData.id_rol,
-
-        ...(isInstructor(formData.id_rol) && {
-          tipo_usuario: "instructor",
-          años_experiencia: formData.años_experiencia || null,
-          estado_instructor: formData.estado_instructor,
-        }),
-        ...(isEstudiante(formData.id_rol) && {
-          tipo_usuario: "estudiante",
-          estado_estudiante: formData.estado_estudiante,
-        }),
+        // Solo incluir contraseña si se proporciona
+        ...(formData.contrasena ? { contrasena: formData.contrasena } : {}),
+        id_rol: formData.id_rol ? Number(formData.id_rol) : null,
       };
 
       await updateUsuario(selectedUsuario.id_usuario, payload);
@@ -175,7 +161,8 @@ export default function Usuarios() {
       showNotification("Usuario actualizado con éxito");
     } catch (err) {
       console.error("Error editando usuario:", err);
-      showNotification("Error al actualizar usuario", "error");
+      const errorMessage = err.response?.data?.mensaje || "Error editando usuario";
+      showNotification(errorMessage, "error");
     }
   };
 
@@ -188,7 +175,8 @@ export default function Usuarios() {
       showNotification("Usuario eliminado con éxito");
     } catch (err) {
       console.error("Error eliminando usuario:", err);
-      showNotification("Error al eliminar usuario", "error");
+      const errorMessage = err.response?.data?.mensaje || "Error eliminando usuario";
+      showNotification(errorMessage, "error");
     }
   };
 
@@ -197,24 +185,15 @@ export default function Usuarios() {
     setSelectedUsuario(usuario);
 
     if (usuario && type === "editar") {
-      const rol = usuario.id_rol;
       setFormData({
-        // Base
-        documento: usuario.documento || "",
-        tipo_documento: usuario.tipo_documento || "",
-        nombre_completo: usuario.nombre_completo || "",
-        email: usuario.email || "",
-        telefono: usuario.telefono || "",
+        documento: usuario.documento ?? "",
+        tipo_documento: usuario.tipo_documento ?? "",
+        nombre_completo: usuario.nombre_completo ?? "",
+        email: usuario.email ?? "",
+        telefono: usuario.telefono ?? "",
         fecha_nacimiento: usuario.fecha_nacimiento ? usuario.fecha_nacimiento.split("T")[0] : "",
-        direccion: usuario.direccion || "",
-        contraseña: "", // No se muestra por seguridad
-        tipo_genero: usuario.tipo_genero || "",
-        id_rol: usuario.id_rol,
-
-        // Adicionales (asumimos que el backend los devolvería si existen)
-        años_experiencia: usuario.años_experiencia || "",
-        estado_estudiante: usuario.estado_estudiante ?? true,
-        estado_instructor: usuario.estado_instructor ?? true,
+        contrasena: "", // No prellenar contraseña al editar
+        id_rol: usuario.roles && usuario.roles.length > 0 ? String(usuario.roles[0].id_rol) : "",
       });
     } else if (!usuario) {
       setFormData({
@@ -224,9 +203,7 @@ export default function Usuarios() {
         email: "",
         telefono: "",
         fecha_nacimiento: "",
-        direccion: "",
-        contraseña: "",
-        tipo_genero: "",
+        contrasena: "",
         id_rol: "",
         años_experiencia: "",
         estado_estudiante: true,
@@ -238,17 +215,26 @@ export default function Usuarios() {
   const closeModal = () => {
     setModal(null);
     setSelectedUsuario(null);
+    setFormData({
+      documento: "",
+      tipo_documento: "",
+      nombre_completo: "",
+      email: "",
+      telefono: "",
+      fecha_nacimiento: "",
+      contrasena: "",
+      id_rol: "",
+    });
   };
 
-  // Filtrado
-  const usuariosFiltrados = usuarios.filter(
-    (u) =>
-      u.nombre_completo?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase()) ||
-      String(u.documento).includes(search)
+  // Filtrado por búsqueda
+  const usuariosFiltrados = usuarios.filter((u) =>
+    (u.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
+    (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
+    String(u.documento || "").includes(search)
   );
 
-  // Paginación
+  // Paginación derivada
   const totalPages = Math.max(1, Math.ceil(usuariosFiltrados.length / itemsPerPage));
   const currentItems = usuariosFiltrados.slice(
     (currentPage - 1) * itemsPerPage,
@@ -263,7 +249,7 @@ export default function Usuarios() {
     <Layout>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Usuarios / Registro de Usuarios</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Usuarios\Registro de Usuarios</h2>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="relative w-full md:w-96">
@@ -273,11 +259,8 @@ export default function Usuarios() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Buscar: documento, nombre o email"
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                placeholder="Buscar usuarios (Documento, Nombre o email)"
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
@@ -286,11 +269,10 @@ export default function Usuarios() {
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
               <Plus size={18} />
-              Registrar nuevo usuario
+              Registrar Nuevo Usuario
             </button>
           </div>
 
-          {/* Tabla con solo campos comunes */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left text-gray-700">
@@ -311,6 +293,12 @@ export default function Usuarios() {
                         Cargando usuarios...
                       </td>
                     </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
+                        {error}
+                      </td>
+                    </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
@@ -320,13 +308,17 @@ export default function Usuarios() {
                   ) : (
                     currentItems.map((u) => (
                       <tr key={u.id_usuario} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4">{u.id_usuario}</td>
-                        <td className="px-6 py-4 font-medium">{u.nombre_completo}</td>
+                        <td className="px-6 py-4 font-medium">{u.id_usuario}</td>
+                        <td className="px-6 py-4 text-gray-600">{u.nombre_completo}</td>
                         <td className="px-6 py-4 text-gray-600">{u.email}</td>
-                        <td className="px-6 py-4">{u.telefono || "—"}</td>
-                        <td className="px-6 py-4">{getRolNombre(u.id_rol)}</td>
+                        <td className="px-6 py-4 text-gray-600">{u.telefono || "— No especificado —"}</td>
                         <td className="px-6 py-4">
-                          <div className="flex gap-2 justify-center">
+                          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                            {getRolNombres(u.roles)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
@@ -395,7 +387,7 @@ export default function Usuarios() {
           )}
         </div>
 
-        {/* Notificación */}
+        {/* Notificación Toast */}
         <AnimatePresence>
           {notification.show && (
             <motion.div
@@ -423,7 +415,7 @@ export default function Usuarios() {
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative"
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
@@ -447,32 +439,33 @@ export default function Usuarios() {
                     : "Eliminar Usuario"}
                 </h3>
 
-                {modal === "crear" || modal === "editar" ? (
-                  <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Campos base */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Documento</label>
-                      <input
-                        type="text"
-                        name="documento"
-                        value={formData.documento}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 900123456"
-                      />
+                {modal === "crear" && (
+                  <form className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Documento</label>
+                        <input
+                          type="text"
+                          name="documento"
+                          value={formData.documento}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: 900123456"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Documento</label>
+                        <input
+                          type="text"
+                          name="tipo_documento"
+                          value={formData.tipo_documento}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: CC, CE"
+                        />
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Documento</label>
-                      <input
-                        type="text"
-                        name="tipo_documento"
-                        value={formData.tipo_documento}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="CC, CE, etc."
-                      />
-                    </div>
-                    <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
                       <input
                         type="text"
@@ -491,72 +484,54 @@ export default function Usuarios() {
                         value={formData.email}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="correo@dominio.com"
+                        placeholder="Ej: correo@dominio.com"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                      <input
-                        type="text"
-                        name="telefono"
-                        value={formData.telefono}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="+57 300 123 4567"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                        <input
+                          type="text"
+                          name="telefono"
+                          value={formData.telefono}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: +57 300 123 4567"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Nacimiento</label>
+                        <input
+                          type="date"
+                          name="fecha_nacimiento"
+                          value={formData.fecha_nacimiento}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Nacimiento</label>
-                      <input
-                        type="date"
-                        name="fecha_nacimiento"
-                        value={formData.fecha_nacimiento}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-                      <input
-                        type="text"
-                        name="direccion"
-                        value={formData.direccion}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Calle 123 #45-67"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Contraseña *
+                      </label>
                       <input
                         type="password"
-                        name="contraseña"
-                        value={formData.contraseña}
+                        name="contrasena"
+                        value={formData.contrasena}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="••••••••"
+                        placeholder="******"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Género</label>
-                      <input
-                        type="text"
-                        name="tipo_genero"
-                        value={formData.tipo_genero}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Masculino / Femenino"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Rol (opcional)</label>
                       <select
                         name="id_rol"
                         value={formData.id_rol}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       >
-                        <option value="">Seleccione un rol</option>
+                        <option value="">Sin asignar</option>
                         {roles.map((r) => (
                           <option key={r.id_rol} value={r.id_rol}>
                             {r.nombre_rol}
@@ -564,57 +539,7 @@ export default function Usuarios() {
                         ))}
                       </select>
                     </div>
-
-                    {/* Campos adicionales: Instructor */}
-                    {isInstructor(formData.id_rol) && (
-                      <>
-                        <div className="md:col-span-2 mt-4 pt-4 border-t border-gray-200">
-                          <h4 className="font-medium text-gray-800 mb-3">Datos de Instructor</h4>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Años de Experiencia</label>
-                          <input
-                            type="number"
-                            name="años_experiencia"
-                            value={formData.años_experiencia}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                            placeholder="Ej: 5"
-                          />
-                        </div>
-                        <div className="flex items-center mt-6">
-                          <input
-                            type="checkbox"
-                            name="estado_instructor"
-                            checked={!!formData.estado_instructor}
-                            onChange={handleChange}
-                            className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                          />
-                          <label className="ml-2 text-sm text-gray-700">Instructor activo</label>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Campos adicionales: Estudiante */}
-                    {isEstudiante(formData.id_rol) && (
-                      <>
-                        <div className="md:col-span-2 mt-4 pt-4 border-t border-gray-200">
-                          <h4 className="font-medium text-gray-800 mb-3">Datos de Estudiante</h4>
-                        </div>
-                        <div className="md:col-span-2 flex items-center">
-                          <input
-                            type="checkbox"
-                            name="estado_estudiante"
-                            checked={!!formData.estado_estudiante}
-                            onChange={handleChange}
-                            className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
-                          />
-                          <label className="ml-2 text-sm text-gray-700">Estudiante activo</label>
-                        </div>
-                      </>
-                    )}
-
-                    <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+                    <div className="flex justify-end gap-3 pt-4">
                       <button
                         type="button"
                         onClick={closeModal}
@@ -624,48 +549,166 @@ export default function Usuarios() {
                       </button>
                       <button
                         type="button"
-                        onClick={modal === "crear" ? handleCreate : handleEdit}
+                        onClick={handleCreate}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                       >
-                        {modal === "crear" ? "Guardar" : "Actualizar"}
+                        Guardar
                       </button>
                     </div>
                   </form>
-                ) : modal === "ver" && selectedUsuario ? (
-                  <div className="space-y-4 text-gray-700">
-                    <div className="grid grid-cols-2 gap-2">
-                      <p className="font-medium">ID:</p>
-                      <p>{selectedUsuario.id_usuario}</p>
+                )}
 
-                      <p className="font-medium">Nombre:</p>
-                      <p>{selectedUsuario.nombre_completo}</p>
-
-                      <p className="font-medium">Email:</p>
-                      <p>{selectedUsuario.email}</p>
-
-                      <p className="font-medium">Teléfono:</p>
-                      <p>{selectedUsuario.telefono || "—"}</p>
-
-                      <p className="font-medium">Rol:</p>
-                      <p>{getRolNombre(selectedUsuario.id_rol)}</p>
+                {modal === "editar" && selectedUsuario && (
+                  <form className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Documento</label>
+                        <input
+                          type="text"
+                          name="documento"
+                          value={formData.documento}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: 900123456"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Documento</label>
+                        <input
+                          type="text"
+                          name="tipo_documento"
+                          value={formData.tipo_documento}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: CC, CE"
+                        />
+                      </div>
                     </div>
-
-                    {/* Mostrar campos adicionales si aplica */}
-                    {isInstructor(selectedUsuario.id_rol) && (
-                      <div className="pt-4 border-t border-gray-200">
-                        <h4 className="font-medium text-gray-800 mb-2">Instructor</h4>
-                        <p><span className="font-medium">Años experiencia:</span> {selectedUsuario.años_experiencia || "No especificado"}</p>
-                        <p><span className="font-medium">Estado:</span> {selectedUsuario.estado_instructor ? "Activo" : "Inactivo"}</p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                      <input
+                        type="text"
+                        name="nombre_completo"
+                        value={formData.nombre_completo}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Juan Pérez"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: correo@dominio.com"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                        <input
+                          type="text"
+                          name="telefono"
+                          value={formData.telefono}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          placeholder="Ej: +57 300 123 4567"
+                        />
                       </div>
-                    )}
-
-                    {isEstudiante(selectedUsuario.id_rol) && (
-                      <div className="pt-4 border-t border-gray-200">
-                        <h4 className="font-medium text-gray-800 mb-2">Estudiante</h4>
-                        <p><span className="font-medium">Estado:</span> {selectedUsuario.estado_estudiante ? "Activo" : "Inactivo"}</p>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Nacimiento</label>
+                        <input
+                          type="date"
+                          name="fecha_nacimiento"
+                          value={formData.fecha_nacimiento}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
                       </div>
-                    )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nueva Contraseña (opcional)
+                      </label>
+                      <input
+                        type="password"
+                        name="contrasena"
+                        value={formData.contrasena}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Dejar en blanco para no cambiar"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Rol (opcional)</label>
+                      <select
+                        name="id_rol"
+                        value={formData.id_rol}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      >
+                        <option value="">Sin asignar</option>
+                        {roles.map((r) => (
+                          <option key={r.id_rol} value={r.id_rol}>
+                            {r.nombre_rol}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  </form>
+                )}
 
+                {modal === "ver" && selectedUsuario && (
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-medium">ID:</span>
+                      <span>{selectedUsuario.id_usuario}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nombre Completo:</span>
+                      <span className="text-right">{selectedUsuario.nombre_completo}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Email:</span>
+                      <span className="text-right">{selectedUsuario.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Documento:</span>
+                      <span className="text-right">{selectedUsuario.documento || "— No especificado —"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Teléfono:</span>
+                      <span className="text-right">{selectedUsuario.telefono || "— No especificado —"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Fecha Nacimiento:</span>
+                      <span className="text-right">
+                        {selectedUsuario.fecha_nacimiento ? selectedUsuario.fecha_nacimiento : "— No especificado —"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Rol:</span>
+                      <span className="text-right">{getRolNombres(selectedUsuario.roles)}</span>
+                    </div>
                     <div className="flex justify-center pt-4">
                       <button
                         onClick={closeModal}
@@ -675,7 +718,9 @@ export default function Usuarios() {
                       </button>
                     </div>
                   </div>
-                ) : modal === "eliminar" && selectedUsuario ? (
+                )}
+
+                {modal === "eliminar" && selectedUsuario && (
                   <div className="text-center space-y-4">
                     <p className="text-gray-700">
                       ¿Está seguro de eliminar al usuario{" "}
@@ -698,7 +743,7 @@ export default function Usuarios() {
                       </button>
                     </div>
                   </div>
-                ) : null}
+                )}
               </motion.div>
             </motion.div>
           )}

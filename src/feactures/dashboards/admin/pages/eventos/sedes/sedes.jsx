@@ -214,74 +214,71 @@ export default function Sedes() {
             </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-[30px]">
+            {/* Encabezados estilo Roles */}
+            <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
+              <p className="w-[10%] font-bold opacity-80">ID</p>
+              <p className="w-[25%] font-bold opacity-80">Nombre</p>
+              <p className="w-[30%] font-bold opacity-80">Dirección</p>
+              <p className="w-[15%] font-bold opacity-80">Ciudad</p>
+              <p className="w-[10%] font-bold opacity-80">Teléfono</p>
+              <p className="w-[15%] font-bold opacity-80">Acciones</p>
+            </article>
+
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-3 w-1/5">Nombre</th>
-                    <th className="px-6 py-3 w-1/4">Dirección</th>
-                    <th className="px-6 py-3 w-1/6">Ciudad</th>
-                    <th className="px-6 py-3 w-1/6">Teléfono</th>
-                    <th className="px-6 py-3 w-1/6">Acciones</th>
-                  </tr>
+              <table className="w-full text-left text-gray-600">
+                <thead className="">
+                  <tr><th className="hidden" /></tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="6" className="text-center py-10 italic text-gray-500">
                         Cargando sedes...
-                      </td>
-                    </tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-red-600">
-                        {error}
                       </td>
                     </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500 italic">
-                        No se encontraron sedes.
+                      <td colSpan="6" className="text-center py-10 italic text-red-700">
+                        No hay sedes registradas
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((sede) => (
-                      <tr key={sede.id_sede} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-medium">{sede.nombre_sede}</td>
-                        <td className="px-6 py-4 text-gray-600 line-clamp-2">{sede.direccion}</td>
-                        <td className="px-6 py-4">{sede.ciudad}</td>
-                        <td className="px-6 py-4">{sede.telefono_sede}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("details", sede)}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                              title="Ver detalles"
-                            >
-                              <Eye size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("edit", sede)}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                              title="Editar"
-                            >
-                              <Pencil size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("delete", sede)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={16} />
-                            </motion.button>
-                          </div>
+                    currentItems.map((s) => (
+                      <tr key={s.id_sede} className="py-[18px] border-b border-black/20 flex items-center">
+                        <td className="px-6 py-[18px] w-[10%]">{s.id_sede}</td>
+                        <td className="px-6 py-[18px] w-[25%] line-clamp-1">{s.nombre_sede}</td>
+                        <td className="px-6 py-[18px] w-[30%] line-clamp-2">{s.direccion}</td>
+                        <td className="px-6 py-[18px] w-[15%]">{s.ciudad}</td>
+                        <td className="px-6 py-[18px] w-[10%]">{s.telefono_sede}</td>
+
+                        <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
+                          <motion.button
+                            onClick={() => openModal("details", s)}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </motion.button>
+
+                          <motion.button
+                            onClick={() => openModal("edit", s)}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </motion.button>
+
+                          <motion.button
+                            onClick={() => openModal("delete", s)}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </motion.button>
                         </td>
                       </tr>
                     ))

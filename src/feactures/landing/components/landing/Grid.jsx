@@ -1,15 +1,22 @@
 import React from "react";
 import { Card } from "./Card";
 import { BtnLinkIcon } from "../BtnLinkIcon";
-import { ArrowRight, NotebookPen, Play } from "lucide-react";
+import { ArrowRight, NotebookPen } from "lucide-react";
 import { BtnLink } from "../BtnLink";
 
 export const Grid = () => {
+  // Lista de videos con descripción
+  const videos = [
+    { src: "/vd_landing1.mp4", desc: "Reel 1: Skate en el parque" },
+    { src: "/vd_landing2.mp4", desc: "Reel 2: Trucos urbanos" },
+    { src: "/vd_landing3.mp4", desc: "Reel 3: Competencia local" },
+  ];
+
   return (
     <>
       {/* ================== SECCIÓN PRODUCTOS ================== */}
-      <section className="max-w-[1400px] mx-auto p-20">
-        <div className=" flex gap-[10px] justify-between">
+      <section className="Products max-w-[1400px] mx-auto p-[20px] max-md:p-[10px] mt-[60px]">
+        <div className="flex gap-[10px] justify-between max-md:flex-col max-md:gap-0">
           <h3 className="mb-[30px]">
             Explora
             <span className="opacity-90 mx-[15px] font-primary">
@@ -18,30 +25,29 @@ export const Grid = () => {
             <span>Creados para la vida</span>
             <span className="opacity-70 font-primary"> sobre ruedas...</span>
           </h3>
-
           <div className="flex">
             <BtnLink title={"Ver más"} style={"text-blue-800 "} />
             <ArrowRight strokeWidth={1} className="text-blue-700" />
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-[20px]">
+        <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px] ">
           <Card
-            styleImage="scale-[0.7]  group-hover:scale-[0.8]!"
+            styleImage="scale-[0.7] group-hover:scale-[0.8]!"
             img="./bg_productosL.jpg"
             descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
             text="Camiseta para hombre"
             dato="$ 20.000"
           />
           <Card
-            styleImage="scale-[0.7]  group-hover:scale-[0.8]!"
+            styleImage="scale-[0.7] group-hover:scale-[0.8]!"
             img="./bg_produstosL2.jpg"
             descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
             text="Camiseta para hombre"
             dato="$ 20.000"
           />
           <Card
-            styleImage="scale-[0.7]  group-hover:scale-[0.8]!"
+            styleImage="scale-[0.7] group-hover:scale-[0.8]!"
             img="./bg_productosL.jpg"
             descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
             text="Camiseta para hombre"
@@ -51,21 +57,19 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN EVENTOS ================== */}
-      <section className="bg-gray-200">
-        <div className="max-w-[1400px] mx-auto p-20">
-          <div className="flex gap-[10px] justify-between ">
-            <h3 className="mb-[30px]  ">
+      <section className="bg-gray-200 mt-[60px]">
+        <div className="max-w-[1400px] mx-auto p-20 max-md: p-[20px]" >
+          <div className="flex gap-[10px] justify-between max-md:flex-col max-md:gap-0 ">
+            <h3 className="mb-[30px]">
               Proximos
               <span className="font-primary"> eventos</span>
             </h3>
-
             <div className="flex gap-[5px]">
               <BtnLink title={"Ver más"} style="text-blue-800" />
               <ArrowRight strokeWidth={1} className="text-blue-700" />
             </div>
           </div>
-
-          <div className="grid grid-cols-3 gap-[20px]">
+          <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px]">
             <Card
               img="./bg_eventosL.jpg"
               descripcion="Evento de skateboard en la ciudad de la eterna primavera"
@@ -89,9 +93,9 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN APRENDER ================== */}
-      <section className="max-w-[1400px] mx-auto h-[600px] flex gap-x-20 items-center p-[3rem]">
+      <section className="max-w-[1400px] mt-[60px] mx-auto h-[600px] flex gap-x-20 items-center p-[3rem] max-lg:flex-col max-md:p-[10px] max-md:gap-[25px]">
         {/* Texto */}
-        <div className="w-[50%]">
+        <div className="w-[50%] max-lg:w-full">
           <h2 className="text-4xl font-bold mb-4">
             ¿Te <span className="font-primary"> gustaría</span>
             <h2>aprender con</h2>
@@ -106,9 +110,8 @@ export const Grid = () => {
             <NotebookPen size={20} strokeWidth={2} color="white" />
           </BtnLinkIcon>
         </div>
-
         {/* Grid de imágenes */}
-        <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[800px] mx-auto h-[500px]">
+        <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[800px] mx-auto h-[500px] max-md:h-[60vw] max-md:gap-[10px]">
           <img
             className="col-span-2 row-span-3 object-cover rounded-lg w-full h-full"
             src="./bg_eventosL3.jpg"
@@ -128,50 +131,34 @@ export const Grid = () => {
       </section>
 
       {/* ================== SECCIÓN REELS ================== */}
-      <section className="max-w-[1300px] mx-auto bg-red-600 mt-[120px] ">
-        <h2>Nuestros mejores reels!</h2>
-        
-        <div className="grid grid-cols-3 gap-[15px]">
-           <article className="relative flex  h-[600px] rounded-[30px] overflow-hidden  cursor-pointer ">
-          <video className=" w-full h-full object-cover absolute { "src="./vd_landing1.mp4"></video>
-          {/* el gradient del video y todos estos son hermanos del video  */}
-          <div className="gradient__reels absolute w-full h-full left-0 top-0 z-10 block"></div>
-          <span className="w-[150px] h-[150px] bg-white/20 z-10 rounded-full backdrop-blur-[14px] border-1 border-white/20 flex flex-col justify-center items-center text-white absolute top-[50%] left-[50%] translate-[-50%]">
-        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
-          <p>Reproducir</p>
-          </span>
-        </article>
-
-
-        
-        <article className="relative flex  h-[600px] rounded-[30px] overflow-hidden  cursor-pointer ">
-          <video className=" w-full h-full object-cover absolute { "src="./vd_landing1.mp4"></video>
-          {/* el gradient del video y todos estos son hermanos del video  */}
-          <div className="gradient__reels absolute w-full h-full left-0 top-0 z-10 block"></div>
-          <span className="w-[150px] h-[150px] bg-white/20 z-10 rounded-full backdrop-blur-[14px] border-1 border-white/20 flex flex-col justify-center items-center text-white absolute top-[50%] left-[50%] translate-[-50%]">
-        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
-          <p>Reproducir</p>
-          </span>
-        </article>
-
-
-            <article className="relative flex  h-[600px] rounded-[30px] overflow-hidden  cursor-pointer ">
-          <video className=" w-full h-full object-cover absolute { "src="./vd_landing1.mp4"></video>
-          {/* el gradient del video y todos estos son hermanos del video  */}
-          <div className="gradient__reels absolute w-full h-full left-0 top-0 z-10 block"></div>
-          <span className="w-[150px] h-[150px] bg-white/20 z-10 rounded-full backdrop-blur-[14px] border-1 border-white/20 flex flex-col justify-center items-center text-white absolute top-[50%] left-[50%] translate-[-50%]">
-        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
-          <p>Reproducir</p>
-          </span>
-        </article>
-
-        </div>
-       
-      </section>
-      {/* Modal */}
-      <section className="w-[400px] h-[600px] gradient__reels rounded-[40px] fixed ">
-        <div className="w-full h-full object-cover">
-            <video className="" src="./vd_landing1.mp4" ></video>
+      <section className="max-w-[1600px] mx-auto mt-[120px] px-4 max-md:p-[30px]  ">
+        <h2 className="text-2xl font-bold mb-6 text-center">¡Nuestros mejores reels!</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 max-md:gap-[10px] ">
+          {videos.map((video, i) => (
+            <article
+              key={i}
+              className="relative group rounded-2xl overflow-hidden aspect-video shadow-xl transition-transform hover:scale-[1.04] bg-black"
+            >
+              <video
+                className="w-full h-full object-cover absolute inset-0 transition-opacity duration-300"
+                src={video.src}
+                muted
+                loop
+                preload="metadata"
+                onMouseEnter={(e) => e.target.play()}
+                onMouseLeave={(e) => {
+                  e.target.pause();
+                  e.target.currentTime = 0; // Reinicia al salir
+                }}
+              />
+              {/* Degradado y overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10 pointer-events-none" />
+              {/* Descripción */}
+              <span className="absolute bottom-6 left-6 z-20 text-white text-lg font-semibold drop-shadow">
+                {video.desc}
+              </span>
+            </article>
+          ))}
         </div>
       </section>
     </>

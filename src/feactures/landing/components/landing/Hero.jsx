@@ -13,10 +13,10 @@ export  const Hero = () =>{
             <img className="w-full h-full object-cover object-center" src="/bg_hero_landing.jpg" alt="" />
             
             {/* Contenedor con texto y el degradado */}
-            <div className=" gradient w-full h-full  left-0 top-0 absolute p-[100px] items-end flex text-white">
-                <div className="max-w-[60%]">
-                    <h1 >Bienvenido a OnWheels - SB,
-                        <span className="font-primary">el spot donde el skate no es solo un deporte </span>, es un estilo de vida.
+            <div className=" gradient w-full h-full  left-0 top-0 absolute p-[100px] items-end flex text-white max-lg:p-[20px]">
+                <div className="max-w-[70%] max-md:max-w-full">
+                    <h1 >Bienvenido a OnWheels - SB
+                        <h3 className="font-primary">el spot donde el skate no es solo un deporte , es un estilo de vida.</h3>
 
                     </h1>
                     <div className="flex gap-[10px] mt-[30px]">

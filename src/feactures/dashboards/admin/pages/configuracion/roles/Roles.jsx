@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion"; 
 import { getRoles, createRole, updateRole, deleteRole } from "../../services/RolesService";
 
 const Roles = () => {

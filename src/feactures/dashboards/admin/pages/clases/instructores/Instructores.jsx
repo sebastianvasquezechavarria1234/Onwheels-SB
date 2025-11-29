@@ -1,24 +1,26 @@
-// src/feactures/dashboards/admin/pages/clases/niveles/ClassLevels.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence,motion } from "framer-motion"; 
 import {
-  getNiveles,
-  createNivel,
-  updateNivel,
-  deleteNivel
-} from "../../services/classLevelsServices";
+  getInstructores,
+  createInstructor,
+  updateInstructor,
+  deleteInstructor,
+  getUsuariosNoInstructores
+} from "../../services/instructoresServices";
 
-export const ClassLevels = () => {
-  const [niveles, setNiveles] = useState([]);
+export const Instructores = () => {
+  const [instructores, setInstructores] = useState([]);
+  const [usuariosDisponibles, setUsuariosDisponibles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modal, setModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
-  const [selectedNivel, setSelectedNivel] = useState(null);
+  const [modal, setModal] = useState(null);
+  const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [formData, setFormData] = useState({
-    nombre_nivel: "",
-    descripcion: ""
+    id_usuario: "",
+    anios_experiencia: "",
+    especialidad: ""
   });
   const [search, setSearch] = useState("");
 
@@ -34,25 +36,29 @@ export const ClassLevels = () => {
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  // Cargar niveles
-  const fetchNiveles = useCallback(async () => {
+  // Cargar instructores y usuarios disponibles
+  const fetchInstructores = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getNiveles();
-      setNiveles(Array.isArray(data) ? data : []);
+      const [instructoresData, usuariosData] = await Promise.all([
+        getInstructores(),
+        getUsuariosNoInstructores()
+      ]);
+      setInstructores(Array.isArray(instructoresData) ? instructoresData : []);
+      setUsuariosDisponibles(Array.isArray(usuariosData) ? usuariosData : []);
     } catch (err) {
-      console.error("Error cargando niveles:", err);
-      setError("Error al cargar los niveles.");
-      showNotification("Error al cargar niveles", "error");
+      console.error("Error cargando datos:", err);
+      setError("Error al cargar los datos.");
+      showNotification("Error al cargar datos", "error");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchNiveles();
-  }, [fetchNiveles]);
+    fetchInstructores();
+  }, [fetchInstructores]);
 
   // Manejar cambios en el formulario
   const handleChange = (e) => {
@@ -60,93 +66,109 @@ export const ClassLevels = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Crear nivel
+  // Crear instructor
   const handleCreate = async () => {
     try {
-      if (!formData.nombre_nivel.trim()) {
-        showNotification("El nombre del nivel es obligatorio", "error");
+      if (!formData.id_usuario) {
+        showNotification("El usuario es obligatorio", "error");
         return;
       }
-      await createNivel(formData);
-      await fetchNiveles();
+
+      const payload = {
+        id_usuario: parseInt(formData.id_usuario),
+        anios_experiencia: formData.anios_experiencia ? parseInt(formData.anios_experiencia) : null,
+        especialidad: formData.especialidad || null
+      };
+
+      await createInstructor(payload);
+      await fetchInstructores();
       closeModal();
-      showNotification("Nivel creado con éxito");
+      showNotification("Instructor creado con éxito");
     } catch (err) {
-      console.error("Error creando nivel:", err);
-      const errorMessage = err.response?.data?.error || "Error creando nivel";
+      console.error("Error creando instructor:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error creando instructor";
       showNotification(errorMessage, "error");
     }
   };
 
-  // Editar nivel
+  // Editar instructor
   const handleEdit = async () => {
     try {
-      if (!selectedNivel) return;
-      if (!formData.nombre_nivel.trim()) {
-        showNotification("El nombre del nivel es obligatorio", "error");
-        return;
-      }
-      await updateNivel(selectedNivel.id_nivel, formData);
-      await fetchNiveles();
+      if (!selectedInstructor) return;
+
+      const payload = {
+        id_usuario: parseInt(formData.id_usuario),
+        anios_experiencia: formData.anios_experiencia ? parseInt(formData.anios_experiencia) : null,
+        especialidad: formData.especialidad || null
+      };
+
+      await updateInstructor(selectedInstructor.id_instructor, payload);
+      await fetchInstructores();
       closeModal();
-      showNotification("Nivel actualizado con éxito");
+      showNotification("Instructor actualizado con éxito");
     } catch (err) {
-      console.error("Error editando nivel:", err);
-      const errorMessage = err.response?.data?.error || "Error editando nivel";
+      console.error("Error editando instructor:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error editando instructor";
       showNotification(errorMessage, "error");
     }
   };
 
-  // Eliminar nivel
+  // Desactivar instructor
   const handleDelete = async () => {
     try {
-      if (!selectedNivel) return;
-      await deleteNivel(selectedNivel.id_nivel);
-      await fetchNiveles();
+      if (!selectedInstructor) return;
+      await deleteInstructor(selectedInstructor.id_instructor);
+      await fetchInstructores();
       closeModal();
-      showNotification("Nivel eliminado con éxito");
+      showNotification("Instructor desactivado con éxito");
     } catch (err) {
-      console.error("Error eliminando nivel:", err);
-      const errorMessage = err.response?.data?.error || "Error eliminando nivel";
+      console.error("Error desactivando instructor:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error desactivando instructor";
       showNotification(errorMessage, "error");
     }
   };
 
   // Abrir modal
-  const openModal = (type, nivel = null) => {
+  const openModal = (type, instructor = null) => {
     setModal(type);
-    setSelectedNivel(nivel);
-    if (nivel && type === "editar") {
+    setSelectedInstructor(instructor);
+
+    if (type === "crear") {
       setFormData({
-        nombre_nivel: nivel.nombre_nivel || "",
-        descripcion: nivel.descripcion || ""
+        id_usuario: "",
+        anios_experiencia: "",
+        especialidad: ""
       });
-    } else {
+    } else if (instructor) {
       setFormData({
-        nombre_nivel: "",
-        descripcion: ""
+        id_usuario: instructor.id_usuario.toString(),
+        anios_experiencia: instructor.anios_experiencia ? instructor.anios_experiencia.toString() : "",
+        especialidad: instructor.especialidad || ""
       });
     }
   };
 
   const closeModal = () => {
     setModal(null);
-    setSelectedNivel(null);
+    setSelectedInstructor(null);
     setFormData({
-      nombre_nivel: "",
-      descripcion: ""
+      id_usuario: "",
+      anios_experiencia: "",
+      especialidad: ""
     });
   };
 
   // Filtrado por búsqueda
-  const nivelesFiltrados = niveles.filter((n) =>
-    (n.nombre_nivel || "").toLowerCase().includes(search.toLowerCase()) ||
-    (n.descripcion || "").toLowerCase().includes(search.toLowerCase())
+  const instructoresFiltrados = instructores.filter((i) =>
+    (i.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
+    (i.email || "").toLowerCase().includes(search.toLowerCase()) ||
+    (i.especialidad || "").toLowerCase().includes(search.toLowerCase()) ||
+    (i.estado ? "activo" : "inactivo").includes(search.toLowerCase())
   );
 
   // Paginación
-  const totalPages = Math.max(1, Math.ceil(nivelesFiltrados.length / itemsPerPage));
-  const currentItems = nivelesFiltrados.slice(
+  const totalPages = Math.max(1, Math.ceil(instructoresFiltrados.length / itemsPerPage));
+  const currentItems = instructoresFiltrados.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -159,7 +181,7 @@ export const ClassLevels = () => {
     <Layout>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Niveles de Clase</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Usuarios / Instructores</h2>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="relative w-full md:w-96">
@@ -170,7 +192,7 @@ export const ClassLevels = () => {
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                placeholder="Buscar niveles (Nombre o Descripción)"
+                placeholder="Buscar instructores (Nombre, Email, Especialidad)"
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
@@ -179,7 +201,7 @@ export const ClassLevels = () => {
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
               <Plus size={18} />
-              Crear Nivel
+              Registrar Instructor
             </button>
           </div>
 
@@ -188,41 +210,55 @@ export const ClassLevels = () => {
               <table className="w-full text-sm text-left text-gray-700">
                 <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <th className="px-6 py-3 w-[30%]">Nombre del Nivel</th>
-                    <th className="px-6 py-3 w-[50%]">Descripción</th>
+                    <th className="px-6 py-3 w-[20%]">Nombre</th>
+                    <th className="px-6 py-3 w-[20%]">Email</th>
+                    <th className="px-6 py-3 w-[15%]">Especialidad</th>
+                    <th className="px-6 py-3 w-[15%]">Experiencia</th>
+                    <th className="px-6 py-3 w-[10%]">Estado</th>
                     <th className="px-6 py-3 w-[20%]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
-                        Cargando niveles...
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                        Cargando instructores...
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="3" className="px-6 py-8 text-center text-red-600">
+                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
                         {error}
                       </td>
                     </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500 italic">
-                        No se encontraron niveles.
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
+                        No se encontraron instructores.
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((n) => (
-                      <tr key={n.id_nivel} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-medium">{n.nombre_nivel}</td>
-                        <td className="px-6 py-4 text-gray-600">{n.descripcion || "— Sin descripción —"}</td>
+                    currentItems.map((i) => (
+                      <tr key={i.id_instructor} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{i.nombre_completo}</td>
+                        <td className="px-6 py-4 text-gray-600">{i.email}</td>
+                        <td className="px-6 py-4 text-gray-600">{i.especialidad || "—"}</td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {i.anios_experiencia ? `${i.anios_experiencia} años` : "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            i.estado ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                          }`}>
+                            {i.estado ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("ver", n)}
+                              onClick={() => openModal("ver", i)}
                               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
                               title="Ver detalles"
                             >
@@ -231,7 +267,7 @@ export const ClassLevels = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("editar", n)}
+                              onClick={() => openModal("editar", i)}
                               className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
                               title="Editar"
                             >
@@ -240,9 +276,9 @@ export const ClassLevels = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("eliminar", n)}
+                              onClick={() => openModal("eliminar", i)}
                               className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                              title="Eliminar"
+                              title="Desactivar"
                             >
                               <Trash2 size={16} />
                             </motion.button>
@@ -256,7 +292,7 @@ export const ClassLevels = () => {
             </div>
           </div>
 
-          {nivelesFiltrados.length > 0 && (
+          {instructoresFiltrados.length > 0 && (
             <div className="flex justify-center items-center gap-2 mt-6 py-4">
               <button
                 disabled={currentPage === 1}
@@ -330,41 +366,59 @@ export const ClassLevels = () => {
                 </button>
                 <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
                   {modal === "crear"
-                    ? "Crear Nivel"
+                    ? "Registrar Instructor"
                     : modal === "editar"
-                    ? "Editar Nivel"
+                    ? "Editar Instructor"
                     : modal === "ver"
-                    ? "Detalles del Nivel"
-                    : "Eliminar Nivel"}
+                    ? "Detalles del Instructor"
+                    : "Desactivar Instructor"}
                 </h3>
 
                 {modal === "crear" && (
                   <form className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre del Nivel *
+                        Usuario *
                       </label>
-                      <input
-                        type="text"
-                        name="nombre_nivel"
-                        value={formData.nombre_nivel}
+                      <select
+                        name="id_usuario"
+                        value={formData.id_usuario}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Principiante"
-                        required
+                      >
+                        <option value="">Seleccionar usuario</option>
+                        {usuariosDisponibles.map(usuario => (
+                          <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                            {usuario.nombre_completo} ({usuario.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Años de Experiencia
+                      </label>
+                      <input
+                        type="number"
+                        name="anios_experiencia"
+                        value={formData.anios_experiencia}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 5"
+                        min="0"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descripción
+                        Especialidad
                       </label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
+                      <input
+                        type="text"
+                        name="especialidad"
+                        value={formData.especialidad}
                         onChange={handleChange}
-                        rows="3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Para estudiantes sin experiencia previa"
+                        placeholder="Ej: Skate vertical, Freestyle"
                       />
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
@@ -380,39 +434,47 @@ export const ClassLevels = () => {
                         onClick={handleCreate}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                       >
-                        Crear
+                        Registrar
                       </button>
                     </div>
                   </form>
                 )}
 
-                {modal === "editar" && selectedNivel && (
+                {modal === "editar" && selectedInstructor && (
                   <form className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre del Nivel *
+                        Usuario
+                      </label>
+                      <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-600">
+                        {selectedInstructor.nombre_completo} ({selectedInstructor.email})
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Años de Experiencia
                       </label>
                       <input
-                        type="text"
-                        name="nombre_nivel"
-                        value={formData.nombre_nivel}
+                        type="number"
+                        name="anios_experiencia"
+                        value={formData.anios_experiencia}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Principiante"
-                        required
+                        placeholder="Ej: 5"
+                        min="0"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descripción
+                        Especialidad
                       </label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
+                      <input
+                        type="text"
+                        name="especialidad"
+                        value={formData.especialidad}
                         onChange={handleChange}
-                        rows="3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Para estudiantes sin experiencia previa"
+                        placeholder="Ej: Skate vertical, Freestyle"
                       />
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
@@ -434,19 +496,41 @@ export const ClassLevels = () => {
                   </form>
                 )}
 
-                {modal === "ver" && selectedNivel && (
+                {modal === "ver" && selectedInstructor && (
                   <div className="space-y-3 text-gray-700">
                     <div className="flex justify-between">
-                      <span className="font-medium">ID:</span>
-                      <span>{selectedNivel.id_nivel}</span>
+                      <span className="font-medium">Nombre:</span>
+                      <span className="text-right">{selectedInstructor.nombre_completo}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Nombre del Nivel:</span>
-                      <span className="text-right">{selectedNivel.nombre_nivel}</span>
+                      <span className="font-medium">Email:</span>
+                      <span className="text-right">{selectedInstructor.email}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Descripción:</span>
-                      <span className="text-right">{selectedNivel.descripcion || "— Sin descripción —"}</span>
+                      <span className="font-medium">Teléfono:</span>
+                      <span className="text-right">{selectedInstructor.telefono || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Documento:</span>
+                      <span className="text-right">{selectedInstructor.documento || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Especialidad:</span>
+                      <span className="text-right">{selectedInstructor.especialidad || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Años de experiencia:</span>
+                      <span className="text-right">
+                        {selectedInstructor.anios_experiencia ? `${selectedInstructor.anios_experiencia} años` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Estado:</span>
+                      <span className={`font-medium ${
+                        selectedInstructor.estado ? "text-green-600" : "text-red-600"
+                      }`}>
+                        {selectedInstructor.estado ? "Activo" : "Inactivo"}
+                      </span>
                     </div>
                     <div className="flex justify-center pt-4">
                       <button
@@ -459,13 +543,13 @@ export const ClassLevels = () => {
                   </div>
                 )}
 
-                {modal === "eliminar" && selectedNivel && (
+                {modal === "eliminar" && selectedInstructor && (
                   <div className="text-center space-y-4">
                     <p className="text-gray-700">
-                      ¿Está seguro de eliminar el nivel{" "}
-                      <span className="font-bold text-red-600">{selectedNivel.nombre_nivel}</span>?
+                      ¿Está seguro de desactivar al instructor{" "}
+                      <span className="font-bold text-red-600">{selectedInstructor.nombre_completo}</span>?
                       <br />
-                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                      <span className="text-sm text-gray-500">El instructor no podrá iniciar sesión.</span>
                     </p>
                     <div className="flex justify-center gap-3 pt-2">
                       <button
@@ -478,7 +562,7 @@ export const ClassLevels = () => {
                         onClick={handleDelete}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                       >
-                        Eliminar
+                        Desactivar
                       </button>
                     </div>
                   </div>
@@ -492,4 +576,4 @@ export const ClassLevels = () => {
   );
 };
 
-export default ClassLevels;
+export default Instructores;

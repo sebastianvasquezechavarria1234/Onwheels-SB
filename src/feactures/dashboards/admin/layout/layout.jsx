@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import '../../hooks/dashboard.css'
-
-import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
 import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, MapPinHouse, School, Settings, Shield, Shirt, ShoppingBag, User, UserPlus, Users, X } from "lucide-react";
+import { motion } from "framer-motion";
 
 export const Layout = ({ children }) => {
-  const [now, setNow] = useState(new Date());
+  const [, setNow] = useState(new Date());
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -22,6 +23,15 @@ export const Layout = ({ children }) => {
   });
 
   const timeStr = now.toLocaleTimeString("es-CO");
+
+  const handleLogout = () => {
+    // Eliminar token y usuario del localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirigir a login
+    navigate('/login');
+  };
 
   return (
     <main
@@ -118,6 +128,16 @@ export const Layout = ({ children }) => {
               </BtnSideBar>
             </li>
             <li>
+              <BtnSideBar title="Estudiantes" link="../admin/estudiantes">
+                <Users size={20} className="text-black/80" strokeWidth={1.5} />
+              </BtnSideBar>
+            </li>
+            <li>
+              <BtnSideBar title="Instructores" link="../admin/instructores">
+                <User size={20} strokeWidth={1.5} />
+              </BtnSideBar>
+            </li>
+            <li>
               <BtnSideBar title="PreInscrpciones" link="../admin/preRegistrations">
                 <UserPlus size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
@@ -137,11 +157,6 @@ export const Layout = ({ children }) => {
           {/* Footer */}
           <ul className="bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
             <div className="flex flex-col gap-[10px] mb-[10px]">
-              {/* <p className="text-sm capitalize">{dateStr}</p>
-              <p className="flex gap-[10px] items-center">
-                <span className="w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
-                {timeStr}
-              </p> */}
             </div>
             <BtnLinkIcon
               title="Cerrar Dashboard"
@@ -150,13 +165,22 @@ export const Layout = ({ children }) => {
             >
               <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
             </BtnLinkIcon>
-
+            {/* BOTÓN DE CERRAR SESIÓN MODIFICADO */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="cursor-pointer bg-[var(--color-blue)] text-white w-full inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
+              aria-label="Cerrar sesión"
+            >
+              <div className="w-[60px] h-[60px] flex justify-center items-center bg-white rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                <ArrowLeft className="text-black" strokeWidth={2} size={20} />
+              </div>
+              <span className="font-medium">Cerrar sesión</span>
+            </button>
           </ul>
-
         </div>
       </nav>
 
-      {/* Contenido animado con entrada y salida mejoradas */}
       <motion.section
         className="w-[80%] hide-scrollbar"
         initial={{

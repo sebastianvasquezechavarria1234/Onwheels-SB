@@ -1,44 +1,23 @@
+import axios from "axios";
+
 const API_URL = "http://localhost:3000/api/usuarios";
 
-// ✅ Obtener todos los usuarios
 export const getUsuarios = async () => {
-  const res = await fetch(API_URL);
-  if (!res.ok) throw new Error("Error al obtener usuarios");
-  return await res.json();
+  const res = await axios.get(API_URL);
+  return res.data;
 };
 
-// ✅ Obtener usuario por ID
-export const getUsuarioById = async (id) => {
-  const res = await fetch(`${API_URL}/${id}`);
-  if (!res.ok) throw new Error("Error al obtener usuario");
-  return await res.json();
+export const createUsuario = async (data) => {
+  const res = await axios.post(API_URL, data);
+  return res.data;
 };
 
-// ✅ Crear usuario
-export const createUsuario = async (usuario) => {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(usuario),
-  });
-  if (!res.ok) throw new Error("Error al crear usuario");
-  return await res.json();
+export const updateUsuario = async (id, data) => {
+  const res = await axios.put(`${API_URL}/${id}`, data);
+  return res.data;
 };
 
-// ✅ Editar usuario
-export const updateUsuario = async (id, usuario) => {
-  const res = await fetch(`${API_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(usuario),
-  });
-  if (!res.ok) throw new Error("Error al actualizar usuario");
-  return await res.json();
-};
-
-// ✅ Eliminar usuario
 export const deleteUsuario = async (id) => {
-  const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Error al eliminar usuario");
-  return await res.json();
+  const res = await axios.delete(`${API_URL}/${id}`);
+  return res.data;
 };

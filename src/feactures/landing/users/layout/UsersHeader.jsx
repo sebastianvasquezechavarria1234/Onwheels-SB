@@ -6,7 +6,7 @@ import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
 
 // Header con modal (sheet) pulido y sin errores
-export const StudentHeader = () => {
+export const UsersHeader = () => {
   const [open, setOpen] = useState(false);
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -83,11 +83,11 @@ export const StudentHeader = () => {
   };
 
   const items = [
-    { title: "Inicio", to: "/student/home" },
-    { title: "Tienda", to: "/student/store" },
-    { title: "Clases", to: "/student/class" },
-    { title: "Eventos", to: "/student/events" },
-    { title: "Sobre nosotros", to: "/student/abaut" },
+    { title: "Inicio", to: "/users/home" },
+    { title: "Tienda", to: "/users/store" },
+    { title: "Clases", to: "/users/class" },
+    { title: "Eventos", to: "/users/events" },
+    { title: "Sobre nosotros", to: "/users/abaut" },
   ];
 
   return (
@@ -97,7 +97,7 @@ export const StudentHeader = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB student
+                Performance-SB Users
               </h4>
             </Link>
           </li>
@@ -113,7 +113,7 @@ export const StudentHeader = () => {
           <li>
             <BtnLinkIcon
               title="Carrito de compras"
-              link="../student/shoppingCart"
+              link="../instructor/shoppingCart"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >
@@ -121,35 +121,35 @@ export const StudentHeader = () => {
             </BtnLinkIcon>
           </li>
           
-         
+          
 
           <li>
             <BtnLinkIcon
               title="Mi cuenta"
-              link="../student/setting"
+              link="../instructor/setting"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >
               <User className="text-black" strokeWidth={1.8} size={20} />
             </BtnLinkIcon>
           </li>
+          {/* BOTÓN DE CERRAR SESIÓN CON LOS ESTILOS ORIGINALES */}
+          <li>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
+              aria-label="Cerrar sesión"
+            >
+              <div className=" w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                <LogOut color="white" strokeWidth={1.8} size={20} />
+              </div>
+              <p>Cerrar seccion</p>
+            </button>
+          </li>
 
-           <li>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        title="Cerrar sesión"
-                        className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
-                        aria-label="Cerrar sesión"
-                      >
-                        <div className=" w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                          <LogOut color="white" strokeWidth={1.8} size={20} />
-                        </div>
-                        <p>Cerrar seccion</p>
-                      </button>
-                    </li>
-
-          {/* Botón de menú (usando button nativo para asegurar onClick) */}
+      
           <li>
             <button
               type="button"
@@ -161,6 +161,7 @@ export const StudentHeader = () => {
             >
               <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
                 <Menu className="text-white" strokeWidth={1.5} size={20} />
+
               </span>
               <h4 className="text-black">Menu</h4>
             </button>
