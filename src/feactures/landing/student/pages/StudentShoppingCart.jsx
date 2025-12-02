@@ -54,7 +54,7 @@ export const StudentShoppingCart = () => {
                             </form>
 
                         </div>
-                        <BtnLinkIcon title="Comprar productos" style="bg-[var(--color-blue)]! text-white w-full max-md:w-[200px]" styleIcon="bg-white!">
+                        <BtnLinkIcon title="Comprar productos" style="bg-[var(--color-blue)]! text-white w-full max-md:w-[200px]" styleIcon="bg-white!" link="/student/checkout">
                             <CreditCard className="text-[var(--color-blue)]!" />
 
                         </BtnLinkIcon>

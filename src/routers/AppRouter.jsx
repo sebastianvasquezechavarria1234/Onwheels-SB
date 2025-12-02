@@ -1,7 +1,8 @@
-
+// src/router/AppRouter.jsx
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import ProtectedRoute from "./protectedRoute"; // ✅ ¡IMPORTANTE!
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
@@ -11,22 +12,19 @@ import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
+// import { Events } from "../feactures/landing/pages/Events"; // ✅ Corregido
 
 // auth
 import Login from "../feactures/Auth/pages/Login";
 import Register from "../feactures/Auth/pages/Register";
 
 // Dashboard admin
-
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
-// import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import Products from "../feactures/dashboards/admin/pages/compras/productos/Products";
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles";
 import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/matriculas";
-import Estudiantes from "../feactures/dashboards/admin/pages/clases/estudiantes/students";
-import Instructores from "../feactures/dashboards/admin/pages/clases/instructores/Instructores";
 import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
 import PreinscripcionesAdmin from "../feactures/dashboards/admin/pages/clases/preinscripciones/PreRegistrations";
 import Usuarios from "../feactures/dashboards/admin/pages/configuracion/usuarios/usuarios";
@@ -35,12 +33,13 @@ import CategoriaEventos from "../feactures/dashboards/admin/pages/eventos/catego
 import Patrocinadores from "../feactures/dashboards/admin/pages/eventos/patrocinadores/patrocinadores";
 import Sedes from "../feactures/dashboards/admin/pages/eventos/sedes/sedes";
 import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
-import ClassLevels from "../feactures/dashboards/admin/pages/clases/niveles/ClassLevels"
+import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
 
 // Dashboard student
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
 import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases";
 import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses";
+import { StudentCheckout } from "../feactures/landing/student/pages/StudentCheckout";
 
 // Dashboard instructor
 import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent";
@@ -58,14 +57,11 @@ import { StudentShoppingCart } from "../feactures/landing/student/pages/StudentS
 
 // Landing Instructor
 import { InstructorHome } from "../feactures/landing/instructor/pages/InstructorHome";
-// import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorStore";
 import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass";
 import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
-// import { InstructorAbout } from "../feactures/landing/instructor/pages/InstructorAbout";
 import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
 import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
 import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
-import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
 
 // Landing Users
 import { UsersHome } from "../feactures/landing/users/pages/UsersHome";
@@ -77,7 +73,21 @@ import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut";
 // Auth extras
 import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
 import { ResetPassword } from "../feactures/Auth/pages/ResetPassword";
-import { StudentCheckout } from "../feactures/landing/student/pages/StudentCheckout";
+import StudentOrderConfirm from "../feactures/landing/student/pages/StudentOrderConfirm";
+
+// Página de acceso no autorizado
+const Unauthorized = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white">
+    <h1 className="text-3xl font-bold mb-4">Acceso Denegado</h1>
+    <p className="text-lg mb-6">No tienes permisos para acceder a esta página</p>
+    <button 
+      onClick={() => window.history.back()} 
+      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+    >
+      Volver atrás
+    </button>
+  </div>
+);
 
 const AppRouter = () => {
   const location = useLocation();
@@ -113,7 +123,7 @@ const AppRouter = () => {
         <Route index element={withAnimation(Home)} />
         <Route path="store" element={withAnimation(Store)} />
         <Route path="class" element={withAnimation(Class)} />
-        <Route path="events" element={withAnimation(Eventos)} />
+        {/* <Route path="events" element={withAnimation(Event)} /> ✅ Corregido */}
         <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
         <Route path="about" element={withAnimation(About)} />
         <Route path="productDetails" element={withAnimation(ProductDetails)} />
@@ -123,25 +133,28 @@ const AppRouter = () => {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
 
-        {/* Dashboard Admin */}
-        <Route path="admin/dashboard" element={<Dashboard />} />
-        <Route path="admin/matriculas" element={<Matriculas />} />
-        <Route path="admin/products" element={<Products />} />
-        <Route path="admin/roles" element={<Roles />} />
-        <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
-        <Route path="admin/compras" element={<Compras />} />
-        <Route path="admin/proveedores" element={<Proveedores />} />
-        {/* <Route path="admin/ventas" element={<Ventas />} /> */}
-        <Route path="admin/categoriasProductos" element={<Categorias />} />
-        <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
-        <Route path="admin/planclases" element={<PlanClasses />} />
-        <Route path="admin/users" element={<Usuarios />} />
-        <Route path="admin/eventos" element={<Eventos />} />
-        <Route path="admin/patrocinadores" element={<Patrocinadores />} />
-        <Route path="admin/sedes" element={<Sedes />} />
-        <Route path="admin/clases" element={<Clases />} />
-        <Route path="admin/plans" element={<PlanClasses />} />
-        {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
+        {/* Ruta no autorizado */}
+        <Route path="unauthorized" element={<Unauthorized />} /> {/* ✅ Agregado */}
+
+        {/* Dashboard Admin - PROTEGIDAS */}
+        <Route element={<ProtectedRoute allowedRoles={["administrador"]} />}>
+          <Route path="admin/dashboard" element={<Dashboard />} />
+          <Route path="admin/matriculas" element={<Matriculas />} />
+          <Route path="admin/products" element={<Products />} />
+          <Route path="admin/roles" element={<Roles />} />
+          <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
+          <Route path="admin/compras" element={<Compras />} />
+          <Route path="admin/proveedores" element={<Proveedores />} />
+          <Route path="admin/categoriasProductos" element={<Categorias />} />
+          <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
+          <Route path="admin/planclases" element={<PlanClasses />} />
+          <Route path="admin/users" element={<Usuarios />} />
+          <Route path="admin/eventos" element={<Eventos />} />
+          <Route path="admin/patrocinadores" element={<Patrocinadores />} />
+          <Route path="admin/sedes" element={<Sedes />} />
+          <Route path="admin/clases" element={<Clases />} />
+          <Route path="admin/plans" element={<PlanClasses />} />
+        </Route>
 
         {/* Dashboard Student - PROTEGIDAS */}
         <Route element={<ProtectedRoute allowedRoles={["estudiante"]} />}>
@@ -155,6 +168,7 @@ const AppRouter = () => {
           <Route path="student/abaut" element={<StudentAbout />} />
           <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
           <Route path="student/checkout" element={<StudentCheckout />} />
+          <Route path="student/orderConfirm" element={<StudentOrderConfirm />} />
         </Route>
 
         {/* Dashboard Instructor - PROTEGIDAS */}
@@ -168,7 +182,6 @@ const AppRouter = () => {
           <Route path="instructor/class" element={<InstructorClass />} />
           <Route path="instructor/events" element={<InstructorEvents />} />
           <Route path="instructor/abaut" element={<InstructorAbaut />} />
-          
           <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
         </Route>
 
