@@ -78,6 +78,9 @@ import { InstructorCheckout } from "../feactures/landing/instructor/pages/Instru
 import { UsersShoppingCart } from "../feactures/landing/users/pages/UsersShoppingCart";
 import { UsersCheckout } from "../feactures/landing/users/pages/UsersCheckout";
 import UsersOrderConfirm from "../feactures/landing/users/pages/UsersOrderConfirm";
+import { UsersSetting } from "../feactures/dashboards/users/pages/UsersSetting";
+import { UsersMyPurchases } from "../feactures/dashboards/users/pages/UsersMyPurchases";
+import UsersPreinscriptions from "../feactures/landing/users/pages/UsersPreinscriptions";
 
 // Página de acceso no autorizado
 const Unauthorized = () => (
@@ -126,10 +129,11 @@ const AppRouter = () => {
           {/* Landing */}
           <Route path="recover" element={<RecoverPassword />} />
           <Route path="reset-password" element={<ResetPassword />} />
+          {/* <Route path="training" element={<Class />} /> */}
 
           <Route index element={withAnimation(Home)} />
           <Route path="store" element={withAnimation(Store)} />
-          <Route path="class" element={withAnimation(Class)} />
+          <Route path="training" element={withAnimation(Class)} />
           <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
           <Route path="about" element={withAnimation(About)} />
           <Route path="productDetails" element={withAnimation(ProductDetails)} />
@@ -170,7 +174,7 @@ const AppRouter = () => {
             <Route path="student/home" element={<StudentHome />} />
             <Route path="student/events" element={<StudentEvents />} />
             <Route path="student/store" element={<StudentStore />} />
-            <Route path="student/class" element={<StudentClass />} />
+            <Route path="student/training" element={<StudentClass />} />
             <Route path="student/abaut" element={<StudentAbout />} />
             <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
             <Route path="student/checkout" element={<StudentCheckout />} />
@@ -185,7 +189,7 @@ const AppRouter = () => {
             <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
             <Route path="instructor/home" element={<InstructorHome />} />
             <Route path="instructor/store" element={<InstructorStore />} />
-            <Route path="instructor/class" element={<InstructorClass />} />
+            <Route path="instructor/training" element={<InstructorClass />} />
             <Route path="instructor/events" element={<InstructorEvents />} />
             <Route path="instructor/abaut" element={<InstructorAbaut />} />
             <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
@@ -196,13 +200,16 @@ const AppRouter = () => {
           {/* Users - PROTEGIDAS */}
           <Route element={<ProtectedRoute allowedRoles={["cliente", "usuario"]} />}>
             <Route path="users/home" element={<UsersHome />} />
+            <Route path="users/preinscriptions" element={<UsersPreinscriptions />} />
             <Route path="users/store" element={<UsersStore />} />
-            <Route path="users/class" element={<UsersClass />} />
+            <Route path="users/training" element={<UsersClass />} />
             <Route path="users/events" element={<UsersEvents />} />
             <Route path="users/abaut" element={<UsersAbaut />} />
             <Route path="users/shoppingCart" element={<UsersShoppingCart />} />
             <Route path="users/checkout" element={<UsersCheckout />} />
             <Route path="users/orderConfirm" element={<UsersOrderConfirm />} />
+            <Route path="users/setting" element={<UsersSetting/>} />
+            <Route path="users/myPurchases" element={<UsersMyPurchases/>} />
           </Route>
         </Routes>
       </AnimatePresence>

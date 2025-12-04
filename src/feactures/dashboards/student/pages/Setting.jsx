@@ -31,6 +31,14 @@ export const Setting = () => {
   const verifyTimeout = useRef(null);
   const lastAbortController = useRef(null);
 
+  // anim timers refs para mensaje
+  const enterTimerRef = useRef(null);
+  const visibleTimerRef = useRef(null);
+  const exitTimerRef = useRef(null);
+
+  // fase del mensaje: null | 'entering' | 'visible' | 'exiting'
+  const [messagePhase, setMessagePhase] = useState(null);
+
   const getCurrentUserId = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     return user?.id_usuario;
@@ -114,6 +122,69 @@ export const Setting = () => {
     fetchUserData();
   }, []);
 
+  // ---- NEW: control de animación del mensaje de éxito ----
+  // tiempos (ms)
+  const ENTER_DUR = 400;
+  const VISIBLE_DUR = 3500; // <-- cambiado a 3500 ms (3.5s)
+  const EXIT_DUR = 400;
+
+  useEffect(() => {
+    // limpiar timers previos
+    if (enterTimerRef.current) {
+      clearTimeout(enterTimerRef.current);
+      enterTimerRef.current = null;
+    }
+    if (visibleTimerRef.current) {
+      clearTimeout(visibleTimerRef.current);
+      visibleTimerRef.current = null;
+    }
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+
+    if (!successMessage) {
+      setMessagePhase(null);
+      return;
+    }
+
+    // iniciar secuencia: entering -> visible -> exiting -> cleanup
+    setMessagePhase('entering');
+
+    enterTimerRef.current = setTimeout(() => {
+      setMessagePhase('visible');
+    }, ENTER_DUR);
+
+    visibleTimerRef.current = setTimeout(() => {
+      setMessagePhase('exiting');
+    }, ENTER_DUR + VISIBLE_DUR);
+
+    exitTimerRef.current = setTimeout(() => {
+      setSuccessMessage("");
+      setMessagePhase(null);
+    }, ENTER_DUR + VISIBLE_DUR + EXIT_DUR);
+
+    return () => {
+      if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
+      if (visibleTimerRef.current) clearTimeout(visibleTimerRef.current);
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+      enterTimerRef.current = visibleTimerRef.current = exitTimerRef.current = null;
+    };
+  }, [successMessage]);
+
+  useEffect(() => {
+    // cleanup on unmount
+    return () => {
+      if (verifyTimeout.current) clearTimeout(verifyTimeout.current);
+      if (lastAbortController.current) {
+        try { lastAbortController.current.abort(); } catch {}
+      }
+      if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
+      if (visibleTimerRef.current) clearTimeout(visibleTimerRef.current);
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    };
+  }, []);
+
   if (loading) {
     return (
       <Layout>
@@ -124,7 +195,7 @@ export const Setting = () => {
     );
   }
 
-  // Validación para nueva contraseña con número y caracter especial
+  // Validación para nueva contraseña: mínimo 6 caracteres + (al menos 1 número OR 1 caracter especial)
   const validateNewPassword = (password) => {
     if (!password) {
       setPasswordValidation(prev => ({
@@ -143,15 +214,10 @@ export const Setting = () => {
         ...prev,
         newPassword: { valid: false, message: "Mínimo 6 caracteres" }
       }));
-    } else if (!hasNumber) {
+    } else if (!(hasNumber || hasSpecialChar)) {
       setPasswordValidation(prev => ({
         ...prev,
-        newPassword: { valid: false, message: "Debe contener al menos 1 número" }
-      }));
-    } else if (!hasSpecialChar) {
-      setPasswordValidation(prev => ({
-        ...prev,
-        newPassword: { valid: false, message: "Debe contener al menos 1 caracter especial" }
+        newPassword: { valid: false, message: "Debe contener al menos 1 número o 1 caracter especial" }
       }));
     } else {
       setPasswordValidation(prev => ({
@@ -245,6 +311,7 @@ export const Setting = () => {
       
       const response = await api.updateUsuario(userId, updateData);
       setUserData(response.usuario);
+      // mostrar mensaje (abajo)
       setSuccessMessage("Perfil actualizado correctamente");
       setIsEditingProfile(false);
     } catch (error) {
@@ -296,6 +363,7 @@ export const Setting = () => {
       
       const response = await api.updateUsuario(userId, updateData);
       setUserData(response.usuario);
+      // mostrar mensaje (abajo)
       setSuccessMessage(response.mensaje || "Contraseña actualizada correctamente");
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setPasswordValidation({
@@ -347,16 +415,53 @@ export const Setting = () => {
 
   return (
     <Layout>
+     
+      <style>{`
+        .msg-wrap {
+          display: inline-flex;
+          align-items: center;
+          gap: .5rem;
+          padding: 17px;
+          border-radius: 22px;
+          background: #ECFDF5; /* green-100 */
+          color: #40c17eff; /* green-700 */
+          font-weight: 600;
+          will-change: transform, opacity;
+        }
+        /* entering: from left -> center */
+        .msg-entering {
+          transform: translateX(-120%);
+          opacity: 0;
+          animation: slideInFromLeft ${ENTER_DUR}ms cubic-bezier(.2,.9,.2,1) forwards;
+        }
+        /* visible: hold in place (no animation) */
+        .msg-visible {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        /* exiting: center -> left out */
+        .msg-exiting {
+          transform: translateX(0);
+          opacity: 1;
+          animation: slideOutToLeft ${EXIT_DUR}ms cubic-bezier(.3,.1,.25,1) forwards;
+        }
+        @keyframes slideInFromLeft {
+          0% { transform: translateX(-120%); opacity: 0; }
+          60% { transform: translateX(12%); opacity: 1; } /* tiny overshoot for polish */
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutToLeft {
+          0% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(-120%); opacity: 0; }
+        }
+      `}</style>
+
       <section className="p-[30px] relative w-full">
         <h2 className="font-primary text-2xl mb-6">Mi perfil</h2>
 
-        <div className="flex items-center gap-[30px] mt-[80px]">
+        <div className="flex items-start gap-[30px] mt-[80px]">
           <picture className="relative w-[200px] h-[200px] rounded-full flex justify-center items-center bg-gray-100">
-            <img 
-              className="w-full h-full object-cover rounded-full" 
-              src="https://placehold.co/200x200/3b82f6/ffffff?text=SV" 
-              alt="avatar" 
-            />
+            <img className="w-full h-full object-cover opacity-50" src="https://tse4.mm.bing.net/th/id/OIP.XmX3OORybgBCLw-Xd6rYrQHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="avatar" />
           </picture>
 
           <div className="flex flex-col gap-[10px]">
@@ -366,44 +471,58 @@ export const Setting = () => {
             </span>
             
             {isEditingProfile ? (
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={editData.nombre_completo}
-                  onChange={(e) => setEditData({...editData, nombre_completo: e.target.value})}
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nombre completo"
-                />
+              <div className="w-[400px] block space-y-4">
+                <h3 className="italic mt-[30px]">Editar perfil</h3>
+                <label className="mb-[10px] block">
+                  <p className="translate-x-[20px] font-bold! italic">Nombre completo:</p>
+                  <input
+                    type="text"
+                    value={editData.nombre_completo}
+                    onChange={(e) => setEditData({...editData, nombre_completo: e.target.value})}
+                    className="input w-[200px]"
+                    placeholder="Nombre completo"
+                  />
+                </label>
+                <label className="mb-[10px] block">
+                  <p className="translate-x-[20px] font-bold! italic">Telefono:</p>
                 <input
                   type="tel"
                   value={editData.telefono}
                   onChange={(e) => setEditData({...editData, telefono: e.target.value})}
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input"
                   placeholder="Teléfono"
                 />
+                </label>
                 
-                <div className="flex gap-4 pt-2">
+                <div className="flex gap-[10px] pt-2">
                   <button
                     onClick={handleSaveProfile}
                     disabled={isLoading}
-                    className={`px-4 py-2 rounded-lg font-semibold ${isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white transition-colors`}
+                    className={`btn ${isLoading ? 'bg-blue-100 cursor-not-allowed' : 'bg-blue-100 text-blue-600'} text-blue-500 transition-colors`}
                   >
-                    {isLoading ? 'Guardando...' : 'Guardar cambios'}
+                    <h4>
+                      {isLoading ? 'Guardando...' : 'Guardar cambios'}
+                    </h4>
                   </button>
                   <button
                     onClick={handleCancelProfile}
-                    className="px-4 py-2 rounded-lg font-semibold bg-gray-300 hover:bg-gray-400 text-gray-800 transition-colors"
+                    className="btn bg-red-100 text-red-500"
                   >
+                    <h4>
                     Cancelar
+                    </h4>
                   </button>
                 </div>
-                {successMessage && <div className="mt-2 p-2 bg-green-100 text-green-700 rounded-lg">{successMessage}</div>}
-                {passwordError && <div className="mt-2 p-2 bg-red-100 text-red-700 rounded-lg">{passwordError}</div>}
+                { /* Mensajes de error locales (se mantienen) */ }
+                {passwordError && <div className="mt-2 p-[12px] rounded-[16px] bg-red-100 text-red-700">{passwordError}</div>}
               </div>
             ) : isChangingPassword ? (
               <div className="space-y-4 max-w-md">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
+                {/* --- Usamos los mismos estilos de título/input/btn que en "Editar perfil" --- */}
+                <h3 className="italic mt-[30px]">Cambiar contraseña</h3>
+
+                <label className="mb-[10px] block">
+                  <p className="translate-x-[20px] font-bold! italic">Contraseña actual:</p>
                   <input
                     type="password"
                     value={passwordData.currentPassword}
@@ -412,113 +531,76 @@ export const Setting = () => {
                       setPasswordData(prev => ({ ...prev, currentPassword: val }));
                       scheduleVerifyCurrentPassword(val);
                     }}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="input"
                     placeholder="Ingrese su contraseña actual"
                   />
-                  {passwordValidation.currentPassword.message && (
-                    <p className={`text-sm mt-1 ${passwordValidation.currentPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
-                      {passwordValidation.currentPassword.message}
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      value={passwordData.newPassword}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setPasswordData(prev => ({ ...prev, newPassword: val }));
-                        validateNewPassword(val);
-                        // revalidate confirm
-                        validateConfirmPassword(passwordData.confirmPassword);
-                      }}
-                      className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
-                        passwordValidation.newPassword.valid === true 
-                          ? 'border-green-500 focus:ring-green-500' 
-                          : passwordValidation.newPassword.valid === false 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:ring-blue-500'
-                      }`}
-                      placeholder="Mínimo 6 caracteres + 1 número + 1 caracter especial"
-                    />
-                    {passwordValidation.newPassword.valid !== null && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        {passwordValidation.newPassword.valid ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <AlertCircle className="w-5 h-5 text-red-500" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {passwordValidation.newPassword.message && (
-                    <p className={`text-sm mt-1 ${passwordValidation.newPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
-                      {passwordValidation.newPassword.message}
-                    </p>
-                  )}
-                </div>
+                </label>
+                {passwordValidation.currentPassword.message && (
+                  <p className={`text-sm mt-1 ${passwordValidation.currentPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
+                    {passwordValidation.currentPassword.message}
+                  </p>
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña</label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setPasswordData(prev => ({ ...prev, confirmPassword: val }));
-                        validateConfirmPassword(val);
-                      }}
-                      className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
-                        passwordValidation.confirmPassword.valid === true 
-                          ? 'border-green-500 focus:ring-green-500' 
-                          : passwordValidation.confirmPassword.valid === false 
-                            ? 'border-red-500 focus:ring-red-500' 
-                            : 'border-gray-300 focus:ring-blue-500'
-                      }`}
-                      placeholder="Repita la nueva contraseña"
-                    />
-                    {passwordValidation.confirmPassword.valid !== null && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        {passwordValidation.confirmPassword.valid ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <AlertCircle className="w-5 h-5 text-red-500" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {passwordValidation.confirmPassword.message && (
-                    <p className={`text-sm mt-1 ${passwordValidation.confirmPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
-                      {passwordValidation.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
+                <label className="mb-[10px] block">
+                  <p className="translate-x-[20px] font-bold! italic">Nueva contraseña:</p>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPasswordData(prev => ({ ...prev, newPassword: val }));
+                      validateNewPassword(val);
+                      // revalidate confirm
+                      validateConfirmPassword(passwordData.confirmPassword);
+                    }}
+                    className="input"
+                    placeholder="Mínimo 6 caracteres + 1 número o 1 caracter especial"
+                  />
+                </label>
+                {passwordValidation.newPassword.message && (
+                  <p className={`text-sm mt-1 ${passwordValidation.newPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
+                    {passwordValidation.newPassword.message}
+                  </p>
+                )}
+
+                <label className="mb-[10px] block">
+                  <p className="translate-x-[20px] font-bold! italic">Confirmar nueva contraseña:</p>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPasswordData(prev => ({ ...prev, confirmPassword: val }));
+                      validateConfirmPassword(val);
+                    }}
+                    className="input"
+                    placeholder="Repita la nueva contraseña"
+                  />
+                </label>
+                {passwordValidation.confirmPassword.message && (
+                  <p className={`text-sm mt-1 ${passwordValidation.confirmPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
+                    {passwordValidation.confirmPassword.message}
+                  </p>
+                )}
                 
-                <div className="flex gap-4 pt-2">
+                <div className="flex gap-[10px] pt-2">
                   <button
                     onClick={handleSavePassword}
                     disabled={isLoading || passwordValidation.newPassword.valid !== true || passwordValidation.confirmPassword.valid !== true || passwordValidation.currentPassword.valid !== true}
-                    className={`px-4 py-2 rounded-lg font-semibold ${isLoading || passwordValidation.newPassword.valid !== true || passwordValidation.confirmPassword.valid !== true || passwordValidation.currentPassword.valid !== true ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white transition-colors`}
+                    // <-- FIX: min width para que el texto "Actualizando..." no cambie el layout
+                    className={`btn min-w-[220px] flex items-center justify-center ${isLoading || passwordValidation.newPassword.valid !== true || passwordValidation.confirmPassword.valid !== true || passwordValidation.currentPassword.valid !== true ? 'bg-blue-100 cursor-not-allowed text-blue-300' : 'bg-blue-100 text-blue-600'} transition-colors`}
                   >
-                    {isLoading ? 'Actualizando...' : 'Actualizar contraseña'}
+                    <h4>{isLoading ? 'Actualizando...' : 'Actualizar contraseña'}</h4>
                   </button>
                   <button
                     onClick={handleCancelPassword}
-                    className="px-4 py-2 rounded-lg font-semibold bg-gray-300 hover:bg-gray-400 text-gray-800 transition-colors"
+                    className="btn bg-red-100 text-red-500"
                   >
-                    Cancelar
+                    <h4>Cancelar</h4>
                   </button>
                 </div>
 
-                {successMessage && (
-                  <div className="mt-2 p-2 bg-green-100 text-green-700 rounded-lg">
-                    {successMessage}
-                  </div>
-                )}
+                { /* Los mensajes de éxito ahora aparecen abajo; dejamos el error local */ }
                 {passwordError && (
                   <div className="mt-2 p-2 bg-red-100 text-red-700 rounded-lg">
                     {passwordError}
@@ -527,37 +609,52 @@ export const Setting = () => {
               </div>
             ) : (
               <>
-                <h4 className="font-primary text-xl">{userData?.nombre_completo}</h4>
+                <h3 className="font-primary italic font-bold! mt-[30px]">{userData?.nombre_completo}</h3>
                 <div className="flex gap-[20px]">
                   <div className="flex gap-[10px] items-center">
-                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-blue-600 rounded-full">
+                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full">
                       <Phone color="white" size={20} strokeWidth={1.3} />
                     </span>
-                    <p className="font-semibold">{userData?.telefono}</p>
+                    <p className="font-semibold!">{userData?.telefono}</p>
                   </div>
                   <div className="flex gap-[10px] items-center">
-                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-blue-600 rounded-full">
+                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full">
                       <Mail color="white" size={20} strokeWidth={1.3} />
                     </span>
-                    <p className="font-semibold">{userData?.email}</p>
+                    <p className="font-semibold! underline">{userData?.email}</p>
                   </div>
                 </div>
                 <div className="flex gap-4 mt-4">
                   <button
                     onClick={() => setIsEditingProfile(true)}
-                    className="px-4 py-2 rounded-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-2"
+                    className="btn bg-blue-100 flex items-center gap-[10px] text-blue-600"
                   >
-                    <Edit2 size={16} /> Editar perfil
+                     <h4>Editar perfil</h4>
                   </button>
                   <button
                     onClick={() => setIsChangingPassword(true)}
-                    className="px-4 py-2 rounded-lg font-semibold bg-gray-600 hover:bg-gray-700 text-white transition-colors flex items-center gap-2"
+                    className="btn bg-gray-200 flex items-center gap-[10px] text-gray-700"
                   >
-                    <Lock size={16} /> Cambiar contraseña
+                     <h4>Cambiar contraseña</h4>
                   </button>
                 </div>
               </>
             )}
+
+            {/* --- Mensaje de éxito ABAJO con anim profesional (entra por la izquierda, queda 3.5s, sale por la izquierda) --- */}
+            {successMessage && (
+              <div
+                className={`msg-wrap ${
+                  messagePhase === 'entering' ? 'msg-entering' : 
+                  messagePhase === 'visible' ? 'msg-visible' : 
+                  messagePhase === 'exiting' ? 'msg-exiting' : ''
+                }`}
+              >
+                <CheckCircle className="w-5 h-5" />
+                <span>{successMessage}</span>
+              </div>
+            )}
+
           </div>
         </div>
       </section>
