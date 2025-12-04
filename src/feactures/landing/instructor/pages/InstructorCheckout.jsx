@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { StudentLayout } from "../layout/StudentLayout"
 import CardProduct from "../../components/CardProduct"
 import { BtnLinkIcon } from "../../components/BtnLinkIcon"
 import { Check } from "lucide-react"
+import { InstructorLayout } from "../layout/InstructorLayout"
 
-export const StudentCheckout = () => {
+export const InstructorCheckout = () => {
   const [form, setForm] = useState({
     nombre_completo: "",
     telefono: "",
@@ -117,7 +117,7 @@ export const StudentCheckout = () => {
   }
 
   return (
-    <StudentLayout>
+    <InstructorLayout>
       <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px] max-lg:flex-col max-md:p-[10px] max-md:pt-[80px]">
         <div className="w-[75%] max-lg:w-full">
           <h2 className="mb-[20px] max-md:mb-[20px]">Información de envío y pago</h2>
@@ -227,7 +227,7 @@ export const StudentCheckout = () => {
               </div>
             </div>
 
-            <BtnLinkIcon title="Comfirmar compra" link="../student/orderConfirm" style="bg-[var(--color-blue)]! text-white!" styleIcon="bg-white!">
+            <BtnLinkIcon title="Comfirmar compra" link="../instructor/orderConfirm" style="bg-[var(--color-blue)]! text-white!" styleIcon="bg-white!">
               <Check color="black" strokeWidth={1.8} size={18} />
             </BtnLinkIcon>
           </article>
@@ -267,6 +267,6 @@ export const StudentCheckout = () => {
           </div>
         </div>
       </section>
-    </StudentLayout>
+    </InstructorLayout>
   )
 }

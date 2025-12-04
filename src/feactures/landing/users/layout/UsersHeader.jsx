@@ -97,7 +97,7 @@ export const UsersHeader = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB Users
+                Performance-SB
               </h4>
             </Link>
           </li>
@@ -113,7 +113,7 @@ export const UsersHeader = () => {
           <li>
             <BtnLinkIcon
               title="Carrito de compras"
-              link="../instructor/shoppingCart"
+              link="../users/shoppingCart"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >

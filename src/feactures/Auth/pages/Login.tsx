@@ -45,9 +45,9 @@ const Login = () => {
       if (rol === "administrador") {
         navigate("/admin/dashboard", { replace: true });
       } else if (rol === "estudiante") {
-        navigate("/student/setting", { replace: true });
+        navigate("/student/home", { replace: true });
       } else if (rol === "instructor") {
-        navigate("/instructor/setting", { replace: true });
+        navigate("/instructor/home", { replace: true });
       } else {
         navigate("/users/home", { replace: true });
       }

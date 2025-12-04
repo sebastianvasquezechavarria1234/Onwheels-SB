@@ -1,8 +1,8 @@
-// src/router/AppRouter.jsx
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import ProtectedRoute from "./protectedRoute"; // ✅ ¡IMPORTANTE!
+import ProtectedRoute from "./protectedRoute";
+import TokenRedirect from "./TokenRedirect";
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
@@ -12,7 +12,6 @@ import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
-// import { Events } from "../feactures/landing/pages/Events"; // ✅ Corregido
 
 // auth
 import Login from "../feactures/Auth/pages/Login";
@@ -74,6 +73,11 @@ import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut";
 import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
 import { ResetPassword } from "../feactures/Auth/pages/ResetPassword";
 import StudentOrderConfirm from "../feactures/landing/student/pages/StudentOrderConfirm";
+import { InstructorOrderConfirm } from "../feactures/landing/instructor/pages/InstructorOrderConfirm";
+import { InstructorCheckout } from "../feactures/landing/instructor/pages/InstructorCheckout";
+import { UsersShoppingCart } from "../feactures/landing/users/pages/UsersShoppingCart";
+import { UsersCheckout } from "../feactures/landing/users/pages/UsersCheckout";
+import UsersOrderConfirm from "../feactures/landing/users/pages/UsersOrderConfirm";
 
 // Página de acceso no autorizado
 const Unauthorized = () => (
@@ -114,87 +118,95 @@ const AppRouter = () => {
     ) : <Component />;
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* Landing */}
-        <Route path="recover" element={<RecoverPassword />} />
-        <Route path="reset-password" element={<ResetPassword />} />
+    <>
+      <TokenRedirect />
+      
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Landing */}
+          <Route path="recover" element={<RecoverPassword />} />
+          <Route path="reset-password" element={<ResetPassword />} />
 
-        <Route index element={withAnimation(Home)} />
-        <Route path="store" element={withAnimation(Store)} />
-        <Route path="class" element={withAnimation(Class)} />
-        {/* <Route path="events" element={withAnimation(Event)} /> ✅ Corregido */}
-        <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
-        <Route path="about" element={withAnimation(About)} />
-        <Route path="productDetails" element={withAnimation(ProductDetails)} />
-        <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
+          <Route index element={withAnimation(Home)} />
+          <Route path="store" element={withAnimation(Store)} />
+          <Route path="class" element={withAnimation(Class)} />
+          <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
+          <Route path="about" element={withAnimation(About)} />
+          <Route path="productDetails" element={withAnimation(ProductDetails)} />
+          <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
 
-        {/* Auth */}
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
+          {/* Auth */}
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
 
-        {/* Ruta no autorizado */}
-        <Route path="unauthorized" element={<Unauthorized />} /> {/* ✅ Agregado */}
+          {/* Ruta no autorizado */}
+          <Route path="unauthorized" element={<Unauthorized />} />
 
-        {/* Dashboard Admin - PROTEGIDAS */}
-        <Route element={<ProtectedRoute allowedRoles={["administrador"]} />}>
-          <Route path="admin/dashboard" element={<Dashboard />} />
-          <Route path="admin/matriculas" element={<Matriculas />} />
-          <Route path="admin/products" element={<Products />} />
-          <Route path="admin/roles" element={<Roles />} />
-          <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
-          <Route path="admin/compras" element={<Compras />} />
-          <Route path="admin/proveedores" element={<Proveedores />} />
-          <Route path="admin/categoriasProductos" element={<Categorias />} />
-          <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
-          <Route path="admin/planclases" element={<PlanClasses />} />
-          <Route path="admin/users" element={<Usuarios />} />
-          <Route path="admin/eventos" element={<Eventos />} />
-          <Route path="admin/patrocinadores" element={<Patrocinadores />} />
-          <Route path="admin/sedes" element={<Sedes />} />
-          <Route path="admin/clases" element={<Clases />} />
-          <Route path="admin/plans" element={<PlanClasses />} />
-        </Route>
+          {/* Dashboard Admin - PROTEGIDAS */}
+          <Route element={<ProtectedRoute allowedRoles={["administrador"]} />}>
+            <Route path="admin/dashboard" element={<Dashboard />} />
+            <Route path="admin/matriculas" element={<Matriculas />} />
+            <Route path="admin/products" element={<Products />} />
+            <Route path="admin/roles" element={<Roles />} />
+            <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
+            <Route path="admin/compras" element={<Compras />} />
+            <Route path="admin/proveedores" element={<Proveedores />} />
+            <Route path="admin/categoriasProductos" element={<Categorias />} />
+            <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
+            <Route path="admin/planclases" element={<PlanClasses />} />
+            <Route path="admin/users" element={<Usuarios />} />
+            <Route path="admin/eventos" element={<Eventos />} />
+            <Route path="admin/patrocinadores" element={<Patrocinadores />} />
+            <Route path="admin/sedes" element={<Sedes />} />
+            <Route path="admin/clases" element={<Clases />} />
+            <Route path="admin/plans" element={<PlanClasses />} />
+          </Route>
 
-        {/* Dashboard Student - PROTEGIDAS */}
-        <Route element={<ProtectedRoute allowedRoles={["estudiante"]} />}>
-          <Route path="student/setting" element={<Setting />} />
-          <Route path="student/myClasses" element={<MyClasses />} />
-          <Route path="student/myPurchases" element={<MyPurchases />} />
-          <Route path="student/home" element={<StudentHome />} />
-          <Route path="student/events" element={<StudentEvents />} />
-          <Route path="student/store" element={<StudentStore />} />
-          <Route path="student/class" element={<StudentClass />} />
-          <Route path="student/abaut" element={<StudentAbout />} />
-          <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
-          <Route path="student/checkout" element={<StudentCheckout />} />
-          <Route path="student/orderConfirm" element={<StudentOrderConfirm />} />
-        </Route>
+          {/* Dashboard Student - PROTEGIDAS */}
+          <Route element={<ProtectedRoute allowedRoles={["estudiante"]} />}>
+            <Route path="student/setting" element={<Setting />} />
+            <Route path="student/myClasses" element={<MyClasses />} />
+            <Route path="student/myPurchases" element={<MyPurchases />} />
+            <Route path="student/home" element={<StudentHome />} />
+            <Route path="student/events" element={<StudentEvents />} />
+            <Route path="student/store" element={<StudentStore />} />
+            <Route path="student/class" element={<StudentClass />} />
+            <Route path="student/abaut" element={<StudentAbout />} />
+            <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
+            <Route path="student/checkout" element={<StudentCheckout />} />
+            <Route path="student/orderConfirm" element={<StudentOrderConfirm />} />
+          </Route>
 
-        {/* Dashboard Instructor - PROTEGIDAS */}
-        <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
-          <Route path="instructor/setting" element={<SettingInstructor />} />
-          <Route path="instructor/myStudent" element={<MyStudent />} />
-          <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
-          <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
-          <Route path="instructor/home" element={<InstructorHome />} />
-          <Route path="instructor/store" element={<InstructorStore />} />
-          <Route path="instructor/class" element={<InstructorClass />} />
-          <Route path="instructor/events" element={<InstructorEvents />} />
-          <Route path="instructor/abaut" element={<InstructorAbaut />} />
-          <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
-        </Route>
+          {/* Dashboard Instructor - PROTEGIDAS */}
+          <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
+            <Route path="instructor/setting" element={<SettingInstructor />} />
+            <Route path="instructor/myStudent" element={<MyStudent />} />
+            <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
+            <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
+            <Route path="instructor/home" element={<InstructorHome />} />
+            <Route path="instructor/store" element={<InstructorStore />} />
+            <Route path="instructor/class" element={<InstructorClass />} />
+            <Route path="instructor/events" element={<InstructorEvents />} />
+            <Route path="instructor/abaut" element={<InstructorAbaut />} />
+            <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
+            <Route path="instructor/checkout" element={<InstructorCheckout />} />
+            <Route path="instructor/orderConfirm" element={<InstructorOrderConfirm />} />
+          </Route>
 
-        {/* Users - PROTEGIDAS */}
-        <Route element={<ProtectedRoute allowedRoles={["cliente", "usuario"]} />}>
-          <Route path="users/home" element={<UsersHome />} />
-          <Route path="users/store" element={<UsersStore />} />
-          <Route path="users/class" element={<UsersClass />} />
-          <Route path="users/events" element={<UsersEvents />} />
-          <Route path="users/abaut" element={<UsersAbaut />} />
-        </Route>
-      </Routes>
-    </AnimatePresence>
+          {/* Users - PROTEGIDAS */}
+          <Route element={<ProtectedRoute allowedRoles={["cliente", "usuario"]} />}>
+            <Route path="users/home" element={<UsersHome />} />
+            <Route path="users/store" element={<UsersStore />} />
+            <Route path="users/class" element={<UsersClass />} />
+            <Route path="users/events" element={<UsersEvents />} />
+            <Route path="users/abaut" element={<UsersAbaut />} />
+            <Route path="users/shoppingCart" element={<UsersShoppingCart />} />
+            <Route path="users/checkout" element={<UsersCheckout />} />
+            <Route path="users/orderConfirm" element={<UsersOrderConfirm />} />
+          </Route>
+        </Routes>
+      </AnimatePresence>
+    </>
   );
 };
 

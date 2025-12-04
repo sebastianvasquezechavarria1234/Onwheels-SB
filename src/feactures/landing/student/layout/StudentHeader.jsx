@@ -97,7 +97,7 @@ export const StudentHeader = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB student
+                Performance-SB
               </h4>
             </Link>
           </li>
@@ -109,10 +109,10 @@ export const StudentHeader = () => {
           ))}
         </ul>
 
-        <ul className="flex gap-[5px] items-center">
+        <ul className="flex gap-[0px] items-center">
           <li>
             <BtnLinkIcon
-              title="Carrito de compras"
+              title=""
               link="../student/shoppingCart"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
@@ -125,7 +125,7 @@ export const StudentHeader = () => {
 
           <li>
             <BtnLinkIcon
-              title="Mi cuenta"
+              title=""
               link="../student/setting"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"

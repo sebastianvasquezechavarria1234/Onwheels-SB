@@ -10,7 +10,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Obtener el rol del usuario (manejar diferentes formatos)
+  // Obtener el rol del usuario
   const userRole = user.roles?.[0] || user.rol || 'cliente';
 
   // Si no se especifican roles permitidos, permitir acceso

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { StudentLayout } from "../layout/StudentLayout";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { CreditCard, DownloadCloud, Copy } from "lucide-react";
 import confettiLib from "canvas-confetti";
+import { InstructorLayout } from "../layout/InstructorLayout";
 
-export const StudentOrderConfirm = () => {
+export const InstructorOrderConfirm = () => {
   const { orderId: paramOrderId } = useParams();
   const navigate = useNavigate();
   const canvasRef = useRef(null);
@@ -204,7 +204,7 @@ export const StudentOrderConfirm = () => {
   }, [showConfetti]);
 
   return (
-    <StudentLayout>
+    <InstructorLayout>
       {showConfetti && (
         <canvas
           ref={canvasRef}
@@ -289,7 +289,7 @@ export const StudentOrderConfirm = () => {
                 title="Seguir comprando"
                 style="bg-[var(--color-blue)]! text-white"
                 styleIcon="bg-white!"
-                link="../student/store"
+                link="../instructor/store"
               >
                 <CreditCard className="text-[var(--color-blue)]!" />
               </BtnLinkIcon>
@@ -310,8 +310,8 @@ export const StudentOrderConfirm = () => {
           </article>
         </div>
       </section>
-    </StudentLayout>
+    </InstructorLayout>
   );
 };
 
-export default StudentOrderConfirm;
+export default InstructorOrderConfirm;

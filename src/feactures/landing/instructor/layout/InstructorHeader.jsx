@@ -97,7 +97,7 @@ export const InstructorHeader = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB intructor
+                Performance-SB
               </h4>
             </Link>
           </li>
