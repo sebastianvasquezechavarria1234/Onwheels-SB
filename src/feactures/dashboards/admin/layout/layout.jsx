@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '../../hooks/dashboard.css'
+
+import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
 import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, MapPinHouse, School, Settings, Shield, Shirt, ShoppingBag, User, UserPlus, Users, X } from "lucide-react";
-import { motion } from "framer-motion";
 
 export const Layout = ({ children }) => {
-  const [, setNow] = useState(new Date());
   const [now, setNow] = useState(new Date());
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
     return () => clearInterval(timer);
   }, []);
 
@@ -116,6 +116,7 @@ export const Layout = ({ children }) => {
           </ul>
 
           {/* clases */}
+         {/* clases */}
           <h4 className="font-primary mb-[10px]">Clases:</h4>
           <ul className="pl-[0px]">
             <li>
@@ -158,14 +159,12 @@ export const Layout = ({ children }) => {
           {/* Footer */}
           <ul className="bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
             <div className="flex flex-col gap-[10px] mb-[10px]">
+              {/* <p className="text-sm capitalize">{dateStr}</p>
+              <p className="flex gap-[10px] items-center">
+                <span className="w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
+                {timeStr}
+              </p> */}
             </div>
-            <BtnLinkIcon
-              title="Cerrar Dashboard"
-              style="bg-[var(--color-blue)]! text-white pr-[25px] w-full"
-              styleIcon="bg-white!"
-            >
-              <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
-            </BtnLinkIcon>
             {/* BOTÓN DE CERRAR SESIÓN MODIFICADO */}
             <button
               type="button"
@@ -179,9 +178,11 @@ export const Layout = ({ children }) => {
               <span className="font-medium">Cerrar sesión</span>
             </button>
           </ul>
+
         </div>
       </nav>
 
+      {/* Contenido animado con entrada y salida mejoradas */}
       <motion.section
         className="w-[80%] hide-scrollbar"
         initial={{
@@ -215,3 +216,4 @@ export const Layout = ({ children }) => {
     </main>
   );
 };
+

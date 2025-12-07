@@ -1,16 +1,15 @@
-// src/feactures/dashboards/admin/pages/clases/preinscripciones/PreinscripcionesAdmin.jsx
-import React, { useEffect, useState } from "react";
+// src/features/dashboards/admin/pages/clases/preinscripciones/PreinscripcionesAdmin.jsx
+import React, { useEffect, useState, useCallback } from "react";
 import { Layout } from "../../../layout/layout";
-import { Eye, Check, X, Plus, Search } from "lucide-react";
+import { Eye, Check, X, Search } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getPreinscripcionesPendientes,
-  getPreinscripcionById,
-  actualizarEstadoPreinscripcion
+  rechazarPreinscripcion,
+  aceptarPreinscripcionYCrearMatricula
 } from "../../services/preinscripcionesService";
 
 import axios from "axios";
-import { createMatricula } from "../../services/matriculasServices";
 
 const PreinscripcionesAdmin = () => {
   const [preinscripciones, setPreinscripciones] = useState([]);
@@ -23,10 +22,9 @@ const PreinscripcionesAdmin = () => {
   const [planes, setPlanes] = useState([]);
   const [claseSeleccionada, setClaseSeleccionada] = useState("");
   const [planSeleccionado, setPlanSeleccionado] = useState("");
-  const [metodoPago, setMetodoPago] = useState("");
   const [fechaMatricula, setFechaMatricula] = useState(new Date().toISOString().split('T')[0]);
 
-  const [modal, setModal] = useState(null); // "details" | "aceptar" | "rechazar" | "matricula"
+  const [modal, setModal] = useState(null); // "details" | "matricula" | "rechazar"
   const [selectedPreinscripcion, setSelectedPreinscripcion] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
@@ -36,7 +34,7 @@ const PreinscripcionesAdmin = () => {
   };
 
   // Cargar preinscripciones pendientes y datos para matrícula
-  const fetchPreinscripciones = async () => {
+  const fetchPreinscripciones = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -55,21 +53,19 @@ const PreinscripcionesAdmin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPreinscripciones();
-  }, []);
+  }, [fetchPreinscripciones]);
 
   // Abrir modal
   const openModal = (type, preinscripcion = null) => {
     setModal(type);
     setSelectedPreinscripcion(preinscripcion);
     if (type === "matricula") {
-      // Resetear datos del formulario de matrícula
       setClaseSeleccionada("");
       setPlanSeleccionado("");
-      setMetodoPago("");
       setFechaMatricula(new Date().toISOString().split('T')[0]);
     }
   };
@@ -82,7 +78,7 @@ const PreinscripcionesAdmin = () => {
   // Rechazar preinscripción
   const handleRechazar = async () => {
     try {
-      await actualizarEstadoPreinscripcion(selectedPreinscripcion.id_estudiante, "Rechazado");
+      await rechazarPreinscripcion(selectedPreinscripcion.id_estudiante);
       await fetchPreinscripciones();
       showNotification("Preinscripción rechazada correctamente");
       closeModal();
@@ -93,38 +89,29 @@ const PreinscripcionesAdmin = () => {
     }
   };
 
-  // Crear matrícula y aceptar preinscripción
-  const handleCrearMatricula = async () => {
+  // Aceptar preinscripción y crear matrícula
+  const handleAceptarYMatricular = async () => {
     try {
-      // Validaciones
       if (!claseSeleccionada || !planSeleccionado) {
         showNotification("Debes seleccionar clase y plan", "error");
         return;
       }
 
-      // Crear datos de matrícula
       const matriculaData = {
-        id_estudiante: selectedPreinscripcion.id_estudiante,
         id_clase: parseInt(claseSeleccionada),
         id_plan: parseInt(planSeleccionado),
         fecha_matricula: fechaMatricula,
-        metodo_pago: metodoPago || "pendiente"
       };
 
-      // 1. Crear la matrícula
-      await createMatricula(matriculaData);
+      await aceptarPreinscripcionYCrearMatricula(selectedPreinscripcion.id_estudiante, matriculaData);
       
-      // 2. Aceptar la preinscripción
-      await actualizarEstadoPreinscripcion(selectedPreinscripcion.id_estudiante, "Activo");
-      
-      // 3. Actualizar la lista y cerrar
       await fetchPreinscripciones();
-      showNotification("Matrícula creada y preinscripción aceptada correctamente");
+      showNotification("Preinscripción aceptada y matrícula creada correctamente");
       closeModal();
       
     } catch (err) {
-      console.error("Error creando matrícula:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error creando matrícula";
+      console.error("Error aceptando preinscripción:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error al aceptar preinscripción";
       showNotification(errorMessage, "error");
     }
   };
@@ -134,14 +121,16 @@ const PreinscripcionesAdmin = () => {
     (p.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
     (p.email || "").toLowerCase().includes(search.toLowerCase()) ||
     (p.documento || "").includes(search) ||
-    (p.nivel_experiencia || "").toLowerCase().includes(search.toLowerCase())
+    (p.nivel_experiencia || "").toLowerCase().includes(search.toLowerCase()) ||
+    (p.enfermedad || "").toLowerCase().includes(search.toLowerCase()) ||
+    (p.nombre_acudiente || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <Layout>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Preinscripciones  Gestión de Preinscripciones</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Gestión de Preinscripciones</h2>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="relative w-full md:w-96">
@@ -152,7 +141,7 @@ const PreinscripcionesAdmin = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar preinscripciones (Nombre, Email, Documento)"
+                placeholder="Buscar preinscripciones (Nombre, Email, Documento, Enfermedad)"
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
@@ -165,28 +154,30 @@ const PreinscripcionesAdmin = () => {
                   <tr>
                     <th className="px-6 py-3 w-[15%]">Estudiante</th>
                     <th className="px-6 py-3 w-[15%]">Email</th>
-                    <th className="px-6 py-3 w-[10%]">Edad</th>
-                    <th className="px-6 py-3 w-[15%]">Nivel Experiencia</th>
-                    <th className="px-6 py-3 w-[15%]">Documento</th>
-                    <th className="px-6 py-3 w-[20%]">Acciones</th>
+                    <th className="px-6 py-3 w-[8%]">Edad</th>
+                    <th className="px-6 py-3 w-[12%]">Nivel Experiencia</th>
+                    <th className="px-6 py-3 w-[10%]">Documento</th>
+                    <th className="px-6 py-3 w-[15%]">Enfermedad</th>
+                    <th className="px-6 py-3 w-[15%]">Acudiente</th>
+                    <th className="px-6 py-3 w-[10%]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                         Cargando preinscripciones...
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
+                      <td colSpan="8" className="px-6 py-8 text-center text-red-600">
                         {error}
                       </td>
                     </tr>
                   ) : preinscripcionesFiltradas.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
+                      <td colSpan="8" className="px-6 py-8 text-center text-gray-500 italic">
                         No hay preinscripciones pendientes.
                       </td>
                     </tr>
@@ -200,6 +191,10 @@ const PreinscripcionesAdmin = () => {
                         <td className="px-6 py-4 text-gray-600">{p.edad || "—"}</td>
                         <td className="px-6 py-4 text-gray-600">{p.nivel_experiencia || "—"}</td>
                         <td className="px-6 py-4 text-gray-600">{p.documento || "—"}</td>
+                        <td className="px-6 py-4 text-gray-600">{p.enfermedad || "—"}</td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {p.nombre_acudiente ? `${p.nombre_acudiente} (${p.telefono_acudiente || "—"})` : "—"}
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <motion.button
@@ -216,7 +211,7 @@ const PreinscripcionesAdmin = () => {
                               whileTap={{ scale: 0.95 }}
                               onClick={() => openModal("matricula", p)}
                               className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition"
-                              title="Aceptar preinscripción"
+                              title="Aceptar y crear matrícula"
                             >
                               <Check size={16} />
                             </motion.button>
@@ -394,9 +389,7 @@ const PreinscripcionesAdmin = () => {
 
                 <p className="text-gray-700 text-center mb-6">
                   ¿Estás seguro de rechazar la preinscripción de{" "}
-                  <span className="font-bold text-blue-600">{selectedPreinscripcion.nombre_completo}</span>?
-                  <br />
-                  <span className="text-sm text-gray-500">Esto cambiará el estado a "Rechazado" y no se podrá crear matrícula.</span>
+                  <span className="font-bold text-red-600">{selectedPreinscripcion.nombre_completo}</span>?
                 </p>
 
                 <div className="flex justify-center gap-3 pt-2">
@@ -467,7 +460,7 @@ const PreinscripcionesAdmin = () => {
                       <option value="">Seleccionar clase</option>
                       {clases.map(clase => (
                         <option key={clase.id_clase} value={clase.id_clase}>
-                          {clase.nombre_clase} - {clase.dia_semana} {clase.hora_inicio}
+                          {clase.nombre_nivel} - {clase.dia_semana} {clase.hora_inicio} ({clase.nombre_sede})
                         </option>
                       ))}
                     </select>
@@ -501,22 +494,6 @@ const PreinscripcionesAdmin = () => {
                       onChange={(e) => setFechaMatricula(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Método de pago
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      value={metodoPago}
-                      onChange={(e) => setMetodoPago(e.target.value)}
-                    >
-                      <option value="">Seleccionar método</option>
-                      <option value="Efectivo">Efectivo</option>
-                      <option value="Transferencia">Transferencia</option>
-                      <option value="Tarjeta">Tarjeta</option>
-                      <option value="Pendiente">Pendiente</option>
-                    </select>
-                  </div>
                 </div>
 
                 <div className="flex justify-center gap-3 pt-4">
@@ -527,10 +504,10 @@ const PreinscripcionesAdmin = () => {
                     Cancelar
                   </button>
                   <button
-                    onClick={handleCrearMatricula}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    onClick={handleAceptarYMatricular}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                   >
-                    Crear Matrícula
+                    Aceptar y Matricular
                   </button>
                 </div>
               </motion.div>

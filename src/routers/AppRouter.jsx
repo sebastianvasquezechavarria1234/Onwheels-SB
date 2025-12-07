@@ -2,6 +2,8 @@
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import ProtectedRoute from './ProtectedRoute';
+
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
@@ -20,6 +22,7 @@ import Register from "../feactures/Auth/pages/Register";
 
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
 // import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
+import Clientes from "../feactures/dashboards/admin/pages/ventas/clientes/Clientes";
 import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import Products from "../feactures/dashboards/admin/pages/compras/productos/Products";
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
@@ -135,12 +138,16 @@ const AppRouter = () => {
         <Route path="admin/categoriasProductos" element={<Categorias />} />
         <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
         <Route path="admin/planclases" element={<PlanClasses />} />
+        <Route path="admin/estudiantes" element={<Estudiantes />} />
+        <Route path="admin/instructores" element={<Instructores />} />
         <Route path="admin/users" element={<Usuarios />} />
         <Route path="admin/eventos" element={<Eventos />} />
         <Route path="admin/patrocinadores" element={<Patrocinadores />} />
         <Route path="admin/sedes" element={<Sedes />} />
         <Route path="admin/clases" element={<Clases />} />
         <Route path="admin/plans" element={<PlanClasses />} />
+        <Route path="/admin/clientes" element={<Clientes />} />
+
         {/* <Route path="admin/classLevels" element={<ClassLevels />} /> */}
 
         {/* Dashboard Student - PROTEGIDAS */}

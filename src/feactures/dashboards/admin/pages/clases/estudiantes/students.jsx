@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence } from "framer-motion"; 
+import { AnimatePresence, motion } from "framer-motion"; 
 import {
   getEstudiantes,
   createEstudiante,
