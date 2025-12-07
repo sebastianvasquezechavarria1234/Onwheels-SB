@@ -10,7 +10,7 @@ import {
   updateUsuario,
   deleteUsuario,
 } from "../../services/usuariosServices";
-import { getRoles } from "../../services/rolesService"; // ✅ Corregido: minúscula en el nombre del archivo
+import { getRoles } from "../../services/RolesService"; // ✅ Corregido: minúscula en el nombre del archivo
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);

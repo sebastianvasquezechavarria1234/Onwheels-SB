@@ -1,6 +1,6 @@
-// src/pages/ventas/Ventas.jsx
+
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout } from "../../../layout/layout";
+import { Layout } from "../../layout/layout";
 import {
   Search,
   Plus,
@@ -15,28 +15,26 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ===== SERVICES =====
 import {
   getVentas,
   getVentaById,
   createVenta,
   updateVenta,
   deleteVenta,
-  updateVentaStatus,
-} from "../../services/ventasService";
+  // updateVentaStatus,
+} from "../../pages/services/ventasService";
 
 import {
   getProductos,
   getColores,
   getTallas,
   getVariantes,
-} from "../../services/productosServices";
+} from "../../pages/services/productosServices";
 
-import { getUsuarios } from "../../services/usuariosService"; // Para listar clientes (usuarios)
-import { getClientes, createCliente } from "../../services/clientesService"; // Perfil cliente
+import { getUsuarios } from "../../pages/services/usuariosServices"; 
+import { getClientes, createCliente } from "../../pages/services/clientesServices";
 
-export default function Ventas() {
-  // ===== Estados principales =====
+    function Ventas() {
   const [ventas, setVentas] = useState([]);
   const [usuarios, setUsuarios] = useState([]); // todos los usuarios (posibles clientes)
   const [clientes, setClientes] = useState([]); // solo quienes tienen perfil cliente
@@ -1205,3 +1203,4 @@ export default function Ventas() {
     </Layout>
   );
 }
+export default Ventas;

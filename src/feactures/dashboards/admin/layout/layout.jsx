@@ -7,10 +7,9 @@ import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, MapPinHouse, 
 import { motion } from "framer-motion";
 
 export const Layout = ({ children }) => {
-  const [, setNow] = useState(new Date());
-  const navigate = useNavigate();
-
-  useEffect(() => {
+const [now, setNow] = useState(new Date()); 
+ const navigate = useNavigate();
+useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);

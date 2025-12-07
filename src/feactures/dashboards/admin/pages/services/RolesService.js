@@ -1,24 +1,39 @@
-// src/services/RolesService.js (CORRECTO)
+// src/services/RolesService.js
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/roles";
+// Base URL de tu API
+const API = axios.create({
+  baseURL: "http://localhost:3000/api",
+});
 
-export const getRoles = async () => {
-  const response = await axios.get(API_URL);
+// Función para obtener el token
+const getToken = () => localStorage.getItem("token");
+
+// Función genérica que añade el token a las peticiones
+const authRequest = async (method, url, data = null) => {
+  const token = getToken();
+  const config = {
+    method,
+    url,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  };
+  if (data) config.data = data;
+  const response = await API(config);
   return response.data;
 };
 
-export const createRole = async (rolData) => {
-  const response = await axios.post(API_URL, rolData);
-  return response.data;
-};
+// === Roles ===
+export const getRoles = () => authRequest("get", "/roles");
+export const createRole = (rolData) => authRequest("post", "/roles", rolData);
+export const updateRole = (id, rolData) => authRequest("put", `/roles/${id}`, rolData);
+export const deleteRole = (id) => authRequest("delete", `/roles/${id}`);
 
-export const updateRole = async (id, rolData) => {
-  const response = await axios.put(`${API_URL}/${id}`, rolData);
-  return response.data;
-};
+// === Permisos ===
+export const getPermisos = () => authRequest("get", "/permisos");
 
-export const deleteRole = async (id) => {
-  const response = await axios.delete(`${API_URL}/${id}`);
-  return response.data;
-};
+// === Roles-Permisos ===
+export const getPermisosByRol = (idRol) => authRequest("get", `/roles/${idRol}/permisos`);
+export const asignarPermisoARol = (idRol, idPermiso) => 
+  authRequest("post", `/roles/${idRol}/permisos`, { id_permiso: idPermiso });
+export const eliminarPermisoDeRol = (idRol, idPermiso) => 
+  authRequest("delete", `/roles/${idRol}/permisos/${idPermiso}`);

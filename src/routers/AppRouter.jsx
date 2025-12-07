@@ -2,12 +2,14 @@
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import ProtectedRoute from './ProtectedRoute';
+
 
 // pages landing
 import { Home } from "../feactures/landing/pages/Home";
 import { Store } from "../feactures/landing/pages/Store";
 import Class from "../feactures/landing/pages/Class";
-import Preinscriptions from "../feactures/landing/pages/preinscriptions";
+import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
@@ -20,7 +22,6 @@ import Register from "../feactures/Auth/pages/Register";
 
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras";
 // import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas";
-// import Categorias from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-producto";
 import Products from "../feactures/dashboards/admin/pages/compras/productos/Products";
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores";
 import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles";
@@ -28,14 +29,14 @@ import Matriculas from "../feactures/dashboards/admin/pages/clases/matriculas/ma
 import Estudiantes from "../feactures/dashboards/admin/pages/clases/estudiantes/students";
 import Instructores from "../feactures/dashboards/admin/pages/clases/instructores/Instructores";
 import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
-import Preinscripciones from "../feactures/dashboards/admin/pages/clases/preinscripciones/PreRegistrations";
-import ClassLevels from "../feactures/dashboards/admin/pages/clases/planes/plans";
+import PreinscripcionesAdmin from "../feactures/dashboards/admin/pages/clases/preinscripciones/PreRegistrations";
 import Usuarios from "../feactures/dashboards/admin/pages/configuracion/usuarios/usuarios";
 import Eventos from "../feactures/dashboards/admin/pages/eventos/eventos/eventos";
 import CategoriaEventos from "../feactures/dashboards/admin/pages/eventos/categoria-eventos/categoria-eventos";
 import Patrocinadores from "../feactures/dashboards/admin/pages/eventos/patrocinadores/patrocinadores";
 import Sedes from "../feactures/dashboards/admin/pages/eventos/sedes/sedes";
 import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
+import ClassLevels from "../feactures/dashboards/admin/pages/clases/niveles/ClassLevels"
 
 // Dashboard student
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
@@ -59,12 +60,12 @@ import { StudentShoppingCart } from "../feactures/landing/student/pages/StudentS
 // Landing Instructor
 import { InstructorHome } from "../feactures/landing/instructor/pages/InstructorHome";
 // import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorStore";
-import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass";
-import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
-// import { InstructorAbout } from "../feactures/landing/instructor/pages/InstructorAbout";
-import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
-import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
-import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
+// import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass";
+// import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents";
+// // import { InstructorAbout } from "../feactures/landing/instructor/pages/InstructorAbout";
+// import { InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart";
+// import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorSore";
+// import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbaut";
 import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
 
 // Landing Users
@@ -78,6 +79,9 @@ import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut";
 import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
 import { ResetPassword } from "../feactures/Auth/pages/ResetPassword";
 import { StudentCheckout } from "../feactures/landing/student/pages/StudentCheckout";
+import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos";
+import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorStore";
+import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas";
 
 const AppRouter = () => {
   const location = useLocation();
@@ -95,6 +99,13 @@ const AppRouter = () => {
     animate: { opacity: 1, filter: "blur(0px)", transition: { duration: 0.5 } },
     exit: { opacity: 0, filter: "blur(20px)", transition: { duration: 0.3 } },
   };
+
+  const withAnimation = (Component) =>
+    isLanding ? (
+      <motion.div variants={blurVariants} initial="initial" animate="animate" exit="exit">
+        <Component />
+      </motion.div>
+    ) : <Component />;
 
   return (
     <AnimatePresence mode="wait">
@@ -121,12 +132,11 @@ const AppRouter = () => {
         <Route path="admin/matriculas" element={<Matriculas />} />
         <Route path="admin/products" element={<Products />} />
         <Route path="admin/roles" element={<Roles />} />
-        <Route path="admin/classLevels" element={<ClassLevels />} />
-        <Route path="admin/preRegistrations" element={<Preinscripciones />} />
+        <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
         <Route path="admin/compras" element={<Compras />} />
         <Route path="admin/proveedores" element={<Proveedores />} />
-        {/* <Route path="admin/ventas" element={<Ventas />} /> */}
-        <Route path="admin/categoriasProductos" element={<CategoriaProductos/>} />
+        { <Route path="admin/ventas" element={<Ventas/>} /> }
+        <Route path="admin/categoriasProductos" element={<CategoriaProductos />} />
         <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
         <Route path="admin/planclases" element={<PlanClasses />} />
         <Route path="admin/users" element={<Usuarios />} />
@@ -159,11 +169,11 @@ const AppRouter = () => {
           <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
           <Route path="instructor/home" element={<InstructorHome />} />
           <Route path="instructor/store" element={<InstructorStore />} />
-          <Route path="instructor/class" element={<InstructorClass />} />
+          {/* <Route path="instructor/class" element={<InstructorClass />} />
           <Route path="instructor/events" element={<InstructorEvents />} />
-          <Route path="instructor/abaut" element={<InstructorAbaut />} />
+          <Route path="instructor/abaut" element={<InstructorAbaut />} /> */}
           
-          <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
+          {/* <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} /> */}
         </Route>
 
         {/* Users - PROTEGIDAS */}
