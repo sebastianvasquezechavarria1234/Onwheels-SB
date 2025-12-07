@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-
 import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
-import { ArrowLeft, LogOut, School, Settings, ShoppingBag, User, Users, X } from "lucide-react";
+import { ArrowLeft, LogOut, Settings, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const Layout = ({ children }) => {
@@ -11,7 +10,7 @@ export const Layout = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -38,45 +37,41 @@ export const Layout = ({ children }) => {
       style={{ perspective: "1200px" }}
     >
       {/* Sidebar */}
-      <nav className=" h-full w-[20%] p-[30px] border-r border-black/20  z-10">
+      <nav className="h-full w-[20%] p-[30px] border-r border-black/20 z-10">
         <h2 className="mb-[20px] border-b pb-[30px] border-black/20 font-primary">
           Estudiante
         </h2>
         <div className="flex flex-col justify-between h-[83%]">
-          <ul className="">
+          <ul>
             <li>
-              <BtnSideBar title="Mi cuenta" link="../student/setting">
-                <Settings size={20} strokeWidth={1.5}/>
+              <BtnSideBar title="Mi cuenta" link="../users/setting">
+                <Settings size={20} strokeWidth={1.5} />
+              </BtnSideBar>
+            </li>
+            <li>
+              <BtnSideBar title="Mis compras" link="../users/myPurchases">
+                <ShoppingBag size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
 
-            <li>
-              <BtnSideBar title="Mis clases" link="../student/myClasses">
-                <School size={20} className="text-black/70" strokeWidth={1.5}/>
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Mis compras" link="../student/myPurchases">
-                <ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-
-            {/* 🔴 Botón rojo de cerrar sesión funcional (misma estructura y estilos) */}
+            {/* 🔴 Botón rojo de cerrar sesión funcional */}
             <li>
               <button
                 onClick={handleLogout}
+               
                 className="cursor-pointer w-full flex items-center gap-[10px] text-red-700"
               >
                 <span className="w-[60px] h-[60px] flex justify-center items-center bg-red-700 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
                   <LogOut className="text-white" size={20} strokeWidth={2} />
+
                 </span>
                 <h4>Cerrar session</h4>
               </button>
             </li>
           </ul>
 
-          {/* Footer movido (fecha, hora y botón) — exactamente igual en estilos */}
-          <ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 ">
+          {/* Footer con fecha y hora */}
+          <ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10">
             <div className="flex flex-col gap-[10px] mb-[10px]">
               <p className="text-sm capitalize">{dateStr}</p>
               <p className="flex gap-[10px] items-center">
@@ -84,16 +79,19 @@ export const Layout = ({ children }) => {
                 {timeStr}
               </p>
             </div>
-            <BtnLinkIcon link="../student/home" title="Cerrar Dashboard" style="bg-[var(--color-blue)]! text-white pr-[25px] w-full" styleIcon="bg-white!">
-              <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2}/>
+            <BtnLinkIcon
+              link="../student/home"
+              title="Cerrar Dashboard"
+              style="bg-[var(--color-blue)]! text-white pr-[25px] w-full"
+              styleIcon="bg-white!"
+            >
+              <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
             </BtnLinkIcon>
           </ul>
-
         </div>
-
       </nav>
 
-      {/* Contenido animado con entrada y salida mejoradas */}
+      {/* Contenido animado */}
       <motion.section
         className="w-[80%] hide-scrollbar"
         initial={{
@@ -118,7 +116,7 @@ export const Layout = ({ children }) => {
         }}
         style={{
           height: "100%",
-          overflowY: "auto", // Scroll funcional
+          overflowY: "auto",
           transformStyle: "preserve-3d",
         }}
       >

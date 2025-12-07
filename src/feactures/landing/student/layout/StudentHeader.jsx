@@ -5,6 +5,111 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
 
+// Helper: wrapper para íconos con tooltip animado (blanco con texto negro y animación "pro")
+// --- ÚNICO CAMBIO: la flecha está ARRIBA del texto, el texto es más gordito y en italic ---
+const IconWithTooltip = ({ label, children, className = "", onClick }) => {
+  const [hover, setHover] = useState(false);
+
+  const tooltipVariants = {
+    hidden: {
+      opacity: 0,
+      y: -10,
+      scale: 0.9,
+      rotateX: 18,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      rotateX: 0,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+      transition: {
+        type: "spring",
+        stiffness: 700,
+        damping: 20,
+        mass: 0.7,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -6,
+      scale: 0.98,
+      transition: { duration: 0.14, ease: "easeIn" },
+    },
+  };
+
+  const popPulse = {
+    initial: { scale: 1 },
+    hover: { scale: 1.03, transition: { yoyo: Infinity, duration: 0.9 } },
+  };
+
+  return (
+    <div
+      className={`relative inline-flex ${className}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+    >
+      {/* elemento visible (ícono / button / link) */}
+      <motion.div
+        onClick={onClick}
+        aria-describedby={`tooltip-${label.replace(/\s+/g, "-")}`}
+        className="flex items-center"
+        initial="initial"
+        animate={hover ? "hover" : "initial"}
+        variants={popPulse}
+      >
+        {children}
+      </motion.div>
+
+      {/* tooltip animado blanco con texto negro y flecha encima del texto */}
+      <AnimatePresence>
+        {hover && (
+          <motion.div
+            key="tooltip"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tooltipVariants}
+            role="status"
+            aria-hidden={!hover}
+            className="absolute left-1/2 top-full z-50 mt-3 -translate-x-1/2 whitespace-nowrap"
+            style={{ pointerEvents: "none", perspective: 800 }}
+          >
+            <div className="inline-flex flex-col items-center">
+              {/* Arrow (triángulo) ARRIBA del texto, pegado al cuadro */}
+              <svg
+                width="16"
+                height="8"
+                viewBox="0 0 16 8"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ marginBottom: -6 }} /* pega la flecha al cuadro del texto */
+                aria-hidden="true"
+              >
+                {/* triángulo apuntando hacia arriba (hacia el ícono) */}
+                <path d="M8 0 L16 8 H0 Z" fill="white" stroke="rgba(0,0,0,0.06)" strokeWidth="0.6" />
+              </svg>
+
+              {/* Texto un poco más gordito y en italic */}
+              <div
+                className="inline-block rounded-lg px-3 py-1.5 text-[13px] font-semibold italic shadow-[0_8px_30px_rgba(16,24,40,0.18)] bg-white text-black"
+                style={{ minWidth: 96, textAlign: "center" }}
+              >
+                {label}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 // Header con modal (sheet) pulido y sin errores
 export const StudentHeader = () => {
   const [open, setOpen] = useState(false);
@@ -59,11 +164,11 @@ export const StudentHeader = () => {
 
   const handleLogout = () => {
     // Eliminar token y usuario del localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
     // Redirigir a login
-    navigate('/login');
+    navigate("/login");
   };
 
   const overlayVariants = {
@@ -85,7 +190,7 @@ export const StudentHeader = () => {
   const items = [
     { title: "Inicio", to: "/student/home" },
     { title: "Tienda", to: "/student/store" },
-    { title: "Clases", to: "/student/class" },
+    { title: "Formacion", to: "/student/training" },
     { title: "Eventos", to: "/student/events" },
     { title: "Sobre nosotros", to: "/student/abaut" },
   ];
@@ -95,9 +200,13 @@ export const StudentHeader = () => {
       <nav className="flex items-center justify-between w-full bg-[var(--color-blue)] backdrop-blur-[16px] p-[5px]">
         <ul className="flex gap-[20px] items-center">
           <li>
-            <Link to="/">
+            <Link to="../student/home" className="flex gap-[0px] items-center">
+            <div className="w-[60px] h-[60px] bg-white p-[5px] rounded-full ">
+              <img className="w-full h-full object-cover" src="/logo.png" alt="logo" />
+
+            </div>
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB student
+                Performance-SB
               </h4>
             </Link>
           </li>
@@ -109,45 +218,51 @@ export const StudentHeader = () => {
           ))}
         </ul>
 
-        <ul className="flex gap-[5px] items-center">
+        <ul className="flex gap-[-10px] items-center">
           <li>
-            <BtnLinkIcon
-              title="Carrito de compras"
-              link="../student/shoppingCart"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
-            >
-              <ShoppingCart color="black" strokeWidth={1.5} size={20} />
-            </BtnLinkIcon>
-          </li>
-          
-         
-
-          <li>
-            <BtnLinkIcon
-              title="Mi cuenta"
-              link="../student/setting"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
-            >
-              <User className="text-black" strokeWidth={1.8} size={20} />
-            </BtnLinkIcon>
+            {/* Carrito con tooltip */}
+            <IconWithTooltip label="Carrito de compras">
+              <BtnLinkIcon
+                title=""
+                link="../student/shoppingCart"
+                style="bg-[transparent]! text-white! max-xl:hidden p-[0px]!"
+                styleIcon="bg-white!"
+              >
+                <ShoppingCart color="black" strokeWidth={1.5} size={20} />
+              </BtnLinkIcon>
+            </IconWithTooltip>
           </li>
 
-           <li>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        title="Cerrar sesión"
-                        className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
-                        aria-label="Cerrar sesión"
-                      >
-                        <div className=" w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                          <LogOut color="white" strokeWidth={1.8} size={20} />
-                        </div>
-                        <p>Cerrar seccion</p>
-                      </button>
-                    </li>
+          <li>
+            {/* Perfil con tooltip */}
+            <IconWithTooltip label="Mi perfil">
+              <BtnLinkIcon
+                title=""
+                link="../student/setting"
+                style="bg-[transparent]! text-white! max-xl:hidden  p-[0px]!"
+                styleIcon="bg-white!"
+              >
+                <User className="text-black" strokeWidth={1.8} size={20} />
+              </BtnLinkIcon>
+            </IconWithTooltip>
+          </li>
+
+          <li>
+            {/* Cerrar sesión con tooltip */}
+            <IconWithTooltip label="Cerrar sesión">
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Cerrar sesión"
+                className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[1px_1px_1px_1px]"
+                aria-label="Cerrar sesión"
+              >
+                <div className=" w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                  <LogOut color="white" strokeWidth={1.8} size={20} />
+                </div>
+              </button>
+            </IconWithTooltip>
+          </li>
 
           {/* Botón de menú (usando button nativo para asegurar onClick) */}
           <li>
@@ -257,4 +372,4 @@ export const StudentHeader = () => {
       </AnimatePresence>
     </header>
   );
-}
+};
