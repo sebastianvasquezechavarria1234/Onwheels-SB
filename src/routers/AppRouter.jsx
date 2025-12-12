@@ -33,6 +33,8 @@ import Patrocinadores from "../feactures/dashboards/admin/pages/eventos/patrocin
 import Sedes from "../feactures/dashboards/admin/pages/eventos/sedes/sedes";
 import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes";
 import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard";
+import Administradores from "../feactures/dashboards/admin/pages/configuracion/admin/Administradores";
+
 
 // Dashboard student
 import { Setting } from "../feactures/dashboards/student/pages/Setting";
@@ -164,6 +166,9 @@ const AppRouter = () => {
             <Route path="admin/sedes" element={<Sedes />} />
             <Route path="admin/clases" element={<Clases />} />
             <Route path="admin/plans" element={<PlanClasses />} />
+            <Route path="admin/admins" element={<Administradores />} />
+
+
           </Route>
 
           {/* Dashboard Student - PROTEGIDAS */}
