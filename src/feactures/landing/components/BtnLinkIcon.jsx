@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom"
 import { ArrowDown } from "lucide-react"
 
-export const BtnLinkIcon = ({ title, children, style, styleIcon, link }) => {
-  const letters = title.split("")
+
+  
+// Assign a default value of "" to title if it is undefined when the component is rendered.
+export const BtnLinkIcon = ({ title = "", children, style, styleIcon, link }) => {
+  const letters = title.split("") // This line will now work correctly
 
   return (
     <Link
