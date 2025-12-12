@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, Users, Clock, Star, Target, Trophy } from "lucide-react";
+import { CheckCircle2, Users, Clock, Star, Target, Trophy, Icon } from "lucide-react";
 import { Layout } from "../layout/Layout";
 
 // Horarios por turno (mañana, tarde, noche)
@@ -201,7 +201,7 @@ export const Class = () => {
                 >
                   <div className="flex flex-col items-center text-center">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Icon className={`w-8 h-8 ${color}`} />
+                      {/* <Icon className="w-8 h-8" /> */}
                     </div>
                     <h3 className="text-xl font-bold mb-3 text-card-foreground">{title}</h3>
                     <p className="text-muted-foreground leading-relaxed">{text}</p>

@@ -1,12 +1,12 @@
 import React from "react";
-import { StudentLayout } from "../layout/StudentLayout";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { CreditCard } from "lucide-react";
 import CardProduct from "../../components/CardProduct";
+import { UsersLayout } from "../layout/UsersLayout";
 
-export const StudentShoppingCart = () => {
+export const UsersShoppingCart = () => {
     return (
-        <StudentLayout>
+        <UsersLayout>
             <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px] max-lg:flex-col max-md:p-[10px] max-md:pt-[80px]">
                 <div className="w-[75%] max-lg:w-full">
                     <h2 className="mb-[20px] max-md:mb-[20px]">Carrito de compras.</h2>
@@ -54,7 +54,7 @@ export const StudentShoppingCart = () => {
                             </form>
 
                         </div>
-                        <BtnLinkIcon title="Comprar productos" style="bg-[var(--color-blue)]! text-white w-full max-md:w-[200px]" styleIcon="bg-white!" link="/student/checkout">
+                        <BtnLinkIcon title="Comprar productos" style="bg-[var(--color-blue)]! text-white w-full max-md:w-[200px]" styleIcon="bg-white!" link="/users/checkout">
                             <CreditCard className="text-[var(--color-blue)]!" />
 
                         </BtnLinkIcon>
@@ -63,6 +63,6 @@ export const StudentShoppingCart = () => {
                 </div>
 
             </section>
-        </StudentLayout>
+        </UsersLayout>
     )
 }
