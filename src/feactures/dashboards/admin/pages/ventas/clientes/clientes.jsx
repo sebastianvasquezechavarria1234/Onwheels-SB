@@ -1,27 +1,29 @@
-// src/features/dashboards/admin/pages/clases/planes/PlanClasses.jsx
+// src/features/dashboards/admin/pages/clientes/Clientes.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { Layout } from "../../../layout/layout";
-import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion"; 
+import { Eye, Plus, Search, Pencil, Trash2, X, User } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  getPlanes,
-  createPlan,
-  updatePlan,
-  deletePlan
-} from "../../services/planclassServices";
+  getClientes,
+  createCliente,
+  updateCliente,
+  deleteCliente,
+  getUsuariosSinCliente
+} from "../../services/clientesServices";
 
-export const PlanClasses = () => {
-  const [planes, setPlanes] = useState([]);
+export const Clientes = () => {
+  const [clientes, setClientes] = useState([]);
+  const [usuariosSinCliente, setUsuariosSinCliente] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [error, setError] = useState(null);
   const [modalType, setModalType] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedCliente, setSelectedCliente] = useState(null);
   const [formData, setFormData] = useState({
-    nombre_plan: "",
-    descripcion: "",
-    precio: "",
-    descuento_porcentaje: "",
-    numero_clases: "4"
+    id_usuario: "",
+    direccion_envio: "",
+    telefono_contacto: "",
+    metodo_pago: ""
   });
   const [search, setSearch] = useState("");
 
@@ -35,14 +37,14 @@ export const PlanClasses = () => {
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  const fetchPlanes = useCallback(async () => {
+  const fetchClientes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getPlanes();
-      setPlanes(Array.isArray(data) ? data : []);
+      const data = await getClientes();
+      setClientes(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error cargando planes:", err);
+      console.error("Error cargando clientes:", err);
       setError("Error al cargar los datos.");
       showNotification("Error al cargar datos", "error");
     } finally {
@@ -50,122 +52,142 @@ export const PlanClasses = () => {
     }
   }, []);
 
+  const fetchUsuariosSinCliente = useCallback(async () => {
+    try {
+      setLoadingUsuarios(true);
+      const data = await getUsuariosSinCliente();
+      if (!Array.isArray(data)) {
+        throw new Error("Respuesta inválida del servidor");
+      }
+      setUsuariosSinCliente(data);
+    } catch (err) {
+      console.error("Error cargando usuarios:", err);
+      showNotification("Error al cargar usuarios. Revisa la consola.", "error");
+      setUsuariosSinCliente([]);
+    } finally {
+      setLoadingUsuarios(false);
+    }
+  }, []);
+
   useEffect(() => {
-    fetchPlanes();
-  }, [fetchPlanes]);
+    fetchClientes();
+  }, [fetchClientes]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const openModal = (type, plan = null) => {
+  const openModal = (type, cliente = null) => {
     setModalType(type);
-    setSelectedPlan(plan);
+    setSelectedCliente(cliente);
     if (type === "add") {
       setFormData({
-        nombre_plan: "",
-        descripcion: "",
-        precio: "",
-        descuento_porcentaje: "",
-        numero_clases: "4"
+        id_usuario: "",
+        direccion_envio: "",
+        telefono_contacto: "",
+        metodo_pago: ""
       });
-    } else if (type === "edit" && plan) {
+      fetchUsuariosSinCliente(); // Cargar usuarios al abrir modal
+    } else if (type === "edit" && cliente) {
       setFormData({
-        nombre_plan: plan.nombre_plan || "",
-        descripcion: plan.descripcion || "",
-        precio: plan.precio != null ? String(plan.precio) : "",
-        descuento_porcentaje: plan.descuento_porcentaje != null ? String(plan.descuento_porcentaje) : "",
-        numero_clases: plan.numero_clases != null ? String(plan.numero_clases) : "4"
+        id_usuario: cliente.id_usuario,
+        direccion_envio: cliente.direccion_envio || "",
+        telefono_contacto: cliente.telefono_contacto || "",
+        metodo_pago: cliente.metodo_pago || ""
       });
     }
   };
 
   const closeModal = () => {
     setModalType(null);
-    setSelectedPlan(null);
+    setSelectedCliente(null);
     setFormData({
-      nombre_plan: "",
-      descripcion: "",
-      precio: "",
-      descuento_porcentaje: "",
-      numero_clases: "4"
+      id_usuario: "",
+      direccion_envio: "",
+      telefono_contacto: "",
+      metodo_pago: ""
     });
+    setUsuariosSinCliente([]); // Limpiar lista al cerrar
   };
 
   const handleCreate = async () => {
     try {
-      if (!formData.nombre_plan || formData.precio === "") {
-        showNotification("Nombre y precio son obligatorios", "error");
+      if (!formData.id_usuario) {
+        showNotification("Debes seleccionar un usuario", "error");
+        return;
+      }
+      if (!formData.direccion_envio.trim()) {
+        showNotification("La dirección de envío es obligatoria", "error");
         return;
       }
 
-      await createPlan({
-        nombre_plan: formData.nombre_plan,
-        descripcion: formData.descripcion,
-        precio: formData.precio,
-        descuento_porcentaje: formData.descuento_porcentaje || "0",
-        numero_clases: formData.numero_clases || "4"
+      await createCliente({
+        id_usuario: formData.id_usuario,
+        direccion_envio: formData.direccion_envio,
+        telefono_contacto: formData.telefono_contacto || undefined,
+        metodo_pago: formData.metodo_pago || undefined
       });
 
-      await fetchPlanes();
+      await fetchClientes();
       closeModal();
-      showNotification("Plan creado con éxito");
+      showNotification("Cliente creado con éxito");
     } catch (err) {
-      console.error("Error creando plan:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error creando plan";
+      console.error("Error creando cliente:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error creando cliente";
       showNotification(errorMessage, "error");
     }
   };
 
   const handleEdit = async () => {
     try {
-      if (!selectedPlan) return;
-      if (!formData.nombre_plan || formData.precio === "") {
-        showNotification("Nombre y precio son obligatorios", "error");
+      if (!selectedCliente) return;
+      if (!formData.direccion_envio.trim()) {
+        showNotification("La dirección de envío es obligatoria", "error");
         return;
       }
 
-      await updatePlan(selectedPlan.id_plan, {
-        nombre_plan: formData.nombre_plan,
-        descripcion: formData.descripcion,
-        precio: formData.precio,
-        descuento_porcentaje: formData.descuento_porcentaje || "0",
-        numero_clases: formData.numero_clases || "4"
+      await updateCliente(selectedCliente.id_cliente, {
+        direccion_envio: formData.direccion_envio,
+        telefono_contacto: formData.telefono_contacto || undefined,
+        metodo_pago: formData.metodo_pago || undefined
       });
 
-      await fetchPlanes();
+      await fetchClientes();
       closeModal();
-      showNotification("Plan actualizado con éxito");
+      showNotification("Cliente actualizado con éxito");
     } catch (err) {
-      console.error("Error editando plan:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error editando plan";
+      console.error("Error editando cliente:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error editando cliente";
       showNotification(errorMessage, "error");
     }
   };
 
   const handleDelete = async () => {
     try {
-      if (!selectedPlan) return;
-      await deletePlan(selectedPlan.id_plan);
-      await fetchPlanes();
+      if (!selectedCliente) return;
+      await deleteCliente(selectedCliente.id_cliente);
+      await fetchClientes();
       closeModal();
-      showNotification("Plan eliminado con éxito");
+      showNotification("Cliente eliminado con éxito");
     } catch (err) {
-      console.error("Error eliminando plan:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error eliminando plan";
+      console.error("Error eliminando cliente:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error eliminando cliente";
       showNotification(errorMessage, "error");
     }
   };
 
-  const planesFiltrados = planes.filter((p) =>
-    p.nombre_plan?.toLowerCase().includes(search.toLowerCase()) ||
-    p.descripcion?.toLowerCase().includes(search.toLowerCase()) ||
-    String(p.precio).includes(search)
+  const clientesFiltrados = clientes.filter((c) =>
+    c.nombre_completo?.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase()) ||
+    c.documento?.includes(search) ||
+    c.direccion_envio?.toLowerCase().includes(search.toLowerCase()) ||
+    c.telefono_contacto?.includes(search) ||
+    c.telefono_usuario?.includes(search)
   );
 
-  const totalPages = Math.max(1, Math.ceil(planesFiltrados.length / itemsPerPage));
-  const currentItems = planesFiltrados.slice(
+  const totalPages = Math.max(1, Math.ceil(clientesFiltrados.length / itemsPerPage));
+  const currentItems = clientesFiltrados.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -174,11 +196,22 @@ export const PlanClasses = () => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
+  const formatMetodoPago = (metodo) => {
+    const map = {
+      tarjeta: "Tarjeta",
+      efectivo: "Efectivo",
+      transferencia: "Transferencia",
+      nequi: "Nequi",
+      daviplata: "Daviplata"
+    };
+    return map[metodo] || metodo || "—";
+  };
+
   return (
     <Layout>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Planes de Clases</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Clientes</h2>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="relative w-full md:w-96">
@@ -189,7 +222,7 @@ export const PlanClasses = () => {
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                placeholder="Buscar plan (Nombre, Descripción, Precio)"
+                placeholder="Buscar cliente (Nombre, Email, Documento, Teléfono, Dirección)"
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
@@ -198,7 +231,7 @@ export const PlanClasses = () => {
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
               <Plus size={18} />
-              Añadir Plan
+              Añadir Cliente
             </button>
           </div>
 
@@ -208,46 +241,50 @@ export const PlanClasses = () => {
                 <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
                     <th className="px-6 py-3 w-[20%]">Nombre</th>
-                    <th className="px-6 py-3 w-[25%]">Descripción</th>
-                    <th className="px-6 py-3 w-[10%]">Precio</th>
-                    <th className="px-6 py-3 w-[10%]">Descuento</th>
-                    <th className="px-6 py-3 w-[15%]">Clases</th>
-                    <th className="px-6 py-3 w-[20%]">Acciones</th>
+                    <th className="px-6 py-3 w-[15%]">Email</th>
+                    <th className="px-6 py-3 w-[10%]">Documento</th>
+                    <th className="px-6 py-3 w-[20%]">Dirección</th>
+                    <th className="px-6 py-3 w-[10%]">Teléfono</th>
+                    <th className="px-6 py-3 w-[10%]">Método Pago</th>
+                    <th className="px-6 py-3 w-[15%]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                        Cargando planes...
+                      <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                        Cargando clientes...
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
+                      <td colSpan="7" className="px-6 py-8 text-center text-red-600">
                         {error}
                       </td>
                     </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
-                        No hay planes registrados.
+                      <td colSpan="7" className="px-6 py-8 text-center text-gray-500 italic">
+                        No hay clientes registrados.
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((plan) => (
-                      <tr key={plan.id_plan} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-medium">{plan.nombre_plan}</td>
-                        <td className="px-6 py-4 text-gray-600">{plan.descripcion}</td>
-                        <td className="px-6 py-4 text-gray-600">${plan.precio}</td>
-                        <td className="px-6 py-4 text-gray-600">{plan.descuento_porcentaje}%</td>
-                        <td className="px-6 py-4 text-gray-600">{plan.numero_clases} clases</td>
+                    currentItems.map((cliente) => (
+                      <tr key={cliente.id_cliente} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{cliente.nombre_completo}</td>
+                        <td className="px-6 py-4 text-gray-600">{cliente.email}</td>
+                        <td className="px-6 py-4 text-gray-600">{cliente.documento}</td>
+                        <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{cliente.direccion_envio}</td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {cliente.telefono_contacto || cliente.telefono_usuario || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">{formatMetodoPago(cliente.metodo_pago)}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("details", plan)}
+                              onClick={() => openModal("details", cliente)}
                               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
                               title="Ver detalles"
                             >
@@ -256,7 +293,7 @@ export const PlanClasses = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("edit", plan)}
+                              onClick={() => openModal("edit", cliente)}
                               className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
                               title="Editar"
                             >
@@ -265,7 +302,7 @@ export const PlanClasses = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("delete", plan)}
+                              onClick={() => openModal("delete", cliente)}
                               className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
                               title="Eliminar"
                             >
@@ -281,7 +318,7 @@ export const PlanClasses = () => {
             </div>
           </div>
 
-          {planesFiltrados.length > 0 && (
+          {clientesFiltrados.length > 0 && (
             <div className="flex justify-center items-center gap-2 mt-6 py-4">
               <button
                 disabled={currentPage === 1}
@@ -355,89 +392,93 @@ export const PlanClasses = () => {
                 </button>
                 <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
                   {modalType === "add"
-                    ? "Agregar Plan"
+                    ? "Agregar Cliente"
                     : modalType === "edit"
-                    ? "Editar Plan"
+                    ? "Editar Cliente"
                     : modalType === "details"
-                    ? "Detalles del Plan"
-                    : "Eliminar Plan"}
+                    ? "Detalles del Cliente"
+                    : "Eliminar Cliente"}
                 </h3>
 
                 {modalType === "add" && (
                   <form className="space-y-4">
+                    {/* SELECCIÓN DE USUARIO */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre del Plan *
+                        Usuario *
+                      </label>
+                      {loadingUsuarios ? (
+                        <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500">
+                          Cargando usuarios...
+                        </div>
+                      ) : usuariosSinCliente.length === 0 ? (
+                        <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-yellow-50 text-yellow-700">
+                          No hay usuarios disponibles. Registra uno primero.
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <select
+                            name="id_usuario"
+                            value={formData.id_usuario}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+                          >
+                            <option value="">— Seleccionar un usuario —</option>
+                            {usuariosSinCliente.map((usuario) => (
+                              <option key={usuario.id_usuario} value={usuario.id_usuario}>
+                                {usuario.nombre_completo} ({usuario.email}) {usuario.es_cliente ? " (Ya es cliente)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <User className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dirección de Envío *
                       </label>
                       <input
                         type="text"
-                        name="nombre_plan"
-                        value={formData.nombre_plan}
+                        name="direccion_envio"
+                        value={formData.direccion_envio}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Mensual"
+                        placeholder="Ej: Calle 123 #45-67, Bogotá"
                         required
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Precio *
+                        Teléfono de Contacto
                       </label>
                       <input
-                        type="number"
-                        name="precio"
-                        value={formData.precio}
+                        type="text"
+                        name="telefono_contacto"
+                        value={formData.telefono_contacto}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 45000"
-                        min="0"
-                        step="0.01"
-                        required
+                        placeholder="Ej: 3001234567"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descuento (%)
+                        Método de Pago
                       </label>
-                      <input
-                        type="number"
-                        name="descuento_porcentaje"
-                        value={formData.descuento_porcentaje}
+                      <select
+                        name="metodo_pago"
+                        value={formData.metodo_pago}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 10"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Número de clases *
-                      </label>
-                      <input
-                        type="number"
-                        name="numero_clases"
-                        value={formData.numero_clases}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 4"
-                        min="1"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descripción
-                      </label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        rows="2"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Acceso ilimitado a clases mensuales"
-                      />
+                      >
+                        <option value="">— Seleccionar —</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="nequi">Nequi</option>
+                        <option value="daviplata">Daviplata</option>
+                      </select>
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <button
@@ -458,81 +499,55 @@ export const PlanClasses = () => {
                   </form>
                 )}
 
-                {modalType === "edit" && selectedPlan && (
+                {modalType === "edit" && selectedCliente && (
                   <form className="space-y-4">
+                    <div className="text-sm text-gray-600 p-2 bg-gray-50 rounded-lg">
+                      <span className="font-medium">Usuario:</span> {selectedCliente.nombre_completo}
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre del Plan *
+                        Dirección de Envío *
                       </label>
                       <input
                         type="text"
-                        name="nombre_plan"
-                        value={formData.nombre_plan}
+                        name="direccion_envio"
+                        value={formData.direccion_envio}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Mensual"
+                        placeholder="Ej: Calle 123 #45-67, Bogotá"
                         required
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Precio *
+                        Teléfono de Contacto
                       </label>
                       <input
-                        type="number"
-                        name="precio"
-                        value={formData.precio}
+                        type="text"
+                        name="telefono_contacto"
+                        value={formData.telefono_contacto}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 45000"
-                        min="0"
-                        step="0.01"
-                        required
+                        placeholder="Ej: 3001234567"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descuento (%)
+                        Método de Pago
                       </label>
-                      <input
-                        type="number"
-                        name="descuento_porcentaje"
-                        value={formData.descuento_porcentaje}
+                      <select
+                        name="metodo_pago"
+                        value={formData.metodo_pago}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 10"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Número de clases *
-                      </label>
-                      <input
-                        type="number"
-                        name="numero_clases"
-                        value={formData.numero_clases}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 4"
-                        min="1"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descripción
-                      </label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        rows="2"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Acceso ilimitado a clases mensuales"
-                      />
+                      >
+                        <option value="">— Seleccionar —</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="nequi">Nequi</option>
+                        <option value="daviplata">Daviplata</option>
+                      </select>
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <button
@@ -553,27 +568,33 @@ export const PlanClasses = () => {
                   </form>
                 )}
 
-                {modalType === "details" && selectedPlan && (
+                {modalType === "details" && selectedCliente && (
                   <div className="space-y-3 text-gray-700">
                     <div className="flex justify-between">
-                      <span className="font-medium">Nombre:</span>
-                      <span className="text-right">{selectedPlan.nombre_plan}</span>
+                      <span className="font-medium">Usuario:</span>
+                      <span className="text-right">{selectedCliente.nombre_completo}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Descripción:</span>
-                      <span className="text-right">{selectedPlan.descripcion || "—"}</span>
+                      <span className="font-medium">Email:</span>
+                      <span className="text-right">{selectedCliente.email}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Precio:</span>
-                      <span className="text-right">${selectedPlan.precio}</span>
+                      <span className="font-medium">Documento:</span>
+                      <span className="text-right">{selectedCliente.documento}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Descuento:</span>
-                      <span className="text-right">{selectedPlan.descuento_porcentaje}%</span>
+                      <span className="font-medium">Dirección:</span>
+                      <span className="text-right">{selectedCliente.direccion_envio}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Clases:</span>
-                      <span className="text-right">{selectedPlan.numero_clases} clases</span>
+                      <span className="font-medium">Teléfono:</span>
+                      <span className="text-right">
+                        {selectedCliente.telefono_contacto || selectedCliente.telefono_usuario || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Método Pago:</span>
+                      <span className="text-right">{formatMetodoPago(selectedCliente.metodo_pago)}</span>
                     </div>
                     <div className="flex justify-center pt-4">
                       <button
@@ -586,11 +607,11 @@ export const PlanClasses = () => {
                   </div>
                 )}
 
-                {modalType === "delete" && selectedPlan && (
+                {modalType === "delete" && selectedCliente && (
                   <div className="text-center space-y-4">
                     <p className="text-gray-700">
-                      ¿Estás seguro de eliminar el plan{" "}
-                      <span className="font-bold text-red-600">{selectedPlan.nombre_plan}</span>?
+                      ¿Estás seguro de eliminar el cliente{" "}
+                      <span className="font-bold text-red-600">{selectedCliente.nombre_completo}</span>?
                       <br />
                       <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
                     </p>
@@ -619,4 +640,4 @@ export const PlanClasses = () => {
   );
 };
 
-export default PlanClasses;
+export default Clientes;

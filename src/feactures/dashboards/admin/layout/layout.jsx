@@ -164,6 +164,17 @@ export const Layout = ({ children }) => {
                       <Users size={20} strokeWidth={1.5} />
                     </BtnSideBar>
                   </motion.li>
+
+           <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Adminsitradores" link="../admin/admins">
+                      <Shield
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+
                   <motion.li variants={itemVariants}>
                     <BtnSideBar title="Roles" link="../admin/roles">
                       <Shield
@@ -173,6 +184,8 @@ export const Layout = ({ children }) => {
                       />
                     </BtnSideBar>
                   </motion.li>
+
+                  
                 </motion.ul>
               )}
             </AnimatePresence>

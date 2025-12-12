@@ -17,6 +17,7 @@ import Login from "../feactures/Auth/pages/Login"
 import Register from "../feactures/Auth/pages/Register"
 
 // Dashboard admin
+
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras"
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas"
 import Products from "../feactures/dashboards/admin/pages/compras/productos/Products"
@@ -33,7 +34,9 @@ import CategoriaEventos from "../feactures/dashboards/admin/pages/eventos/catego
 import Patrocinadores from "../feactures/dashboards/admin/pages/eventos/patrocinadores/patrocinadores"
 import Sedes from "../feactures/dashboards/admin/pages/eventos/sedes/sedes"
 import Clases from "../feactures/dashboards/admin/pages/clases/clases/Classes"
+import Administradores from "../feactures/dashboards/admin/pages/configuracion/admin/Administradores";
 import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard"
+
 
 // Dashboard student
 import { Setting } from "../feactures/dashboards/student/pages/Setting"
@@ -69,7 +72,6 @@ import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut"
 // Auth extras
 import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword"
 import { ResetPassword } from "../feactures/Auth/pages/ResetPassword"
-import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos"
 
 // Landing Admin
 import { AdminHome } from "../feactures/landing/admin/pages/AdminHome"
@@ -100,6 +102,7 @@ import { CustomEventos } from "../feactures/dashboards/custom/pages/CRUDs/Custom
 import { CustomCategoriaEventos } from "../feactures/dashboards/custom/pages/CRUDs/CustomCategoriaEventos"
 import { CustomSedes } from "../feactures/dashboards/custom/pages/CRUDs/CustomSedes"
 import { CustomPatrocinadores } from "../feactures/dashboards/custom/pages/CRUDs/CustomPatrocinadores"
+import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos"
 
 const AppRouter = () => {
   const location = useLocation()
@@ -133,7 +136,7 @@ const AppRouter = () => {
         <Route path="reset-password" element={<ResetPassword />} />
 
         <Route index element={withAnimation(Home)} />
-        <Route path="store" element={withAnimation(Store)} />
+        <Route path="store" element={withAnimation(Store)} /> 
         <Route path="class" element={withAnimation(Class)} />
         <Route path="events" element={withAnimation(Eventos)} />
         <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
@@ -145,32 +148,38 @@ const AppRouter = () => {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
 
-        <Route element={<ProtectedRoute allowedRoles={["administrador"]} />}>
-          <Route path="admin/dashboard" element={<Dashboard />} />
-          <Route path="admin/matriculas" element={<Matriculas />} />
-          <Route path="admin/products" element={<Products />} />
-          <Route path="admin/roles" element={<Roles />} />
-          <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
-          <Route path="admin/compras" element={<Compras />} />
-          <Route path="admin/proveedores" element={<Proveedores />} />
-          <Route path="admin/ventas" element={<Ventas />} />
-          <Route path="admin/categoriasProductos" element={<CategoriaProductos />} />
-          <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
-          <Route path="admin/planclases" element={<PlanClasses />} />
-          <Route path="admin/users" element={<Usuarios />} />
-          <Route path="admin/eventos" element={<Eventos />} />
-          <Route path="admin/patrocinadores" element={<Patrocinadores />} />
-          <Route path="admin/sedes" element={<Sedes />} />
-          <Route path="admin/clases" element={<Clases />} />
-          <Route path="admin/plans" element={<PlanClasses />} />
-          <Route path="admin/estudiantes" element={<Estudiantes />} />
-          <Route path="admin/instructores" element={<Instructores />} />
+        
 
+          {/* Dashboard Admin - PROTEGIDAS */}
+          <Route element={<ProtectedRoute allowedRoles={["administrador"]} />}>
           <Route path="admin/home" element={<AdminHome />} />
           <Route path="admin/store" element={<AdminStore />} />
           <Route path="admin/profile" element={<AdminProfile />} />
           <Route path="admin/purchases" element={<AdminPurchases />} />
-        </Route>
+            <Route path="admin/dashboard" element={<Dashboard />} />
+            <Route path="admin/matriculas" element={<Matriculas />} />
+            <Route path="admin/products" element={<Products />} />
+            <Route path="admin/roles" element={<Roles />} />
+            <Route path="admin/preRegistrations" element={<PreinscripcionesAdmin />} />
+            <Route path="admin/compras" element={<Compras />} />
+            <Route path="admin/proveedores" element={<Proveedores />} />
+            <Route path="admin/categoriasProductos" element={<CategoriaProductos />} />
+            <Route path="admin/categoriasEventos" element={<CategoriaEventos />} />
+            <Route path="admin/planclases" element={<PlanClasses />} />
+            <Route path="admin/users" element={<Usuarios />} />
+            <Route path="admin/eventos" element={<Eventos />} />
+            <Route path="admin/patrocinadores" element={<Patrocinadores />} />
+            <Route path="admin/sedes" element={<Sedes />} />
+            <Route path="admin/clases" element={<Clases />} />
+            <Route path="admin/plans" element={<PlanClasses />} />
+            <Route path="admin/instructores" element={<Instructores />} />
+            <Route path="admin/estudiantes" element={<Estudiantes/>} />
+            <Route path="admin/admins" element={<Administradores />} />
+            <Route path="admin/ventas" element={<Ventas
+            ç />} />
+
+
+          </Route>
 
         {/* Dashboard Student - PROTEGIDAS */}
         <Route element={<ProtectedRoute allowedRoles={["estudiante"]} />}>
