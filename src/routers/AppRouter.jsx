@@ -139,7 +139,7 @@ const AppRouter = () => {
           <Route path="training" element={withAnimation(Class)} />
           <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
           <Route path="about" element={withAnimation(About)} />
-          <Route path="productDetails" element={withAnimation(ProductDetails)} />
+          <Route path="store/product/:id" element={withAnimation(ProductDetails)} />
           <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
 
           {/* Auth */}
