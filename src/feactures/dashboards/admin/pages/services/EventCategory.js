@@ -1,6 +1,6 @@
 // services/EventCategory.js
 
-const API_URL = "http://localhost:3000/api/categoria-eventos";
+const API_URL = "http://localhost:3000/api/categorias-eventos"; // ✅ plural
 
 // ⭐ Obtener todas
 export const getCategoriasEventos = async () => {

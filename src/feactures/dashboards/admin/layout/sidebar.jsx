@@ -126,6 +126,7 @@ const Sidebar = () => {
                 <span>Eventos</span>
               </div>
             </div>
+            
           )}
         </div>
 

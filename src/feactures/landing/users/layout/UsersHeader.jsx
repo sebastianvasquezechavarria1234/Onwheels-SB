@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Menu, ShoppingCart, User, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { LogOut, Menu, ShoppingCart, User, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BtnLinkIcon } from "../components/BtnLinkIcon";
-import { BtnLink } from "../components/BtnLink";
+import { BtnLinkIcon } from "../../components/BtnLinkIcon";
+import { BtnLink } from "../../components/BtnLink";
 
 // Header con modal (sheet) pulido y sin errores
-export const Header = () => {
+export const UsersHeader = () => {
   const [open, setOpen] = useState(false);
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
   const modalRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Bloqueo de scroll cuando modal abierto
@@ -56,6 +57,15 @@ export const Header = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  const handleLogout = () => {
+    // Eliminar token y usuario del localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirigir a login
+    navigate('/login');
+  };
+
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
@@ -73,12 +83,11 @@ export const Header = () => {
   };
 
   const items = [
-    { title: "Inicio", to: "/" },
-    { title: "Tienda", to: "/store" },
-    { title: "Clases", to: "/class" },
-    { title: "Eventos", to: "/events" },
-    { title: "Pre-inscripciones", to: "/preinscriptions" },
-    { title: "Sobre nosotros", to: "/about" },
+    { title: "Inicio", to: "/users/home" },
+    { title: "Tienda", to: "/users/store" },
+    { title: "Clases", to: "/users/class" },
+    { title: "Eventos", to: "/users/events" },
+    { title: "Sobre nosotros", to: "/users/abaut" },
   ];
 
   return (
@@ -88,7 +97,7 @@ export const Header = () => {
           <li>
             <Link to="/">
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB
+                Performance-SB Users
               </h4>
             </Link>
           </li>
@@ -104,26 +113,43 @@ export const Header = () => {
           <li>
             <BtnLinkIcon
               title="Carrito de compras"
-              link="../shoppingCart"
+              link="../instructor/shoppingCart"
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >
               <ShoppingCart color="black" strokeWidth={1.5} size={20} />
             </BtnLinkIcon>
           </li>
+          
+          
 
           <li>
             <BtnLinkIcon
-              title="Iniciar sesión"
-              link="../login#"
-              style="max-lg:bg-[transparent]! max-lg:text-white!"
-              styleIcon="max-xl:bg-white!"
+              title="Mi cuenta"
+              link="../instructor/setting"
+              style="bg-[transparent]! text-white! max-xl:hidden"
+              styleIcon="bg-white!"
             >
-              <User className="text-white max-xl:text-black" strokeWidth={1.5} size={20} />
+              <User className="text-black" strokeWidth={1.8} size={20} />
             </BtnLinkIcon>
           </li>
+          {/* BOTÓN DE CERRAR SESIÓN CON LOS ESTILOS ORIGINALES */}
+          <li>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
+              aria-label="Cerrar sesión"
+            >
+              <div className=" w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                <LogOut color="white" strokeWidth={1.8} size={20} />
+              </div>
+              <p>Cerrar seccion</p>
+            </button>
+          </li>
 
-          {/* Botón de menú (usando button nativo para asegurar onClick) */}
+      
           <li>
             <button
               type="button"
@@ -213,7 +239,16 @@ export const Header = () => {
                 </nav>
 
                 <div className="mt-6 flex items-center gap-3 justify-end">
-                  <BtnLink link="../login#" style="text-[14px]!" title="Iniciar sesión" />
+                  {/* BOTÓN DE CERRAR SESIÓN EN EL MODAL CON ESTILOS CONSISTENTES */}
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setOpen(false);
+                    }}
+                    className="bg-[var(--color-blue)] text-white px-4 py-2 rounded-lg text-[14px] hover:bg-blue-700 transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
                   <BtnLink link="../store#" style="text-[14px]!" title="Tienda" />
                 </div>
               </motion.div>

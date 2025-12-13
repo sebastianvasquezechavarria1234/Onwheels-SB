@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import '../../hooks/dashboard.css'
 
 import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
-import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, MapPinHouse, School, Settings, Shield, Shirt, ShoppingBag, User, UserPlus, Users, X } from "lucide-react";
+import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, Mails, MapPinHouse, School, Settings, Shield, Shirt, ShoppingBag, User, UserPlus, Users, X } from "lucide-react";
 
 export const Layout = ({ children }) => {
   const [now, setNow] = useState(new Date());
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
@@ -22,6 +24,15 @@ export const Layout = ({ children }) => {
   });
 
   const timeStr = now.toLocaleTimeString("es-CO");
+
+  const handleLogout = () => {
+    // Eliminar token y usuario del localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirigir a login
+    navigate('/login');
+  };
 
   return (
     <main
@@ -102,7 +113,13 @@ export const Layout = ({ children }) => {
                 <Users size={20} className="text-black/80" strokeWidth={1.5} />
               </BtnSideBar>
             </li>
+            <li>
+              <BtnSideBar title="Correos masivos" link="../admin/correos">
+                <Mails size={20} className="text-black/80" strokeWidth={1.5} />
+              </BtnSideBar>
+            </li>
           </ul>
+          
 
           {/* clases */}
           <h4 className="font-primary mb-[10px]">Clases:</h4>
@@ -143,14 +160,18 @@ export const Layout = ({ children }) => {
                 {timeStr}
               </p> */}
             </div>
-            <BtnLinkIcon
-              title="Cerrar Dashboard"
-              style="bg-[var(--color-blue)]! text-white pr-[25px] w-full"
-              styleIcon="bg-white!"
+            {/* BOTÓN DE CERRAR SESIÓN MODIFICADO */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="cursor-pointer bg-[var(--color-blue)] text-white w-full inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
+              aria-label="Cerrar sesión"
             >
-              <ArrowLeft className="text-[var(--color-blue)]" strokeWidth={2} />
-            </BtnLinkIcon>
-
+              <div className="w-[60px] h-[60px] flex justify-center items-center bg-white rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                <ArrowLeft className="text-black" strokeWidth={2} size={20} />
+              </div>
+              <span className="font-medium">Cerrar sesión</span>
+            </button>
           </ul>
 
         </div>

@@ -1,4 +1,4 @@
-// src/feactures/dashboards/admin/pages/eventos/Eventos.jsx
+// src/features/dashboards/admin/pages/eventos/Eventos.jsx
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
 import { Search, Plus, Pen, Trash2, Eye, X, Image as ImageIcon } from "lucide-react";
@@ -11,7 +11,7 @@ import {
   createEvento,
   updateEvento,
   deleteEvento,
-} from "../../services/Event";
+} from "../../services/Event.js";
 
 export default function Eventos() {
   const [eventos, setEventos] = useState([]);
@@ -30,7 +30,7 @@ export default function Eventos() {
     nombre_evento: "",
     fecha_evento: "",
     hora_inicio: "",
-    hora_fin: "",
+    hora_aproximada_fin: "", // ✅ CORREGIDO
     descripcion: "",
     imagen: "",
     estado: "activo",
@@ -45,7 +45,7 @@ export default function Eventos() {
     setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
   };
 
-  // Validaciones
+  // ===================== VALIDACIONES =====================
   const validateField = (name, value) => {
     let error = "";
 
@@ -86,7 +86,7 @@ export default function Eventos() {
       if (!timeRegex.test(value)) error = "Formato de hora inválido (HH:MM)";
     }
 
-    if (name === "hora_fin" && value) {
+    if (name === "hora_aproximada_fin" && value) {
       const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
       if (!timeRegex.test(value)) error = "Formato de hora inválido (HH:MM)";
     }
@@ -115,11 +115,7 @@ export default function Eventos() {
     return ok_nombre && ok_categoria && ok_sede && ok_fecha;
   };
 
-  // Paginación y búsqueda
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
+  // ===================== FETCH DATA =====================
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -145,6 +141,7 @@ export default function Eventos() {
     fetchData();
   }, []);
 
+  // ===================== MODALES =====================
   const openModal = (type, evento = null) => {
     setModal(type);
     setSelected(evento);
@@ -156,7 +153,7 @@ export default function Eventos() {
         nombre_evento: "",
         fecha_evento: "",
         hora_inicio: "",
-        hora_fin: "",
+        hora_aproximada_fin: "", // ✅ CORREGIDO
         descripcion: "",
         imagen: "",
         estado: "activo",
@@ -175,7 +172,7 @@ export default function Eventos() {
       nombre_evento: "",
       fecha_evento: "",
       hora_inicio: "",
-      hora_fin: "",
+      hora_aproximada_fin: "", // ✅ CORREGIDO
       descripcion: "",
       imagen: "",
       estado: "activo",
@@ -183,17 +180,15 @@ export default function Eventos() {
     setFormErrors({});
   };
 
+  // ===================== FORM HANDLERS =====================
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Convertir IDs a número si es necesario
     if (name === "id_categoria_evento" || name === "id_patrocinador" || name === "id_sede") {
       const numericValue = value === "" ? "" : Number(value);
       setForm((prev) => ({ ...prev, [name]: numericValue }));
-      // Validar en tiempo real después de actualizar el estado
       setTimeout(() => validateField(name, numericValue), 0);
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
-      // Validar en tiempo real para otros campos
       validateField(name, value);
     }
   };
@@ -204,22 +199,9 @@ export default function Eventos() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateAll()) {
       showNotification("Corrige los errores del formulario", "error");
-      return;
-    }
-
-    // Validar IDs antes de enviar
-    if (form.id_categoria_evento && isNaN(form.id_categoria_evento)) {
-      showNotification("Categoría inválida", "error");
-      return;
-    }
-    if (form.id_sede && isNaN(form.id_sede)) {
-      showNotification("Sede inválida", "error");
-      return;
-    }
-    if (form.id_patrocinador && isNaN(form.id_patrocinador)) {
-      showNotification("Patrocinador inválido", "error");
       return;
     }
 
@@ -251,6 +233,7 @@ export default function Eventos() {
     }
   };
 
+  // ===================== GETTERS =====================
   const getNombreCategoria = (id) => {
     if (!id) return "—";
     const cat = categorias.find((c) => c.id_categoria_evento === id);
@@ -269,7 +252,11 @@ export default function Eventos() {
     return sed ? sed.nombre_sede : "—";
   };
 
-  // Filtrar y paginar
+  // ===================== BUSQUEDA Y PAGINACIÓN =====================
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const filtered = eventos.filter((e) => {
     const q = search.toLowerCase().trim();
     return (
@@ -291,12 +278,14 @@ export default function Eventos() {
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentItems = filtered.slice(indexOfFirst, indexOfLast);
 
+  // ===================== RENDER =====================
   return (
     <Layout>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Eventos / Gestión de Eventos</h2>
 
+          {/* ===================== BUSCADOR Y BOTON ===================== */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="relative w-full md:w-96">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -322,6 +311,7 @@ export default function Eventos() {
             </button>
           </div>
 
+          {/* ===================== TABLA ===================== */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left text-gray-700">
@@ -419,6 +409,7 @@ export default function Eventos() {
             </div>
           </div>
 
+          {/* ===================== PAGINACIÓN ===================== */}
           {filtered.length > 0 && (
             <div className="flex justify-center items-center gap-2 mt-6 py-4">
               <button
@@ -448,9 +439,10 @@ export default function Eventos() {
               </button>
             </div>
           )}
+
         </div>
 
-        {/* Toast */}
+        {/* ===================== NOTIFICACIONES ===================== */}
         <AnimatePresence>
           {notification.show && (
             <motion.div
@@ -467,7 +459,7 @@ export default function Eventos() {
           )}
         </AnimatePresence>
 
-        {/* Modal Crear/Editar */}
+        {/* ===================== MODAL CREAR / EDITAR ===================== */}
         <AnimatePresence>
           {(modal === "crear" || modal === "editar") && (
             <motion.div
@@ -496,7 +488,7 @@ export default function Eventos() {
                   {modal === "crear" ? "Registrar Evento" : "Editar Evento"}
                 </h3>
 
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <form id="form-evento" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                     <input
@@ -630,19 +622,19 @@ export default function Eventos() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora fin</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora fin estimada</label>
                     <input
-                      name="hora_fin"
+                      name="hora_aproximada_fin" // ✅ CORREGIDO
                       type="time"
-                      value={form.hora_fin}
+                      value={form.hora_aproximada_fin} // ✅ CORREGIDO
                       onChange={handleChange}
                       onBlur={handleBlur}
                       className={`w-full p-2 border rounded-md ${
-                        formErrors.hora_fin ? "border-red-500" : "border-gray-300"
+                        formErrors.hora_aproximada_fin ? "border-red-500" : "border-gray-300"
                       }`}
                     />
-                    {formErrors.hora_fin && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.hora_fin}</p>
+                    {formErrors.hora_aproximada_fin && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.hora_aproximada_fin}</p>
                     )}
                   </div>
 
@@ -683,11 +675,19 @@ export default function Eventos() {
                 </form>
 
                 <div className="flex justify-end gap-2">
-                  <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md">
-                    Guardar
+                  <button
+                    type="submit"
+                    form="form-evento"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                  >
+                    {modal === "crear" ? "Registrar" : "Actualizar"}
                   </button>
                 </div>
               </motion.div>
@@ -695,7 +695,7 @@ export default function Eventos() {
           )}
         </AnimatePresence>
 
-        {/* Modal Ver */}
+        {/* ===================== MODAL VER ===================== */}
         <AnimatePresence>
           {modal === "ver" && selected && (
             <motion.div
@@ -759,8 +759,8 @@ export default function Eventos() {
                       <div>{selected.hora_inicio || "—"}</div>
                     </div>
                     <div>
-                      <div className="font-medium text-gray-600">Hora fin</div>
-                      <div>{selected.hora_fin || "—"}</div>
+                      <div className="font-medium text-gray-600">Hora fin estimada</div>
+                      <div>{selected.hora_aproximada_fin || "—"}</div> {/* ✅ CORREGIDO */}
                     </div>
                     <div>
                       <div className="font-medium text-gray-600">Estado</div>
@@ -795,7 +795,7 @@ export default function Eventos() {
           )}
         </AnimatePresence>
 
-        {/* Modal Eliminar */}
+        {/* ===================== MODAL ELIMINAR ===================== */}
         <AnimatePresence>
           {modal === "eliminar" && selected && (
             <motion.div
@@ -818,8 +818,8 @@ export default function Eventos() {
                 </h3>
 
                 <p className="text-gray-700 text-center">
-                  ¿Está seguro de eliminar el evento { " " }
-                  <span className="font-bold">{selected.nombre_evento}</span> ?
+                  ¿Está seguro de eliminar el evento{" "}
+                  <span className="font-bold">{selected.nombre_evento}</span>?
                   <br />
                   <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
                 </p>

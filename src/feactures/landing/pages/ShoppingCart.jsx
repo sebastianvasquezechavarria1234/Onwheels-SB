@@ -1,8 +1,8 @@
 import React from "react";
 import { Layout } from "../layout/Layout";
-import { CardProduct } from "../components/CardProduct";
 import { BtnLinkIcon } from "../components/BtnLinkIcon";
 import { CreditCard } from "lucide-react";
+import CardProduct from "../components/CardProduct";
 
 export const ShoppingCart = () => {
     return (
