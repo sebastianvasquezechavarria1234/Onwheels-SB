@@ -1,27 +1,29 @@
-// admin/services/MatriculaService.js
+// src/feactures/dashboards/admin/services/nivelesService.js
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:3000/api", // Ajusta a tu backend
-});
+const API_URL = "http://localhost:3000/api/niveles";
 
-// Obtener todas las matrículas
-export const getMatriculas = async () => {
-  const res = await api.get("/matriculas");
-  return Array.isArray(res.data) ? res.data : res.data?.matriculas ?? [];
-};
-
-// Obtener matrícula por ID
-export const getMatriculaById = async (id) => {
-  const res = await api.get(`/matriculas/${id}`);
+export const getNiveles = async () => {
+  const res = await axios.get(API_URL);
   return res.data;
 };
 
-// Crear nueva matrícula
-export const createMatricula = (payload) => api.post("/matriculas", payload);
+export const getNivelById = async (id) => {
+  const res = await axios.get(`${API_URL}/${id}`);
+  return res.data;
+};
 
-// Actualizar matrícula por ID
-export const updateMatricula = (id, payload) => api.put(`/matriculas/${id}`, payload);
+export const createNivel = async (nivelData) => {
+  const res = await axios.post(API_URL, nivelData);
+  return res.data;
+};
 
-// Eliminar matrícula por ID
-export const deleteMatricula = (id) => api.delete(`/matriculas/${id}`);
+export const updateNivel = async (id, nivelData) => {
+  const res = await axios.put(`${API_URL}/${id}`, nivelData);
+  return res.data;
+};
+
+export const deleteNivel = async (id) => {
+  const res = await axios.delete(`${API_URL}/${id}`);
+  return res.data;
+};

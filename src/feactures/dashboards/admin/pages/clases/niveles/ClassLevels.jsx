@@ -1,359 +1,495 @@
-// import React, { useEffect, useState } from "react";
-// import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
-// import {  AnimatePresence } from "framer-motion";
-// // import {
-// //   getMatriculas,
-// //   createMatricula,
-// //   updateMatricula,
-// //   deleteMatricula,
-// // } from "../";
-// import { Layout } from "../layout/layout";
+// src/feactures/dashboards/admin/pages/clases/niveles/ClassLevels.jsx
+import React, { useEffect, useState, useCallback } from "react";
+import { Layout } from "../../../layout/layout";
+import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  getNiveles,
+  createNivel,
+  updateNivel,
+  deleteNivel
+} from "../../services/classLevelsServices";
 
-// export default function ClassLevels() {
-//   const [matriculas, setMatriculas] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState(null);
+export const ClassLevels = () => {
+  const [niveles, setNiveles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [modal, setModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
+  const [selectedNivel, setSelectedNivel] = useState(null);
+  const [formData, setFormData] = useState({
+    nombre_nivel: "",
+    descripcion: ""
+  });
+  const [search, setSearch] = useState("");
 
-//   const [selected, setSelected] = useState(null);
-//   const [modalType, setModalType] = useState(null);
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-//   const [addForm, setAddForm] = useState({
-//     id_preinscripcion: "",
-//     id_clase: "",
-//     id_plan: "",
-//     id_metodo_pago: "",
-//     fecha_matricula: "",
-//     valor_matricula: "",
-//   });
+  // Notificación
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
-//   const [editForm, setEditForm] = useState({ ...addForm });
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+  };
 
-//   useEffect(() => {
-//     fetchMatriculas();
-//   }, []);
+  // Cargar niveles
+  const fetchNiveles = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getNiveles();
+      setNiveles(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error cargando niveles:", err);
+      setError("Error al cargar los niveles.");
+      showNotification("Error al cargar niveles", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-//   const fetchMatriculas = async () => {
-//     setLoading(true);
-//     try {
-//       const data = await getMatriculas();
-//       setMatriculas(data);
-//     } catch (err) {
-//       console.error(err);
-//       setError("Error al cargar matrículas.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+  useEffect(() => {
+    fetchNiveles();
+  }, [fetchNiveles]);
 
-//   /* --- CRUD --- */
-//   const saveAdd = async () => {
-//     try {
-//       const res = await createMatricula(addForm);
-//       setMatriculas((prev) => [res.data.matricula, ...prev]);
-//       closeModal();
-//     } catch (err) {
-//       console.error("Error creando matrícula:", err);
-//     }
-//   };
+  // Manejar cambios en el formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-//   const saveEdit = async () => {
-//     if (!selected) return;
-//     try {
-//       await updateMatricula(selected.id_matricula, editForm);
-//       setMatriculas((prev) =>
-//         prev.map((m) =>
-//           m.id_matricula === selected.id_matricula ? { ...m, ...editForm } : m
-//         )
-//       );
-//       closeModal();
-//     } catch (err) {
-//       console.error("Error editando matrícula:", err);
-//     }
-//   };
+  // Crear nivel
+  const handleCreate = async () => {
+    try {
+      if (!formData.nombre_nivel.trim()) {
+        showNotification("El nombre del nivel es obligatorio", "error");
+        return;
+      }
+      await createNivel(formData);
+      await fetchNiveles();
+      closeModal();
+      showNotification("Nivel creado con éxito");
+    } catch (err) {
+      console.error("Error creando nivel:", err);
+      const errorMessage = err.response?.data?.error || "Error creando nivel";
+      showNotification(errorMessage, "error");
+    }
+  };
 
-//   const confirmDelete = async (id) => {
-//     try {
-//       await deleteMatricula(id);
-//       setMatriculas((prev) => prev.filter((m) => m.id_matricula !== id));
-//       closeModal();
-//     } catch (err) {
-//       console.error("Error eliminando matrícula:", err);
-//     }
-//   };
+  // Editar nivel
+  const handleEdit = async () => {
+    try {
+      if (!selectedNivel) return;
+      if (!formData.nombre_nivel.trim()) {
+        showNotification("El nombre del nivel es obligatorio", "error");
+        return;
+      }
+      await updateNivel(selectedNivel.id_nivel, formData);
+      await fetchNiveles();
+      closeModal();
+      showNotification("Nivel actualizado con éxito");
+    } catch (err) {
+      console.error("Error editando nivel:", err);
+      const errorMessage = err.response?.data?.error || "Error editando nivel";
+      showNotification(errorMessage, "error");
+    }
+  };
 
+  // Eliminar nivel
+  const handleDelete = async () => {
+    try {
+      if (!selectedNivel) return;
+      await deleteNivel(selectedNivel.id_nivel);
+      await fetchNiveles();
+      closeModal();
+      showNotification("Nivel eliminado con éxito");
+    } catch (err) {
+      console.error("Error eliminando nivel:", err);
+      const errorMessage = err.response?.data?.error || "Error eliminando nivel";
+      showNotification(errorMessage, "error");
+    }
+  };
 
-//   /* --- Modal helpers --- */
-//   const openModal = (type, item) => {
-//     setModalType(type);
-//     if (type === "add") {
-//       setAddForm({
-//         id_preinscripcion: "",
-//         id_clase: "",
-//         id_plan: "",
-//         id_metodo_pago: "",
-//         fecha_matricula: "",
-//         valor_matricula: "",
-//       });
-//       setSelected(null);
-//       return;
-//     }
-//     if (item) {
-//       setSelected(item);
-//       setEditForm({ ...item });
-//     }
-//   };
+  // Abrir modal
+  const openModal = (type, nivel = null) => {
+    setModal(type);
+    setSelectedNivel(nivel);
+    if (nivel && type === "editar") {
+      setFormData({
+        nombre_nivel: nivel.nombre_nivel || "",
+        descripcion: nivel.descripcion || ""
+      });
+    } else {
+      setFormData({
+        nombre_nivel: "",
+        descripcion: ""
+      });
+    }
+  };
 
-//   const closeModal = () => {
-//     setSelected(null);
-//     setModalType(null);
-//   };
+  const closeModal = () => {
+    setModal(null);
+    setSelectedNivel(null);
+    setFormData({
+      nombre_nivel: "",
+      descripcion: ""
+    });
+  };
 
-//   const handleChange = (e, formSetter) => {
-//     const { name, value } = e.target;
-//     formSetter((prev) => ({ ...prev, [name]: value }));
-//   };
+  // Filtrado por búsqueda
+  const nivelesFiltrados = niveles.filter((n) =>
+    (n.nombre_nivel || "").toLowerCase().includes(search.toLowerCase()) ||
+    (n.descripcion || "").toLowerCase().includes(search.toLowerCase())
+  );
 
-//   return (
-//     <Layout>
-//       <div className="p-6 bg-gray-50 min-h-screen w-full">
-//         <div className="bg-white rounded-2xl shadow-md border border-gray-200">
-//           {/* Encabezado */}
-//           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-//             <h2 className="text-lg font-semibold text-gray-700">
-//               matrículas &gt; Gestión de Matrículas
-//             </h2>
-//           </div>
+  // Paginación
+  const totalPages = Math.max(1, Math.ceil(nivelesFiltrados.length / itemsPerPage));
+  const currentItems = nivelesFiltrados.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-//           {/* Barra búsqueda + botón */}
-//           <div className="flex justify-between items-center p-4">
-//             <div className="relative w-1/3">
-//               <input
-//                 type="text"
-//                 placeholder="Buscar matrículas..."
-//                 className="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-//               />
-//               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-//             </div>
-//             <button
-//               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-all"
-//               onClick={() => openModal("add")}
-//             >
-//               <Plus className="h-4 w-4" />
-//               Registrar nueva matrícula
-//             </button>
-//           </div>
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
-//           {/* Tabla */}
-//           <div className="overflow-x-auto">
-//             <table className="w-full text-sm text-left text-gray-600">
-//               <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
-//                 <tr>
-//                   <th className="px-6 py-3">ID Matrícula</th>
-//                   <th className="px-6 py-3">Preinscripción</th>
-//                   <th className="px-6 py-3">Clase</th>
-//                   <th className="px-6 py-3">Plan</th>
-//                   <th className="px-6 py-3">Fecha Matrícula</th>
-//                   <th className="px-6 py-3">Valor Matrícula</th>
-//                   <th className="px-6 py-3">Método de Pago</th>
-//                   <th className="px-6 py-3 text-center">Acciones</th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {loading && (
-//                   <tr>
-//                     <td colSpan="8" className="text-center py-10">
-//                       Cargando...
-//                     </td>
-//                   </tr>
-//                 )}
-//                 {error && (
-//                   <tr>
-//                     <td colSpan="8" className="text-center py-10 text-red-500">
-//                       {error}
-//                     </td>
-//                   </tr>
-//                 )}
-//                 {!loading && !error && matriculas.length === 0 && (
-//                   <tr>
-//                     <td
-//                       colSpan="8"
-//                       className="text-center py-10 text-gray-400 italic"
-//                     >
-//                       No hay matrículas registradas
-//                     </td>
-//                   </tr>
-//                 )}
-//                 {matriculas.map((m) => (
-//                   <tr key={m.id_matricula} className="hover:bg-gray-50">
-//                     <td className="px-6 py-2">{m.id_matricula}</td>
-//                     <td className="px-6 py-2">{m.id_preinscripcion}</td>
-//                     <td className="px-6 py-2">{m.id_clase}</td>
-//                     <td className="px-6 py-2">{m.id_plan}</td>
-//                     <td className="px-6 py-2">{m.fecha_matricula}</td>
-//                     <td className="px-6 py-2">{m.valor_matricula}</td>
-//                     <td className="px-6 py-2">{m.id_metodo_pago}</td>
-//                     <td className="px-6 py-2 flex gap-2 justify-center">
-//                       <button
-//                         onClick={() => openModal("edit", m)}
-//                         className="text-blue-600 hover:text-blue-800"
-//                       >
-//                         <Pencil size={18} />
-//                       </button>
-//                       <button
-//                         onClick={() => openModal("delete", m)}
-//                         className="text-red-600 hover:text-red-800"
-//                       >
-//                         <Trash2 size={18} />
-//                       </button>
-//                       <button
-//                         onClick={() => openModal("details", m)}
-//                         className="text-green-600 hover:text-green-800"
-//                       >
-//                         <Eye size={18} />
-//                       </button>
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         </div>
-//       </div>
+  return (
+    <Layout>
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Niveles de Clase</h2>
 
-//       {/* Modales */}
-//       <AnimatePresence>
-//         {modalType === "add" && (
-//           <ModalWrapper onClose={closeModal}>
-//             <h3 className="font-bold mb-4">Nueva Matrícula</h3>
-//             <form>
-//               <input
-//                 name="id_preinscripcion"
-//                 value={addForm.id_preinscripcion}
-//                 onChange={(e) => handleChange(e, setAddForm)}
-//                 className="input w-full mb-2"
-//                 placeholder="Preinscripción"
-//               />
-//               <input
-//                 name="id_clase"
-//                 value={addForm.id_clase}
-//                 onChange={(e) => handleChange(e, setAddForm)}
-//                 className="input w-full mb-2"
-//                 placeholder="Clase"
-//               />
-//               <input
-//                 name="id_plan"
-//                 value={addForm.id_plan}
-//                 onChange={(e) => handleChange(e, setAddForm)}
-//                 className="input w-full mb-2"
-//                 placeholder="Plan"
-//               />
-//               <input
-//                 type="date"
-//                 name="fecha_matricula"
-//                 value={addForm.fecha_matricula}
-//                 onChange={(e) => handleChange(e, setAddForm)}
-//                 className="input w-full mb-2"
-//               />
-//               <input
-//                 type="number"
-//                 name="valor_matricula"
-//                 value={addForm.valor_matricula}
-//                 onChange={(e) => handleChange(e, setAddForm)}
-//                 className="input w-full mb-2"
-//                 placeholder="Valor matrícula"
-//               />
-//               <input
-//                 name="id_metodo_pago"
-//                 value={addForm.id_metodo_pago}
-//                 onChange={(e) => handleChange(e, setAddForm)}
-//                 className="input w-full mb-2"
-//                 placeholder="Método de pago"
-//               />
-//               <button
-//                 type="button"
-//                 className="btn bg-blue-500 text-white"
-//                 onClick={saveAdd}
-//               >
-//                 Guardar
-//               </button>
-//             </form>
-//           </ModalWrapper>
-//         )}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                placeholder="Buscar niveles (Nombre o Descripción)"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              />
+            </div>
+            <button
+              onClick={() => openModal("crear")}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
+            >
+              <Plus size={18} />
+              Crear Nivel
+            </button>
+          </div>
 
-//         {modalType === "edit" && selected && (
-//           <ModalWrapper onClose={closeModal}>
-//             <h3 className="font-bold mb-4">Editar Matrícula</h3>
-//             <form>
-//               <input
-//                 name="valor_matricula"
-//                 value={editForm.valor_matricula}
-//                 onChange={(e) => handleChange(e, setEditForm)}
-//                 className="input w-full mb-2"
-//               />
-//               <button
-//                 type="button"
-//                 className="btn bg-blue-500 text-white"
-//                 onClick={saveEdit}
-//               >
-//                 Guardar cambios
-//               </button>
-//             </form>
-//           </ModalWrapper>
-//         )}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-3 w-[30%]">Nombre del Nivel</th>
+                    <th className="px-6 py-3 w-[50%]">Descripción</th>
+                    <th className="px-6 py-3 w-[20%]">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
+                        Cargando niveles...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-red-600">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500 italic">
+                        No se encontraron niveles.
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((n) => (
+                      <tr key={n.id_nivel} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{n.nombre_nivel}</td>
+                        <td className="px-6 py-4 text-gray-600">{n.descripcion || "— Sin descripción —"}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("ver", n)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("editar", n)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("eliminar", n)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-//         {modalType === "delete" && selected && (
-//           <ModalWrapper onClose={closeModal}>
-//             <h3 className="font-bold mb-4">Eliminar Matrícula</h3>
-//             <p>
-//               ¿Seguro que deseas eliminar la matrícula{" "}
-//               <b>{selected.id_matricula}</b>?
-//             </p>
-//             <div className="flex justify-end gap-2 mt-4">
-//               <button className="btn bg-gray-200" onClick={closeModal}>
-//                 Cancelar
-//               </button>
-//               <button
-//                 className="btn bg-red-500 text-white"
-//                 onClick={() => confirmDelete(selected.id_matricula)}
-//               >
-//                 Eliminar
-//               </button>
-//             </div>
-//           </ModalWrapper>
-//         )}
+          {nivelesFiltrados.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6 py-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
+        </div>
 
-//         {modalType === "details" && selected && (
-//           <ModalWrapper onClose={closeModal}>
-//             <h3 className="font-bold mb-4">Detalles Matrícula</h3>
-//             <pre className="bg-gray-100 p-4 rounded">
-//               {JSON.stringify(selected, null, 2)}
-//             </pre>
-//             <button className="btn bg-gray-200 mt-4" onClick={closeModal}>
-//               Cerrar
-//             </button>
-//           </ModalWrapper>
-//         )}
-//       </AnimatePresence>
-//     </Layout>
-//   );
-// }
+        {/* Notificación Toast */}
+        <AnimatePresence>
+          {notification.show && (
+            <motion.div
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              transition={{ duration: 0.3 }}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
+                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+              }`}
+            >
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-// /* === Modal Wrapper === */
-// const ModalWrapper = ({ children, onClose }) => (
-//   <motion.div
-//     className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-//     initial={{ opacity: 0 }}
-//     animate={{ opacity: 1 }}
-//     exit={{ opacity: 0 }}
-//   >
-//     <motion.div
-//       className="bg-white p-6 rounded-2xl shadow-xl w-[90%] max-w-lg relative"
-//       initial={{ scale: 0.9, opacity: 0 }}
-//       animate={{ scale: 1, opacity: 1 }}
-//       exit={{ scale: 0.9, opacity: 0 }}
-//     >
-//       {children}
-//     </motion.div>
-//     <div className="absolute inset-0" onClick={onClose}></div>
-//   </motion.div>
-// );
+        {/* Modales */}
+        <AnimatePresence>
+          {modal && (
+            <motion.div
+              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
+            >
+              <motion.div
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
+                  {modal === "crear"
+                    ? "Crear Nivel"
+                    : modal === "editar"
+                    ? "Editar Nivel"
+                    : modal === "ver"
+                    ? "Detalles del Nivel"
+                    : "Eliminar Nivel"}
+                </h3>
+
+                {modal === "crear" && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Nivel *
+                      </label>
+                      <input
+                        type="text"
+                        name="nombre_nivel"
+                        value={formData.nombre_nivel}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Principiante"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descripción
+                      </label>
+                      <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Para estudiantes sin experiencia previa"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCreate}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Crear
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {modal === "editar" && selectedNivel && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Nivel *
+                      </label>
+                      <input
+                        type="text"
+                        name="nombre_nivel"
+                        value={formData.nombre_nivel}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Principiante"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descripción
+                      </label>
+                      <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Para estudiantes sin experiencia previa"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {modal === "ver" && selectedNivel && (
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-medium">ID:</span>
+                      <span>{selectedNivel.id_nivel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nombre del Nivel:</span>
+                      <span className="text-right">{selectedNivel.nombre_nivel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Descripción:</span>
+                      <span className="text-right">{selectedNivel.descripcion || "— Sin descripción —"}</span>
+                    </div>
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {modal === "eliminar" && selectedNivel && (
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-700">
+                      ¿Está seguro de eliminar el nivel{" "}
+                      <span className="font-bold text-red-600">{selectedNivel.nombre_nivel}</span>?
+                      <br />
+                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                    </p>
+                    <div className="flex justify-center gap-3 pt-2">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+    </Layout>
+  );
+};
+
+export default ClassLevels;

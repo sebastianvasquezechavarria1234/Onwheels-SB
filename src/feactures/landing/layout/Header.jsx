@@ -5,6 +5,109 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../components/BtnLinkIcon";
 import { BtnLink } from "../components/BtnLink";
 
+// Helper: wrapper para íconos con tooltip animado (flecha arriba, fondo blanco, texto negro, bold + italic)
+const IconWithTooltip = ({ label, children, className = "", onClick }) => {
+  const [hover, setHover] = useState(false);
+
+  const tooltipVariants = {
+    hidden: {
+      opacity: 0,
+      y: -10,
+      scale: 0.9,
+      rotateX: 18,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      rotateX: 0,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+      transition: {
+        type: "spring",
+        stiffness: 700,
+        damping: 20,
+        mass: 0.7,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -6,
+      scale: 0.98,
+      transition: { duration: 0.14, ease: "easeIn" },
+    },
+  };
+
+  const popPulse = {
+    initial: { scale: 1 },
+    hover: { scale: 1.03, transition: { yoyo: Infinity, duration: 0.9 } },
+  };
+
+  return (
+    <div
+      className={`relative inline-flex ${className}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+    >
+      {/* elemento visible (ícono / button / link) */}
+      <motion.div
+        onClick={onClick}
+        aria-describedby={`tooltip-${label.replace(/\s+/g, "-")}`}
+        className="flex items-center"
+        initial="initial"
+        animate={hover ? "hover" : "initial"}
+        variants={popPulse}
+      >
+        {children}
+      </motion.div>
+
+      {/* tooltip animado blanco con texto negro y flecha encima del texto */}
+      <AnimatePresence>
+        {hover && (
+          <motion.div
+            key="tooltip"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tooltipVariants}
+            role="status"
+            aria-hidden={!hover}
+            className="absolute left-1/2 top-full z-50 mt-3 -translate-x-1/2 whitespace-nowrap"
+            style={{ pointerEvents: "none", perspective: 800 }}
+          >
+            <div className="inline-flex flex-col items-center">
+              {/* Arrow (triángulo) ARRIBA del texto, pegado al cuadro */}
+              <svg
+                width="16"
+                height="8"
+                viewBox="0 0 16 8"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ marginBottom: -6 }}
+                aria-hidden="true"
+              >
+                <path d="M8 0 L16 8 H0 Z" fill="white" stroke="rgba(0,0,0,0.06)" strokeWidth="0.6" />
+              </svg>
+
+              {/* Texto un poco más gordito y en italic */}
+              <div
+                className="inline-block rounded-lg px-3 py-1.5 text-[13px] font-semibold italic shadow-[0_8px_30px_rgba(16,24,40,0.18)] bg-white text-black"
+                style={{ minWidth: 96, textAlign: "center" }}
+              >
+                {label}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 // Header con modal (sheet) pulido y sin errores
 export const Header = () => {
   const [open, setOpen] = useState(false);
@@ -75,9 +178,9 @@ export const Header = () => {
   const items = [
     { title: "Inicio", to: "/" },
     { title: "Tienda", to: "/store" },
-    { title: "Clases", to: "/class" },
+    { title: "Formación", to: "/training" },
     { title: "Eventos", to: "/events" },
-    { title: "Pre-inscripciones", to: "/preinscriptions" },
+    { title: "Pre-inscribirme", to: "/preinscriptions" },
     { title: "Sobre nosotros", to: "/about" },
   ];
 
@@ -86,7 +189,11 @@ export const Header = () => {
       <nav className="flex items-center justify-between w-full bg-[var(--color-blue)] backdrop-blur-[16px] p-[5px]">
         <ul className="flex gap-[20px] items-center">
           <li>
-            <Link to="/">
+            <Link to="/" className="flex gap-[0px] items-center">
+                <div className="w-[60px] h-[60px] bg-white p-[5px] rounded-full ">
+              <img className="w-full h-full object-cover" src="/logo.png" alt="logo" />
+
+            </div>
               <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
                 Performance-SB
               </h4>
@@ -102,25 +209,31 @@ export const Header = () => {
 
         <ul className="flex gap-[5px] items-center">
           <li>
-            <BtnLinkIcon
-              title="Carrito de compras"
-              link="../shoppingCart"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
-            >
-              <ShoppingCart color="black" strokeWidth={1.5} size={20} />
-            </BtnLinkIcon>
+            {/* Carrito con tooltip */}
+            <IconWithTooltip label="Carrito de compras">
+              <BtnLinkIcon
+                title=""
+                link="../shoppingCart"
+                style="bg-[transparent]! text-white! max-xl:hidden p-[0px]!"
+                styleIcon="bg-white!"
+              >
+                <ShoppingCart color="black" strokeWidth={1.5} size={20} />
+              </BtnLinkIcon>
+            </IconWithTooltip>
           </li>
 
           <li>
-            <BtnLinkIcon
-              title="Iniciar sesión"
-              link="../login#"
-              style="max-lg:bg-[transparent]! max-lg:text-white!"
-              styleIcon="max-xl:bg-white!"
-            >
-              <User className="text-white max-xl:text-black" strokeWidth={1.5} size={20} />
-            </BtnLinkIcon>
+            {/* Iniciar sesión con tooltip */}
+            <IconWithTooltip label="Iniciar sesión">
+              <BtnLinkIcon
+                title=""
+                link="../login#"
+                style="bg-[transparent]! text-white! max-xl:hidden p-[0px]!"
+                styleIcon="bg-white!"
+              >
+                <User className="text-black" strokeWidth={1.5} size={20} />
+              </BtnLinkIcon>
+            </IconWithTooltip>
           </li>
 
           {/* Botón de menú (usando button nativo para asegurar onClick) */}

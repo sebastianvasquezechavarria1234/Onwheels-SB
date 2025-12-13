@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
 import { ArrowLeft, LogOut, School, Settings, ShoppingBag, User, Users, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const Layout = ({ children }) => {
   const [now, setNow] = useState(new Date());
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
@@ -21,6 +23,14 @@ export const Layout = ({ children }) => {
   });
 
   const timeStr = now.toLocaleTimeString("es-CO");
+
+  // --- Lógica cerrar sesión ---
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+  // ----------------------------
 
   return (
     <main
@@ -50,10 +60,18 @@ export const Layout = ({ children }) => {
                 <ShoppingBag size={20} className="text-black/80 " strokeWidth={1.5} />
               </BtnSideBar>
             </li>
+
+            {/* 🔴 Botón rojo de cerrar sesión funcional (misma estructura y estilos) */}
             <li>
-              <BtnSideBar title="Cerrar session" link="/" styleIcon="bg-red-700" style="text-red-700">
-                <LogOut size={20} className="text-white " strokeWidth={2} />
-              </BtnSideBar>
+              <button
+                onClick={handleLogout}
+                className="cursor-pointer w-full flex items-center gap-[10px] text-red-700"
+              >
+                <span className="w-[60px] h-[60px] flex justify-center items-center bg-red-700 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
+                  <LogOut className="text-white" size={20} strokeWidth={2} />
+                </span>
+                <h4>Cerrar session</h4>
+              </button>
             </li>
           </ul>
 

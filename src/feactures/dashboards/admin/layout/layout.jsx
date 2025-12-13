@@ -1,183 +1,484 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import '../../hooks/dashboard.css'
-
-import { motion } from "framer-motion";
+import "../../hooks/dashboard.css";
 import { BtnSideBar } from "../../BtnSideBar";
 import { BtnLinkIcon } from "../../../landing/components/BtnLinkIcon";
-import { ArrowLeft, Calendar, ChartBarIncreasing, LayoutDashboard, Mails, MapPinHouse, School, Settings, Shield, Shirt, ShoppingBag, User, UserPlus, Users, X } from "lucide-react";
+import {
+  ChevronRight,
+  Calendar,
+  ChartBarIncreasing,
+  LayoutDashboard,
+  MapPinHouse,
+  Shield,
+  Shirt,
+  ShoppingBag,
+  User,
+  UserPlus,
+  Users,
+  LogOutIcon,
+  Mails,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const Layout = ({ children }) => {
   const [now, setNow] = useState(new Date());
   const navigate = useNavigate();
+  const timerRef = useRef(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000); // actualiza cada segundo
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const dateStr = now.toLocaleDateString("es-CO", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // 🔐 Contador persistente y sin brinco
+  const [timeLeft, setTimeLeft] = useState("");
+  const expRef = useRef(null);
 
-  const timeStr = now.toLocaleTimeString("es-CO");
+  useEffect(() => {
+    // Leer o crear expiración persistente
+    let exp = localStorage.getItem("tokenExp");
+    if (!exp) {
+      const oneHourLater = Date.now() + 60 * 60 * 1000;
+      localStorage.setItem("tokenExp", oneHourLater);
+      exp = oneHourLater;
+    }
+    expRef.current = parseInt(exp);
+
+    const updateCountdown = () => {
+      const remaining = expRef.current - Date.now();
+      if (remaining <= 0) {
+        setTimeLeft("00:00:00");
+        return;
+      }
+      const hours = String(Math.floor(remaining / (1000 * 60 * 60))).padStart(2, "0");
+      const minutes = String(Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, "0");
+      const seconds = String(Math.floor((remaining % (1000 * 60)) / 1000)).padStart(2, "0");
+      setTimeLeft(`${hours}:${minutes}:${seconds}`);
+    };
+
+    updateCountdown();
+    timerRef.current = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timerRef.current);
+  }, []); // ✅ Solo corre una vez, no se reinicia al cambiar de ruta
 
   const handleLogout = () => {
-    // Eliminar token y usuario del localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Redirigir a login
-    navigate('/login');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("tokenExp");
+    navigate("/login");
+  };
+
+  const [openModule, setOpenModule] = useState(() => localStorage.getItem("openModule") || "config");
+
+  const openOnly = (key) => {
+    setOpenModule((prev) => {
+      if (prev === key) return prev;
+      localStorage.setItem("openModule", key);
+      return key;
+    });
+  };
+
+  const listVariants = {
+    initial: { opacity: 0, height: 0, rotateX: -8, y: -4, scaleY: 0.98 },
+    animate: {
+      opacity: 1,
+      height: "auto",
+      rotateX: 0,
+      y: 0,
+      scaleY: 1,
+      transition: {
+        type: "spring",
+        stiffness: 360,
+        damping: 28,
+        restDelta: 0.001,
+        duration: 0.25,
+        staggerChildren: 0,
+      },
+    },
+    exit: {
+      opacity: 0,
+      height: 0,
+      rotateX: -8,
+      y: -4,
+      scaleY: 0.98,
+      transition: { duration: 0.2, ease: [0.25, 0.8, 0.25, 1], staggerChildren: 0 },
+    },
+  };
+
+  const itemVariants = {
+    initial: { opacity: 1, y: 0, scale: 1 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 1, y: 0, scale: 1 },
   };
 
   return (
     <main
       className="relative w-full h-screen flex gap-[10px] overflow-hidden"
-      style={{ perspective: "1200px" }}
+      style={{ perspective: "1600px" }}
     >
-      {/* Sidebar */}
-      <nav className=" h-full w-[20%] p-[30px] border-r pb-[10px] border-black/20  z-10 max-2xl:p-[15px] ">
+      <nav className="relative h-full w-[20%] p-[30px] border-r pb-[10px] border-black/20 z-10 max-2xl:p-[15px] flex flex-col">
         <h2 className="mb-[20px] border-b pb-[30px] border-black/20 font-primary max-2xl:pb-[15px] dashboard__title">
           Admin
         </h2>
-        <div className="sidebar flex flex-col justify-between  overflow-y-scroll h-[85%]">
-          <li>
+
+        <div className="sidebar flex-1 overflow-y-scroll pr-1">
+          <li className="mt-[7px] mb-[13px]">
             <BtnSideBar title="Dashboard" link="../admin/dashboard">
               <LayoutDashboard size={20} strokeWidth={1.5} />
             </BtnSideBar>
           </li>
-          {/* configuracion */}
-          <h4 className="font-primary mb-[10px]">Configuración:</h4>
-          <ul className="pl-[0px]">
-            <li>
-              <BtnSideBar title="Usuarios" link="../admin/users">
-                <Users size={20} strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Roles" link="../admin/roles">
-                <Shield size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-          </ul>
 
-
-          {/* compras */}
-          <h4 className="font-primary mb-[10px]">Compras:</h4>
-          <ul className="pl-[0px]">
-            <li>
-              <BtnSideBar title="Productos" link="../admin/products">
-                <Shirt size={20} strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Categoria de productos" link="../admin/categoriasProductos">
-                <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Proveedores" link="../admin/proveedores">
-                <Users size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Compras" link="../admin/compras">
-                <ShoppingBag size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-          </ul>
-          {/* eventos */}
-          <h4 className="font-primary mb-[10px]">Eventos:</h4>
-          <ul className="pl-[0px]">
-            <li>
-              <BtnSideBar title="Eventos" link="../admin/eventos">
-                <Calendar size={20} strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Categoria de eventos" link="../admin/categoriasEventos">
-                <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Sedes" link="../admin/sedes">
-                <MapPinHouse size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Patrocinadores" link="../admin/patrocinadores">
-                <Users size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Correos masivos" link="../admin/correos">
-                <Mails size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-          </ul>
-          
-
-          {/* clases */}
-          <h4 className="font-primary mb-[10px]">Clases:</h4>
-          <ul className="pl-[0px]">
-            <li>
-              <BtnSideBar title="Clases" link="../admin/clases">
-                <Calendar size={20} strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Niveles de clases" link="../admin/classLevels">
-                <ChartBarIncreasing size={20} className="text-black/80" strokeWidth={1.8} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="PreInscrpciones" link="../admin/preRegistrations">
-                <UserPlus size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Matriculas" link="../admin/matriculas">
-                <Users size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-            <li>
-              <BtnSideBar title="Planes" link="../admin/plans">
-                <Users size={20} className="text-black/80" strokeWidth={1.5} />
-              </BtnSideBar>
-            </li>
-          </ul>
-
-          {/* Footer */}
-          <ul className="bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 max-2xl:p-[15px]">
-            <div className="flex flex-col gap-[10px] mb-[10px]">
-              {/* <p className="text-sm capitalize">{dateStr}</p>
-              <p className="flex gap-[10px] items-center">
-                <span className="w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
-                {timeStr}
-              </p> */}
-            </div>
-            {/* BOTÓN DE CERRAR SESIÓN MODIFICADO */}
+          {/* CONFIGURACIÓN */}
+          <div
+            className={`mb-[20px] border-b ${
+              openModule === "config" ? "border-transparent" : "border-black/10"
+            } transition-all duration-300 pb-[14px]`}
+          >
             <button
               type="button"
-              onClick={handleLogout}
-              className="cursor-pointer bg-[var(--color-blue)] text-white w-full inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
-              aria-label="Cerrar sesión"
+              onClick={() => openOnly("config")}
+              className="w-full text-left flex items-center justify-between mb-[6px] cursor-pointer group"
             >
-              <div className="w-[60px] h-[60px] flex justify-center items-center bg-white rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <ArrowLeft className="text-black" strokeWidth={2} size={20} />
-              </div>
-              <span className="font-medium">Cerrar sesión</span>
+              <h4 className="font-primary mb-[0px] group-hover:text-[var(--color-blue)] transition-colors duration-200">
+                Configuración:
+              </h4>
+              <motion.div
+                animate={{ rotate: openModule === "config" ? 90 : 0 }}
+                transition={{ type: "spring", stiffness: 360, damping: 26 }}
+                className="ml-2 text-black/70 group-hover:text-[var(--color-blue)]"
+              >
+                <ChevronRight size={18} strokeWidth={2.2} />
+              </motion.div>
             </button>
-          </ul>
+            <AnimatePresence initial={false}>
+              {openModule === "config" && (
+                <motion.ul
+                  key="config"
+                  variants={listVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  style={{ overflow: "hidden" }}
+                >
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Usuarios" link="../admin/users">
+                      <Users size={20} strokeWidth={1.5} />
+                    </BtnSideBar>
+                  </motion.li>
+
+           <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Adminsitradores" link="../admin/admins">
+                      <Shield
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Roles" link="../admin/roles">
+                      <Shield
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+
+                  
+                </motion.ul>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* COMPRAS */}
+          <div
+            className={`mb-[20px] border-b ${
+              openModule === "compras" ? "border-transparent" : "border-black/10"
+            } transition-all duration-300 pb-[14px]`}
+          >
+            <button
+              type="button"
+              onClick={() => openOnly("compras")}
+              className="w-full text-left flex items-center justify-between mb-[6px] cursor-pointer group"
+            >
+              <h4 className="font-primary mb-[0px] group-hover:text-[var(--color-blue)] transition-colors duration-200">
+                Compras:
+              </h4>
+              <motion.div
+                animate={{ rotate: openModule === "compras" ? 90 : 0 }}
+                transition={{ type: "spring", stiffness: 360, damping: 26 }}
+                className="ml-2 text-black/70 group-hover:text-[var(--color-blue)]"
+              >
+                <ChevronRight size={18} strokeWidth={2.2} />
+              </motion.div>
+            </button>
+            <AnimatePresence initial={false}>
+              {openModule === "compras" && (
+                <motion.ul
+                  key="compras"
+                  variants={listVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  style={{ overflow: "hidden" }}
+                >
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Productos" link="../admin/products">
+                      <Shirt size={20} strokeWidth={1.5} />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar
+                      title="Categoria de productos"
+                      link="../admin/categoriasProductos"
+                    >
+                      <ChartBarIncreasing
+                        size={20}
+                        strokeWidth={1.8}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Proveedores" link="../admin/proveedores">
+                      <Users
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Compras" link="../admin/compras">
+                      <ShoppingBag
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                </motion.ul>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* EVENTOS */}
+          <div
+            className={`mb-[20px] border-b ${
+              openModule === "eventos" ? "border-transparent" : "border-black/10"
+            } transition-all duration-300 pb-[14px]`}
+          >
+            <button
+              type="button"
+              onClick={() => openOnly("eventos")}
+              className="w-full text-left flex items-center justify-between mb-[6px] cursor-pointer group"
+            >
+              <h4 className="font-primary mb-[0px] group-hover:text-[var(--color-blue)] transition-colors duration-200">
+                Eventos:
+              </h4>
+              <motion.div
+                animate={{ rotate: openModule === "eventos" ? 90 : 0 }}
+                transition={{ type: "spring", stiffness: 360, damping: 26 }}
+                className="ml-2 text-black/70 group-hover:text-[var(--color-blue)]"
+              >
+                <ChevronRight size={18} strokeWidth={2.2} />
+              </motion.div>
+            </button>
+            <AnimatePresence initial={false}>
+              {openModule === "eventos" && (
+                <motion.ul
+                  key="eventos"
+                  variants={listVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  style={{ overflow: "hidden" }}
+                >
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Eventos" link="../admin/eventos">
+                      <Calendar size={20} strokeWidth={1.5} />
+                    </BtnSideBar>
+                  </motion.li>
+
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar
+                      title="Categoria de eventos"
+                      link="../admin/categoriasEventos"
+                    >
+                      <ChartBarIncreasing
+                        size={20}
+                        strokeWidth={1.8}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+
+                   <motion.li variants={itemVariants}>
+                    <BtnSideBar
+                      title="Correos Masivos"
+                      link="../admin/correos-masivos"
+                    >
+                      <Mails
+                        size={20}
+                        strokeWidth={1.8}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Sedes" link="../admin/sedes">
+                      <MapPinHouse
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar
+                      title="Patrocinadores"
+                      link="../admin/patrocinadores"
+                    >
+                      <Users
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                </motion.ul>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* CLASES */}
+          <div
+            className={`mb-[20px] border-b ${
+              openModule === "clases" ? "border-transparent" : "border-black/10"
+            } transition-all duration-300 pb-[14px]`}
+          >
+            <button
+              type="button"
+              onClick={() => openOnly("clases")}
+              className="w-full text-left flex items-center justify-between mb-[6px] cursor-pointer group"
+            >
+              <h4 className="font-primary mb-[0px] group-hover:text-[var(--color-blue)] transition-colors duration-200">
+                Clases:
+              </h4>
+              <motion.div
+                animate={{ rotate: openModule === "clases" ? 90 : 0 }}
+                transition={{ type: "spring", stiffness: 360, damping: 26 }}
+                className="ml-2 text-black/70 group-hover:text-[var(--color-blue)]"
+              >
+                <ChevronRight size={18} strokeWidth={2.2} />
+              </motion.div>
+            </button>
+            <AnimatePresence initial={false}>
+              {openModule === "clases" && (
+                <motion.ul
+                  key="clases"
+                  variants={listVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  style={{ overflow: "hidden" }}
+                >
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Clases" link="../admin/clases">
+                      <Calendar size={20} strokeWidth={1.5} />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar
+                      title="Niveles de clases"
+                      link="../admin/classLevels"
+                    >
+                      <ChartBarIncreasing
+                        size={20}
+                        strokeWidth={1.8}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Estudiantes" link="../admin/estudiantes">
+                      <Users
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Instructores" link="../admin/instructores">
+                      <User size={20} strokeWidth={1.5} />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar
+                      title="PreInscrpciones"
+                      link="../admin/preRegistrations"
+                    >
+                      <UserPlus
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Matriculas" link="../admin/matriculas">
+                      <Users
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                  <motion.li variants={itemVariants}>
+                    <BtnSideBar title="Planes" link="../admin/plans">
+                      <Users
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+                </motion.ul>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* FOOTER STICKY */}
+        <ul className="sticky bottom-0 bg-gray-100 p-[20px] rounded-[30px] border-1 border-black/10 mt-auto shadow-sm">
+        
+        <div className="flex gap-[10px] items-start">
+            <span className="translate-y-[6px] w-[10px] h-[10px] block bg-green-600 rounded-full"></span>
+          <p className=" mb-[10px] select-none">
+            El token de seguridad expirará en:{" "}
+            <span className="font-semibold italic text-green-700 transition-none">
+              {timeLeft}
+            </span>
+          </p>
 
         </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="cursor-pointer bg-[var(--color-blue)] text-white w-full inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px]"
+          >
+            <div className="w-[60px] h-[60px] flex justify-center items-center bg-white rounded-full">
+              <LogOutIcon className="text-black" strokeWidth={2.5} size={20} />
+            </div>
+            <h4 className="italic">Cerrar sesión</h4>
+          </button>
+        </ul>
       </nav>
 
-      {/* Contenido animado con entrada y salida mejoradas */}
       <motion.section
         className="w-[80%] hide-scrollbar"
         initial={{
@@ -196,8 +497,8 @@ export const Layout = ({ children }) => {
           filter: "blur(0px)",
         }}
         transition={{
-          delay: 0.1,
-          duration: 1,
+          delay: 0.05,
+          duration: 0.55,
           ease: [0.22, 1, 0.36, 1],
         }}
         style={{
@@ -211,4 +512,3 @@ export const Layout = ({ children }) => {
     </main>
   );
 };
-Layout.jsx

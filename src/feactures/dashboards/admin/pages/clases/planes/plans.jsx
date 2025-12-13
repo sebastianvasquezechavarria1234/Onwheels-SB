@@ -1,488 +1,615 @@
-import React, { useEffect, useState } from "react";
-import { Eye, Plus, Search, Pencil, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+// src/features/dashboards/admin/pages/clases/planes/PlanClasses.jsx
+import React, { useEffect, useState, useCallback } from "react";
 import { Layout } from "../../../layout/layout";
-import { createPlan, deletePlan, getPlanes, updatePlan } from "../../services/planclassServices";
+import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion"; 
+import {
+  getPlanes,
+  createPlan,
+  updatePlan,
+  deletePlan
+} from "../../services/planclassServices";
 
 export const PlanClasses = () => {
   const [planes, setPlanes] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [modalType, setModalType] = useState(null);
-
-  const [editForm, setEditForm] = useState({
-    nombre_plan: "",
-    descripcion: "",
-    precio: "",
-    descuento_porcentaje: "",
-  });
-
-  const [addForm, setAddForm] = useState({
-    nombre_plan: "",
-    descripcion: "",
-    precio: "",
-    descuento_porcentaje: "",
-  });
-
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [modalType, setModalType] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [formData, setFormData] = useState({
+    nombre_plan: "",
+    descripcion: "",
+    precio: "",
+    descuento_porcentaje: "",
+    numero_clases: "4"
+  });
   const [search, setSearch] = useState("");
 
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  useEffect(() => {
-    loadPlanes();
-  }, []);
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
-  const loadPlanes = async () => {
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+  };
+
+  const fetchPlanes = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await getPlanes();
-      setPlanes(data || []);
+      setPlanes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error cargando planes:", err);
+      setError("Error al cargar los datos.");
+      showNotification("Error al cargar datos", "error");
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchPlanes();
+  }, [fetchPlanes]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const openModal = (type, item) => {
+  const openModal = (type, plan = null) => {
     setModalType(type);
-
+    setSelectedPlan(plan);
     if (type === "add") {
-      setAddForm({ nombre_plan: "", descripcion: "", precio: "", descuento_porcentaje: "" });
-      setSelected(null);
-      return;
-    }
-
-    setSelected(item || null);
-
-    if (type === "edit" && item) {
-      setEditForm({
-        nombre_plan: item.nombre_plan || "",
-        descripcion: item.descripcion || "",
-        precio: item.precio || "",
-        descuento_porcentaje: item.descuento_porcentaje || "",
+      setFormData({
+        nombre_plan: "",
+        descripcion: "",
+        precio: "",
+        descuento_porcentaje: "",
+        numero_clases: "4"
+      });
+    } else if (type === "edit" && plan) {
+      setFormData({
+        nombre_plan: plan.nombre_plan || "",
+        descripcion: plan.descripcion || "",
+        precio: plan.precio != null ? String(plan.precio) : "",
+        descuento_porcentaje: plan.descuento_porcentaje != null ? String(plan.descuento_porcentaje) : "",
+        numero_clases: plan.numero_clases != null ? String(plan.numero_clases) : "4"
       });
     }
   };
 
   const closeModal = () => {
-    setSelected(null);
     setModalType(null);
+    setSelectedPlan(null);
+    setFormData({
+      nombre_plan: "",
+      descripcion: "",
+      precio: "",
+      descuento_porcentaje: "",
+      numero_clases: "4"
+    });
   };
 
-  const confirmDelete = async (id) => {
+  const handleCreate = async () => {
     try {
-      await deletePlan(id);
-      await loadPlanes();
+      if (!formData.nombre_plan || formData.precio === "") {
+        showNotification("Nombre y precio son obligatorios", "error");
+        return;
+      }
+
+      await createPlan({
+        nombre_plan: formData.nombre_plan,
+        descripcion: formData.descripcion,
+        precio: formData.precio,
+        descuento_porcentaje: formData.descuento_porcentaje || "0",
+        numero_clases: formData.numero_clases || "4"
+      });
+
+      await fetchPlanes();
       closeModal();
-    } catch (err) {
-      console.error("Error eliminando plan:", err);
-    }
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const saveEdit = async () => {
-    if (!selected) return closeModal();
-    try {
-      await updatePlan(selected.id_plan, editForm);
-      await loadPlanes();
-      closeModal();
-    } catch (err) {
-      console.error("Error actualizando plan:", err);
-    }
-  };
-
-  const handleAddChange = (e) => {
-    const { name, value } = e.target;
-    setAddForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const saveAdd = async () => {
-    try {
-      await createPlan(addForm);
-      await loadPlanes();
-      closeModal();
+      showNotification("Plan creado con éxito");
     } catch (err) {
       console.error("Error creando plan:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error creando plan";
+      showNotification(errorMessage, "error");
     }
   };
 
-  // Filtrado antes de la paginación
+  const handleEdit = async () => {
+    try {
+      if (!selectedPlan) return;
+      if (!formData.nombre_plan || formData.precio === "") {
+        showNotification("Nombre y precio son obligatorios", "error");
+        return;
+      }
+
+      await updatePlan(selectedPlan.id_plan, {
+        nombre_plan: formData.nombre_plan,
+        descripcion: formData.descripcion,
+        precio: formData.precio,
+        descuento_porcentaje: formData.descuento_porcentaje || "0",
+        numero_clases: formData.numero_clases || "4"
+      });
+
+      await fetchPlanes();
+      closeModal();
+      showNotification("Plan actualizado con éxito");
+    } catch (err) {
+      console.error("Error editando plan:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error editando plan";
+      showNotification(errorMessage, "error");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (!selectedPlan) return;
+      await deletePlan(selectedPlan.id_plan);
+      await fetchPlanes();
+      closeModal();
+      showNotification("Plan eliminado con éxito");
+    } catch (err) {
+      console.error("Error eliminando plan:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error eliminando plan";
+      showNotification(errorMessage, "error");
+    }
+  };
+
   const planesFiltrados = planes.filter((p) =>
     p.nombre_plan?.toLowerCase().includes(search.toLowerCase()) ||
     p.descripcion?.toLowerCase().includes(search.toLowerCase()) ||
     String(p.precio).includes(search)
   );
 
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = planesFiltrados.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.max(1, Math.ceil(planesFiltrados.length / itemsPerPage));
+  const currentItems = planesFiltrados.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages]);
+  }, [currentPage, totalPages]);
 
   return (
     <Layout>
-      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
-        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Clases / Planes de clases</h2>
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Planes de Clases</h2>
 
-        {/* Barra de búsqueda y botón */}
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-          <form action="" className="flex gap-[10px]">
-            <label className="mb-[20px] block">
-              <p className="">Buscar plan:</p>
-              <div className="relative">
-                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                <input
-                  className="input pl-[50px]!"
-                  type="text"
-                  placeholder={'Por ejemplo: "Mensual"'}
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
               </div>
-            </label>
-          </form>
-
-          <div className="">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                placeholder="Buscar plan (Nombre, Descripción, Precio)"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              />
+            </div>
             <button
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
-              onClick={() => openModal("add", null)}
+              onClick={() => openModal("add")}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus size={20} strokeWidth={1.8} />
-              Añadir plan
+              <Plus size={18} />
+              Añadir Plan
             </button>
           </div>
-        </div>
 
-        {/* Lista de planes (tabla estilo) */}
-        <div className="p-[30px]">
-          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[20%] font-bold! opacity-80">Nombre</p>
-            <p className="w-[30%] font-bold! opacity-80">Descripción</p>
-            <p className="w-[15%] font-bold! opacity-80">Precio</p>
-            <p className="w-[15%] font-bold! opacity-80">Descuento</p>
-            <p className="w-[20%] font-bold! opacity-80">Acciones</p>
-          </article>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead>
-                <tr><th className="hidden" /></tr>
-              </thead>
-              <tbody>
-                {loading ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <td colSpan="5" className="text-center py-10 text-gray-400 italic">Cargando planes...</td>
+                    <th className="px-6 py-3 w-[20%]">Nombre</th>
+                    <th className="px-6 py-3 w-[25%]">Descripción</th>
+                    <th className="px-6 py-3 w-[10%]">Precio</th>
+                    <th className="px-6 py-3 w-[10%]">Descuento</th>
+                    <th className="px-6 py-3 w-[15%]">Clases</th>
+                    <th className="px-6 py-3 w-[20%]">Acciones</th>
                   </tr>
-                ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-10 italic text-red-700">No hay planes registrados</td>
-                  </tr>
-                ) : (
-                  currentItems.map((plan) => (
-                    <tr key={plan.id_plan} className="py-[18px] border-b border-black/20 flex items-center">
-                      <td className="px-6 py-[18px] w-[20%]">{plan.nombre_plan}</td>
-                      <td className="px-6 py-[18px] w-[30%] line-clamp-2">{plan.descripcion}</td>
-                      <td className="px-6 py-[18px] w-[15%]">${plan.precio}</td>
-                      <td className="px-6 py-[18px] w-[15%]">{plan.descuento_porcentaje}%</td>
-                      <td className="px-6 py-[18px] w-[20%] flex gap-[10px] items-center justify-center">
-                        <motion.button
-                          onClick={() => openModal("details", plan)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("edit", plan)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("delete", plan)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </motion.button>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                        Cargando planes...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
+                        No hay planes registrados.
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((plan) => (
+                      <tr key={plan.id_plan} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{plan.nombre_plan}</td>
+                        <td className="px-6 py-4 text-gray-600">{plan.descripcion}</td>
+                        <td className="px-6 py-4 text-gray-600">${plan.precio}</td>
+                        <td className="px-6 py-4 text-gray-600">{plan.descuento_porcentaje}%</td>
+                        <td className="px-6 py-4 text-gray-600">{plan.numero_clases} clases</td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("details", plan)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("edit", plan)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("delete", plan)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Paginación */}
-          <div className="flex justify-center items-center gap-2 py-4 italic">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Anterior
-            </button>
-
-            <span className="text-[18px]">Página <span className="text-blue-700">{currentPage}</span> de {totalPages}</span>
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Siguiente
-            </button>
-          </div>
+          {planesFiltrados.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6 py-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* === Modales === */}
+        {/* Notificación Toast */}
         <AnimatePresence>
-          {/* Agregar */}
-          {modalType === "add" && (
+          {notification.show && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              transition={{ duration: 0.3 }}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
+                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+              }`}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Agregar plan</h3>
-
-                <form className="grid grid-cols-2 gap-[16px]">
-                  <label className="block col-span-1">
-                    <p className="">Nombre</p>
-                    <input
-                      name="nombre_plan"
-                      className="input w-full"
-                      value={addForm.nombre_plan}
-                      onChange={handleAddChange}
-                      placeholder="Ej: Mensual"
-                      required
-                    />
-                  </label>
-
-                  <label className="block col-span-1">
-                    <p className="">Precio</p>
-                    <input
-                      type="number"
-                      name="precio"
-                      className="input w-full"
-                      value={addForm.precio}
-                      onChange={handleAddChange}
-                      placeholder="Ej: 45000"
-                      required
-                    />
-                  </label>
-
-                  <label className="block col-span-1">
-                    <p className="">Descuento (%)</p>
-                    <input
-                      type="number"
-                      name="descuento_porcentaje"
-                      className="input w-full"
-                      value={addForm.descuento_porcentaje}
-                      onChange={handleAddChange}
-                      placeholder="Ej: 10"
-                    />
-                  </label>
-
-                  <label className="block col-span-1">
-                    <p className="">Descripción</p>
-                    <input
-                      name="descripcion"
-                      className="input w-full"
-                      value={addForm.descripcion}
-                      onChange={handleAddChange}
-                      placeholder="Ej: Acceso ilimitado a clases mensuales"
-                    />
-                  </label>
-
-                  <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
-                    <button type="button" onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
-                    <button type="button" onClick={saveAdd} className="btn bg-blue-100 text-blue-700">Guardar</button>
-                  </div>
-                </form>
-              </motion.div>
+              {notification.message}
             </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Detalles */}
-          {modalType === "details" && selected && (
+        {/* Modales */}
+        <AnimatePresence>
+          {modalType && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">Detalles del plan</h3>
-                <div className="grid grid-cols-2 gap-[10px]">
-                  <div>
-                    <p className="font-medium">Nombre:</p>
-                    <p className="font-medium">Descripción:</p>
-                    <p className="font-medium">Precio:</p>
-                    <p className="font-medium">Descuento:</p>
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
+                  {modalType === "add"
+                    ? "Agregar Plan"
+                    : modalType === "edit"
+                    ? "Editar Plan"
+                    : modalType === "details"
+                    ? "Detalles del Plan"
+                    : "Eliminar Plan"}
+                </h3>
+
+                {modalType === "add" && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Plan *
+                      </label>
+                      <input
+                        type="text"
+                        name="nombre_plan"
+                        value={formData.nombre_plan}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Mensual"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Precio *
+                      </label>
+                      <input
+                        type="number"
+                        name="precio"
+                        value={formData.precio}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 45000"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descuento (%)
+                      </label>
+                      <input
+                        type="number"
+                        name="descuento_porcentaje"
+                        value={formData.descuento_porcentaje}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 10"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Número de clases *
+                      </label>
+                      <input
+                        type="number"
+                        name="numero_clases"
+                        value={formData.numero_clases}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 4"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descripción
+                      </label>
+                      <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        rows="2"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Acceso ilimitado a clases mensuales"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCreate}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {modalType === "edit" && selectedPlan && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Plan *
+                      </label>
+                      <input
+                        type="text"
+                        name="nombre_plan"
+                        value={formData.nombre_plan}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Mensual"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Precio *
+                      </label>
+                      <input
+                        type="number"
+                        name="precio"
+                        value={formData.precio}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 45000"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descuento (%)
+                      </label>
+                      <input
+                        type="number"
+                        name="descuento_porcentaje"
+                        value={formData.descuento_porcentaje}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 10"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Número de clases *
+                      </label>
+                      <input
+                        type="number"
+                        name="numero_clases"
+                        value={formData.numero_clases}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 4"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Descripción
+                      </label>
+                      <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        rows="2"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Acceso ilimitado a clases mensuales"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {modalType === "details" && selectedPlan && (
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nombre:</span>
+                      <span className="text-right">{selectedPlan.nombre_plan}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Descripción:</span>
+                      <span className="text-right">{selectedPlan.descripcion || "—"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Precio:</span>
+                      <span className="text-right">${selectedPlan.precio}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Descuento:</span>
+                      <span className="text-right">{selectedPlan.descuento_porcentaje}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Clases:</span>
+                      <span className="text-right">{selectedPlan.numero_clases} clases</span>
+                    </div>
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-700">{selected.nombre_plan}</p>
-                    <p className="text-gray-700">{selected.descripcion}</p>
-                    <p className="text-gray-700">${selected.precio}</p>
-                    <p className="text-gray-700">{selected.descuento_porcentaje}%</p>
+                )}
+
+                {modalType === "delete" && selectedPlan && (
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-700">
+                      ¿Estás seguro de eliminar el plan{" "}
+                      <span className="font-bold text-red-600">{selectedPlan.nombre_plan}</span>?
+                      <br />
+                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                    </p>
+                    <div className="flex justify-center gap-3 pt-2">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex justify-end gap-[10px] mt-[30px]">
-                  <button className="btn bg-gray-200" onClick={closeModal}>
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Editar */}
-          {modalType === "edit" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Editar plan</h3>
-
-                <form className="grid grid-cols-2 gap-[16px]">
-                  <label className="block col-span-1">
-                    <p className="">Nombre</p>
-                    <input
-                      name="nombre_plan"
-                      className="input w-full"
-                      value={editForm.nombre_plan}
-                      onChange={handleEditChange}
-                      placeholder="Ej: Mensual"
-                      required
-                    />
-                  </label>
-
-                  <label className="block col-span-1">
-                    <p className="">Precio</p>
-                    <input
-                      type="number"
-                      name="precio"
-                      className="input w-full"
-                      value={editForm.precio}
-                      onChange={handleEditChange}
-                      placeholder="Ej: 45000"
-                      required
-                    />
-                  </label>
-
-                  <label className="block col-span-1">
-                    <p className="">Descuento (%)</p>
-                    <input
-                      type="number"
-                      name="descuento_porcentaje"
-                      className="input w-full"
-                      value={editForm.descuento_porcentaje}
-                      onChange={handleEditChange}
-                      placeholder="Ej: 10"
-                    />
-                  </label>
-
-                  <label className="block col-span-1">
-                    <p className="">Descripción</p>
-                    <input
-                      name="descripcion"
-                      className="input w-full"
-                      value={editForm.descripcion}
-                      onChange={handleEditChange}
-                      placeholder="Ej: Acceso ilimitado a clases mensuales"
-                    />
-                  </label>
-
-                  <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
-                    <button type="button" onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
-                    <button type="button" onClick={saveEdit} className="btn bg-blue-100 text-blue-700">Guardar</button>
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Eliminar */}
-          {modalType === "delete" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px]">Eliminar plan</h3>
-                <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar el plan <span className="font-bold">{selected?.nombre_plan}</span>? Esta acción es permanente.</p>
-                <div className="flex justify-end gap-[10px] mt-[20px]">
-                  <button className="btn bg-gray-200" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button className="btn bg-red-100 text-red-700" onClick={() => confirmDelete(selected.id_plan)}>
-                    Eliminar
-                  </button>
-                </div>
+                )}
               </motion.div>
             </motion.div>
           )}

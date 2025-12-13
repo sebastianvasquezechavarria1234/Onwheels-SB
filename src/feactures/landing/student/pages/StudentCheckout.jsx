@@ -227,7 +227,7 @@ export const StudentCheckout = () => {
               </div>
             </div>
 
-            <BtnLinkIcon title="Comfirmar compra" link="" style="bg-[var(--color-blue)]! text-white!" styleIcon="bg-white!">
+            <BtnLinkIcon title="Comfirmar compra" link="../student/orderConfirm" style="bg-[var(--color-blue)]! text-white!" styleIcon="bg-white!">
               <Check color="black" strokeWidth={1.8} size={18} />
             </BtnLinkIcon>
           </article>
