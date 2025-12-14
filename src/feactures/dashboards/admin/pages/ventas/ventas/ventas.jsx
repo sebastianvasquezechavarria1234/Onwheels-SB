@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout } from "../../layout/layout";
+import { Layout } from "../../../layout/layout";
 import {
   Search,
   Plus,
@@ -22,17 +22,17 @@ import {
   updateVenta,
   deleteVenta,
   // updateVentaStatus,
-} from "../../pages/services/ventasService";
+} from "../../services/ventasService";
 
 import {
   getProductos,
   getColores,
   getTallas,
   getVariantes,
-} from "../../pages/services/productosServices";
+} from "../../services/productosServices";
 
-import { getUsuarios } from "../../pages/services/usuariosServices"; 
-import { getClientes, createCliente } from "../../pages/services/clientesServices";
+import { getUsuarios } from "../../services/usuariosServices"; 
+import { getClientes, createCliente } from "../../services/clientesServices";
 
     function Ventas() {
   const [ventas, setVentas] = useState([]);

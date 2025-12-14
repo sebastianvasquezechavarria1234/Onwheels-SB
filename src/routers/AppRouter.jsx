@@ -19,7 +19,6 @@ import Register from "../feactures/Auth/pages/Register"
 // Dashboard admin
 
 import Compras from "../feactures/dashboards/admin/pages/compras/compras/compras"
-import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas"
 import Products from "../feactures/dashboards/admin/pages/compras/productos/Products"
 import Proveedores from "../feactures/dashboards/admin/pages/compras/proveedores/proveedores"
 import Roles from "../feactures/dashboards/admin/pages/configuracion/roles/Roles"
@@ -103,6 +102,7 @@ import { CustomCategoriaEventos } from "../feactures/dashboards/custom/pages/CRU
 import { CustomSedes } from "../feactures/dashboards/custom/pages/CRUDs/CustomSedes"
 import { CustomPatrocinadores } from "../feactures/dashboards/custom/pages/CRUDs/CustomPatrocinadores"
 import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos"
+import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas"
 
 const AppRouter = () => {
   const location = useLocation()
@@ -175,8 +175,7 @@ const AppRouter = () => {
             <Route path="admin/instructores" element={<Instructores />} />
             <Route path="admin/estudiantes" element={<Estudiantes/>} />
             <Route path="admin/admins" element={<Administradores />} />
-            <Route path="admin/ventas" element={<Ventas
-            ç />} />
+            <Route path="admin/ventas" element={<Ventas/>} />
 
 
           </Route>

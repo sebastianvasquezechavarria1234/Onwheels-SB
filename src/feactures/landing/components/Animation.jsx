@@ -7,7 +7,7 @@ export const Animation = () => {
                 {/* Card imagen */}
                 <div className="bg__animation relative block flex bg-red-600 rounded-[0px] border-[10px] border-white flex justify-center">
                     {/* Title */}
-                    <h4 className="font-primary absolute top-[30px] text-[30px]!">OnWheels-SB</h4>
+                    <h4 className="font-primary absolute top-[30px] text-[30px]!">Performace-SB</h4>
                     {/* Gradient */}
                     <div className="bg__animation--gradient w-full h-full"></div>
                 </div>
