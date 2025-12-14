@@ -1,6 +1,7 @@
+// src/features/dashboards/admin/pages/eventos/Eventos.jsx
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
-import { Search, Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { Search, Plus, Pen, Trash2, Eye, X, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getEventos,
@@ -10,7 +11,7 @@ import {
   createEvento,
   updateEvento,
   deleteEvento,
-} from "../../services/Event";
+} from "../../services/Event.js";
 
 export default function Eventos() {
   const [eventos, setEventos] = useState([]);
@@ -29,20 +30,92 @@ export default function Eventos() {
     nombre_evento: "",
     fecha_evento: "",
     hora_inicio: "",
-    hora_aproximada_fin: "",
+    hora_aproximada_fin: "", // ✅ CORREGIDO
     descripcion: "",
-    imagen_evento: "",
+    imagen: "",
     estado: "activo",
   });
 
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = eventos.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(eventos.length / itemsPerPage);
+  const [formErrors, setFormErrors] = useState({});
 
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
+  };
+
+  // ===================== VALIDACIONES =====================
+  const validateField = (name, value) => {
+    let error = "";
+
+    if (name === "nombre_evento") {
+      if (!value.trim()) error = "El nombre es obligatorio";
+      else if (value.trim().length < 2) error = "Debe tener mínimo 2 caracteres";
+      else if (value.trim().length > 200) error = "Máximo 200 caracteres";
+      else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s0-9&.,\-]+$/.test(value.trim())) error = "Nombre inválido";
+    }
+
+    if (name === "id_categoria_evento") {
+      if (!value) error = "Seleccione una categoría";
+    }
+
+    if (name === "id_patrocinador" && value) {
+      const idNum = Number(value);
+      if (isNaN(idNum) || !patrocinadores.some(p => p.id_patrocinador === idNum)) {
+        error = "Patrocinador no válido";
+      }
+    }
+
+    if (name === "id_sede") {
+      if (!value) error = "Seleccione una sede";
+    }
+
+    if (name === "fecha_evento") {
+      if (!value) error = "La fecha es obligatoria";
+      else {
+        const date = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (date < today) error = "La fecha no puede ser anterior a hoy";
+      }
+    }
+
+    if (name === "hora_inicio" && value) {
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(value)) error = "Formato de hora inválido (HH:MM)";
+    }
+
+    if (name === "hora_aproximada_fin" && value) {
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(value)) error = "Formato de hora inválido (HH:MM)";
+    }
+
+    if (name === "descripcion" && value && value.length > 500) {
+      error = "Máximo 500 caracteres";
+    }
+
+    if (name === "imagen" && value.trim() !== "") {
+      try {
+        new URL(value.trim());
+      } catch {
+        error = "URL inválida";
+      }
+    }
+
+    setFormErrors((prev) => ({ ...prev, [name]: error }));
+    return !error;
+  };
+
+  const validateAll = () => {
+    const ok_nombre = validateField("nombre_evento", form.nombre_evento);
+    const ok_categoria = validateField("id_categoria_evento", form.id_categoria_evento);
+    const ok_sede = validateField("id_sede", form.id_sede);
+    const ok_fecha = validateField("fecha_evento", form.fecha_evento);
+    return ok_nombre && ok_categoria && ok_sede && ok_fecha;
+  };
+
+  // ===================== FETCH DATA =====================
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -52,12 +125,13 @@ export default function Eventos() {
         getPatrocinadores(),
         getSedes(),
       ]);
-      setEventos(ev);
-      setCategorias(cat);
-      setPatrocinadores(pat);
-      setSedes(sed);
+      setEventos(ev || []);
+      setCategorias(cat || []);
+      setPatrocinadores(pat || []);
+      setSedes(sed || []);
     } catch (err) {
       console.error("Error cargando datos:", err);
+      showNotification("Error cargando datos", "error");
     } finally {
       setLoading(false);
     }
@@ -67,6 +141,7 @@ export default function Eventos() {
     fetchData();
   }, []);
 
+  // ===================== MODALES =====================
   const openModal = (type, evento = null) => {
     setModal(type);
     setSelected(evento);
@@ -78,414 +153,640 @@ export default function Eventos() {
         nombre_evento: "",
         fecha_evento: "",
         hora_inicio: "",
-        hora_aproximada_fin: "",
+        hora_aproximada_fin: "", // ✅ CORREGIDO
         descripcion: "",
-        imagen_evento: "",
+        imagen: "",
         estado: "activo",
       }
     );
+    setFormErrors({});
   };
 
   const closeModal = () => {
     setModal(null);
     setSelected(null);
+    setForm({
+      id_categoria_evento: "",
+      id_patrocinador: "",
+      id_sede: "",
+      nombre_evento: "",
+      fecha_evento: "",
+      hora_inicio: "",
+      hora_aproximada_fin: "", // ✅ CORREGIDO
+      descripcion: "",
+      imagen: "",
+      estado: "activo",
+    });
+    setFormErrors({});
+  };
+
+  // ===================== FORM HANDLERS =====================
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "id_categoria_evento" || name === "id_patrocinador" || name === "id_sede") {
+      const numericValue = value === "" ? "" : Number(value);
+      setForm((prev) => ({ ...prev, [name]: numericValue }));
+      setTimeout(() => validateField(name, numericValue), 0);
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+      validateField(name, value);
+    }
+  };
+
+  const handleBlur = (e) => {
+    validateField(e.target.name, e.target.value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateAll()) {
+      showNotification("Corrige los errores del formulario", "error");
+      return;
+    }
+
     try {
       if (modal === "crear") {
         await createEvento(form);
+        showNotification("Evento creado con éxito", "success");
       } else if (modal === "editar") {
         await updateEvento(selected.id_evento, form);
+        showNotification("Evento actualizado con éxito", "success");
       }
       fetchData();
       closeModal();
     } catch (err) {
       console.error("Error al guardar evento:", err);
+      showNotification("Error al guardar evento", "error");
     }
   };
 
   const handleDelete = async () => {
     try {
       await deleteEvento(selected.id_evento);
+      showNotification("Evento eliminado con éxito", "success");
       fetchData();
       closeModal();
     } catch (err) {
       console.error("Error al eliminar:", err);
+      showNotification("Error al eliminar evento", "error");
     }
   };
 
-  const getNombreCategoria = (id) =>
-    categorias.find((c) => c.id_categoria_evento === id)?.nombre_categoria ||
-    "—";
+  // ===================== GETTERS =====================
+  const getNombreCategoria = (id) => {
+    if (!id) return "—";
+    const cat = categorias.find((c) => c.id_categoria_evento === id);
+    return cat ? cat.nombre_categoria : "—";
+  };
 
-  const getNombrePatrocinador = (id) =>
-    patrocinadores.find((p) => p.id_patrocinador === id)?.nombre_patrocinador ||
-    "—";
+  const getNombrePatrocinador = (id) => {
+    if (!id) return "—";
+    const pat = patrocinadores.find((p) => p.id_patrocinador === id);
+    return pat ? pat.nombre_patrocinador : "—";
+  };
 
-  const getNombreSede = (id) =>
-    sedes.find((s) => s.id_sede === id)?.nombre_sede || "—";
+  const getNombreSede = (id) => {
+    if (!id) return "—";
+    const sed = sedes.find((s) => s.id_sede === id);
+    return sed ? sed.nombre_sede : "—";
+  };
 
+  // ===================== BUSQUEDA Y PAGINACIÓN =====================
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const filtered = eventos.filter((e) => {
+    const q = search.toLowerCase().trim();
+    return (
+      e.nombre_evento.toLowerCase().includes(q) ||
+      getNombreCategoria(e.id_categoria_evento)?.toLowerCase().includes(q) ||
+      getNombrePatrocinador(e.id_patrocinador)?.toLowerCase().includes(q) ||
+      getNombreSede(e.id_sede)?.toLowerCase().includes(q) ||
+      e.fecha_evento.toLowerCase().includes(q)
+    );
+  });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [totalPages, currentPage]);
+
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentItems = filtered.slice(indexOfFirst, indexOfLast);
+
+  // ===================== RENDER =====================
   return (
     <Layout>
-      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
-        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">
-          Eventos &gt; Gestión de Eventos
-        </h2>
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Eventos / Gestión de Eventos</h2>
 
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-          <form action="" className="flex gap-[10px]">
-            <label className="mb-[20px] block">
-              <p className="">Buscar eventos:</p>
-              <div className="relative">
-                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                <input
-                  type="text"
-                  placeholder="Buscar eventos..."
-                  className="input pl-[50px]!"
-                />
+          {/* ===================== BUSCADOR Y BOTON ===================== */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
               </div>
-            </label>
-          </form>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Buscar eventos..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              />
+            </div>
 
-          <div>
             <button
               onClick={() => openModal("crear")}
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus className="h-4 w-4" />
-              Registrar nuevo evento
+              <Plus size={18} /> Registrar nuevo evento
             </button>
           </div>
-        </div>
 
-        <div className="p-[30px]">
-          {/* Encabezados estilo Roles (sin mayúsculas forzadas, sin sombra extra) */}
-          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[30%] font-bold! opacity-80">Nombre</p>
-            <p className="w-[20%] font-bold! opacity-80">Categoría</p>
-            <p className="w-[20%] font-bold! opacity-80">Patrocinador</p>
-            <p className="w-[15%] font-bold! opacity-80">Sede</p>
-            <p className="w-[15%] font-bold! opacity-80">Fecha</p>
-            <p className="w-[15%] font-bold! opacity-80">Acciones</p>
-          </article>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead className="">
-                <tr>
-                  <th className="px-6 py-3 hidden">--</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+          {/* ===================== TABLA ===================== */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <td
-                      colSpan="6"
-                      className="text-center py-10 text-gray-400 italic"
-                    >
-                      Cargando...
-                    </td>
+                    <th className="px-6 py-3 w-[5%]">ID</th>
+                    <th className="px-6 py-3 w-[8%]">Imagen</th>
+                    <th className="px-6 py-3 w-[15%]">Nombre</th>
+                    <th className="px-6 py-3 w-[12%]">Categoría</th>
+                    <th className="px-6 py-3 w-[12%]">Patrocinador</th>
+                    <th className="px-6 py-3 w-[12%]">Sede</th>
+                    <th className="px-6 py-3 w-[8%]">Fecha</th>
+                    <th className="px-6 py-3 w-[7%]">Estado</th>
+                    <th className="px-6 py-3 w-[10%]">Acciones</th>
                   </tr>
-                ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="text-center py-10 italic text-red-700"
-                    >
-                      No hay eventos registrados
-                    </td>
-                  </tr>
-                ) : (
-                  currentItems.map((e) => (
-                    <tr
-                      key={e.id_evento}
-                      className="border-b border-black/20"
-                    >
-                      <td className="px-6 py-[18px] w-[30%] line-clamp-1">{e.nombre_evento}</td>
-                      <td className="px-6 py-[18px] w-[20%] line-clamp-1">{getNombreCategoria(e.id_categoria_evento)}</td>
-                      <td className="px-6 py-[18px] w-[20%] line-clamp-1">{getNombrePatrocinador(e.id_patrocinador)}</td>
-                      <td className="px-6 py-[18px] w-[15%] line-clamp-1">{getNombreSede(e.id_sede)}</td>
-                      <td className="px-6 py-[18px] w-[15%]">{e.fecha_evento}</td>
-                      <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
-                        <button
-                          onClick={() => openModal("ver", e)}
-                          className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => openModal("editar", e)}
-                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => openModal("eliminar", e)}
-                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="9" className="text-center py-10 text-gray-500 italic">
+                        Cargando...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="text-center py-10 text-gray-500 italic">
+                        No hay eventos registrados
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((e) => (
+                      <tr key={e.id_evento} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4">{e.id_evento}</td>
+                        <td className="px-6 py-4">
+                          {e.imagen ? (
+                            <img src={e.imagen} className="w-10 h-10 object-cover rounded border" />
+                          ) : (
+                            <div className="w-10 h-10 bg-gray-100 border rounded flex items-center justify-center">
+                              <ImageIcon size={16} className="text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 font-medium">{e.nombre_evento}</td>
+                        <td className="px-6 py-4">{getNombreCategoria(e.id_categoria_evento)}</td>
+                        <td className="px-6 py-4">{getNombrePatrocinador(e.id_patrocinador)}</td>
+                        <td className="px-6 py-4">{getNombreSede(e.id_sede)}</td>
+                        <td className="px-6 py-4">{e.fecha_evento}</td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                              e.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {e.estado}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2 justify-center">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("ver", e)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("editar", e)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pen size={16} />
+                            </motion.button>
+
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("eliminar", e)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Paginación */}
-          <div className="flex justify-center items-center gap-2 py-4 italic">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Anterior
-            </button>
-            <span className="text-[18px]">
-              Página <span className="text-blue-700">{currentPage}</span> de {totalPages}
-            </span>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Siguiente
-            </button>
-          </div>
+          {/* ===================== PAGINACIÓN ===================== */}
+          {filtered.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6 py-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
+
         </div>
 
-        {/* Modales: Crear/Editar */}
+        {/* ===================== NOTIFICACIONES ===================== */}
+        <AnimatePresence>
+          {notification.show && (
+            <motion.div
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              transition={{ duration: 0.3 }}
+              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
+                notification.type === "success" ? "bg-green-600" : "bg-red-600"
+              }`}
+            >
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ===================== MODAL CREAR / EDITAR ===================== */}
         <AnimatePresence>
           {(modal === "crear" || modal === "editar") && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
                   {modal === "crear" ? "Registrar Evento" : "Editar Evento"}
                 </h3>
 
-                {/* --- FORM: ahora en grid 2 columnas --- */}
-                <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-[16px]">
-                  {/* Nombre - Col 1 */}
-                  <label className="block col-span-1">
-                    <p className="">Nombre</p>
+                <form id="form-evento" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                     <input
-                      type="text"
+                      name="nombre_evento"
                       value={form.nombre_evento}
-                      onChange={(e) => setForm({ ...form, nombre_evento: e.target.value })}
-                      className="input w-full"
-                      required
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.nombre_evento ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="Nombre del evento"
                     />
-                  </label>
+                    {formErrors.nombre_evento && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.nombre_evento}</p>
+                    )}
+                  </div>
 
-                  {/* Categoría - Col 2 */}
-                  <label className="block col-span-1">
-                    <p className="">Categoría</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
                     <select
+                      name="id_categoria_evento"
                       value={form.id_categoria_evento}
-                      onChange={(e) => setForm({ ...form, id_categoria_evento: e.target.value })}
-                      className="input w-full"
-                      required
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.id_categoria_evento ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
-                      <option value="">Seleccione...</option>
+                      <option value="">Seleccionar...</option>
                       {categorias.map((c) => (
                         <option key={c.id_categoria_evento} value={c.id_categoria_evento}>
                           {c.nombre_categoria}
                         </option>
                       ))}
                     </select>
-                  </label>
+                    {formErrors.id_categoria_evento && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.id_categoria_evento}</p>
+                    )}
+                  </div>
 
-                  {/* Patrocinador - Col 1 */}
-                  <label className="block col-span-1">
-                    <p className="">Patrocinador</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Patrocinador</label>
                     <select
+                      name="id_patrocinador"
                       value={form.id_patrocinador}
-                      onChange={(e) => setForm({ ...form, id_patrocinador: e.target.value })}
-                      className="input w-full"
-                      required
+                      onChange={handleChange}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.id_patrocinador ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
-                      <option value="">Seleccione...</option>
+                      <option value="">Seleccionar...</option>
                       {patrocinadores.map((p) => (
                         <option key={p.id_patrocinador} value={p.id_patrocinador}>
                           {p.nombre_patrocinador}
                         </option>
                       ))}
                     </select>
-                  </label>
+                    {formErrors.id_patrocinador && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.id_patrocinador}</p>
+                    )}
+                  </div>
 
-                  {/* Sede - Col 2 */}
-                  <label className="block col-span-1">
-                    <p className="">Sede</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sede *</label>
                     <select
+                      name="id_sede"
                       value={form.id_sede}
-                      onChange={(e) => setForm({ ...form, id_sede: e.target.value })}
-                      className="input w-full"
-                      required
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.id_sede ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
-                      <option value="">Seleccione...</option>
+                      <option value="">Seleccionar...</option>
                       {sedes.map((s) => (
                         <option key={s.id_sede} value={s.id_sede}>
                           {s.nombre_sede}
                         </option>
                       ))}
                     </select>
-                  </label>
+                    {formErrors.id_sede && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.id_sede}</p>
+                    )}
+                  </div>
 
-                  {/* Fecha - Col 1 */}
-                  <label className="block col-span-1">
-                    <p className="">Fecha</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
                     <input
+                      name="fecha_evento"
                       type="date"
                       value={form.fecha_evento}
-                      onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
-                      className="input w-full"
-                      required
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.fecha_evento ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
-                  </label>
+                    {formErrors.fecha_evento && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.fecha_evento}</p>
+                    )}
+                  </div>
 
-                  {/* Estado - Col 2 */}
-                  <label className="block col-span-1">
-                    <p className="">Estado</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                     <select
+                      name="estado"
                       value={form.estado}
-                      onChange={(e) => setForm({ ...form, estado: e.target.value })}
-                      className="input w-full"
+                      onChange={handleChange}
+                      className="w-full p-2 border border-gray-300 rounded-md"
                     >
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
                     </select>
-                  </label>
+                  </div>
 
-                  {/* Hora inicio - Col 1 */}
-                  <label className="block col-span-1">
-                    <p className="mb-[8px]">Hora inicio</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora inicio</label>
                     <input
+                      name="hora_inicio"
                       type="time"
                       value={form.hora_inicio}
-                      onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
-                      className="input w-full"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.hora_inicio ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
-                  </label>
+                    {formErrors.hora_inicio && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.hora_inicio}</p>
+                    )}
+                  </div>
 
-                  {/* Hora fin - Col 2 */}
-                  <label className="block col-span-1">
-                    <p className="mb-[8px]">Hora fin</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora fin estimada</label>
                     <input
+                      name="hora_aproximada_fin" // ✅ CORREGIDO
                       type="time"
-                      value={form.hora_aproximada_fin}
-                      onChange={(e) => setForm({ ...form, hora_aproximada_fin: e.target.value })}
-                      className="input w-full"
+                      value={form.hora_aproximada_fin} // ✅ CORREGIDO
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.hora_aproximada_fin ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
-                  </label>
+                    {formErrors.hora_aproximada_fin && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.hora_aproximada_fin}</p>
+                    )}
+                  </div>
 
-                  {/* Descripción - ocupa 2 columnas */}
-                  <label className="block col-span-2">
-                    <p className="">Descripción</p>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                     <textarea
+                      name="descripcion"
                       value={form.descripcion}
-                      onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                      className="input w-full h-[120px]"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.descripcion ? "border-red-500" : "border-gray-300"
+                      }`}
+                      rows={2}
+                      placeholder="Descripción del evento"
                     />
-                  </label>
+                    {formErrors.descripcion && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.descripcion}</p>
+                    )}
+                  </div>
 
-                  {/* Imagen - ocupa 2 columnas */}
-                  <label className="block col-span-2">
-                    <p className="">Imagen</p>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (URL)</label>
                     <input
-                      type="text"
-                      value={form.imagen_evento}
-                      onChange={(e) => setForm({ ...form, imagen_evento: e.target.value })}
-                      placeholder="URL de la imagen"
-                      className="input w-full"
+                      name="imagen"
+                      value={form.imagen}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full p-2 border rounded-md ${
+                        formErrors.imagen ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="https://ejemplo.com/imagen.jpg"
                     />
-                  </label>
-
-                  {/* botones - ocupa 2 columnas */}
-                  <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
-                    <button type="button" onClick={closeModal} className="btn bg-gray-200">
-                      Cancelar
-                    </button>
-                    <button type="submit" className="btn bg-blue-100 text-blue-700">
-                      Guardar
-                    </button>
+                    {formErrors.imagen && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.imagen}</p>
+                    )}
                   </div>
                 </form>
-                {/* --- FIN FORM --- */}
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    form="form-evento"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                  >
+                    {modal === "crear" ? "Registrar" : "Actualizar"}
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Modal Ver */}
+        {/* ===================== MODAL VER ===================== */}
         <AnimatePresence>
           {modal === "ver" && selected && (
             <motion.div
-              className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">Detalles del Evento</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">Detalles del Evento</h3>
 
-                <div className="grid grid-cols-2 gap-[10px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                   <div>
-                    <p className="font-medium">Nombre:</p>
-                    <p className="font-medium">Categoría:</p>
-                    <p className="font-medium">Patrocinador:</p>
-                    <p className="font-medium">Sede:</p>
-                    <p className="font-medium">Fecha:</p>
-                    <p className="font-medium">Hora inicio:</p>
-                    <p className="font-medium">Hora fin:</p>
-                    <p className="font-medium">Descripción:</p>
+                    {selected.imagen ? (
+                      <img
+                        src={selected.imagen}
+                        alt="Evento"
+                        className="w-full h-48 object-contain border rounded-md"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gray-100 border rounded-md flex items-center justify-center">
+                        <ImageIcon size={32} className="text-gray-400" />
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-gray-700">{selected.nombre_evento}</p>
-                    <p className="text-gray-700">{getNombreCategoria(selected.id_categoria_evento)}</p>
-                    <p className="text-gray-700">{getNombrePatrocinador(selected.id_patrocinador)}</p>
-                    <p className="text-gray-700">{getNombreSede(selected.id_sede)}</p>
-                    <p className="text-gray-700">{selected.fecha_evento}</p>
-                    <p className="text-gray-700">{selected.hora_inicio}</p>
-                    <p className="text-gray-700">{selected.hora_aproximada_fin}</p>
-                    <p className="text-gray-700">{selected.descripcion}</p>
+                  <div className="space-y-4 text-gray-700">
+                    <div>
+                      <div className="font-medium text-gray-600">ID</div>
+                      <div>{selected.id_evento}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Nombre</div>
+                      <div>{selected.nombre_evento}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Categoría</div>
+                      <div>{getNombreCategoria(selected.id_categoria_evento)}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Patrocinador</div>
+                      <div>{getNombrePatrocinador(selected.id_patrocinador)}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Sede</div>
+                      <div>{getNombreSede(selected.id_sede)}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Fecha</div>
+                      <div>{selected.fecha_evento}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Hora inicio</div>
+                      <div>{selected.hora_inicio || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Hora fin estimada</div>
+                      <div>{selected.hora_aproximada_fin || "—"}</div> {/* ✅ CORREGIDO */}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-600">Estado</div>
+                      <div>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
+                            selected.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {selected.estado}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {selected.imagen_evento && (
-                  <img src={selected.imagen_evento} alt="Evento" className="w-full h-40 object-cover rounded-lg mt-2" />
-                )}
+                <div>
+                  <div className="font-medium text-gray-600 mb-1">Descripción</div>
+                  <div>{selected.descripcion || "—"}</div>
+                </div>
 
-                <p className="mt-2 text-gray-600">
-                  <strong>Estado:</strong> {selected.estado}
-                </p>
-
-                <div className="flex justify-end gap-[10px] mt-[30px]">
-                  <button onClick={closeModal} className="btn bg-gray-200">
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={closeModal}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
+                  >
                     Cerrar
                   </button>
                 </div>
@@ -494,33 +795,46 @@ export default function Eventos() {
           )}
         </AnimatePresence>
 
-        {/* Modal Eliminar */}
+        {/* ===================== MODAL ELIMINAR ===================== */}
         <AnimatePresence>
           {modal === "eliminar" && selected && (
             <motion.div
-              className="modal fixed w-full h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">Confirmar eliminación</h3>
-                <p className="text-gray-600 mb-4">
-                  ¿Seguro que deseas eliminar el evento <span className="font-bold">{selected.nombre_evento}</span>?
+                <h3 className="text-xl font-bold text-red-600 mb-4 text-center">
+                  Eliminar Evento
+                </h3>
+
+                <p className="text-gray-700 text-center">
+                  ¿Está seguro de eliminar el evento{" "}
+                  <span className="font-bold">{selected.nombre_evento}</span>?
+                  <br />
+                  <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
                 </p>
-                <div className="flex justify-end gap-[10px] mt-[20px]">
-                  <button onClick={closeModal} className="btn bg-gray-200">
+
+                <div className="flex justify-center gap-3 pt-6">
+                  <button
+                    onClick={closeModal}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                  >
                     Cancelar
                   </button>
-                  <button onClick={handleDelete} className="btn bg-red-100 text-red-700">
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                  >
                     Eliminar
                   </button>
                 </div>

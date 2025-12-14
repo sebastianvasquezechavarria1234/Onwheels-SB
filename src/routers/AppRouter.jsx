@@ -4,14 +4,15 @@ import { AnimatePresence, motion } from "framer-motion"
 import ProtectedRoute from "./ProtectedRoute"
 
 // pages landing
-import { Home } from "../feactures/landing/pages/Home"
-import { Store } from "../feactures/landing/pages/Store"
-import Class from "../feactures/landing/pages/Class"
-import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions"
-import { About } from "../feactures/landing/pages/About"
-import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart"
-import { ProductDetails } from "../feactures/landing/pages/ProductDetails"
 
+import { Home } from "../feactures/landing/pages/Home";
+import { Store } from "../feactures/landing/pages/Store";
+import Class from "../feactures/landing/pages/Class";
+import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
+import { About } from "../feactures/landing/pages/About";
+import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
+import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
+ 
 // auth
 import Login from "../feactures/Auth/pages/Login"
 import Register from "../feactures/Auth/pages/Register"
@@ -69,8 +70,20 @@ import { UsersEvents } from "../feactures/landing/users/pages/UsersEvents"
 import { UsersAbaut } from "../feactures/landing/users/pages/UsersAbaut"
 
 // Auth extras
-import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword"
-import { ResetPassword } from "../feactures/Auth/pages/ResetPassword"
+ 
+import { RecoverPassword } from "../feactures/Auth/pages/RecoverPassword";
+import { ResetPassword } from "../feactures/Auth/pages/ResetPassword";
+import StudentOrderConfirm from "../feactures/landing/student/pages/StudentOrderConfirm";
+import { InstructorOrderConfirm } from "../feactures/landing/instructor/pages/InstructorOrderConfirm";
+import { InstructorCheckout } from "../feactures/landing/instructor/pages/InstructorCheckout";
+import { UsersShoppingCart } from "../feactures/landing/users/pages/UsersShoppingCart";
+import { UsersCheckout } from "../feactures/landing/users/pages/UsersCheckout";
+import UsersOrderConfirm from "../feactures/landing/users/pages/UsersOrderConfirm";
+import { UsersSetting } from "../feactures/dashboards/users/pages/UsersSetting";
+import { UsersMyPurchases } from "../feactures/dashboards/users/pages/UsersMyPurchases";
+import UsersPreinscriptions from "../feactures/landing/users/pages/UsersPreinscriptions";
+import EnviarCorreosMasivos from "../feactures/dashboards/admin/pages/eventos/correos/CorreosMasivos";
+
 
 // Landing Admin
 import { AdminHome } from "../feactures/landing/admin/pages/AdminHome"
@@ -135,14 +148,15 @@ const AppRouter = () => {
         <Route path="recover" element={<RecoverPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
 
-        <Route index element={withAnimation(Home)} />
-        <Route path="store" element={withAnimation(Store)} /> 
-        <Route path="class" element={withAnimation(Class)} />
-        <Route path="events" element={withAnimation(Eventos)} />
-        <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
-        <Route path="about" element={withAnimation(About)} />
-        <Route path="productDetails" element={withAnimation(ProductDetails)} />
-        <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
+
+          <Route index element={withAnimation(Home)} />
+          <Route path="store" element={withAnimation(Store)} />
+          <Route path="events" element={withAnimation(Eventos)} />
+          <Route path="training" element={withAnimation(Class)} />
+          <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
+          <Route path="about" element={withAnimation(About)} />
+          <Route path="store/product/:id" element={withAnimation(ProductDetails)} />
+          <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
 
         {/* Auth */}
         <Route path="login" element={<Login />} />
@@ -176,6 +190,10 @@ const AppRouter = () => {
             <Route path="admin/estudiantes" element={<Estudiantes/>} />
             <Route path="admin/admins" element={<Administradores />} />
             <Route path="admin/ventas" element={<Ventas/>} />
+            <Route path="admin/correos-masivos" element={<EnviarCorreosMasivos/>} />
+
+
+
 
 
           </Route>

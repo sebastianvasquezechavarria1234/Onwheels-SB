@@ -18,7 +18,7 @@ export const createPatrocinador = async (patrocinador) => {
   return await res.json();
 };
 
-// ✅ Editar patrocinador
+// ✅ Editar
 export const updatePatrocinador = async (id, patrocinador) => {
   const res = await fetch(`${API_URL}/${id}`, {
     method: "PUT",
@@ -29,7 +29,7 @@ export const updatePatrocinador = async (id, patrocinador) => {
   return await res.json();
 };
 
-// ✅ Eliminar patrocinador
+// ✅ Eliminar
 export const deletePatrocinador = async (id) => {
   const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Error al eliminar patrocinador");

@@ -3,32 +3,18 @@ import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  getSedes,
-  createSede,
-  updateSede,
-  deleteSede,
-} from "../../services/sedesServices";
+  getCategorias,
+  createCategoria,
+  updateCategoria,
+  deleteCategoria,
+} from "../../services/categoriasService";
 
-export default function Sedes() {
-  const [sedes, setSedes] = useState([]);
+export default function CategoriaProductos() {
+  const [categorias, setCategorias] = useState([]);
   const [selected, setSelected] = useState(null);
   const [modalType, setModalType] = useState(null);
-  const [editForm, setEditForm] = useState({
-    nombre_sede: "",
-    direccion: "",
-    ciudad: "",
-    telefono: "", // ✅ corregido
-  });
-  const [addForm, setAddForm] = useState({
-    nombre_sede: "",
-    direccion: "",
-    ciudad: "",
-<<<<<<< HEAD
-    telefono_sede: "",
-=======
-    telefono: "", // ✅ corregido
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-  });
+  const [editForm, setEditForm] = useState({ nombre_categoria: "", descripcion: "" });
+  const [addForm, setAddForm] = useState({ nombre_categoria: "", descripcion: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -53,19 +39,19 @@ export default function Sedes() {
   }, []);
 
   useEffect(() => {
-    fetchSedes();
+    fetchCategorias();
   }, []);
 
-  const fetchSedes = async () => {
+  const fetchCategorias = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getSedes();
-      setSedes(Array.isArray(data) ? data : []);
+      const data = await getCategorias();
+      setCategorias(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error cargando sedes:", err);
-      setError("No se pudieron cargar las sedes.");
-      showNotification("Error al cargar sedes", "error");
+      console.error("Error cargando categorías:", err);
+      setError("No se pudieron cargar las categorías.");
+      showNotification("Error al cargar categorías", "error");
     } finally {
       setLoading(false);
     }
@@ -74,28 +60,13 @@ export default function Sedes() {
   const openModal = (type, item = null) => {
     setModalType(type);
     if (type === "add") {
-      setAddForm({
-        nombre_sede: "",
-        direccion: "",
-        ciudad: "",
-<<<<<<< HEAD
-        telefono_sede: "",
-=======
-        telefono: "", // ✅ corregido
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-      });
+      setAddForm({ nombre_categoria: "", descripcion: "" });
       setSelected(null);
     } else if (type === "edit" && item) {
       setSelected(item);
       setEditForm({
-        nombre_sede: item.nombre_sede || "",
-        direccion: item.direccion || "",
-        ciudad: item.ciudad || "",
-<<<<<<< HEAD
-        telefono_sede: item.telefono_sede || "",
-=======
-        telefono: item.telefono || "", // ✅ corregido
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
+        nombre_categoria: item.nombre_categoria || "",
+        descripcion: item.descripcion || "",
       });
     } else {
       setSelected(item);
@@ -119,88 +90,70 @@ export default function Sedes() {
 
   const saveAdd = async () => {
     const payload = {
-      nombre_sede: addForm.nombre_sede.trim(),
-      direccion: addForm.direccion.trim(),
-      ciudad: addForm.ciudad.trim(),
-<<<<<<< HEAD
-      telefono_sede: addForm.telefono_sede.trim(),
+      nombre_categoria: addForm.nombre_categoria.trim(),
+      descripcion: addForm.descripcion.trim(),
     };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono_sede) {
-=======
-      telefono: addForm.telefono.trim(), // ✅ corregido
-    };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-      showNotification("Todos los campos son obligatorios", "error");
+    if (!payload.nombre_categoria) {
+      showNotification("El nombre de la categoría es obligatorio", "error");
       return;
     }
-
     try {
-      const newSede = await createSede(payload);
-      setSedes((prev) => [newSede, ...prev]);
+      const newCategoria = await createCategoria(payload);
+      setCategorias((prev) => [newCategoria, ...prev]);
       closeModal();
-      showNotification("Sede creada con éxito");
+      showNotification("Categoría creada con éxito");
     } catch (err) {
       console.error(err);
-      showNotification("Error al crear la sede", "error");
+      showNotification("Error al crear la categoría", "error");
     }
   };
 
   const saveEdit = async () => {
     if (!selected) return closeModal();
     const payload = {
-      nombre_sede: editForm.nombre_sede.trim(),
-      direccion: editForm.direccion.trim(),
-      ciudad: editForm.ciudad.trim(),
-<<<<<<< HEAD
-      telefono_sede: editForm.telefono_sede.trim(),
+      nombre_categoria: editForm.nombre_categoria.trim(),
+      descripcion: editForm.descripcion.trim(),
     };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono_sede) {
-=======
-      telefono: editForm.telefono.trim(), // ✅ corregido
-    };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-      showNotification("Todos los campos son obligatorios", "error");
+    if (!payload.nombre_categoria) {
+      showNotification("El nombre de la categoría es obligatorio", "error");
       return;
     }
-
     try {
-      await updateSede(selected.id_sede, payload);
-      setSedes((prev) =>
-        prev.map((s) => (s.id_sede === selected.id_sede ? { ...s, ...payload } : s))
+      await updateCategoria(selected.id_categoria, payload);
+      setCategorias((prev) =>
+        prev.map((c) =>
+          c.id_categoria === selected.id_categoria ? { ...c, ...payload } : c
+        )
       );
       closeModal();
-      showNotification("Sede actualizada con éxito");
+      showNotification("Categoría actualizada con éxito");
     } catch (err) {
       console.error(err);
-      showNotification("Error al actualizar la sede", "error");
+      showNotification("Error al actualizar la categoría", "error");
     }
   };
 
   const confirmDelete = async () => {
     if (!selected) return;
     try {
-      await deleteSede(selected.id_sede);
-      setSedes((prev) => prev.filter((s) => s.id_sede !== selected.id_sede));
+      await deleteCategoria(selected.id_categoria);
+      setCategorias((prev) =>
+        prev.filter((c) => c.id_categoria !== selected.id_categoria)
+      );
       closeModal();
-      showNotification("Sede eliminada con éxito");
+      showNotification("Categoría eliminada con éxito");
     } catch (err) {
       console.error(err);
-      showNotification("Error al eliminar la sede", "error");
+      showNotification("Error al eliminar la categoría", "error");
     }
   };
 
-  // Filtrado por nombre
-  const sedesFiltradas = sedes.filter((s) =>
-    s.nombre_sede?.toLowerCase().includes(search.toLowerCase())
+  // Filtrado y paginación
+  const categoriasFiltradas = categorias.filter((c) =>
+    c.nombre_categoria?.toLowerCase().includes(search.toLowerCase())
   );
-  const totalPages = Math.max(1, Math.ceil(sedesFiltradas.length / itemsPerPage));
-  const currentItems = sedesFiltradas.slice(
+  const totalPages = Math.max(1, Math.ceil(categoriasFiltradas.length / itemsPerPage));
+  const currentItems = categoriasFiltradas.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -213,7 +166,7 @@ export default function Sedes() {
     <Layout>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Sedes</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Categorías de Productos</h2>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="relative w-full md:w-96">
@@ -228,7 +181,7 @@ export default function Sedes() {
                 }}
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 type="text"
-                placeholder="Buscar sede (ej: La 70)"
+                placeholder="Buscar categoría (ej: Electrónica)"
               />
             </div>
             <button
@@ -236,79 +189,76 @@ export default function Sedes() {
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
               <Plus size={18} />
-              Registrar Nueva Sede
+              Añadir Categoría
             </button>
           </div>
 
-          <div className="p-[30px]">
-            {/* Encabezados estilo Roles */}
-            <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-              <p className="w-[10%] font-bold opacity-80">ID</p>
-              <p className="w-[25%] font-bold opacity-80">Nombre</p>
-              <p className="w-[30%] font-bold opacity-80">Dirección</p>
-              <p className="w-[15%] font-bold opacity-80">Ciudad</p>
-              <p className="w-[10%] font-bold opacity-80">Teléfono</p>
-              <p className="w-[15%] font-bold opacity-80">Acciones</p>
-            </article>
-
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-gray-600">
-                <thead className="">
-                  <tr><th className="hidden" /></tr>
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-3 w-1/3">Nombre</th>
+                    <th className="px-6 py-3 w-2/3">Descripción</th>
+                    <th className="px-6 py-3 w-1/6">Acciones</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-10 italic text-gray-500">
-                        Cargando sedes...
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
+                        Cargando categorías...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-8 text-center text-red-600">
+                        {error}
                       </td>
                     </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-10 italic text-red-700">
-                        No hay sedes registradas
+                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500 italic">
+                        No se encontraron categorías.
                       </td>
                     </tr>
                   ) : (
-                    currentItems.map((s) => (
-                      <tr key={s.id_sede} className="py-[18px] border-b border-black/20 flex items-center">
-                        <td className="px-6 py-[18px] w-[10%]">{s.id_sede}</td>
-                        <td className="px-6 py-[18px] w-[25%] line-clamp-1">{s.nombre_sede}</td>
-                        <td className="px-6 py-[18px] w-[30%] line-clamp-2">{s.direccion}</td>
-                        <td className="px-6 py-[18px] w-[15%]">{s.ciudad}</td>
-<<<<<<< HEAD
-                        <td className="px-6 py-[18px] w-[10%]">{s.telefono_sede}</td>
-=======
-                        <td className="px-6 py-[18px] w-[10%]">{s.telefono}</td> {/* ✅ corregido */}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-
-                        <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
-                          <motion.button
-                            onClick={() => openModal("details", s)}
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-[45px] h-[45px] bg-green-100 text-green-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-green-300 shadow-md"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </motion.button>
-
-                          <motion.button
-                            onClick={() => openModal("edit", s)}
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </motion.button>
-
-                          <motion.button
-                            onClick={() => openModal("delete", s)}
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </motion.button>
+                    currentItems.map((categoria) => (
+                      <tr key={categoria.id_categoria} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 font-medium">{categoria.nombre_categoria}</td>
+                        <td className="px-6 py-4 text-gray-600 line-clamp-2">
+                          {categoria.descripcion || "— Sin descripción —"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("details", categoria)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("edit", categoria)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("delete", categoria)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -318,7 +268,7 @@ export default function Sedes() {
             </div>
           </div>
 
-          {sedesFiltradas.length > 0 && (
+          {categoriasFiltradas.length > 0 && (
             <div className="flex justify-center items-center gap-2 mt-6 py-4">
               <button
                 disabled={currentPage === 1}
@@ -393,12 +343,12 @@ export default function Sedes() {
 
                 <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
                   {modalType === "add"
-                    ? "Registrar Nueva Sede"
+                    ? "Añadir Categoría"
                     : modalType === "edit"
-                    ? "Editar Sede"
+                    ? "Editar Categoría"
                     : modalType === "details"
-                    ? "Detalles de la Sede"
-                    : "Eliminar Sede"}
+                    ? "Detalles de la Categoría"
+                    : "Eliminar Categoría"}
                 </h3>
 
                 {modalType === "add" && (
@@ -406,46 +356,22 @@ export default function Sedes() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                       <input
-                        name="nombre_sede"
-                        value={addForm.nombre_sede}
+                        name="nombre_categoria"
+                        value={addForm.nombre_categoria}
                         onChange={handleAddChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Skatepark La 70"
+                        placeholder="Ej: Electrónica"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
-                      <input
-                        name="direccion"
-                        value={addForm.direccion}
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={addForm.descripcion}
                         onChange={handleAddChange}
+                        rows="3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Calle 10 #45-20"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
-                      <input
-                        name="ciudad"
-                        value={addForm.ciudad}
-                        onChange={handleAddChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Medellín"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
-                      <input
-<<<<<<< HEAD
-                        name="telefono_sede"
-                        value={addForm.telefono_sede}
-=======
-                        name="telefono" // ✅ corregido
-                        value={addForm.telefono}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-                        onChange={handleAddChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="+57 300 123 4567"
+                        placeholder="Breve descripción de la categoría"
                       />
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
@@ -472,46 +398,22 @@ export default function Sedes() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                       <input
-                        name="nombre_sede"
-                        value={editForm.nombre_sede}
+                        name="nombre_categoria"
+                        value={editForm.nombre_categoria}
                         onChange={handleEditChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Skatepark La 70"
+                        placeholder="Ej: Ropa"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
-                      <input
-                        name="direccion"
-                        value={editForm.direccion}
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={editForm.descripcion}
                         onChange={handleEditChange}
+                        rows="3"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Calle 10 #45-20"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
-                      <input
-                        name="ciudad"
-                        value={editForm.ciudad}
-                        onChange={handleEditChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Medellín"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
-                      <input
-<<<<<<< HEAD
-                        name="telefono_sede"
-                        value={editForm.telefono_sede}
-=======
-                        name="telefono" // ✅ corregido
-                        value={editForm.telefono}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-                        onChange={handleEditChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="+57 300 123 4567"
+                        placeholder="Actualice la descripción"
                       />
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
@@ -537,23 +439,11 @@ export default function Sedes() {
                   <div className="space-y-3 text-gray-700">
                     <div className="flex justify-between">
                       <span className="font-medium">Nombre:</span>
-                      <span>{selected.nombre_sede}</span>
+                      <span>{selected.nombre_categoria}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Dirección:</span>
-                      <span className="text-right">{selected.direccion}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Ciudad:</span>
-                      <span>{selected.ciudad}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Teléfono:</span>
-<<<<<<< HEAD
-                      <span>{selected.telefono_sede}</span>
-=======
-                      <span>{selected.telefono}</span> {/* ✅ corregido */}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
+                      <span className="font-medium">Descripción:</span>
+                      <span className="text-right">{selected.descripcion || "— Sin descripción —"}</span>
                     </div>
                     <div className="flex justify-center pt-4">
                       <button
@@ -569,8 +459,8 @@ export default function Sedes() {
                 {modalType === "delete" && selected && (
                   <div className="text-center space-y-4">
                     <p className="text-gray-700">
-                      ¿Está seguro de eliminar la sede{" "}
-                      <span className="font-bold text-red-600">{selected.nombre_sede}</span>?
+                      ¿Está seguro de eliminar la categoría{" "}
+                      <span className="font-bold text-red-600">{selected.nombre_categoria}</span>?
                       <br />
                       <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
                     </p>

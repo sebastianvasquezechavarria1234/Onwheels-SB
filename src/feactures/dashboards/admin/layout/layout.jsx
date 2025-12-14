@@ -16,6 +16,7 @@ import {
   UserPlus,
   Users,
   LogOutIcon,
+  Mails,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -300,6 +301,7 @@ export const Layout = ({ children }) => {
                       <Calendar size={20} strokeWidth={1.5} />
                     </BtnSideBar>
                   </motion.li>
+
                   <motion.li variants={itemVariants}>
                     <BtnSideBar
                       title="Categoria de eventos"
@@ -312,6 +314,20 @@ export const Layout = ({ children }) => {
                       />
                     </BtnSideBar>
                   </motion.li>
+
+                   <motion.li variants={itemVariants}>
+                    <BtnSideBar
+                      title="Correos Masivos"
+                      link="../admin/correos-masivos"
+                    >
+                      <Mails
+                        size={20}
+                        strokeWidth={1.8}
+                        className="text-black/80"
+                      />
+                    </BtnSideBar>
+                  </motion.li>
+
                   <motion.li variants={itemVariants}>
                     <BtnSideBar title="Sedes" link="../admin/sedes">
                       <MapPinHouse
