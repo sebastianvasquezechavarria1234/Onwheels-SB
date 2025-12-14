@@ -13,18 +13,24 @@ export default function Sedes() {
   const [sedes, setSedes] = useState([]);
   const [selected, setSelected] = useState(null);
   const [modalType, setModalType] = useState(null);
+  
+  // Forms separate due to implementation structure
   const [editForm, setEditForm] = useState({
     nombre_sede: "",
     direccion: "",
     ciudad: "",
-    telefono: "", // ✅ corregido
+    telefono: "", 
   });
   const [addForm, setAddForm] = useState({
     nombre_sede: "",
     direccion: "",
     ciudad: "",
-    telefono: "", // ✅ corregido
+    telefono: "", 
   });
+
+  // Validation State
+  const [formErrors, setFormErrors] = useState({});
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -37,6 +43,47 @@ export default function Sedes() {
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+  };
+
+  // ===================== VALIDACIONES =====================
+  const validateField = (name, value, isAdd = true) => {
+    let error = "";
+    
+    // Si estamos editando y el campo no pertenece al form de add, etc.
+    // Simplificación: validamos el valor per se.
+
+    if (name === "nombre_sede") {
+        if (!value || !value.trim()) error = "El nombre es obligatorio";
+        else if (value.trim().length < 3) error = "El nombre debe tener al menos 3 caracteres";
+    }
+
+    if (name === "direccion") {
+        if (!value || !value.trim()) error = "La dirección es obligatoria";
+        else if (value.trim().length < 5) error = "Dirección muy corta";
+        else if (value.trim().length > 100) error = "Dirección demasiado larga";
+    }
+
+    if (name === "ciudad") {
+        if (!value || !value.trim()) error = "La ciudad es obligatoria";
+        else if (!/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/.test(value.trim())) error = "Ciudad inválida (solo letras)";
+    }
+
+    if (name === "telefono") {
+        if (!value || !value.trim()) error = "El teléfono es obligatorio";
+        else if (!/^[0-9+\s()-]{7,20}$/.test(value.trim())) error = "Teléfono inválido";
+    }
+
+    // Actualizamos errores
+    setFormErrors((prev) => ({ ...prev, [name]: error }));
+    return !error;
+  };
+
+  const validateAll = (form) => {
+      const ok1 = validateField("nombre_sede", form.nombre_sede);
+      const ok2 = validateField("direccion", form.direccion);
+      const ok3 = validateField("ciudad", form.ciudad);
+      const ok4 = validateField("telefono", form.telefono);
+      return ok1 && ok2 && ok3 && ok4;
   };
 
   // Cerrar modal con Escape
@@ -69,12 +116,13 @@ export default function Sedes() {
 
   const openModal = (type, item = null) => {
     setModalType(type);
+    setFormErrors({}); // Reset errors
     if (type === "add") {
       setAddForm({
         nombre_sede: "",
         direccion: "",
         ciudad: "",
-        telefono: "", // ✅ corregido
+        telefono: "", 
       });
       setSelected(null);
     } else if (type === "edit" && item) {
@@ -83,7 +131,7 @@ export default function Sedes() {
         nombre_sede: item.nombre_sede || "",
         direccion: item.direccion || "",
         ciudad: item.ciudad || "",
-        telefono: item.telefono || "", // ✅ corregido
+        telefono: item.telefono || "", 
       });
     } else {
       setSelected(item);
@@ -93,30 +141,33 @@ export default function Sedes() {
   const closeModal = () => {
     setSelected(null);
     setModalType(null);
+    setFormErrors({});
   };
 
   const handleAddChange = (e) => {
     const { name, value } = e.target;
     setAddForm((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value, true);
   };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value, false);
   };
 
   const saveAdd = async () => {
+    if (!validateAll(addForm)) {
+         showNotification("Por favor corrija los errores", "error");
+         return;
+    }
+
     const payload = {
       nombre_sede: addForm.nombre_sede.trim(),
       direccion: addForm.direccion.trim(),
       ciudad: addForm.ciudad.trim(),
-      telefono: addForm.telefono.trim(), // ✅ corregido
+      telefono: addForm.telefono.trim(),
     };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
-      showNotification("Todos los campos son obligatorios", "error");
-      return;
-    }
 
     try {
       const newSede = await createSede(payload);
@@ -131,17 +182,18 @@ export default function Sedes() {
 
   const saveEdit = async () => {
     if (!selected) return closeModal();
+    
+    if (!validateAll(editForm)) {
+         showNotification("Por favor corrija los errores", "error");
+         return;
+    }
+
     const payload = {
       nombre_sede: editForm.nombre_sede.trim(),
       direccion: editForm.direccion.trim(),
       ciudad: editForm.ciudad.trim(),
-      telefono: editForm.telefono.trim(), // ✅ corregido
+      telefono: editForm.telefono.trim(), 
     };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
-      showNotification("Todos los campos son obligatorios", "error");
-      return;
-    }
 
     try {
       await updateSede(selected.id_sede, payload);
@@ -250,7 +302,7 @@ export default function Sedes() {
                         <td className="px-6 py-[18px] w-[25%] line-clamp-1">{s.nombre_sede}</td>
                         <td className="px-6 py-[18px] w-[30%] line-clamp-2">{s.direccion}</td>
                         <td className="px-6 py-[18px] w-[15%]">{s.ciudad}</td>
-                        <td className="px-6 py-[18px] w-[10%]">{s.telefono}</td> {/* ✅ corregido */}
+                        <td className="px-6 py-[18px] w-[10%]">{s.telefono}</td>
 
                         <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
                           <motion.button
@@ -379,9 +431,10 @@ export default function Sedes() {
                         name="nombre_sede"
                         value={addForm.nombre_sede}
                         onChange={handleAddChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.nombre_sede ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="Ej: Skatepark La 70"
                       />
+                      {formErrors.nombre_sede && <p className="text-red-500 text-xs mt-1">{formErrors.nombre_sede}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
@@ -389,9 +442,10 @@ export default function Sedes() {
                         name="direccion"
                         value={addForm.direccion}
                         onChange={handleAddChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.direccion ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="Calle 10 #45-20"
                       />
+                      {formErrors.direccion && <p className="text-red-500 text-xs mt-1">{formErrors.direccion}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
@@ -399,19 +453,21 @@ export default function Sedes() {
                         name="ciudad"
                         value={addForm.ciudad}
                         onChange={handleAddChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.ciudad ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="Medellín"
                       />
+                      {formErrors.ciudad && <p className="text-red-500 text-xs mt-1">{formErrors.ciudad}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
                       <input
-                        name="telefono" // ✅ corregido
+                        name="telefono" 
                         value={addForm.telefono}
                         onChange={handleAddChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.telefono ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="+57 300 123 4567"
                       />
+                      {formErrors.telefono && <p className="text-red-500 text-xs mt-1">{formErrors.telefono}</p>}
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <button
@@ -440,9 +496,10 @@ export default function Sedes() {
                         name="nombre_sede"
                         value={editForm.nombre_sede}
                         onChange={handleEditChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.nombre_sede ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="Ej: Skatepark La 70"
                       />
+                      {formErrors.nombre_sede && <p className="text-red-500 text-xs mt-1">{formErrors.nombre_sede}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
@@ -450,9 +507,10 @@ export default function Sedes() {
                         name="direccion"
                         value={editForm.direccion}
                         onChange={handleEditChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.direccion ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="Calle 10 #45-20"
                       />
+                      {formErrors.direccion && <p className="text-red-500 text-xs mt-1">{formErrors.direccion}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
@@ -460,19 +518,21 @@ export default function Sedes() {
                         name="ciudad"
                         value={editForm.ciudad}
                         onChange={handleEditChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.ciudad ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="Medellín"
                       />
+                      {formErrors.ciudad && <p className="text-red-500 text-xs mt-1">{formErrors.ciudad}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
                       <input
-                        name="telefono" // ✅ corregido
+                        name="telefono" 
                         value={editForm.telefono}
                         onChange={handleEditChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.telefono ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
                         placeholder="+57 300 123 4567"
                       />
+                      {formErrors.telefono && <p className="text-red-500 text-xs mt-1">{formErrors.telefono}</p>}
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                       <button
@@ -509,7 +569,7 @@ export default function Sedes() {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Teléfono:</span>
-                      <span>{selected.telefono}</span> {/* ✅ corregido */}
+                      <span>{selected.telefono}</span> 
                     </div>
                     <div className="flex justify-center pt-4">
                       <button

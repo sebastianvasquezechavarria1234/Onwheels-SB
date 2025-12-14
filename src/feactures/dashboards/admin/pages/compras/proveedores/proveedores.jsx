@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, X } from "lucide-react";
 import { Layout } from "../../../layout/layout";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -118,29 +118,26 @@ export default function Proveedores() {
           Compras &gt; Proveedores
         </h2>
 
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-          <form action="" className="flex gap-[10px]">
-            <label className="mb-[20px] block">
-              <p className="">Buscar proveedores:</p>
-              <div className="relative">
-                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                <input
-                  type="text"
-                  value={busqueda}
-                  onChange={(e) => { setBusqueda(e.target.value); setCurrentPage(1); }}
-                  placeholder="Ej: 900123456, Nombre Proveedor"
-                  className="input pl-[50px]!"
-                />
-              </div>
-            </label>
-          </form>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 mt-[120px]">
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+              <Search size={18} />
+            </div>
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => { setBusqueda(e.target.value); setCurrentPage(1); }}
+              placeholder="Ej: 900123456, Nombre Proveedor"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
+          </div>
 
           <div>
             <button
               onClick={() => openModal("crear")}
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus className="h-4 w-4" />
+              <Plus size={18} />
               Registrar nuevo proveedor
             </button>
           </div>
@@ -182,28 +179,27 @@ export default function Proveedores() {
                       <td className="px-6 py-[18px] w-[15%]">{prov.telefono}</td>
                       <td className="px-6 py-[18px] w-[15%] line-clamp-1">{prov.direccion}</td>
 
-                      <td className="px-6 py-[18px] w-[10%] flex gap-[10px] items-center justify-center">
-                        <motion.button
-                          onClick={() => openModal("editar", prov)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 20h9" />
-                          </svg>
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("eliminar", prov)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M3 6h18" />
-                          </svg>
-                        </motion.button>
+                      <td className="px-6 py-[18px] w-[10%]">
+                        <div className="flex gap-2 items-center justify-center">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => openModal("editar", prov)}
+                            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                            title="Editar"
+                          >
+                            <Pencil size={16} />
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => openModal("eliminar", prov)}
+                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </motion.button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -238,22 +234,26 @@ export default function Proveedores() {
         <AnimatePresence>
           {(modal === "crear" || modal === "editar") && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
+                  <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
                 <h3 className="font-primary text-center mb-[30px]">{modal === "crear" ? "Registrar Proveedor" : "Editar Proveedor"}</h3>
 
                 <form onSubmit={handleGuardar} className="grid grid-cols-2 gap-[16px]">
@@ -315,8 +315,8 @@ export default function Proveedores() {
                   </label>
 
                   <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
-                    <button type="button" onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
-                    <button type="submit" className="btn bg-blue-100 text-blue-700">Guardar</button>
+                    <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Guardar</button>
                   </div>
                 </form>
               </motion.div>
@@ -325,27 +325,25 @@ export default function Proveedores() {
 
           {modal === "eliminar" && selected && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="font-primary text-center mb-[30px] text-red-600">Eliminar Proveedor</h3>
                 <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar al proveedor <strong>{selected?.nombre_proveedor}</strong>?</p>
                 <div className="flex justify-end gap-[10px] mt-[20px]">
-                  <button onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
-                  <button onClick={handleEliminar} className="btn bg-red-100 text-red-700">Eliminar</button>
+                  <button onClick={closeModal} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                  <button onClick={handleEliminar} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Eliminar</button>
                 </div>
               </motion.div>
             </motion.div>

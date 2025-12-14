@@ -46,29 +46,29 @@ export default function Eventos() {
   };
 
   // ===================== VALIDACIONES =====================
-  const validateField = (name, value) => {
+  // ===================== VALIDACIONES MEJORADAS =====================
+  const validateField = (name, value, currentForm) => {
+    // Usamos currentForm para validaciones cruzadas (ej: hora inicio vs fin)
+    // Si no se pasa, usamos el estado 'form' actual
+    const formData = currentForm || form; 
     let error = "";
 
     if (name === "nombre_evento") {
-      if (!value.trim()) error = "El nombre es obligatorio";
-      else if (value.trim().length < 2) error = "Debe tener mínimo 2 caracteres";
-      else if (value.trim().length > 200) error = "Máximo 200 caracteres";
-      else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s0-9&.,\-]+$/.test(value.trim())) error = "Nombre inválido";
-    }
-
-    if (name === "id_categoria_evento") {
-      if (!value) error = "Seleccione una categoría";
-    }
-
-    if (name === "id_patrocinador" && value) {
-      const idNum = Number(value);
-      if (isNaN(idNum) || !patrocinadores.some(p => p.id_patrocinador === idNum)) {
-        error = "Patrocinador no válido";
+      if (!value || !value.trim()) error = "El nombre es obligatorio";
+      else if (value.trim().length < 5) error = "Mínimo 5 caracteres para mayor descriptividad";
+      else if (value.trim().length > 150) error = "Máximo 150 caracteres";
+      // Regex más flexible: permite letras, números, espacios, guiones, puntos y comas.
+      else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9\s.,&:-]+$/.test(value.trim())) {
+        error = "Caracteres no permitidos (solo letras, números y signos básicos)";
       }
     }
 
+    if (name === "id_categoria_evento") {
+      if (!value) error = "Seleccione una categoría válida";
+    }
+
     if (name === "id_sede") {
-      if (!value) error = "Seleccione una sede";
+      if (!value) error = "Seleccione una sede donde se realizará el evento";
     }
 
     if (name === "fecha_evento") {
@@ -76,31 +76,42 @@ export default function Eventos() {
       else {
         const date = new Date(value);
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (date < today) error = "La fecha no puede ser anterior a hoy";
+        today.setHours(0, 0, 0, 0); // Ignorar hora actual
+        // Permitimos eventos de hoy en adelante
+        // Ajuste zona horaria simple: comparamos timestamps de medianoche local
+        const dateTimestamp = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        const todayTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+
+        if (dateTimestamp < todayTimestamp) {
+            error = "La fecha no puede ser anterior a hoy";
+        }
       }
     }
 
-    if (name === "hora_inicio" && value) {
-      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      if (!timeRegex.test(value)) error = "Formato de hora inválido (HH:MM)";
+    if (name === "hora_inicio") {
+      if (!value) error = "La hora de inicio es obligatoria";
     }
 
-    if (name === "hora_aproximada_fin" && value) {
-      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      if (!timeRegex.test(value)) error = "Formato de hora inválido (HH:MM)";
+    if (name === "hora_aproximada_fin") {
+       if (!value) error = "La hora de fin es obligatoria";
+       else if (formData.hora_inicio && value <= formData.hora_inicio) {
+         error = "La hora de fin debe ser posterior a la de inicio";
+       }
     }
 
-    if (name === "descripcion" && value && value.length > 500) {
-      error = "Máximo 500 caracteres";
+    if (name === "descripcion") {
+        if (!value || value.trim().length < 10) error = "La descripción debe tener al menos 10 caracteres";
+        if (value && value.length > 500) error = "Máximo 500 caracteres";
     }
 
-    if (name === "imagen" && value.trim() !== "") {
-      try {
-        new URL(value.trim());
-      } catch {
-        error = "URL inválida";
-      }
+    if (name === "imagen") {
+        if (value && value.trim() !== "") {
+            try {
+                new URL(value.trim());
+            } catch {
+                error = "URL de imagen inválida (debe comenzar con http/https)";
+            }
+        }
     }
 
     setFormErrors((prev) => ({ ...prev, [name]: error }));
@@ -108,11 +119,15 @@ export default function Eventos() {
   };
 
   const validateAll = () => {
-    const ok_nombre = validateField("nombre_evento", form.nombre_evento);
-    const ok_categoria = validateField("id_categoria_evento", form.id_categoria_evento);
-    const ok_sede = validateField("id_sede", form.id_sede);
-    const ok_fecha = validateField("fecha_evento", form.fecha_evento);
-    return ok_nombre && ok_categoria && ok_sede && ok_fecha;
+    const fields = ["nombre_evento", "id_categoria_evento", "id_sede", "fecha_evento", "hora_inicio", "hora_aproximada_fin", "descripcion", "imagen"];
+    let isValid = true;
+    
+    fields.forEach(field => {
+      const isFieldValid = validateField(field, form[field]);
+      if (!isFieldValid) isValid = false;
+    });
+
+    return isValid;
   };
 
   // ===================== FETCH DATA =====================
@@ -188,8 +203,9 @@ export default function Eventos() {
       setForm((prev) => ({ ...prev, [name]: numericValue }));
       setTimeout(() => validateField(name, numericValue), 0);
     } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-      validateField(name, value);
+      const nextForm = { ...form, [name]: value };
+      setForm(nextForm);
+      validateField(name, value, nextForm);
     }
   };
 

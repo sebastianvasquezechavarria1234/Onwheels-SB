@@ -1,16 +1,54 @@
-import React from "react";
-import { Card } from "./Card";
+import React, { useEffect, useState } from "react";
+import { Card as ProductCard } from "../shop/Card"; // Reutilizamos tarjeta de tienda
+import { Card as GenericCard } from "./Card"; // Tarjeta genérica para eventos
 import { BtnLinkIcon } from "../BtnLinkIcon";
 import { ArrowRight, NotebookPen } from "lucide-react";
 import { BtnLink } from "../BtnLink";
+import { Link } from "react-router-dom";
 
 export const Grid = () => {
-  // Lista de videos con descripción
+  const [products, setProducts] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Lista de videos con descripción (Estática por ahora)
   const videos = [
     { src: "/vd_landing1.mp4", desc: "Reel 1: Skate en el parque" },
     { src: "/vd_landing2.mp4", desc: "Reel 2: Trucos urbanos" },
     { src: "/vd_landing3.mp4", desc: "Reel 3: Competencia local" },
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            // 1. Fetch Productos (Traemos todos y cortamos, o idealmente un endpoint 'featured')
+            const resProd = await fetch("http://localhost:3000/api/productos");
+            if (resProd.ok) {
+                const dataProd = await resProd.json();
+                setProducts(dataProd.slice(0, 3)); // Solo 3
+            }
+
+            // 2. Fetch Eventos Futuros
+            const resEvents = await fetch("http://localhost:3000/api/eventos/futuros");
+            if (resEvents.ok) {
+                const dataEvents = await resEvents.json();
+                setEvents(dataEvents.slice(0, 3));
+            } else {
+                // Fallback si falla futuros, intentar normales
+                const resAll = await fetch("http://localhost:3000/api/eventos");
+                 if (resAll.ok) {
+                    const dataAll = await resAll.json();
+                    setEvents(dataAll.slice(0, 3));
+                 }
+            }
+        } catch (error) {
+            console.error("Error cargando datos home:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchData();
+  }, []);
 
   return (
     <>
@@ -26,33 +64,16 @@ export const Grid = () => {
             <span className="opacity-70 font-primary"> sobre ruedas...</span>
           </h3>
           <div className="flex">
-            <BtnLink title={"Ver más"} style={"text-blue-800 "} />
+            <BtnLink title={"Ver más"} link="/store" style={"text-blue-800 "} />
             <ArrowRight strokeWidth={1} className="text-blue-700" />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px] ">
-          <Card
-            styleImage="scale-[0.7] group-hover:scale-[0.8]!"
-            img="./bg_productosL.jpg"
-            descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
-            text="Camiseta para hombre"
-            dato="$ 20.000"
-          />
-          <Card
-            styleImage="scale-[0.7] group-hover:scale-[0.8]!"
-            img="./bg_produstosL2.jpg"
-            descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
-            text="Camiseta para hombre"
-            dato="$ 20.000"
-          />
-          <Card
-            styleImage="scale-[0.7] group-hover:scale-[0.8]!"
-            img="./bg_productosL.jpg"
-            descripcion="Lorem ipsum, dolor sit amet consectetur adipisicing elit."
-            text="Camiseta para hombre"
-            dato="$ 20.000"
-          />
+           {loading ? <p>Cargando productos...</p> : products.map(p => (
+               <ProductCard key={p.id_producto} product={p} />
+           ))}
+           {!loading && products.length === 0 && <p>No hay productos destacados.</p>}
         </div>
       </section>
 
@@ -65,29 +86,22 @@ export const Grid = () => {
               <span className="font-primary"> eventos</span>
             </h3>
             <div className="flex gap-[5px]">
-              <BtnLink title={"Ver más"} style="text-blue-800" />
+              <BtnLink title={"Ver más"} link="/events" style="text-blue-800" />
               <ArrowRight strokeWidth={1} className="text-blue-700" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px]">
-            <Card
-              img="./bg_eventosL.jpg"
-              descripcion="Evento de skateboard en la ciudad de la eterna primavera"
-              text="Próximos eventos :"
-              dato="2/09/2025"
-            />
-            <Card
-              img="./bg_eventos.jpg"
-              descripcion="Evento de skateboard en la ciudad de la eterna primavera"
-              text="Próximos eventos :"
-              dato="2/09/2025"
-            />
-            <Card
-              img="./bg_eventosL3.jpg"
-              descripcion="Evento de skateboard en la ciudad de la eterna primavera"
-              text="Próximos eventos :"
-              dato="2/09/2025"
-            />
+             {loading ? <p>Cargando eventos...</p> : events.map(e => (
+                 <GenericCard 
+                    key={e.id_evento}
+                    img={e.imagen_evento || "./bg_eventosL.jpg"}
+                    text="Próximo evento"
+                    descripcion={e.descripcion_evento}
+                    dato={new Date(e.fecha_evento).toLocaleDateString()}
+                    styleImage=""
+                 />
+             ))}
+             {!loading && events.length === 0 && <p>No hay eventos próximos.</p>}
           </div>
         </div>
       </section>
@@ -106,7 +120,7 @@ export const Grid = () => {
             emocionantes y los mejores productos para que vivas al máximo tu
             pasión por el skateboarding.
           </h4>
-          <BtnLinkIcon title={"Preinscribete!"}>
+          <BtnLinkIcon title={"Preinscribete!"} link="/preinscriptions">
             <NotebookPen size={20} strokeWidth={2} color="white" />
           </BtnLinkIcon>
         </div>

@@ -1,6 +1,6 @@
 // src/feactures/dashboards/admin/pages/compras/productos/Products.styled.fixed.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search } from "lucide-react";
+import { X, Plus, Trash2, Search, Eye, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -403,26 +403,27 @@ export default function Productos() {
       <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
         <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Productos &gt; Gestión de Productos</h2>
 
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[40px] items-center">
-          <div className="w-1/3">
-            <div className="relative">
-              <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="input !pl-[50px] w-full p-2"
-              />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 mt-[40px]">
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+              <Search size={18} />
             </div>
+            <input
+              type="text"
+              placeholder="Buscar productos..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            />
           </div>
 
           <div>
             <button
               onClick={() => openProductModal(null)}
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus size={16} /> Registrar nuevo producto
+              <Plus size={18} />
+              Registrar nuevo producto
             </button>
           </div>
         </div>
@@ -457,10 +458,34 @@ export default function Productos() {
                     <td className="px-6 py-[18px] w-[6%]">{p.descuento_producto}%</td>
                     <td className="px-6 py-[18px] w-[6%]"><span className={`px-2 py-1 rounded-full text-xs font-medium ${p.estado === "activo" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{p.estado}</span></td>
                     <td className="px-6 py-[18px] w-[10%]">
-                      <div className="flex gap-[14px] items-center justify-center">
-                        <button onClick={() => openProductModal(p)} className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md">👁</button>
-                        <button onClick={() => openProductModal(p)} className="w-[45px] h-[45px] bg-yellow-100 text-yellow-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-yellow-200 shadow-md">✏️</button>
-                        <button onClick={() => handleDeleteProducto(p.id_producto)} className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md">🗑</button>
+                      <div className="flex gap-2 items-center justify-center">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => openProductModal(p)}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                          title="Ver detalles"
+                        >
+                          <Eye size={16} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => openProductModal(p)}
+                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                          title="Editar"
+                        >
+                          <Pencil size={16} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleDeleteProducto(p.id_producto)}
+                          className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={16} />
+                        </motion.button>
                       </div>
                     </td>
                   </tr>
@@ -498,9 +523,21 @@ export default function Productos() {
         {/* MODAL PRODUCTO (CREAR / EDITAR / VER) */}
         <AnimatePresence>
         {isProductModalOpen && (
-          <motion.div className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} role="dialog" aria-modal="true">
-            <div className="absolute inset-0" onClick={() => setIsProductModalOpen(false)} />
-            <motion.div className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-4xl max-h-[92vh] overflow-y-auto" initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}>
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsProductModalOpen(false)}
+          >
+            <motion.div
+              className="bg-white rounded-xl shadow-xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">{productForm.id_producto ? "Editar Producto" : "Crear Nuevo Producto"}</h2>
                 <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-600">

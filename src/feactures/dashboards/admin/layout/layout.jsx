@@ -123,7 +123,7 @@ export const Layout = ({ children }) => {
 
         <div className="sidebar flex-1 overflow-y-scroll pr-1">
           <li className="mt-[7px] mb-[13px]">
-            <BtnSideBar title="Dashboard" link="../admin/dashboard">
+            <BtnSideBar title="Dashboard" link="/admin/dashboard">
               <LayoutDashboard size={20} strokeWidth={1.5} />
             </BtnSideBar>
           </li>
@@ -161,13 +161,13 @@ export const Layout = ({ children }) => {
                   style={{ overflow: "hidden" }}
                 >
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Usuarios" link="../admin/users">
+                    <BtnSideBar title="Usuarios" link="/admin/users">
                       <Users size={20} strokeWidth={1.5} />
                     </BtnSideBar>
                   </motion.li>
 
            <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Adminsitradores" link="../admin/admins">
+                    <BtnSideBar title="Adminsitradores" link="/admin/admins">
                       <Shield
                         size={20}
                         strokeWidth={1.5}
@@ -177,7 +177,7 @@ export const Layout = ({ children }) => {
                   </motion.li>
 
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Roles" link="../admin/roles">
+                    <BtnSideBar title="Roles" link="/admin/roles">
                       <Shield
                         size={20}
                         strokeWidth={1.5}
@@ -225,14 +225,14 @@ export const Layout = ({ children }) => {
                   style={{ overflow: "hidden" }}
                 >
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Productos" link="../admin/products">
+                    <BtnSideBar title="Productos" link="/admin/products">
                       <Shirt size={20} strokeWidth={1.5} />
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
                     <BtnSideBar
                       title="Categoria de productos"
-                      link="../admin/categoriasProductos"
+                      link="/admin/categoriasProductos"
                     >
                       <ChartBarIncreasing
                         size={20}
@@ -242,7 +242,7 @@ export const Layout = ({ children }) => {
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Proveedores" link="../admin/proveedores">
+                    <BtnSideBar title="Proveedores" link="/admin/proveedores">
                       <Users
                         size={20}
                         strokeWidth={1.5}
@@ -251,7 +251,7 @@ export const Layout = ({ children }) => {
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Compras" link="../admin/compras">
+                    <BtnSideBar title="Compras" link="/admin/compras">
                       <ShoppingBag
                         size={20}
                         strokeWidth={1.5}
@@ -297,7 +297,7 @@ export const Layout = ({ children }) => {
                   style={{ overflow: "hidden" }}
                 >
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Eventos" link="../admin/eventos">
+                    <BtnSideBar title="Eventos" link="/admin/eventos">
                       <Calendar size={20} strokeWidth={1.5} />
                     </BtnSideBar>
                   </motion.li>
@@ -305,7 +305,7 @@ export const Layout = ({ children }) => {
                   <motion.li variants={itemVariants}>
                     <BtnSideBar
                       title="Categoria de eventos"
-                      link="../admin/categoriasEventos"
+                      link="/admin/categoriasEventos"
                     >
                       <ChartBarIncreasing
                         size={20}
@@ -318,7 +318,7 @@ export const Layout = ({ children }) => {
                    <motion.li variants={itemVariants}>
                     <BtnSideBar
                       title="Correos Masivos"
-                      link="../admin/correos-masivos"
+                      link="/admin/correos-masivos"
                     >
                       <Mails
                         size={20}
@@ -329,7 +329,7 @@ export const Layout = ({ children }) => {
                   </motion.li>
 
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Sedes" link="../admin/sedes">
+                    <BtnSideBar title="Sedes" link="/admin/sedes">
                       <MapPinHouse
                         size={20}
                         strokeWidth={1.5}
@@ -340,7 +340,7 @@ export const Layout = ({ children }) => {
                   <motion.li variants={itemVariants}>
                     <BtnSideBar
                       title="Patrocinadores"
-                      link="../admin/patrocinadores"
+                      link="/admin/patrocinadores"
                     >
                       <Users
                         size={20}
@@ -387,14 +387,14 @@ export const Layout = ({ children }) => {
                   style={{ overflow: "hidden" }}
                 >
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Clases" link="../admin/clases">
+                    <BtnSideBar title="Clases" link="/admin/clases">
                       <Calendar size={20} strokeWidth={1.5} />
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
                     <BtnSideBar
                       title="Niveles de clases"
-                      link="../admin/classLevels"
+                      link="/admin/classLevels"
                     >
                       <ChartBarIncreasing
                         size={20}
@@ -404,7 +404,7 @@ export const Layout = ({ children }) => {
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Estudiantes" link="../admin/estudiantes">
+                    <BtnSideBar title="Estudiantes" link="/admin/estudiantes">
                       <Users
                         size={20}
                         strokeWidth={1.5}
@@ -413,14 +413,14 @@ export const Layout = ({ children }) => {
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Instructores" link="../admin/instructores">
+                    <BtnSideBar title="Instructores" link="/admin/instructores">
                       <User size={20} strokeWidth={1.5} />
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
                     <BtnSideBar
                       title="PreInscrpciones"
-                      link="../admin/preRegistrations"
+                      link="/admin/preRegistrations"
                     >
                       <UserPlus
                         size={20}
@@ -430,7 +430,7 @@ export const Layout = ({ children }) => {
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Matriculas" link="../admin/matriculas">
+                    <BtnSideBar title="Matriculas" link="/admin/matriculas">
                       <Users
                         size={20}
                         strokeWidth={1.5}
@@ -439,7 +439,7 @@ export const Layout = ({ children }) => {
                     </BtnSideBar>
                   </motion.li>
                   <motion.li variants={itemVariants}>
-                    <BtnSideBar title="Planes" link="../admin/plans">
+                    <BtnSideBar title="Planes" link="/admin/plans">
                       <Users
                         size={20}
                         strokeWidth={1.5}
