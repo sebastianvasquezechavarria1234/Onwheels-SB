@@ -1,25 +1,34 @@
-// admin/services/matriculasService.js
+// src/services/matriculasService.js
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:3000/api", // Ajusta si tu backend usa otro puerto o prefijo
-});
+const API_URL = "http://localhost:3000/api/matriculas";
 
-// ✅ Obtener todas las matrículas
 export const getMatriculas = async () => {
-  const res = await api.get("/matriculas");
-  return Array.isArray(res.data) ? res.data : [];
+  const response = await axios.get(API_URL);
+  return response.data;
 };
 
-// ✅ Obtener matrícula por ID
-export const getMatriculaById = (id) => api.get(`/matriculas/${id}`);
+// Obtener todas las matrículas de un estudiante
+export const getMatriculasPorEstudiante = async (id_estudiante) => {
+  const response = await axios.get(`http://localhost:3000/api/matriculas/estudiante/${id_estudiante}`);
+  return response.data;
+};
+export const getMatriculaById = async (id) => {
+  const response = await axios.get(`${API_URL}/${id}`);
+  return response.data;
+};
 
-// ✅ Crear matrícula
-export const createMatricula = (payload) => api.post("/matriculas", payload);
+export const createMatricula = async (data) => {
+  const response = await axios.post(API_URL, data);
+  return response.data;
+};
 
-// ✅ Actualizar matrícula
-export const updateMatricula = (id, payload) =>
-  api.put(`/matriculas/${id}`, payload);
+export const updateMatricula = async (id, data) => {
+  const response = await axios.put(`${API_URL}/${id}`, data);
+  return response.data;
+};
 
-// ✅ Eliminar matrícula
-export const deleteMatricula = (id) => api.delete(`/matriculas/${id}`);
+export const deleteMatricula = async (id) => {
+  const response = await axios.delete(`${API_URL}/${id}`);
+  return response.data;
+};

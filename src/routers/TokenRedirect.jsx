@@ -24,14 +24,17 @@ const TokenRedirect = () => {
           navigate('/student/home', { replace: true });
         } else if (userRole === 'instructor') {
           navigate('/instructor/home', { replace: true });
-        } else if (userRole === 'usuario') {
+        } else if (userRole === 'administrador') {
+          navigate('/admin/home', { replace: true });
+          } else if (userRole === 'usuario') {
           navigate('/users/home', { replace: true });
+      
         }
       }
     }
   }, [navigate, location.pathname]);
 
-  return null;
+  return null; // No renderiza nada
 };
 
 export default TokenRedirect;

@@ -126,6 +126,7 @@ const Sidebar = () => {
                 <span>Eventos</span>
               </div>
             </div>
+            
           )}
         </div>
 
@@ -212,4 +213,3 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;

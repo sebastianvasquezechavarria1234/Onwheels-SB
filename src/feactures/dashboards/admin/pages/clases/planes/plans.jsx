@@ -1,8 +1,8 @@
-// src/feactures/dashboards/admin/pages/clases/planes/PlanClasses.jsx
+// src/features/dashboards/admin/pages/clases/planes/PlanClasses.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { Layout } from "../../../layout/layout";
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence } from "framer-motion"; 
+import { AnimatePresence, motion } from "framer-motion"; 
 import {
   getPlanes,
   createPlan,
@@ -20,15 +20,14 @@ export const PlanClasses = () => {
     nombre_plan: "",
     descripcion: "",
     precio: "",
-    descuento_porcentaje: ""
+    descuento_porcentaje: "",
+    numero_clases: "4"
   });
   const [search, setSearch] = useState("");
 
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
@@ -36,7 +35,6 @@ export const PlanClasses = () => {
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  // Cargar planes
   const fetchPlanes = useCallback(async () => {
     try {
       setLoading(true);
@@ -56,13 +54,11 @@ export const PlanClasses = () => {
     fetchPlanes();
   }, [fetchPlanes]);
 
-  // Manejar cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Abrir modal
   const openModal = (type, plan = null) => {
     setModalType(type);
     setSelectedPlan(plan);
@@ -71,14 +67,16 @@ export const PlanClasses = () => {
         nombre_plan: "",
         descripcion: "",
         precio: "",
-        descuento_porcentaje: ""
+        descuento_porcentaje: "",
+        numero_clases: "4"
       });
     } else if (type === "edit" && plan) {
       setFormData({
         nombre_plan: plan.nombre_plan || "",
         descripcion: plan.descripcion || "",
         precio: plan.precio != null ? String(plan.precio) : "",
-        descuento_porcentaje: plan.descuento_porcentaje != null ? String(plan.descuento_porcentaje) : ""
+        descuento_porcentaje: plan.descuento_porcentaje != null ? String(plan.descuento_porcentaje) : "",
+        numero_clases: plan.numero_clases != null ? String(plan.numero_clases) : "4"
       });
     }
   };
@@ -90,11 +88,11 @@ export const PlanClasses = () => {
       nombre_plan: "",
       descripcion: "",
       precio: "",
-      descuento_porcentaje: ""
+      descuento_porcentaje: "",
+      numero_clases: "4"
     });
   };
 
-  // Crear plan
   const handleCreate = async () => {
     try {
       if (!formData.nombre_plan || formData.precio === "") {
@@ -106,7 +104,8 @@ export const PlanClasses = () => {
         nombre_plan: formData.nombre_plan,
         descripcion: formData.descripcion,
         precio: formData.precio,
-        descuento_porcentaje: formData.descuento_porcentaje || "0"
+        descuento_porcentaje: formData.descuento_porcentaje || "0",
+        numero_clases: formData.numero_clases || "4"
       });
 
       await fetchPlanes();
@@ -119,7 +118,6 @@ export const PlanClasses = () => {
     }
   };
 
-  // Actualizar plan
   const handleEdit = async () => {
     try {
       if (!selectedPlan) return;
@@ -132,7 +130,8 @@ export const PlanClasses = () => {
         nombre_plan: formData.nombre_plan,
         descripcion: formData.descripcion,
         precio: formData.precio,
-        descuento_porcentaje: formData.descuento_porcentaje || "0"
+        descuento_porcentaje: formData.descuento_porcentaje || "0",
+        numero_clases: formData.numero_clases || "4"
       });
 
       await fetchPlanes();
@@ -145,7 +144,6 @@ export const PlanClasses = () => {
     }
   };
 
-  // Eliminar plan
   const handleDelete = async () => {
     try {
       if (!selectedPlan) return;
@@ -160,14 +158,12 @@ export const PlanClasses = () => {
     }
   };
 
-  // Filtrado
   const planesFiltrados = planes.filter((p) =>
     p.nombre_plan?.toLowerCase().includes(search.toLowerCase()) ||
     p.descripcion?.toLowerCase().includes(search.toLowerCase()) ||
     String(p.precio).includes(search)
   );
 
-  // Paginación
   const totalPages = Math.max(1, Math.ceil(planesFiltrados.length / itemsPerPage));
   const currentItems = planesFiltrados.slice(
     (currentPage - 1) * itemsPerPage,
@@ -212,28 +208,29 @@ export const PlanClasses = () => {
                 <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
                     <th className="px-6 py-3 w-[20%]">Nombre</th>
-                    <th className="px-6 py-3 w-[30%]">Descripción</th>
-                    <th className="px-6 py-3 w-[15%]">Precio</th>
-                    <th className="px-6 py-3 w-[15%]">Descuento</th>
+                    <th className="px-6 py-3 w-[25%]">Descripción</th>
+                    <th className="px-6 py-3 w-[10%]">Precio</th>
+                    <th className="px-6 py-3 w-[10%]">Descuento</th>
+                    <th className="px-6 py-3 w-[15%]">Clases</th>
                     <th className="px-6 py-3 w-[20%]">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                         Cargando planes...
                       </td>
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-red-600">
+                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
                         {error}
                       </td>
                     </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-500 italic">
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
                         No hay planes registrados.
                       </td>
                     </tr>
@@ -244,6 +241,7 @@ export const PlanClasses = () => {
                         <td className="px-6 py-4 text-gray-600">{plan.descripcion}</td>
                         <td className="px-6 py-4 text-gray-600">${plan.precio}</td>
                         <td className="px-6 py-4 text-gray-600">{plan.descuento_porcentaje}%</td>
+                        <td className="px-6 py-4 text-gray-600">{plan.numero_clases} clases</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <motion.button
@@ -415,6 +413,21 @@ export const PlanClasses = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Número de clases *
+                      </label>
+                      <input
+                        type="number"
+                        name="numero_clases"
+                        value={formData.numero_clases}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 4"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Descripción
                       </label>
                       <textarea
@@ -495,6 +508,21 @@ export const PlanClasses = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Número de clases *
+                      </label>
+                      <input
+                        type="number"
+                        name="numero_clases"
+                        value={formData.numero_clases}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 4"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Descripción
                       </label>
                       <textarea
@@ -542,6 +570,10 @@ export const PlanClasses = () => {
                     <div className="flex justify-between">
                       <span className="font-medium">Descuento:</span>
                       <span className="text-right">{selectedPlan.descuento_porcentaje}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Clases:</span>
+                      <span className="text-right">{selectedPlan.numero_clases} clases</span>
                     </div>
                     <div className="flex justify-center pt-4">
                       <button

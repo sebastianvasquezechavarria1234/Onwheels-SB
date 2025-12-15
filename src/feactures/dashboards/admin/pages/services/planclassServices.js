@@ -1,9 +1,8 @@
-// src/feactures/dashboards/admin/services/planclassServices.js
+// src/features/dashboards/admin/services/planclassServices.js
 import axios from "axios";
 
 const API_URL = "http://localhost:3000/api/planes";
 
-// ✅ Obtener todos los planes
 export const getPlanes = async () => {
   try {
     const response = await axios.get(API_URL);
@@ -14,7 +13,6 @@ export const getPlanes = async () => {
   }
 };
 
-// ✅ Obtener plan por ID (aunque no se usa actualmente en el frontend, es bueno tenerlo)
 export const getPlanById = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/${id}`);
@@ -25,17 +23,16 @@ export const getPlanById = async (id) => {
   }
 };
 
-// ✅ Crear nuevo plan
 export const createPlan = async (planData) => {
   try {
-    // Aseguramos que los campos numéricos sean del tipo correcto
     const payload = {
       nombre_plan: planData.nombre_plan,
       descripcion: planData.descripcion || null,
       precio: parseFloat(planData.precio),
       descuento_porcentaje: planData.descuento_porcentaje
         ? parseFloat(planData.descuento_porcentaje)
-        : 0
+        : 0,
+      numero_clases: parseInt(planData.numero_clases) || 4
     };
     const response = await axios.post(API_URL, payload);
     return response.data;
@@ -45,7 +42,6 @@ export const createPlan = async (planData) => {
   }
 };
 
-// ✅ Actualizar plan existente
 export const updatePlan = async (id, planData) => {
   try {
     const payload = {
@@ -54,7 +50,8 @@ export const updatePlan = async (id, planData) => {
       precio: parseFloat(planData.precio),
       descuento_porcentaje: planData.descuento_porcentaje
         ? parseFloat(planData.descuento_porcentaje)
-        : 0
+        : 0,
+      numero_clases: parseInt(planData.numero_clases) || 4
     };
     const response = await axios.put(`${API_URL}/${id}`, payload);
     return response.data;
@@ -64,7 +61,6 @@ export const updatePlan = async (id, planData) => {
   }
 };
 
-// ✅ Eliminar plan
 export const deletePlan = async (id) => {
   try {
     const response = await axios.delete(`${API_URL}/${id}`);

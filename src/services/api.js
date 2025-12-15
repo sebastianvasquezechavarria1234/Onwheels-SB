@@ -22,6 +22,7 @@ api.interceptors.response.use(
       const isLoginPage = window.location.pathname === "/login" || window.location.pathname === "/"
       const hasToken = localStorage.getItem("token")
 
+<<<<<<< HEAD
       if (!isLoginPage && hasToken) {
         // Token inválido o expirado en una página protegida
         localStorage.removeItem("token")
@@ -38,3 +39,6 @@ api.interceptors.response.use(
 )
 
 export default api
+=======
+export default api;
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c

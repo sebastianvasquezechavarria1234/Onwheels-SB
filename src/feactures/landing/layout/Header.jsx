@@ -213,7 +213,7 @@ export const Header = () => {
             <IconWithTooltip label="Carrito de compras">
               <BtnLinkIcon
                 title=""
-                link="../shoppingCart"
+                link="../login"
                 style="bg-[transparent]! text-white! max-xl:hidden p-[0px]!"
                 styleIcon="bg-white!"
               >

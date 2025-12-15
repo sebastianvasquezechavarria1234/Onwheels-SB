@@ -4,6 +4,10 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import api from "../../../services/api"
+<<<<<<< HEAD
+=======
+import { getRoleHomePath } from "../../../utils/roleUtils"
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -14,6 +18,7 @@ const Login = () => {
   const [formSubmitted, setFormSubmitted] = useState(false)
 
   useEffect(() => {
+    // Limpiar el error después de 5 segundos si no hay nueva interacción
     if (error && formSubmitted) {
       const timer = setTimeout(() => {
         setError("")
@@ -37,6 +42,7 @@ const Login = () => {
 
       localStorage.setItem("token", response.data.token)
       localStorage.setItem("user", JSON.stringify(response.data.user))
+<<<<<<< HEAD
 
       const roles = response.data.user.roles || []
       const rol = roles[0]?.toLowerCase() || "cliente"
@@ -50,6 +56,11 @@ const Login = () => {
       } else {
         navigate("/users/home", { replace: true })
       }
+=======
+
+      const homePath = getRoleHomePath()
+      navigate(homePath, { replace: true })
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
     } catch (err) {
       console.error("Login error:", err)
       if (err.response) {
@@ -59,7 +70,11 @@ const Login = () => {
       } else {
         setError("Error al procesar la solicitud")
       }
+<<<<<<< HEAD
       // Solo resetear loading cuando hay error
+=======
+    } finally {
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
       setLoading(false)
       setFormSubmitted(false)
     }
@@ -73,13 +88,17 @@ const Login = () => {
       >
         ×
       </button>
+<<<<<<< HEAD
       <div className="w-full max-w-6xl bg-slate-800 rounded-3xl shadow-2xl overflow-hidden relative">
+=======
+      <div className="w-full max-w-6xl bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
         <div className="flex flex-col lg:flex-row min-h-[600px]">
           {/* Sección de ilustración */}
           <div className="lg:w-1/2 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-800/30 to-transparent"></div>
             <div className="relative z-10 text-center">
-              <h2 className="text-3xl font-bold mb-4">Inicia sesión</h2>
+              <h2 className="text-3xl font-bold mb-4">Inicia sección</h2>
               <div className="w-80 h-80 mx-auto mb-6 relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-800 to-blue-900 rounded-full opacity-20"></div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
