@@ -35,10 +35,22 @@ export const updateProducto = async (id, data) => {
 }
 
 export const deleteProducto = async (id) => {
-  const res = await fetch(`${API_URL}/productos/${id}`, { method: "DELETE" })
-  if (!res.ok) throw new Error("Error eliminando producto")
-  return res.json()
-}
+  const res = await fetch(`${API_URL}/productos/${id}`, { method: "DELETE" });
+  
+  if (!res.ok) {
+    let mensaje = "Error eliminando producto";
+    try {
+      const data = await res.json();
+      mensaje = data.mensaje || data.error || mensaje; // ✅ Usa el mensaje del backend
+    } catch (e) {
+      // Si no es JSON, usa el status text
+      mensaje = res.statusText || mensaje;
+    }
+    throw new Error(mensaje); // ✅ Este mensaje será mostrado en la notificación
+  }
+  
+  return res.json();
+};
 
 // ================== COLORES ==================
 export const getColores = async () => {
@@ -46,6 +58,7 @@ export const getColores = async () => {
   if (!res.ok) throw new Error("Error obteniendo colores")
   return res.json()
 }
+
 
 export const createColor = async (data) => {
   const res = await fetch(`${API_URL}/colores`, {
@@ -56,6 +69,7 @@ export const createColor = async (data) => {
   if (!res.ok) throw new Error("Error creando color")
   return res.json()
 }
+
 
 export const updateColor = async (id, data) => {
   const res = await fetch(`${API_URL}/colores/${id}`, {
@@ -73,12 +87,14 @@ export const deleteColor = async (id) => {
   return res.json()
 }
 
+
 // ================== VARIANTES ==================
 export const getVariantes = async () => {
   const res = await fetch(`${API_URL}/variantes`)
   if (!res.ok) throw new Error("Error obteniendo variantes")
   return res.json()
 }
+
 
 export const createVariante = async (data) => {
   const res = await fetch(`${API_URL}/variantes`, {
@@ -90,6 +106,7 @@ export const createVariante = async (data) => {
   return res.json()
 }
 
+
 export const updateVariante = async (id, data) => {
   const res = await fetch(`${API_URL}/variantes/${id}`, {
     method: "PUT",
@@ -99,6 +116,7 @@ export const updateVariante = async (id, data) => {
   if (!res.ok) throw new Error("Error actualizando variante")
   return res.json()
 }
+
 
 export const deleteVariante = async (id) => {
   const res = await fetch(`${API_URL}/variantes/${id}`, { method: "DELETE" })

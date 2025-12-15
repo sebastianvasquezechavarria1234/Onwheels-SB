@@ -3,18 +3,41 @@ import { Link } from "react-router-dom";
 import { Facebook, Youtube, Twitter, Mail, Phone, Instagram } from "lucide-react";
 
 export const Footer = () => {
-    const currentYear = new Date().getFullYear();
+    return(
+        <footer className=" bg-[var(--color-blue)] text-white m-[120px_0px_0px_0px]">
+            <div className="mt-[120px] max-w-[1500px] mx-auto px-[20px] py-[120px] flex max-lg:flex-col max-md:py-[60px]">
+                <div className="w-[30%] flex flex-col justify-between max-lg:w-full">
+                    <h3 className="font-primary text-[3rem]!">Performace-SB</h3>
+                </div>
 
-    return (
-        <footer className="bg-[var(--color-blue)] text-white mt-20">
-            <div className="max-w-[1500px] mx-auto px-6 py-10">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                    {/* Brand Section */}
-                    <div className="flex flex-col items-center md:items-start space-y-2">
-                        <h3 className="font-primary text-3xl font-bold tracking-tight">OnWheels-SB</h3>
-                        <p className="text-sm opacity-80 text-center md:text-left max-w-xs">
-                            Tu destino para todo lo relacionado con patinaje. Clases, tienda y eventos en un solo lugar.
+                <div className="w-[70%] grid grid-cols-3 max-md:grid-cols-2 gap-[10px] max-lg:w-full max-lg:mt-[40px]">
+                    <div className="flex flex-col">
+                        <h4 className="font-primary mb-[20px]">Enlaces rapidos</h4>
+                        <p className="flex gap-[10px] items-center py-[5px]">
+                            <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                            <BtnLink title="Inicio" link=""/>
                         </p>
+                        <p className="flex gap-[10px] items-center py-[5px]">
+                            <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                            <BtnLink title="Pre-inscripciones" link=""/>
+                        </p>
+                        <p className="flex gap-[10px] items-center py-[5px]">
+                            <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                            <BtnLink title="Tienda" link=""/>
+                        </p>
+                        <p className="flex gap-[10px] items-center py-[5px]">
+                            <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                            <BtnLink title="Clases" link=""/>
+                        </p>
+                        <p className="flex gap-[10px] items-center py-[5px]">
+                            <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                            <BtnLink title="Eventos" link=""/>
+                        </p>
+                        <p className="flex gap-[10px] items-center py-[5px]">
+                            <span className="w-[5px] h-[5px] rounded-full bg-white block"></span>
+                            <BtnLink title="Sobre nosotros" link=""/>
+                        </p>
+                    
                     </div>
 
                     {/* Quick Links Overlay */}
@@ -58,14 +81,11 @@ export const Footer = () => {
                     </div>
                 </div>
 
-                {/* Divider & Copyright */}
-                <div className="mt-10 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm opacity-60">
-                    <p>© {currentYear} OnWheels-SB. Todos los derechos reservados.</p>
-                    <div className="flex gap-4 mt-2 md:mt-0">
-                        <Link to="#" className="hover:text-white transition-colors">Privacidad</Link>
-                        <Link to="#" className="hover:text-white transition-colors">Términos</Link>
-                    </div>
-                </div>
+            </div>
+
+
+            <div className=" max-w-[1500px] mx-auto py-[20px] border-t border-white/40 text-center">
+                 <p>© 2025 Performace-SB - Todos los derechos reservados</p>
             </div>
         </footer>
     );

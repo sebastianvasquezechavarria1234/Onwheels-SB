@@ -1,31 +1,70 @@
+
+
 import React, { useEffect, useState } from "react";
-import { Search, Plus } from "lucide-react";
 import { Layout } from "../../../layout/layout";
+import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
-
-  // 🔹 Paginación
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // 🔹 Modales y formularios
-  const [modal, setModal] = useState(null); // "crear" | "editar" | "eliminar"
+  // Modal y formularios
+  const [modalType, setModalType] = useState(null); // "add", "edit", "details", "delete"
   const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ NIT_proveedor: "", nombre_proveedor: "", email: "", telefono: "", direccion: "" });
+  const [addForm, setAddForm] = useState({
+    nit: "",
+    nombre_proveedor: "",
+    email: "",
+    telefono: "",
+    direccion: "",
+  });
+  const [editForm, setEditForm] = useState({
+    nit: "",
+    nombre_proveedor: "",
+    email: "",
+    telefono: "",
+    direccion: "",
+  });
 
-  // 🔹 Cargar proveedores desde la API
+  // Notificación
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "success", // 'success' | 'error'
+  });
+
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+  };
+
+  // Cerrar modal con Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Cargar proveedores
   const fetchProveedores = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const res = await fetch("http://localhost:3000/api/proveedores"); // Ajusta al puerto de tu backend
+      const res = await fetch("http://localhost:3000/api/proveedores");
+      if (!res.ok) throw new Error("Error en la respuesta del servidor");
       const data = await res.json();
-      setProveedores(data);
-    } catch (error) {
-      console.error("Error al obtener proveedores:", error);
+      setProveedores(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error al cargar proveedores:", err);
+      setError("No se pudieron cargar los proveedores.");
+      showNotification("Error al cargar proveedores", "error");
     } finally {
       setLoading(false);
     }
@@ -35,318 +74,564 @@ export default function Proveedores() {
     fetchProveedores();
   }, []);
 
-  // Filtrar proveedores por nombre o NIT
+  // Abrir modal
+  const openModal = (type, item = null) => {
+    setModalType(type);
+    if (type === "add") {
+      setAddForm({
+        nit: "",
+        nombre_proveedor: "",
+        email: "",
+        telefono: "",
+        direccion: "",
+      });
+      setSelected(null);
+    } else if (type === "edit" && item) {
+      setSelected(item);
+      setEditForm({ ...item });
+    } else {
+      setSelected(item);
+    }
+  };
+
+  const closeModal = () => {
+    setModalType(null);
+    setSelected(null);
+  };
+
+  // Manejo de cambios en formularios
+  const handleAddChange = (e) => {
+    const { name, value } = e.target;
+    setAddForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Validación
+  const validateForm = (form) => {
+    if (!form.nit.trim()) {
+      showNotification("El NIT es obligatorio", "error");
+      return false;
+    }
+    if (!/^\d+$/.test(form.nit)) {
+      showNotification("El NIT debe contener solo números", "error");
+      return false;
+    }
+    if (!form.nombre_proveedor.trim()) {
+      showNotification("El nombre del proveedor es obligatorio", "error");
+      return false;
+    }
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      showNotification("El correo electrónico no es válido", "error");
+      return false;
+    }
+    return true;
+  };
+
+  // Guardar nuevo proveedor
+  const saveAdd = async () => {
+    if (!validateForm(addForm)) return;
+    try {
+      const res = await fetch("http://localhost:3000/api/proveedores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addForm),
+      });
+      if (!res.ok) throw new Error("Error al crear el proveedor");
+      const newProveedor = await res.json();
+      setProveedores((prev) => [newProveedor, ...prev]);
+      closeModal();
+      showNotification("Proveedor creado con éxito");
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al crear el proveedor", "error");
+    }
+  };
+
+  // Actualizar proveedor
+  const saveEdit = async () => {
+    if (!selected || !validateForm(editForm)) return;
+    try {
+      const res = await fetch(`http://localhost:3000/api/proveedores/${selected.nit}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) throw new Error("Error al actualizar el proveedor");
+      setProveedores((prev) =>
+        prev.map((p) => (p.nit === selected.nit ? { ...p, ...editForm } : p))
+      );
+      closeModal();
+      showNotification("Proveedor actualizado con éxito");
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al actualizar el proveedor", "error");
+    }
+  };
+
+  // Eliminar proveedor
+  const confirmDelete = async () => {
+    if (!selected) return;
+    try {
+      const res = await fetch(`http://localhost:3000/api/proveedores/${selected.nit}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Error al eliminar el proveedor");
+      setProveedores((prev) =>
+        prev.filter((p) => p.nit !== selected.nit)
+      );
+      closeModal();
+      showNotification("Proveedor eliminado con éxito");
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al eliminar el proveedor", "error");
+    }
+  };
+
+  // Filtrado y paginación
   const proveedoresFiltrados = proveedores.filter(
-    (prov) =>
-      prov.nombre_proveedor?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      prov.NIT_proveedor?.toString().includes(busqueda)
+    (p) =>
+      p.nombre_proveedor?.toLowerCase().includes(search.toLowerCase()) ||
+      p.nit?.toString().includes(search)
   );
 
-  // Paginación derivada
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = proveedoresFiltrados.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.max(1, Math.ceil(proveedoresFiltrados.length / itemsPerPage));
+  const currentItems = proveedoresFiltrados.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
 
-  // Abrir modal
-  const openModal = (type, prov = null) => {
-    setModal(type);
-    setSelected(prov);
-    setForm(
-      prov || {
-        NIT_proveedor: "",
-        nombre_proveedor: "",
-        email: "",
-        telefono: "",
-        direccion: "",
-      }
-    );
-  };
-
-  const closeModal = () => {
-    setModal(null);
-    setSelected(null);
-    setForm({ NIT_proveedor: "", nombre_proveedor: "", email: "", telefono: "", direccion: "" });
-  };
-
-  // Guardar (crear o editar)
-  const handleGuardar = async (e) => {
-    e && e.preventDefault();
-    try {
-      if (modal === "crear") {
-        await fetch("http://localhost:3000/api/proveedores", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
-      } else if (modal === "editar" && selected) {
-        await fetch(`http://localhost:3000/api/proveedores/${selected.NIT_proveedor}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
-      }
-      await fetchProveedores();
-      closeModal();
-    } catch (err) {
-      console.error("Error al guardar proveedor:", err);
-    }
-  };
-
-  // Eliminar
-  const handleEliminar = async () => {
-    try {
-      if (!selected) return;
-      await fetch(`http://localhost:3000/api/proveedores/${selected.NIT_proveedor}`, {
-        method: "DELETE",
-      });
-      await fetchProveedores();
-      closeModal();
-    } catch (err) {
-      console.error("Error al eliminar proveedor:", err);
-    }
-  };
-
   return (
     <Layout>
-      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
-        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">
-          Compras &gt; Proveedores
-        </h2>
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Compras / Proveedores</h2>
 
-        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[120px]">
-          <form action="" className="flex gap-[10px]">
-            <label className="mb-[20px] block">
-              <p className="">Buscar proveedores:</p>
-              <div className="relative">
-                <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
-                <input
-                  type="text"
-                  value={busqueda}
-                  onChange={(e) => { setBusqueda(e.target.value); setCurrentPage(1); }}
-                  placeholder="Ej: 900123456, Nombre Proveedor"
-                  className="input pl-[50px]!"
-                />
+          {/* Barra de búsqueda y botón */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
               </div>
-            </label>
-          </form>
-
-          <div>
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                type="text"
+                placeholder="Buscar proveedor (NIT o nombre)"
+              />
+            </div>
             <button
-              onClick={() => openModal("crear")}
-              className="btn bg-blue-100 text-blue-700 flex items-center gap-[10px]"
+              onClick={() => openModal("add")}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus className="h-4 w-4" />
-              Registrar nuevo proveedor
+              <Plus size={18} />
+              Añadir Proveedor
             </button>
           </div>
-        </div>
 
-        <div className="p-[30px]">
-          {/* Encabezados estilo Roles */}
-          <article className="font-semibold italic mt-[40px] flex items-center border-b border-black/20 pb-[20px]">
-            <p className="w-[15%] font-bold! opacity-80">NIT</p>
-            <p className="w-[25%] font-bold! opacity-80">Nombre Proveedor</p>
-            <p className="w-[20%] font-bold! opacity-80">Email</p>
-            <p className="w-[15%] font-bold! opacity-80">Teléfono</p>
-            <p className="w-[15%] font-bold! opacity-80">Dirección</p>
-            <p className="w-[10%] font-bold! opacity-80">Acciones</p>
-          </article>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-600">
-              <thead>
-                <tr>
-                  <th className="hidden" />
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+          {/* Tabla */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <td colSpan="6" className="text-center py-10 text-gray-400 italic">Cargando proveedores...</td>
+                    <th className="px-6 py-3 w-1/6">NIT</th>
+                    <th className="px-6 py-3 w-1/4">Nombre</th>
+                    <th className="px-6 py-3 w-1/4">Email</th>
+                    <th className="px-6 py-3 w-1/6">Teléfono</th>
+                    <th className="px-6 py-3 w-1/6">Dirección</th>
+                    <th className="px-6 py-3 w-1/6">Acciones</th>
                   </tr>
-                ) : proveedoresFiltrados.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="text-center py-10 italic text-red-700">No hay proveedores registrados</td>
-                  </tr>
-                ) : (
-                  currentItems.map((prov) => (
-                    <tr key={prov.NIT_proveedor} className="py-[18px] border-b border-black/20">
-                      <td className="px-6 py-[18px] w-[15%]">{prov.NIT_proveedor}</td>
-                      <td className="px-6 py-[18px] w-[25%] line-clamp-1">{prov.nombre_proveedor}</td>
-                      <td className="px-6 py-[18px] w-[20%] line-clamp-1">{prov.email}</td>
-                      <td className="px-6 py-[18px] w-[15%]">{prov.telefono}</td>
-                      <td className="px-6 py-[18px] w-[15%] line-clamp-1">{prov.direccion}</td>
-
-                      <td className="px-6 py-[18px] w-[10%] flex gap-[10px] items-center justify-center">
-                        <motion.button
-                          onClick={() => openModal("editar", prov)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md"
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 20h9" />
-                          </svg>
-                        </motion.button>
-
-                        <motion.button
-                          onClick={() => openModal("eliminar", prov)}
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md"
-                        >
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M3 6h18" />
-                          </svg>
-                        </motion.button>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                        Cargando proveedores...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
+                        {error}
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
+                        No se encontraron proveedores.
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((prov) => (
+                      <tr
+                        key={prov.nit}
+                        className="border-b border-gray-100 hover:bg-gray-50 transition"
+                      >
+                        <td className="px-6 py-4 font-medium">{prov.nit}</td>
+                        <td className="px-6 py-4 font-medium">{prov.nombre_proveedor}</td>
+                        <td className="px-6 py-4 text-gray-600 line-clamp-1">
+                          {prov.email || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">{prov.telefono || "—"}</td>
+                        <td className="px-6 py-4 text-gray-600 line-clamp-1">
+                          {prov.direccion || "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("details", prov)}
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              title="Ver detalles"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("edit", prov)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
+                            >
+                              <Pencil size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("delete", prov)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Paginación */}
-          <div className="flex justify-center items-center gap-2 py-4 italic">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Anterior
-            </button>
-
-            <span className="text-[18px]">Página <span className="text-blue-700">{currentPage}</span> de {totalPages}</span>
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="btn cursor-pointer bg-gray-200"
-            >
-              Siguiente
-            </button>
-          </div>
+          {proveedoresFiltrados.length > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-6 py-4">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página <span className="font-semibold text-blue-700">{currentPage}</span> de{" "}
+                {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-4 py-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Notificación Toast */}
+        <AnimatePresence>
+          {notification.show && (
+            <motion.div
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 300 }}
+              transition={{ duration: 0.3 }}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
+                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+              }`}
+            >
+              {notification.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Modales */}
         <AnimatePresence>
-          {(modal === "crear" || modal === "editar") && (
+          {modalType && (
             <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              onClick={closeModal}
             >
-              <div className="absolute inset-0" onClick={closeModal} />
-
               <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="font-primary text-center mb-[30px]">{modal === "crear" ? "Registrar Proveedor" : "Editar Proveedor"}</h3>
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
+                  {modalType === "add"
+                    ? "Añadir Proveedor"
+                    : modalType === "edit"
+                    ? "Editar Proveedor"
+                    : modalType === "details"
+                    ? "Detalles del Proveedor"
+                    : "Eliminar Proveedor"}
+                </h3>
 
-                <form onSubmit={handleGuardar} className="grid grid-cols-2 gap-[16px]">
-                  <label className="block col-span-1">
-                    <p className="">NIT</p>
-                    <input
-                      type="text"
-                      value={form.NIT_proveedor}
-                      onChange={(e) => setForm({ ...form, NIT_proveedor: e.target.value })}
-                      className="input w-full"
-                      placeholder="Ej: 900123456"
-                      required
-                    />
-                  </label>
+                {modalType === "add" && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        NIT *
+                      </label>
+                      <input
+                        name="nit"
+                        value={addForm.nit}
+                        onChange={handleAddChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 900123456"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre *
+                      </label>
+                      <input
+                        name="nombre_proveedor"
+                        value={addForm.nombre_proveedor}
+                        onChange={handleAddChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Distribuidora XYZ"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        name="email"
+                        type="email"
+                        value={addForm.email}
+                        onChange={handleAddChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="contacto@proveedor.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Teléfono
+                      </label>
+                      <input
+                        name="telefono"
+                        value={addForm.telefono}
+                        onChange={handleAddChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="+57 300 123 4567"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dirección
+                      </label>
+                      <input
+                        name="direccion"
+                        value={addForm.direccion}
+                        onChange={handleAddChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Calle 123 #45-67"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveAdd}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </form>
+                )}
 
-                  <label className="block col-span-1">
-                    <p className="">Nombre</p>
-                    <input
-                      type="text"
-                      value={form.nombre_proveedor}
-                      onChange={(e) => setForm({ ...form, nombre_proveedor: e.target.value })}
-                      className="input w-full"
-                      placeholder="Ej: Proveedor S.A."
-                      required
-                    />
-                  </label>
+                {modalType === "edit" && selected && (
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        NIT *
+                      </label>
+                      <input
+                        name="nit"
+                        value={editForm.nit}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: 900123456"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre *
+                      </label>
+                      <input
+                        name="nombre_proveedor"
+                        value={editForm.nombre_proveedor}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Ej: Distribuidora XYZ"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        name="email"
+                        type="email"
+                        value={editForm.email}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="contacto@proveedor.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Teléfono
+                      </label>
+                      <input
+                        name="telefono"
+                        value={editForm.telefono}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="+57 300 123 4567"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dirección
+                      </label>
+                      <input
+                        name="direccion"
+                        value={editForm.direccion}
+                        onChange={handleEditChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Calle 123 #45-67"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveEdit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Actualizar
+                      </button>
+                    </div>
+                  </form>
+                )}
 
-                  <label className="block col-span-1">
-                    <p className="">Email</p>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="input w-full"
-                      placeholder="Ej: contacto@proveedor.com"
-                    />
-                  </label>
-
-                  <label className="block col-span-1">
-                    <p className="">Teléfono</p>
-                    <input
-                      type="text"
-                      value={form.telefono}
-                      onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-                      className="input w-full"
-                      placeholder="Ej: +57 300 123 4567"
-                    />
-                  </label>
-
-                  <label className="block col-span-2">
-                    <p className="">Dirección</p>
-                    <input
-                      type="text"
-                      value={form.direccion}
-                      onChange={(e) => setForm({ ...form, direccion: e.target.value })}
-                      className="input w-full"
-                      placeholder="Ej: Calle 123 #45-67"
-                    />
-                  </label>
-
-                  <div className="flex justify-end gap-[10px] mt-[10px] col-span-2">
-                    <button type="button" onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
-                    <button type="submit" className="btn bg-blue-100 text-blue-700">Guardar</button>
+                {modalType === "details" && selected && (
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between">
+                      <span className="font-medium">NIT:</span>
+                      <span>{selected.nit}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nombre:</span>
+                      <span>{selected.nombre_proveedor}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Email:</span>
+                      <span>{selected.email || "— Sin email —"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Teléfono:</span>
+                      <span>{selected.telefono || "— Sin teléfono —"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Dirección:</span>
+                      <span className="text-right">{selected.direccion || "— Sin dirección —"}</span>
+                    </div>
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
                   </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
+                )}
 
-          {modal === "eliminar" && selected && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="absolute inset-0" onClick={closeModal} />
-
-              <motion.div
-                className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-[640px]"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 18 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="font-primary text-center mb-[30px] text-red-600">Eliminar Proveedor</h3>
-                <p className="text-gray-600 mb-4">¿Estás seguro que deseas eliminar al proveedor <strong>{selected?.nombre_proveedor}</strong>?</p>
-                <div className="flex justify-end gap-[10px] mt-[20px]">
-                  <button onClick={closeModal} className="btn bg-gray-200">Cancelar</button>
-                  <button onClick={handleEliminar} className="btn bg-red-100 text-red-700">Eliminar</button>
-                </div>
+                {modalType === "delete" && selected && (
+                  <div className="text-center space-y-4">
+                    <p className="text-gray-700">
+                      ¿Está seguro de eliminar al proveedor{" "}
+                      <span className="font-bold text-red-600">{selected.nombre_proveedor}</span>?
+                      <br />
+                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                    </p>
+                    <div className="flex justify-center gap-3 pt-2">
+                      <button
+                        onClick={closeModal}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={confirmDelete}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           )}

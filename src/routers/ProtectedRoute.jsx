@@ -28,7 +28,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
     } else if (userRole.toLowerCase() === 'instructor') {
       return <Navigate to="/instructor/home" replace />;
     } else if (userRole.toLowerCase() === 'administrador') {
-      return <Navigate to="/admin/dashboard" replace />;
+      return <Navigate to="/admin/home" replace />;
     } else {
       return <Navigate to="/users/home" replace />;
     }

@@ -23,14 +23,13 @@ const Events = () => {
             </button>
           </div>
         </section>
-
-        {/* Categorías y filtros */}
         <div className="container mx-auto flex flex-wrap justify-center gap-6 my-8 px-4">
           <select className="border border-gray-300 rounded-lg px-4 py-2 text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition w-48">
             <option>categorias</option>
             <option>competencias</option>
             <option>exhibiciones</option>
           </select>
+          
           <select className="border border-gray-300 rounded-lg px-4 py-2 text-gray-800 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition w-48">
             <option>ciudad</option>
             <option>medellin</option>
