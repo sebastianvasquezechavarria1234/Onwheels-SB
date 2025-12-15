@@ -220,7 +220,7 @@ export const InstructorHeader = () => {
         <ul className="flex items-center">
           <li>
             {/* Carrito con tooltip */}
-            <IconWithTooltip label="Carrito de compras">
+            <IconWithTooltip label="">
               <BtnLinkIcon
                 title=""
                 link="../instructor/shoppingCart"

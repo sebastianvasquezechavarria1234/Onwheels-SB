@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import ProtectedRoute from "./protectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 import TokenRedirect from "./TokenRedirect";
 import { Layout } from "../feactures/landing/layout/Layout";
 
@@ -15,7 +15,7 @@ const PreinscriptionsLanding = lazy(() => import("../feactures/landing/pages/pre
 const About = lazy(() => import("../feactures/landing/pages/About").then(module => ({ default: module.About })));
 const ShoppingCart = lazy(() => import("../feactures/landing/pages/ShoppingCart").then(module => ({ default: module.ShoppingCart })));
 const ProductDetails = lazy(() => import("../feactures/landing/pages/ProductDetails").then(module => ({ default: module.ProductDetails })));
-const Events = lazy(() => import("../feactures/landing/pages/Events")); // Added Events import
+const Events = lazy(() => import("../feactures/landing/pages/Events"));
 
 // Auth
 const Login = lazy(() => import("../feactures/Auth/pages/Login"));
@@ -40,6 +40,8 @@ const Patrocinadores = lazy(() => import("../feactures/dashboards/admin/pages/ev
 const Sedes = lazy(() => import("../feactures/dashboards/admin/pages/eventos/sedes/sedes"));
 const Clases = lazy(() => import("../feactures/dashboards/admin/pages/clases/clases/Classes"));
 const Administradores = lazy(() => import("../feactures/dashboards/admin/pages/configuracion/admin/Administradores"));
+const Instructores = lazy(() => import("../feactures/dashboards/admin/pages/clases/instructores/Instructores"));
+const Estudiantes = lazy(() => import("../feactures/dashboards/admin/pages/clases/estudiantes/students"));
 const EnviarCorreosMasivos = lazy(() => import("../feactures/dashboards/admin/pages/eventos/correos/CorreosMasivos"));
 
 // Dashboard Student
@@ -61,10 +63,10 @@ const MyClassesInstructor = lazy(() => import("../feactures/dashboards/instructo
 const SettingInstructor = lazy(() => import("../feactures/dashboards/instructor/pages/SettingInstructor").then(module => ({ default: module.SettingInstructor })));
 const MyPurchasesInstructor = lazy(() => import("../feactures/dashboards/instructor/pages/MyPurchasesInstrutor").then(module => ({ default: module.MyPurchasesInstructor })));
 const InstructorHome = lazy(() => import("../feactures/landing/instructor/pages/InstructorHome").then(module => ({ default: module.InstructorHome })));
-const InstructorStore = lazy(() => import("../feactures/landing/instructor/pages/InstructorSore").then(module => ({ default: module.InstructorStore })));
-const InstructorClass = lazy(() => import("../feactures/landing/instructor/pages/InstructorClass")); // Default export
+const InstructorStore = lazy(() => import("../feactures/landing/instructor/pages/InstructorStore").then(module => ({ default: module.InstructorStore })));
+const InstructorClass = lazy(() => import("../feactures/landing/instructor/pages/InstructorClass"));
 const InstructorEvents = lazy(() => import("../feactures/landing/instructor/pages/InstructorEvents").then(module => ({ default: module.InstructorEvents })));
-const InstructorAbaut = lazy(() => import("../feactures/landing/instructor/pages/InstructorAbaut").then(module => ({ default: module.InstructorAbaut })));
+const InstructorAbaut = lazy(() => import("../feactures/landing/instructor/pages/InstructorAbout").then(module => ({ default: module.InstructorAbaut })));
 const InstructorShoppingCart = lazy(() => import("../feactures/landing/instructor/pages/InstructorShoppingCart").then(module => ({ default: module.InstructorShoppingCart })));
 const InstructorCheckout = lazy(() => import("../feactures/landing/instructor/pages/InstructorCheckout").then(module => ({ default: module.InstructorCheckout })));
 const InstructorOrderConfirm = lazy(() => import("../feactures/landing/instructor/pages/InstructorOrderConfirm").then(module => ({ default: module.InstructorOrderConfirm })));
@@ -81,6 +83,38 @@ const UsersOrderConfirm = lazy(() => import("../feactures/landing/users/pages/Us
 const UsersSetting = lazy(() => import("../feactures/dashboards/users/pages/UsersSetting").then(module => ({ default: module.UsersSetting })));
 const UsersMyPurchases = lazy(() => import("../feactures/dashboards/users/pages/UsersMyPurchases").then(module => ({ default: module.UsersMyPurchases })));
 const UsersPreinscriptions = lazy(() => import("../feactures/landing/users/pages/UsersPreinscriptions"));
+
+// Direct Imports
+import { AdminHome } from "../feactures/landing/admin/pages/AdminHome"
+import { AdminStore } from "../feactures/landing/admin/pages/AdminStore"
+import { AdminProfile } from "../feactures/landing/admin/pages/AdminProfile"
+import { AdminPurchases } from "../feactures/landing/admin/pages/AdminPurchases"
+
+// Custom Roles
+import { CustomHome } from "../feactures/landing/custom/pages/CustomHome"
+import { CustomStore } from "../feactures/landing/custom/pages/CustomStore"
+import { CustomProfile } from "../feactures/dashboards/custom/pages/CustomProfile"
+import { CustomMyPurchases } from "../feactures/dashboards/custom/pages/CustomMyPurchases"
+import { CustomPurchases } from "../feactures/landing/custom/pages/CustomPurchases"
+import { CustomDashboard } from "../feactures/dashboards/custom/pages/CustomDashboard"
+import { CustomUsuarios } from "../feactures/dashboards/custom/pages/CRUDs/CustomUsuarios"
+import { CustomRoles } from "../feactures/dashboards/custom/pages/CRUDs/CustomRoles"
+import { CustomProductos } from "../feactures/dashboards/custom/pages/CRUDs/CustomProductos"
+import { CustomEstudiantes } from "../feactures/dashboards/custom/pages/CRUDs/CustomEstudiantes"
+import { CustomClases } from "../feactures/dashboards/custom/pages/CRUDs/CustomClases"
+import { CustomInstructores } from "../feactures/dashboards/custom/pages/CRUDs/CustomInstructores"
+import { CustomMatriculas } from "../feactures/dashboards/custom/pages/CRUDs/CustomMatriculas"
+import { CustomPreinscripciones } from "../feactures/dashboards/custom/pages/CRUDs/CustomPreinscripciones"
+import { CustomPlanes } from "../feactures/dashboards/custom/pages/CRUDs/CustomPlanes"
+import { CustomCompras } from "../feactures/dashboards/custom/pages/CRUDs/CustomCompras"
+import { CustomProveedores } from "../feactures/dashboards/custom/pages/CRUDs/CustomProveedores"
+import { CustomCategorias } from "../feactures/dashboards/custom/pages/CRUDs/CustomCategorias"
+import { CustomEventos } from "../feactures/dashboards/custom/pages/CRUDs/CustomEventos"
+import { CustomCategoriaEventos } from "../feactures/dashboards/custom/pages/CRUDs/CustomCategoriaEventos"
+import { CustomSedes } from "../feactures/dashboards/custom/pages/CRUDs/CustomSedes"
+import { CustomPatrocinadores } from "../feactures/dashboards/custom/pages/CRUDs/CustomPatrocinadores"
+import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos"
+import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas"
 
 // Error Page
 const Unauthorized = () => (
@@ -102,30 +136,29 @@ const LoadingFallback = () => (
   </Layout>
 );
 
-
 const AppRouter = () => {
-  const location = useLocation();
+  const location = useLocation()
 
   // rutas landing que tendrán animación
-  const landingRoutes = [
-    "/", "/store", "/class", "/events", "/preinscriptions", "/about", "/shoppingCart"
-  ];
+  const landingRoutes = ["/", "/store", "/class", "/events", "/preinscriptions", "/about", "/shoppingCart"]
 
-  const isLanding = landingRoutes.includes(location.pathname);
+  const isLanding = landingRoutes.includes(location.pathname)
 
   // animaciones de transición
   const blurVariants = {
     initial: { opacity: 0, filter: "blur(20px)" },
     animate: { opacity: 1, filter: "blur(0px)", transition: { duration: 0.5 } },
     exit: { opacity: 0, filter: "blur(20px)", transition: { duration: 0.3 } },
-  };
+  }
 
   const withAnimation = (Component) =>
     isLanding ? (
       <motion.div variants={blurVariants} initial="initial" animate="animate" exit="exit">
         <Component />
       </motion.div>
-    ) : <Component />;
+    ) : (
+      <Component />
+    )
 
   return (
     <>
@@ -134,14 +167,12 @@ const AppRouter = () => {
       <Suspense fallback={<LoadingFallback />}>
         <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
+            
             {/* Landing */}
-            <Route path="recover" element={<RecoverPassword />} />
-            <Route path="reset-password" element={<ResetPassword />} />
-
             <Route index element={withAnimation(Home)} />
             <Route path="store" element={withAnimation(Store)} />
             <Route path="training" element={withAnimation(Class)} />
-            <Route path="events" element={withAnimation(Events)} /> {/* Added events route */}
+            <Route path="events" element={withAnimation(Events)} />
             <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
             <Route path="about" element={withAnimation(About)} />
             <Route path="store/product/:id" element={withAnimation(ProductDetails)} />
@@ -150,12 +181,18 @@ const AppRouter = () => {
             {/* Auth */}
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
+            <Route path="recover" element={<RecoverPassword />} />
+            <Route path="reset-password" element={<ResetPassword />} />
 
             {/* Ruta no autorizado */}
             <Route path="unauthorized" element={<Unauthorized />} />
 
             {/* Dashboard Admin - PROTEGIDAS */}
             <Route element={<ProtectedRoute allowedRoles={["administrador"]} />}>
+                <Route path="admin/home" element={<AdminHome />} />
+                <Route path="admin/store" element={<AdminStore />} />
+                <Route path="admin/profile" element={<AdminProfile />} />
+                <Route path="admin/purchases" element={<AdminPurchases />} />
                 <Route path="admin/dashboard" element={<Dashboard />} />
                 <Route path="admin/matriculas" element={<Matriculas />} />
                 <Route path="admin/products" element={<Products />} />
@@ -171,8 +208,10 @@ const AppRouter = () => {
                 <Route path="admin/patrocinadores" element={<Patrocinadores />} />
                 <Route path="admin/sedes" element={<Sedes />} />
                 <Route path="admin/clases" element={<Clases />} />
-                <Route path="admin/plans" element={<PlanClasses />} />
+                <Route path="admin/instructores" element={<Instructores />} />
+                <Route path="admin/estudiantes" element={<Estudiantes/>} />
                 <Route path="admin/admins" element={<Administradores />} />
+                <Route path="admin/ventas" element={<Ventas/>} />
                 <Route path="admin/correos-masivos" element={<EnviarCorreosMasivos/>} />
             </Route>
 
@@ -221,6 +260,39 @@ const AppRouter = () => {
                 <Route path="users/setting" element={<UsersSetting/>} />
                 <Route path="users/myPurchases" element={<UsersMyPurchases/>} />
             </Route>
+
+            {/* Cualquier usuario con token puede acceder (verificación en ProtectedRoute) */}
+            <Route element={<ProtectedRoute allowedRoles={[]} />}>
+                {/* Landing personalizada */}
+                <Route path="custom/home" element={<CustomHome />} />
+                <Route path="custom/store" element={<CustomStore />} />
+                <Route path="custom/purchases" element={<CustomPurchases />} />
+
+                <Route path="custom/profile" element={<CustomProfile />} />
+                <Route path="custom/my-purchases" element={<CustomMyPurchases />} />
+
+                {/* Dashboard personalizado - sidebar con CRUDs según permisos */}
+                <Route path="custom/dashboard" element={<CustomDashboard />} />
+
+                <Route path="custom/usuarios" element={<CustomUsuarios />} />
+                <Route path="custom/roles" element={<CustomRoles />} />
+                <Route path="custom/productos" element={<CustomProductos />} />
+                <Route path="custom/categorias" element={<CustomCategorias />} />
+                <Route path="custom/proveedores" element={<CustomProveedores />} />
+                <Route path="custom/compras" element={<CustomCompras />} />
+                <Route path="custom/eventos" element={<CustomEventos />} />
+                <Route path="custom/categoria-eventos" element={<CustomCategoriaEventos />} />
+                <Route path="custom/sedes" element={<CustomSedes />} />
+                <Route path="custom/patrocinadores" element={<CustomPatrocinadores />} />
+                <Route path="custom/clases" element={<CustomClases />} />
+                <Route path="custom/niveles" element={<CustomPlanes />} />
+                <Route path="custom/estudiantes" element={<CustomEstudiantes />} />
+                <Route path="custom/instructores" element={<CustomInstructores />} />
+                <Route path="custom/preinscripciones" element={<CustomPreinscripciones />} />
+                <Route path="custom/matriculas" element={<CustomMatriculas />} />
+                <Route path="custom/planes" element={<CustomPlanes />} />
+            </Route>
+
             </Routes>
         </AnimatePresence>
       </Suspense>

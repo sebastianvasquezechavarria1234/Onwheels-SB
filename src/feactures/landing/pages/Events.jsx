@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { CalendarDays, MapPin, ChevronLeft, ChevronRight, Clock, X, Info } from "lucide-react";
 import { Layout } from "../layout/Layout";
 import { getEventos, getEventosFuturos } from "../../../services/eventoServices";
+import { getCategoriasEventos } from "../../dashboards/admin/pages/services/EventCategory";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Events = () => {
@@ -9,6 +10,11 @@ const Events = () => {
   const [futureEvents, setFutureEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Filters State
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedDateFilter, setSelectedDateFilter] = useState("");
+
   // Modal State
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -38,12 +44,14 @@ const Events = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [allEvents, future] = await Promise.all([
+      const [allEvents, future, cats] = await Promise.all([
         getEventos(),
-        getEventosFuturos()
+        getEventosFuturos(),
+        getCategoriasEventos()
       ]);
       setEvents(allEvents);
       setFutureEvents(future);
+      setCategories(cats || []);
     } catch (error) {
       console.error("Error fetching events:", error);
     } finally {
@@ -146,6 +154,34 @@ const Events = () => {
     );
   };
 
+  // Filtrado de eventos
+  const filteredEvents = events.filter((event) => {
+    let matchCategory = true;
+    let matchDate = true;
+
+    if (selectedCategory) {
+      matchCategory = event.nombre_categoria === selectedCategory;
+    }
+
+    if (selectedDateFilter) {
+      const eventDate = new Date(event.fecha_evento);
+      const now = new Date();
+      
+      if (selectedDateFilter === "Este mes") {
+        matchDate = 
+          eventDate.getMonth() === now.getMonth() && 
+          eventDate.getFullYear() === now.getFullYear();
+      } else if (selectedDateFilter === "Próximo mes") {
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        matchDate = 
+          eventDate.getMonth() === nextMonth.getMonth() && 
+          eventDate.getFullYear() === nextMonth.getFullYear();
+      }
+    }
+
+    return matchCategory && matchDate;
+  });
+
   return (
     <Layout>
       <div className="min-h-screen flex flex-col mt-4 relative">
@@ -174,16 +210,27 @@ const Events = () => {
         {/* Filtros Simplificados */}
         <div className="container mx-auto flex flex-wrap justify-center gap-4 my-10 px-4">
           <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-200 flex flex-wrap gap-4">
-            <select className="bg-transparent px-4 py-2 text-gray-700 outline-none cursor-pointer hover:text-blue-600 transition font-medium">
-              <option>Todas las Categorías</option>
-              <option>Competencias</option>
-              <option>Exhibiciones</option>
+            <select 
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="bg-transparent px-4 py-2 text-gray-700 outline-none cursor-pointer hover:text-blue-600 transition font-medium"
+            >
+              <option value="">Todas las Categorías</option>
+              {categories.map((cat) => (
+                <option key={cat.id_categoria_evento} value={cat.nombre_categoria}>
+                  {cat.nombre_categoria}
+                </option>
+              ))}
             </select>
             <div className="w-px bg-gray-300 hidden md:block"></div>
-            <select className="bg-transparent px-4 py-2 text-gray-700 outline-none cursor-pointer hover:text-blue-600 transition font-medium">
-              <option>Cualquier Fecha</option>
-              <option>Este mes</option>
-              <option>Próximo mes</option>
+            <select 
+              value={selectedDateFilter}
+              onChange={(e) => setSelectedDateFilter(e.target.value)}
+              className="bg-transparent px-4 py-2 text-gray-700 outline-none cursor-pointer hover:text-blue-600 transition font-medium"
+            >
+              <option value="">Cualquier Fecha</option>
+              <option value="Este mes">Este mes</option>
+              <option value="Próximo mes">Próximo mes</option>
             </select>
           </div>
         </div>
@@ -199,9 +246,9 @@ const Events = () => {
                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600 mx-auto mb-4"></div>
                <p className="text-gray-500">Cargando la agenda...</p>
              </div>
-          ) : events.length > 0 ? (
+          ) : filteredEvents.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {events.slice(0, 6).map(event => (
+              {filteredEvents.map(event => (
                 <div key={event.id_evento} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col h-full border border-gray-100">
                   <div className="relative h-56 overflow-hidden">
                     <img
@@ -381,7 +428,7 @@ const Events = () => {
         {/* Modal de Detalle de Evento */}
         <AnimatePresence>
           {selectedEvent && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center px-4 overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -394,73 +441,94 @@ const Events = () => {
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 10 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden relative z-10 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden relative z-10 flex flex-col max-h-[90vh]"
               >
-                <div className="relative h-64 flex-shrink-0">
+                {/* Header Image */}
+                <div className="relative h-72 md:h-96 flex-shrink-0">
                   <img
                     src={selectedEvent.imagen || "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Anonymous_emblem.svg/1200px-Anonymous_emblem.svg.png"}
                     alt={selectedEvent.nombre_evento}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                  
                   <button 
                     onClick={closeModal}
-                    className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-2 rounded-full backdrop-blur-md transition"
+                    className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 text- rounded-full backdrop-blur-md transition border border-white/20 z-20"
                   >
-                    <X size={20} />
+                    <X size={24} />
                   </button>
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <span className="bg-red-600 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-2 inline-block">
+
+                  <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 text-white">
+                    <span className="bg-red-600 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4 inline-block shadow-lg shadow-red-900/40">
                       {selectedEvent.nombre_categoria}
                     </span>
-                    <h2 className="text-3xl font-bold leading-tight">{selectedEvent.nombre_evento}</h2>
+                    <h2 className="text-3xl md:text-5xl font-bold leading-tight mb-2 drop-shadow-md">{selectedEvent.nombre_evento}</h2>
+                    <div className="flex flex-wrap gap-4 text-gray-300 text-sm md:text-base font-medium mt-2">
+                       <span className="flex items-center gap-2"><MapPin size={18} className="text-red-500" /> {selectedEvent.nombre_sede}</span>
+                       <span className="hidden md:inline text-gray-500">•</span>
+                       <span className="flex items-center gap-2"><CalendarDays size={18} className="text-blue-400" /> {new Date(selectedEvent.fecha_evento).toLocaleDateString()}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-8 overflow-y-auto custom-scrollbar">
-                  <div className="grid grid-cols-2 gap-6 mb-8">
-                     <div className="bg-gray-50 p-4 rounded-xl flex items-start gap-3">
-                        <CalendarDays className="text-blue-600 flex-shrink-0 mt-1" />
+                {/* Content */}
+                <div className="p-6 md:p-10 overflow-y-auto custom-scrollbar bg-white">
+                  <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+                     
+                     {/* Detalles principales */}
+                     <div className="md:col-span-2 space-y-8">
                         <div>
-                          <p className="text-sm text-gray-500 font-medium uppercase text-xs">Fecha</p>
-                          <p className="font-bold text-gray-800">
-                            {new Date(selectedEvent.fecha_evento).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                          <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
+                            Sobre el evento
+                            <span className="h-px bg-gray-200 flex-grow ml-4"></span>
+                          </h3>
+                          <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
+                            {selectedEvent.descripcion}
                           </p>
                         </div>
                      </div>
-                     <div className="bg-gray-50 p-4 rounded-xl flex items-start gap-3">
-                        <Clock className="text-orange-600 flex-shrink-0 mt-1" />
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium uppercase text-xs">Horario</p>
-                          <p className="font-bold text-gray-800">
-                            {selectedEvent.hora_inicio} - {selectedEvent.hora_aproximada_fin}
-                          </p>
-                        </div>
-                     </div>
-                     <div className="bg-gray-50 p-4 rounded-xl flex items-start gap-3 col-span-2">
-                        <MapPin className="text-red-500 flex-shrink-0 mt-1" />
-                        <div>
-                          <p className="text-sm text-gray-500 font-medium uppercase text-xs">Ubicación</p>
-                          <p className="font-bold text-gray-800">{selectedEvent.nombre_sede}</p>
-                          <p className="text-sm text-gray-500">{selectedEvent.direccion}</p>
-                        </div>
-                     </div>
-                  </div>
 
-                  <div className="mb-8">
-                    <h3 className="text-lg font-bold mb-3 text-gray-900 border-b pb-2">Sobre el evento</h3>
-                    <p className="text-gray-600 leading-relaxed text-lg">
-                      {selectedEvent.descripcion}
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-4 pt-4">
-                     <button className="flex-1 bg-blue-950 text-white py-3.5 rounded-xl font-bold hover:bg-blue-900 transition shadow-lg shadow-blue-900/20">
-                       Confirmar Asistencia
-                     </button>
-                     <button className="px-6 py-3.5 border border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition">
-                       Compartir
-                     </button>
+                     {/* Sidebar de información */}
+                     <div className="space-y-6">
+                        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                           <h4 className="font-bold text-gray-900 mb-4 text-lg">Información Clave</h4>
+                           
+                           <ul className="space-y-4">
+                             <li className="flex items-start gap-3">
+                                <div className="p-2 bg-blue-100 text-blue-700 rounded-lg"><Clock size={18} /></div>
+                                <div>
+                                  <span className="block text-xs uppercase text-gray-400 font-bold">Horario</span>
+                                  <span className="font-semibold text-gray-800">{selectedEvent.hora_inicio} - {selectedEvent.hora_aproximada_fin}</span>
+                                </div>
+                             </li>
+                             <li className="flex items-start gap-3">
+                                <div className="p-2 bg-red-100 text-red-700 rounded-lg"><MapPin size={18} /></div>
+                                <div>
+                                  <span className="block text-xs uppercase text-gray-400 font-bold">Dirección</span>
+                                  <span className="font-semibold text-gray-800">{selectedEvent.direccion}</span>
+                                </div>
+                             </li>
+                             <li className="flex items-start gap-3">
+                                <div className="p-2 bg-purple-100 text-purple-700 rounded-lg"><Info size={18} /></div>
+                                <div>
+                                  <span className="block text-xs uppercase text-gray-400 font-bold">Organizador</span>
+                                  <span className="font-semibold text-gray-800">OnWheels SB</span>
+                                </div>
+                             </li>
+                           </ul>
+                        </div>
+                        
+                        <div className="flex flex-col gap-3">
+                           <button className="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-blue-800 transition shadow-lg shadow-blue-900/25 transform hover:-translate-y-1">
+                             Confirmar Asistencia
+                           </button>
+                           <button className="w-full py-3 border-2 border-gray-200 rounded-xl font-bold text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition">
+                             Compartir Evento
+                           </button>
+                        </div>
+
+                     </div>
                   </div>
                 </div>
               </motion.div>

@@ -22,7 +22,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-focus-lock": "^2.13.6",
-    "react-router-dom": "^7.9.6",
+    "react-router": "^6.28.0",
+    "react-router-dom": "^6.28.0",
     "recharts": "^3.4.1",
     "sweetalert2": "^11.26.3",
     "swiper": "^12.0.1",
@@ -31,6 +32,8 @@
     "tailwindcss-filters": "^3.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/parser": "^7.28.5",
     "@eslint/js": "^9.21.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

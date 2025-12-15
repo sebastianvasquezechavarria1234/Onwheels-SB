@@ -1,32 +1,69 @@
-// src/features/dashboards/admin/services/clientesServices.js
-import axios from "axios";
+// ================== CONFIG ==================
+const API_URL = "http://localhost:3000/api";
 
-const API_URL = "http://localhost:3000/api/clientes-data";
-const API_USUARIOS = "http://localhost:3000/api/usuarios"; // si también usas esta
-// === Clientes ===
+// ================== CLIENTES ==================
+
 export const getClientes = async () => {
-  const response = await axios.get(API_URL);
-  return response.data;
+  const res = await fetch(`${API_URL}/clientes`);
+  if (!res.ok) throw new Error("Error obteniendo clientes");
+  return res.json();
 };
 
-export const createCliente = async (clienteData) => {
-  const response = await axios.post(API_URL, clienteData);
-  return response.data;
+export const getClienteById = async (id) => {
+  const res = await fetch(`${API_URL}/clientes/${id}`);
+  if (!res.ok) throw new Error("Error obteniendo cliente");
+  return res.json();
 };
 
-export const updateCliente = async (id, clienteData) => {
-  const response = await axios.put(`${API_URL}/${id}`, clienteData);
-  return response.data;
+export const createCliente = async (data) => {
+  const res = await fetch(`${API_URL}/clientes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    let mensaje = "Error creando cliente";
+    try {
+      const errorData = await res.json();
+      mensaje = errorData.mensaje || errorData.error || mensaje;
+    } catch (e) {
+      mensaje = res.statusText || mensaje;
+    }
+    throw new Error(mensaje);
+  }
+  return res.json();
+};
+
+export const updateCliente = async (id, data) => {
+  const res = await fetch(`${API_URL}/clientes/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    let mensaje = "Error actualizando cliente";
+    try {
+      const errorData = await res.json();
+      mensaje = errorData.mensaje || errorData.error || mensaje;
+    } catch (e) {
+      mensaje = res.statusText || mensaje;
+    }
+    throw new Error(mensaje);
+  }
+  return res.json();
 };
 
 export const deleteCliente = async (id) => {
-  const response = await axios.delete(`${API_URL}/${id}`);
-  return response.data;
-};
-
-// === Usuarios (para selección al crear cliente) ===
-export const getUsuariosSinCliente = async () => {
-  // Esta ruta debe devolver SOLO usuarios que NO tienen perfil de cliente
-  const response = await axios.get(`${API_USUARIOS}/sin-cliente`);
-  return response.data;
+  const res = await fetch(`${API_URL}/clientes/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    let mensaje = "Error eliminando cliente";
+    try {
+      const errorData = await res.json();
+      mensaje = errorData.mensaje || errorData.error || mensaje;
+    } catch (e) {
+      mensaje = res.statusText || mensaje;
+    }
+    throw new Error(mensaje);
+  }
+  return res.json();
 };

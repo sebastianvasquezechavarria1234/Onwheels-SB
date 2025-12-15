@@ -153,7 +153,7 @@ const Preinscriptions = () => {
           {/* Mitad Izquierda: Imagen / Branding */}
           <div className="lg:w-1/2 bg-blue-50 rounded-xl p-6 flex flex-col items-center justify-center">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900">¡Bienvenido a Onwheels-SB!</h3>
+              <h3 className="text-2xl font-bold text-gray-900">¡Bienvenido a Performace-SB!</h3>
               <p className="text-gray-600 mt-2">Tu camino hacia el aprendizaje comienza aquí.</p>
               {currentUser && (
                 <div className="mt-4 p-3 bg-white rounded-lg shadow">

@@ -10,7 +10,7 @@ import {
   updateUsuario,
   deleteUsuario,
 } from "../../services/usuariosServices";
-import { getRoles } from "../../services/rolesService"; // ✅ Corregido: minúscula en el nombre del archivo
+import { getRoles } from "../../services/RolesService"; // ✅ Corregido: minúscula en el nombre del archivo
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -20,8 +20,8 @@ export default function Usuarios() {
 
   const [modal, setModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
   const [selectedUsuario, setSelectedUsuario] = useState(null);
-
   const [formData, setFormData] = useState({
+    // Campos base (USUARIOS)
     documento: "",
     tipo_documento: "",
     nombre_completo: "",
@@ -30,11 +30,13 @@ export default function Usuarios() {
     fecha_nacimiento: "",
     contrasena: "",
     id_rol: "",
+
+    // Campos adicionales (solo si aplica)
+    años_experiencia: "",
+    estado_estudiante: true,
+    estado_instructor: true,
   });
-
   const [search, setSearch] = useState("");
-
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -77,13 +79,30 @@ export default function Usuarios() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Manejar cambios en el formulario
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  // Crear
+  // ✅ Función corregida: recibe un array de roles y devuelve los nombres
+  const getRolNombres = (rolesArr) => {
+    if (!rolesArr || rolesArr.length === 0) return "Sin rol";
+    return rolesArr.map((r) => r.nombre_rol).join(", ");
+  };
+
+  const isEstudiante = (idRol) => {
+    const rol = roles.find((r) => r.id_rol === idRol);
+    return rol?.nombre_rol?.toLowerCase().includes("estudiante");
+  };
+
+  const isInstructor = (idRol) => {
+    const rol = roles.find((r) => r.id_rol === idRol);
+    return rol?.nombre_rol?.toLowerCase().includes("instructor");
+  };
+
   const handleCreate = async () => {
     try {
       // validaciones mínimas
@@ -114,7 +133,6 @@ export default function Usuarios() {
     }
   };
 
-  // Editar
   const handleEdit = async () => {
     try {
       if (!selectedUsuario) return;
@@ -148,7 +166,6 @@ export default function Usuarios() {
     }
   };
 
-  // Eliminar
   const handleDelete = async () => {
     try {
       if (!selectedUsuario) return;
@@ -163,7 +180,6 @@ export default function Usuarios() {
     }
   };
 
-  // Abrir modal
   const openModal = (type, usuario = null) => {
     setModal(type);
     setSelectedUsuario(usuario);
@@ -189,6 +205,9 @@ export default function Usuarios() {
         fecha_nacimiento: "",
         contrasena: "",
         id_rol: "",
+        años_experiencia: "",
+        estado_estudiante: true,
+        estado_instructor: true,
       });
     }
   };
@@ -206,12 +225,6 @@ export default function Usuarios() {
       contrasena: "",
       id_rol: "",
     });
-  };
-
-  // obtiene el nombre(s) de roles de un usuario
-  const getRolNombre = (rolesArr) => {
-    if (!rolesArr || rolesArr.length === 0) return "Sin rol";
-    return rolesArr.map((r) => r.nombre_rol).join(", ");
   };
 
   // Filtrado por búsqueda
@@ -301,7 +314,7 @@ export default function Usuarios() {
                         <td className="px-6 py-4 text-gray-600">{u.telefono || "— No especificado —"}</td>
                         <td className="px-6 py-4">
                           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                            {getRolNombre(u.roles)}
+                            {getRolNombres(u.roles)}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -694,7 +707,7 @@ export default function Usuarios() {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Rol:</span>
-                      <span className="text-right">{getRolNombre(selectedUsuario.roles)}</span>
+                      <span className="text-right">{getRolNombres(selectedUsuario.roles)}</span>
                     </div>
                     <div className="flex justify-center pt-4">
                       <button

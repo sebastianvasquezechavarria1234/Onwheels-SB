@@ -5,6 +5,7 @@ import { BtnLinkIcon } from "../BtnLinkIcon";
 import { ArrowRight, NotebookPen } from "lucide-react";
 import { BtnLink } from "../BtnLink";
 import { Link } from "react-router-dom";
+import { getEventosFuturos } from "../../../../services/eventoServices";
 
 export const Grid = () => {
   const [products, setProducts] = useState([]);
@@ -29,17 +30,11 @@ export const Grid = () => {
             }
 
             // 2. Fetch Eventos Futuros
-            const resEvents = await fetch("http://localhost:3000/api/eventos/futuros");
-            if (resEvents.ok) {
-                const dataEvents = await resEvents.json();
+            try {
+                const dataEvents = await getEventosFuturos();
                 setEvents(dataEvents.slice(0, 3));
-            } else {
-                // Fallback si falla futuros, intentar normales
-                const resAll = await fetch("http://localhost:3000/api/eventos");
-                 if (resAll.ok) {
-                    const dataAll = await resAll.json();
-                    setEvents(dataAll.slice(0, 3));
-                 }
+            } catch (err) {
+                 console.error("Error fetching future events:", err);
             }
         } catch (error) {
             console.error("Error cargando datos home:", error);
@@ -94,9 +89,9 @@ export const Grid = () => {
              {loading ? <p>Cargando eventos...</p> : events.map(e => (
                  <GenericCard 
                     key={e.id_evento}
-                    img={e.imagen_evento || "./bg_eventosL.jpg"}
+                    img={e.imagen || "./bg_eventosL.jpg"}
                     text="Próximo evento"
-                    descripcion={e.descripcion_evento}
+                    descripcion={e.descripcion}
                     dato={new Date(e.fecha_evento).toLocaleDateString()}
                     styleImage=""
                  />

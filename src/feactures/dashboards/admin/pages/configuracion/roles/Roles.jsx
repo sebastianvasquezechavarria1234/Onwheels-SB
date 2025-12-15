@@ -1,11 +1,23 @@
+// src/pages/admin/Roles.jsx
 import React, { useEffect, useState } from "react";
 import { Layout } from "../../../layout/layout";
-import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence } from "framer-motion"; 
-import { getRoles, createRole, updateRole, deleteRole } from "../../services/RolesService";
+import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, RotateCcw } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  getRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  getPermisos,
+  getPermisosByRol,
+  asignarPermisoARol,
+  eliminarPermisoDeRol
+} from "../../services/RolesService";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
+  const [permisosTotales, setPermisosTotales] = useState([]);
+  const [permisosAsignados, setPermisosAsignados] = useState([]);
   const [selected, setSelected] = useState(null);
   const [modalType, setModalType] = useState(null);
   const [editForm, setEditForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
@@ -17,14 +29,13 @@ const Roles = () => {
   const itemsPerPage = 5;
 
   // Notificación
-  const [notification, setNotification] = useState({ show: false, message: "", type: "success" }); // type: 'success' | 'error'
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  // Cerrar modal con Escape
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") closeModal();
@@ -35,6 +46,7 @@ const Roles = () => {
 
   useEffect(() => {
     fetchRoles();
+    fetchPermisos();
   }, []);
 
   const fetchRoles = async () => {
@@ -52,26 +64,47 @@ const Roles = () => {
     }
   };
 
-  const openModal = (type, item = null) => {
+  const fetchPermisos = async () => {
+    try {
+      const data = await getPermisos();
+      setPermisosTotales(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error cargando permisos:", err);
+      showNotification("Error al cargar permisos", "error");
+    }
+  };
+
+  const fetchPermisosRol = async (idRol) => {
+    try {
+      const data = await getPermisosByRol(idRol);
+      setPermisosAsignados(Array.isArray(data) ? data.map(p => p.id_permiso) : []);
+    } catch (err) {
+      console.error("Error cargando permisos del rol:", err);
+      showNotification("Error al cargar permisos del rol", "error");
+      setPermisosAsignados([]);
+    }
+  };
+
+  const openModal = async (type, item = null) => {
     setModalType(type);
+    setSelected(item);
     if (type === "add") {
       setAddForm({ nombre_rol: "", descripcion: "", estado: true });
-      setSelected(null);
     } else if (type === "edit" && item) {
-      setSelected(item);
       setEditForm({
         nombre_rol: item.nombre_rol || "",
         descripcion: item.descripcion || "",
         estado: !!item.estado,
       });
-    } else {
-      setSelected(item);
+    } else if (type === "permisos" && item) {
+      await fetchPermisosRol(item.id_rol || item.id);
     }
   };
 
   const closeModal = () => {
     setSelected(null);
     setModalType(null);
+    setPermisosAsignados([]);
   };
 
   const handleAddChange = (e) => {
@@ -159,6 +192,40 @@ const Roles = () => {
     } catch (err) {
       console.error(err);
       showNotification("Error al cambiar el estado", "error");
+    }
+  };
+
+  // === GESTIÓN DE PERMISOS ===
+  const togglePermiso = (idPermiso) => {
+    setPermisosAsignados(prev =>
+      prev.includes(idPermiso)
+        ? prev.filter(id => id !== idPermiso)
+        : [...prev, idPermiso]
+    );
+  };
+
+  const guardarPermisos = async () => {
+    if (!selected) return;
+    const idRol = selected.id_rol || selected.id;
+    try {
+      const permisosActuales = await getPermisosByRol(idRol);
+      const idsActuales = permisosActuales.map(p => p.id_permiso);
+
+      const nuevos = permisosAsignados.filter(id => !idsActuales.includes(id));
+      for (const id of nuevos) {
+        await asignarPermisoARol(idRol, id);
+      }
+
+      const eliminados = idsActuales.filter(id => !permisosAsignados.includes(id));
+      for (const id of eliminados) {
+        await eliminarPermisoDeRol(idRol, id);
+      }
+
+      showNotification("Permisos actualizados con éxito");
+      closeModal();
+    } catch (err) {
+      console.error("Error al guardar permisos:", err);
+      showNotification("Error al actualizar permisos", "error");
     }
   };
 
@@ -282,6 +349,15 @@ const Roles = () => {
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
+                              onClick={() => openModal("permisos", role)}
+                              className="p-2 rounded-lg text-purple-600 hover:bg-purple-50 transition"
+                              title="Gestionar permisos"
+                            >
+                              <Key size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
                               onClick={() => openModal("delete", role)}
                               className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
                               title="Eliminar"
@@ -378,6 +454,8 @@ const Roles = () => {
                     ? "Editar Rol"
                     : modalType === "details"
                     ? "Detalles del Rol"
+                    : modalType === "permisos"
+                    ? `Permisos: ${selected?.nombre_rol}`
                     : "Eliminar Rol"}
                 </h3>
 
@@ -532,6 +610,53 @@ const Roles = () => {
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                       >
                         Eliminar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {modalType === "permisos" && selected && (
+                  <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <p className="text-gray-600 text-sm">
+                      Seleccione los permisos que tendrá este rol:
+                    </p>
+                    {permisosTotales.length === 0 ? (
+                      <p className="text-gray-500 italic">No hay permisos disponibles</p>
+                    ) : (
+                      permisosTotales.map((permiso) => (
+                        <div
+                          key={permiso.id_permiso}
+                          className="flex items-center justify-between p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                        >
+                          <div>
+                            <div className="font-medium">{permiso.nombre_permiso}</div>
+                            <div className="text-xs text-gray-500">{permiso.descripcion || "Sin descripción"}</div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={permisosAsignados.includes(permiso.id_permiso)}
+                            onChange={() => togglePermiso(permiso.id_permiso)}
+                            className="h-4 w-4 text-purple-600 rounded focus:ring-purple-500"
+                          />
+                        </div>
+                      ))
+                    )}
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition flex items-center gap-1"
+                      >
+                        <RotateCcw size={16} />
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={guardarPermisos}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-1"
+                      >
+                        <Save size={16} />
+                        Guardar
                       </button>
                     </div>
                   </div>
