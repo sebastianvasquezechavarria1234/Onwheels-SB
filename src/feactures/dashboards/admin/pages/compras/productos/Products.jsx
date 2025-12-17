@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/compras/productos/Products.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search, Eye, Pen, Image as ImageIcon } from "lucide-react";
+import { X, Plus, Trash2, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getProductos,
@@ -376,25 +376,24 @@ export default function Productos() {
   };
   return (
     <Layout>
-      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Productos / Gestión de Productos</h2>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="relative w-full md:w-96">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                <Search size={18} />
-              </div>
+      <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
+        <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Productos &gt; Gestión de Productos</h2>
+
+        <div className="flex justify-between p-[0px_40px_0px_20px] mt-[40px] items-center">
+          <div className="w-1/3">
+            <div className="relative">
+              <Search className="absolute top-[50%] left-[20px] translate-y-[-50%]" strokeWidth={1.3} />
               <input
                 type="text"
-                value={busqueda}
-                onChange={(e) => {
-                  setBusqueda(e.target.value);
-                  setPaginaActual(1);
-                }}
                 placeholder="Buscar productos..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="input !pl-[50px] w-full p-2"
               />
             </div>
+          </div>
+
+          <div>
             <button
               onClick={() => openProductModal(null)}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
@@ -403,131 +402,74 @@ export default function Productos() {
               Registrar nuevo producto
             </button>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-3 w-[5%]">ID</th>
-                    <th className="px-6 py-3 w-[8%]">Img</th>
-                    <th className="px-6 py-3 w-[18%]">Nombre</th>
-                    <th className="px-6 py-3 w-[20%]">Descripción</th>
-                    <th className="px-6 py-3 w-[12%]">Categoría</th>
-                    <th className="px-6 py-3 w-[8%]">P. Compra</th>
-                    <th className="px-6 py-3 w-[8%]">P. Venta</th>
-                    <th className="px-6 py-3 w-[6%]">%Ganancia</th>
-                    <th className="px-6 py-3 w-[6%]">Desc</th>
-                    <th className="px-6 py-3 w-[7%]">Estado</th>
-                    <th className="px-6 py-3 w-[10%]">Acciones</th>
+        </div>
+
+        {/* Tabla productos */}
+        <div className="p-[30px]">
+          <article className="font-semibold italic mt-[20px] flex items-center border-b border-black/20 pb-[12px]">
+            <p className="w-[6%] font-bold opacity-80">ID</p>
+            <p className="w-[20%] font-bold opacity-80">Nombre</p>
+            <p className="w-[22%] font-bold opacity-80">Descripción</p>
+            <p className="w-[12%] font-bold opacity-80">Categoría</p>
+            <p className="w-[8%] font-bold opacity-80">Precio C.</p>
+            <p className="w-[8%] font-bold opacity-80">Precio V.</p>
+            <p className="w-[6%] font-bold opacity-80">%G</p>
+            <p className="w-[6%] font-bold opacity-80">Desc</p>
+            <p className="w-[6%] font-bold opacity-80">Estado</p>
+            <p className="w-[10%] font-bold opacity-80">Acciones</p>
+          </article>
+
+          <div className="overflow-x-auto mt-4">
+            <table className="w-full text-sm text-left text-gray-600">
+              <tbody>
+                {productosActuales.map((p) => (
+                  <tr key={p.id_producto} className="py-[18px] border-b border-black/20 hover:bg-gray-50">
+                    <td className="px-6 py-[18px] w-[6%]">{p.id_producto}</td>
+                    <td className="px-6 py-[18px] w-[20%] line-clamp-1">{p.nombre_producto}</td>
+                    <td className="px-6 py-[18px] w-[22%] line-clamp-2">{p.descripcion}</td>
+                    <td className="px-6 py-[18px] w-[12%]">{categorias.find((c) => c.id_categoria === p.id_categoria)?.nombre_categoria || ""}</td>
+                    <td className="px-6 py-[18px] w-[8%]">${Number(p.precio_compra || 0).toFixed(2)}</td>
+                    <td className="px-6 py-[18px] w-[8%]">${Number(p.precio || 0).toFixed(2)}</td>
+                    <td className="px-6 py-[18px] w-[6%]">{p.porcentaje_ganancia}%</td>
+                    <td className="px-6 py-[18px] w-[6%]">{p.descuento_producto}%</td>
+                    <td className="px-6 py-[18px] w-[6%]"><span className={`px-2 py-1 rounded-full text-xs font-medium ${p.estado === "activo" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{p.estado}</span></td>
+                    <td className="px-6 py-[18px] w-[10%]">
+                      <div className="flex gap-[14px] items-center justify-center">
+                        <button onClick={() => openProductModal(p)} className="w-[45px] h-[45px] bg-blue-100 text-blue-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-blue-200 shadow-md">👁</button>
+                        <button onClick={() => openProductModal(p)} className="w-[45px] h-[45px] bg-yellow-100 text-yellow-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-yellow-200 shadow-md">✏️</button>
+                        <button onClick={() => handleDeleteProducto(p.id_producto)} className="w-[45px] h-[45px] bg-red-100 text-red-700 flex justify-center items-center rounded-[18px] cursor-pointer border border-red-200 shadow-md">🗑</button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {productosActuales.length === 0 ? (
-                    <tr>
-                      <td colSpan="11" className="px-6 py-8 text-center text-gray-500 italic">
-                        No hay productos registrados
-                      </td>
-                    </tr>
-                  ) : (
-                    productosActuales.map((p) => (
-                      <tr key={p.id_producto} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4">{p.id_producto}</td>
-                        <td className="px-6 py-4">
-                          {p.imagen_producto ? (
-                            <img
-                              src={p.imagen_producto}
-                              alt="Producto"
-                              className="w-10 h-10 object-cover rounded border"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded border">
-                              <ImageIcon size={16} className="text-gray-400" />
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 font-medium">{p.nombre_producto}</td>
-                        <td className="px-6 py-4">{p.descripcion || "—"}</td>
-                        <td className="px-6 py-4">{getCategoriaNombre(p.id_categoria)}</td>
-                        <td className="px-6 py-4">${Number(p.precio_compra || 0).toFixed(2)}</td>
-                        <td className="px-6 py-4">${Number(p.precio || 0).toFixed(2)}</td>
-                        <td className="px-6 py-4">{p.porcentaje_ganancia}%</td>
-                        <td className="px-6 py-4">{p.descuento_producto}%</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              p.estado ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {p.estado ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2 justify-center">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openViewModal(p)}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                              title="Ver detalles"
-                            >
-                              <Eye size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openProductModal(p)}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                              title="Editar"
-                            >
-                              <Pen size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openDeleteConfirm(p)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={16} />
-                            </motion.button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+
+                {productosActuales.length === 0 && (
+                  <tr>
+                    <td colSpan="11" className="px-6 py-10 text-center text-gray-400 italic">No hay productos registrados</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          {productosFiltrados.length > 0 && (
-            <div className="flex justify-center items-center gap-2 mt-6 py-4">
-              <button
-                disabled={paginaActual === 1}
-                onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  paginaActual === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-600">
-                Página <span className="font-semibold text-blue-700">{paginaActual}</span> de {totalPaginas}
-              </span>
-              <button
-                disabled={paginaActual === totalPaginas}
-                onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  paginaActual === totalPaginas
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
+
+          {/* Paginación */}
+          <div className="flex justify-center mt-4 gap-2">
+            <button
+              disabled={paginaActual === 1}
+              onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+              className="btn bg-gray-200"
+            >
+              Anterior
+            </button>
+            <div className="px-3 py-1 rounded-lg border bg-white">Página {paginaActual} / {totalPaginas}</div>
+            <button
+              disabled={paginaActual === totalPaginas}
+              onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+              className="btn bg-gray-200"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
 
         {/* ✅ NOTIFICACIONES */}
@@ -730,151 +672,132 @@ export default function Productos() {
 
         {/* === Modal de Producto (Crear/Editar) === */}
         <AnimatePresence>
-          {isProductModalOpen && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="absolute inset-0" onClick={() => setIsProductModalOpen(false)} />
-              <motion.div
-                className="relative z-10 bg-white p-5 rounded-lg w-[90%] max-w-2xl max-h-[90vh] overflow-y-auto"
-                initial={{ scale: 0.98, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.98, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 24 }}
-              >
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {productForm.id_producto ? "Editar Producto" : "Crear Nuevo Producto"}
-                  </h2>
-                  <button
-                    onClick={() => setIsProductModalOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
+        {isProductModalOpen && (
+          <motion.div className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} role="dialog" aria-modal="true">
+            <div className="absolute inset-0" onClick={() => setIsProductModalOpen(false)} />
+            <motion.div className="relative z-10 bg-white p-[30px] rounded-[30px] w-[90%] max-w-4xl max-h-[92vh] overflow-y-auto" initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">{productForm.id_producto ? "Editar Producto" : "Crear Nuevo Producto"}</h2>
+                <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* formulario */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                  <input
+                    name="nombre_producto"
+                    value={productForm.nombre_producto}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="Nombre del producto"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
+                  <select
+                    name="id_categoria"
+                    value={productForm.id_categoria}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
                   >
-                    <X size={20} />
-                  </button>
+                    <option value="">Seleccionar categoría</option>
+                    {categorias.map((c) => (
+                      <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                    <input
-                      name="nombre_producto"
-                      value={productForm.nombre_producto}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="Nombre del producto"
-                    />
-                    {formErrors.nombre_producto && <p className="text-red-500 text-xs mt-1">{formErrors.nombre_producto}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
-                    <select
-                      name="id_categoria"
-                      value={productForm.id_categoria}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="">Seleccionar categoría</option>
-                      {categorias.map((c) => (
-                        <option key={c.id_categoria} value={c.id_categoria}>
-                          {c.nombre_categoria}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.id_categoria && <p className="text-red-500 text-xs mt-1">{formErrors.id_categoria}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio compra *</label>
-                    <input
-                      name="precio_compra"
-                      type="number"
-                      step="0.01"
-                      value={productForm.precio_compra}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0.00"
-                    />
-                    {formErrors.precio_compra && <p className="text-red-500 text-xs mt-1">{formErrors.precio_compra}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio venta *</label>
-                    <input
-                      name="precio"
-                      type="number"
-                      step="0.01"
-                      value={productForm.precio}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0.00"
-                    />
-                    {formErrors.precio && <p className="text-red-500 text-xs mt-1">{formErrors.precio}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">% Ganancia</label>
-                    <input
-                      name="porcentaje_ganancia"
-                      type="number"
-                      step="0.01"
-                      value={productForm.porcentaje_ganancia}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">% Descuento</label>
-                    <input
-                      name="descuento_producto"
-                      type="number"
-                      step="0.01"
-                      value={productForm.descuento_producto}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                    <textarea
-                      name="descripcion"
-                      value={productForm.descripcion}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      rows={2}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (URL)</label>
-                    <input
-                      name="imagen_producto"
-                      value={productForm.imagen_producto}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="https://ejemplo.com/imagen.jpg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                    <select
-                      name="estado"
-                      value={productForm.estado}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Precio compra</label>
+                  <input
+                    name="precio_compra"
+                    type="number"
+                    step="0.01"
+                    value={productForm.precio_compra}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0.00"
+                  />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Precio venta *</label>
+                  <input
+                    name="precio"
+                    type="number"
+                    step="0.01"
+                    value={productForm.precio}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">% Ganancia</label>
+                  <input
+                    name="porcentaje_ganancia"
+                    type="number"
+                    step="0.01"
+                    value={productForm.porcentaje_ganancia}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">% Descuento</label>
+                  <input
+                    name="descuento_producto"
+                    type="number"
+                    step="0.01"
+                    value={productForm.descuento_producto}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                  <textarea
+                    name="descripcion"
+                    value={productForm.descripcion}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Imagen (URL)</label>
+                  <input
+                    name="imagen_producto"
+                    value={productForm.imagen_producto}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                  <select
+                    name="estado"
+                    value={productForm.estado}
+                    onChange={handleProductChange}
+                    className="input w-full p-2 border rounded-lg"
+                  >
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                </div>
+              </div>
 
                 {/* Variantes */}
                 <div className="mb-5">

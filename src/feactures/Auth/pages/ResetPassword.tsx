@@ -48,6 +48,13 @@ export const ResetPassword = () => {
         console.log('📧 Email final recibido:', emailParam);
     }, [location, navigate]);
 
+    // Helper: validar que la contraseña tenga al menos un número o un caracter especial
+    const hasNumberOrSpecial = (pwd: string) => {
+        const numberRegex = /[0-9]/;
+        const specialRegex = /[!@#$%^&*(),.?":{}|<>_\-\\\/\[\];'`+=~]/;
+        return numberRegex.test(pwd) || specialRegex.test(pwd);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -63,6 +70,13 @@ export const ResetPassword = () => {
 
         if (password.length < 6) {
             setError("La contraseña debe tener al menos 6 caracteres");
+            setLoading(false);
+            return;
+        }
+
+        // Nueva validación: debe contener al menos un número o un carácter especial
+        if (!hasNumberOrSpecial(password)) {
+            setError("La contraseña debe contener al menos un número o un carácter especial");
             setLoading(false);
             return;
         }
@@ -171,6 +185,12 @@ export const ResetPassword = () => {
                                         required
                                         disabled={loading}
                                     />
+                                    {/* Validación en tiempo real: número o caracter especial */}
+                                    {password.length > 0 && !hasNumberOrSpecial(password) && (
+                                        <p className="text-red-600 text-sm mt-2">
+                                            La contraseña debe contener al menos un número o un carácter especial.
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -190,6 +210,13 @@ export const ResetPassword = () => {
                                         required
                                         disabled={loading}
                                     />
+                                    {/* Validación en tiempo real: coincidencia */}
+                                    {confirmPassword.length > 0 && password !== confirmPassword && (
+                                        <p className="text-red-600 text-sm mt-2">Las contraseñas no coinciden.</p>
+                                    )}
+                                    {confirmPassword.length > 0 && password === confirmPassword && hasNumberOrSpecial(password) && (
+                                        <p className="text-green-700 text-sm mt-2">Las contraseñas coinciden y cumplen el requisito.</p>
+                                    )}
                                 </div>
 
                                 {error && (

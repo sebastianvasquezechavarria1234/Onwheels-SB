@@ -1,8 +1,8 @@
 
 
 import React, { useEffect, useState } from "react";
+import { Search, Plus, Eye, Pencil, Trash2, X } from "lucide-react";
 import { Layout } from "../../../layout/layout";
-import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Proveedores() {
@@ -253,6 +253,7 @@ export default function Proveedores() {
                     <th className="px-6 py-3 w-1/6">Dirección</th>
                     <th className="px-6 py-3 w-1/6">Acciones</th>
                   </tr>
+
                 </thead>
                 <tbody>
                   {loading ? (
@@ -381,14 +382,14 @@ export default function Proveedores() {
         <AnimatePresence>
           {modalType && (
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative"
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
@@ -575,6 +576,7 @@ export default function Proveedores() {
                   </form>
                 )}
 
+
                 {modalType === "details" && selected && (
                   <div className="space-y-3 text-gray-700">
                     <div className="flex justify-between">
@@ -607,6 +609,7 @@ export default function Proveedores() {
                     </div>
                   </div>
                 )}
+
 
                 {modalType === "delete" && selected && (
                   <div className="text-center space-y-4">

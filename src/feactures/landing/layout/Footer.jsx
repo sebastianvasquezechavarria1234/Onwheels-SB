@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { BtnLink } from "../components/BtnLink";
 
 import { Facebook, Youtube, Twitter, Mail, Phone, Instagram } from "lucide-react";
 
