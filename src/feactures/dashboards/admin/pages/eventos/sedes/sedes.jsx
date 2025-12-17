@@ -17,17 +17,13 @@ export default function Sedes() {
     nombre_sede: "",
     direccion: "",
     ciudad: "",
-    telefono: "", // ✅ corregido
+    telefono: "",
   });
   const [addForm, setAddForm] = useState({
     nombre_sede: "",
     direccion: "",
     ciudad: "",
-<<<<<<< HEAD
-    telefono_sede: "",
-=======
-    telefono: "", // ✅ corregido
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
+    telefono: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -78,11 +74,7 @@ export default function Sedes() {
         nombre_sede: "",
         direccion: "",
         ciudad: "",
-<<<<<<< HEAD
-        telefono_sede: "",
-=======
-        telefono: "", // ✅ corregido
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
+        telefono: "",
       });
       setSelected(null);
     } else if (type === "edit" && item) {
@@ -91,11 +83,7 @@ export default function Sedes() {
         nombre_sede: item.nombre_sede || "",
         direccion: item.direccion || "",
         ciudad: item.ciudad || "",
-<<<<<<< HEAD
-        telefono_sede: item.telefono_sede || "",
-=======
-        telefono: item.telefono || "", // ✅ corregido
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
+        telefono: item.telefono || "",
       });
     } else {
       setSelected(item);
@@ -122,17 +110,10 @@ export default function Sedes() {
       nombre_sede: addForm.nombre_sede.trim(),
       direccion: addForm.direccion.trim(),
       ciudad: addForm.ciudad.trim(),
-<<<<<<< HEAD
-      telefono_sede: addForm.telefono_sede.trim(),
-    };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono_sede) {
-=======
-      telefono: addForm.telefono.trim(), // ✅ corregido
+      telefono: addForm.telefono.trim(),
     };
 
     if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
       showNotification("Todos los campos son obligatorios", "error");
       return;
     }
@@ -154,17 +135,10 @@ export default function Sedes() {
       nombre_sede: editForm.nombre_sede.trim(),
       direccion: editForm.direccion.trim(),
       ciudad: editForm.ciudad.trim(),
-<<<<<<< HEAD
-      telefono_sede: editForm.telefono_sede.trim(),
-    };
-
-    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono_sede) {
-=======
-      telefono: editForm.telefono.trim(), // ✅ corregido
+      telefono: editForm.telefono.trim(),
     };
 
     if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
       showNotification("Todos los campos son obligatorios", "error");
       return;
     }
@@ -276,12 +250,7 @@ export default function Sedes() {
                         <td className="px-6 py-[18px] w-[25%] line-clamp-1">{s.nombre_sede}</td>
                         <td className="px-6 py-[18px] w-[30%] line-clamp-2">{s.direccion}</td>
                         <td className="px-6 py-[18px] w-[15%]">{s.ciudad}</td>
-<<<<<<< HEAD
-                        <td className="px-6 py-[18px] w-[10%]">{s.telefono_sede}</td>
-=======
-                        <td className="px-6 py-[18px] w-[10%]">{s.telefono}</td> {/* ✅ corregido */}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
-
+                        <td className="px-6 py-[18px] w-[10%]">{s.telefono}</td>
                         <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
                           <motion.button
                             onClick={() => openModal("details", s)}
@@ -436,13 +405,8 @@ export default function Sedes() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
                       <input
-<<<<<<< HEAD
-                        name="telefono_sede"
-                        value={addForm.telefono_sede}
-=======
-                        name="telefono" // ✅ corregido
+                        name="telefono"
                         value={addForm.telefono}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
                         onChange={handleAddChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="+57 300 123 4567"
@@ -502,13 +466,8 @@ export default function Sedes() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
                       <input
-<<<<<<< HEAD
-                        name="telefono_sede"
-                        value={editForm.telefono_sede}
-=======
-                        name="telefono" // ✅ corregido
+                        name="telefono"
                         value={editForm.telefono}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
                         onChange={handleEditChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                         placeholder="+57 300 123 4567"
@@ -549,11 +508,7 @@ export default function Sedes() {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Teléfono:</span>
-<<<<<<< HEAD
-                      <span>{selected.telefono_sede}</span>
-=======
-                      <span>{selected.telefono}</span> {/* ✅ corregido */}
->>>>>>> 852340c18070990a4cae41394aca12bbfdbd032e
+                      <span>{selected.telefono}</span>
                     </div>
                     <div className="flex justify-center pt-4">
                       <button
