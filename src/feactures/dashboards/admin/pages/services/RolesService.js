@@ -1,39 +1,18 @@
 // src/services/RolesService.js
-import axios from "axios";
-
-// Base URL de tu API
-const API = axios.create({
-  baseURL: "http://localhost:3000/api",
-});
-
-// Función para obtener el token
-const getToken = () => localStorage.getItem("token");
-
-// Función genérica que añade el token a las peticiones
-const authRequest = async (method, url, data = null) => {
-  const token = getToken();
-  const config = {
-    method,
-    url,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  };
-  if (data) config.data = data;
-  const response = await API(config);
-  return response.data;
-};
+import api from "../../../../../services/api";
 
 // === Roles ===
-export const getRoles = () => authRequest("get", "/roles");
-export const createRole = (rolData) => authRequest("post", "/roles", rolData);
-export const updateRole = (id, rolData) => authRequest("put", `/roles/${id}`, rolData);
-export const deleteRole = (id) => authRequest("delete", `/roles/${id}`);
+export const getRoles = () => api.get("/roles").then(res => res.data);
+export const createRole = (rolData) => api.post("/roles", rolData).then(res => res.data);
+export const updateRole = (id, rolData) => api.put(`/roles/${id}`, rolData).then(res => res.data);
+export const deleteRole = (id) => api.delete(`/roles/${id}`).then(res => res.data);
 
 // === Permisos ===
-export const getPermisos = () => authRequest("get", "/permisos");
+export const getPermisos = () => api.get("/permisos").then(res => res.data);
 
 // === Roles-Permisos ===
-export const getPermisosByRol = (idRol) => authRequest("get", `/roles/${idRol}/permisos`);
-export const asignarPermisoARol = (idRol, idPermiso) => 
-  authRequest("post", `/roles/${idRol}/permisos`, { id_permiso: idPermiso });
-export const eliminarPermisoDeRol = (idRol, idPermiso) => 
-  authRequest("delete", `/roles/${idRol}/permisos/${idPermiso}`);
+export const getPermisosByRol = (idRol) => api.get(`/roles/${idRol}/permisos`).then(res => res.data);
+export const asignarPermisoARol = (idRol, idPermiso) =>
+  api.post(`/roles/${idRol}/permisos`, { id_permiso: idPermiso }).then(res => res.data);
+export const eliminarPermisoDeRol = (idRol, idPermiso) =>
+  api.delete(`/roles/${idRol}/permisos/${idPermiso}`).then(res => res.data);

@@ -1,69 +1,40 @@
 // ================== CONFIG ==================
-const API_URL = "http://localhost:3000/api";
+import api from "../../../../../services/api";
+const API_URL = "/ventas";
 
 // ================== VENTAS ==================
 
 export const getVentas = async () => {
-  const res = await fetch(`${API_URL}/ventas`);
-  if (!res.ok) throw new Error("Error obteniendo ventas");
-  return res.json();
+  const res = await api.get(API_URL);
+  return res.data;
 };
 
 export const getVentaById = async (id) => {
-  const res = await fetch(`${API_URL}/ventas/${id}`);
-  if (!res.ok) throw new Error("Error obteniendo venta");
-  return res.json();
+  const res = await api.get(`${API_URL}/${id}`);
+  return res.data;
 };
 
 export const createVenta = async (data) => {
-  const res = await fetch(`${API_URL}/ventas`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    let mensaje = "Error creando venta";
-    try {
-      const errorData = await res.json();
-      mensaje = errorData.mensaje || errorData.error || mensaje;
-    } catch (e) {
-      mensaje = res.statusText || mensaje;
-    }
-    throw new Error(mensaje);
-  }
-  return res.json();
+  const res = await api.post(API_URL, data);
+  return res.data;
 };
 
 export const updateVenta = async (id, data) => {
-  const res = await fetch(`${API_URL}/ventas/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    let mensaje = "Error actualizando venta";
-    try {
-      const errorData = await res.json();
-      mensaje = errorData.mensaje || errorData.error || mensaje;
-    } catch (e) {
-      mensaje = res.statusText || mensaje;
-    }
-    throw new Error(mensaje);
-  }
-  return res.json();
+  const res = await api.put(`${API_URL}/${id}`, data);
+  return res.data;
 };
 
 export const deleteVenta = async (id) => {
-  const res = await fetch(`${API_URL}/ventas/${id}`, { method: "DELETE" });
-  if (!res.ok) {
-    let mensaje = "Error eliminando venta";
-    try {
-      const errorData = await res.json();
-      mensaje = errorData.mensaje || errorData.error || mensaje;
-    } catch (e) {
-      mensaje = res.statusText || mensaje;
-    }
-    throw new Error(mensaje);
-  }
-  return res.json();
+  const res = await api.delete(`${API_URL}/${id}`);
+  return res.data;
+};
+
+export const updateVentaStatus = async (id, data) => {
+  const res = await api.put(`${API_URL}/${id}/status`, data);
+  return res.data;
+};
+
+export const cancelVenta = async (id) => {
+  const res = await api.put(`${API_URL}/${id}/cancel`);
+  return res.data;
 };

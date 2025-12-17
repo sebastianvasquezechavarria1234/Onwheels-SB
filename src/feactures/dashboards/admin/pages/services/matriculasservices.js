@@ -1,9 +1,10 @@
 // src/services/matriculasServices.js
-import axios from "axios";
+// src/services/matriculasServices.js
+import api from "../../../../../services/api";
 
-const API_URL = "http://localhost:3000/api/matriculas";
+const API_URL = "/matriculas";
 
 export const createMatricula = async (matriculaData) => {
-  const response = await axios.post(API_URL, matriculaData);
+  const response = await api.post(API_URL, matriculaData);
   return response.data;
 };

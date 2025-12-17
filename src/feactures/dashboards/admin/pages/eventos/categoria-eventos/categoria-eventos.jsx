@@ -1,7 +1,7 @@
 // src/feactures/dashboards/admin/pages/eventos/categorias/CategoriaEventos.jsx
 
 import React, { useEffect, useState } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Search, Plus, Pen, Trash2, Eye, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -97,9 +97,9 @@ export default function CategoriaEventos() {
     setForm(
       categoria
         ? {
-            nombre_categoria: categoria.nombre_categoria || "",
-            descripcion: categoria.descripcion || "",
-          }
+          nombre_categoria: categoria.nombre_categoria || "",
+          descripcion: categoria.descripcion || "",
+        }
         : { nombre_categoria: "", descripcion: "" }
     );
 
@@ -188,7 +188,7 @@ export default function CategoriaEventos() {
   const currentItems = filtered.slice(start, start + itemsPerPage);
 
   return (
-    <Layout>
+    <>
       {/* -------------- UI CONTENT ---------------- */}
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
@@ -306,11 +306,10 @@ export default function CategoriaEventos() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Anterior
               </button>
@@ -320,11 +319,10 @@ export default function CategoriaEventos() {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Siguiente
               </button>
@@ -340,9 +338,8 @@ export default function CategoriaEventos() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-green-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -390,9 +387,8 @@ export default function CategoriaEventos() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       placeholder="Ej: Conferencias"
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.nombre_categoria ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.nombre_categoria ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
                     {formErrors.nombre_categoria && (
                       <p className="text-red-500 text-xs mt-1">
@@ -413,9 +409,8 @@ export default function CategoriaEventos() {
                       onBlur={handleBlur}
                       placeholder="Descripción de la categoría"
                       rows={3}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.descripcion ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.descripcion ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
                     {formErrors.descripcion && (
                       <p className="text-red-500 text-xs mt-1">
@@ -520,7 +515,7 @@ export default function CategoriaEventos() {
                 </h3>
 
                 <p className="text-gray-700 text-center">
-                  ¿Está seguro de eliminar la categoría { " " }
+                  ¿Está seguro de eliminar la categoría {" "}
                   <span className="font-bold">{selected.nombre_categoria}</span> ?
                   <br />
                   <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
@@ -545,6 +540,6 @@ export default function CategoriaEventos() {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 }

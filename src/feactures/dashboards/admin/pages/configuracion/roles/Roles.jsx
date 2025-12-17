@@ -1,6 +1,6 @@
 // src/pages/admin/Roles.jsx
 import React, { useEffect, useState } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, RotateCcw } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -244,7 +244,7 @@ const Roles = () => {
   }, [totalPages, currentPage]);
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Roles</h2>
@@ -312,16 +312,14 @@ const Roles = () => {
                         <td className="px-6 py-4">
                           <span
                             onClick={() => toggleEstado(role)}
-                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition ${
-                              role.estado
+                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition ${role.estado
                                 ? "bg-green-100 text-green-800 hover:bg-green-200"
                                 : "bg-red-100 text-red-800 hover:bg-red-200"
-                            }`}
+                              }`}
                           >
                             <span
-                              className={`w-2 h-2 rounded-full ${
-                                role.estado ? "bg-green-600" : "bg-red-600"
-                              }`}
+                              className={`w-2 h-2 rounded-full ${role.estado ? "bg-green-600" : "bg-red-600"
+                                }`}
                             ></span>
                             {role.estado ? "Activo" : "Inactivo"}
                           </span>
@@ -379,11 +377,10 @@ const Roles = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Anterior
               </button>
@@ -393,11 +390,10 @@ const Roles = () => {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Siguiente
               </button>
@@ -413,9 +409,8 @@ const Roles = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -451,12 +446,12 @@ const Roles = () => {
                   {modalType === "add"
                     ? "Añadir Rol"
                     : modalType === "edit"
-                    ? "Editar Rol"
-                    : modalType === "details"
-                    ? "Detalles del Rol"
-                    : modalType === "permisos"
-                    ? `Permisos: ${selected?.nombre_rol}`
-                    : "Eliminar Rol"}
+                      ? "Editar Rol"
+                      : modalType === "details"
+                        ? "Detalles del Rol"
+                        : modalType === "permisos"
+                          ? `Permisos: ${selected?.nombre_rol}`
+                          : "Eliminar Rol"}
                 </h3>
 
                 {modalType === "add" && (
@@ -666,7 +661,7 @@ const Roles = () => {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 };
 

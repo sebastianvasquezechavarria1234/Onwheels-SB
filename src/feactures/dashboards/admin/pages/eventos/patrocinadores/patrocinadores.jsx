@@ -1,6 +1,6 @@
 // src/feactures/dashboards/admin/pages/eventos/patrocinadores/Patrocinadores.jsx
 import React, { useEffect, useState } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Search, Plus, Pen, Trash2, Eye, X, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -106,11 +106,11 @@ export default function Patrocinadores() {
     setForm(
       patrocinador
         ? {
-            nombre_patrocinador: patrocinador.nombre_patrocinador,
-            email: patrocinador.email,
-            telefono: patrocinador.telefono,
-            logo: patrocinador.logo || "",
-          }
+          nombre_patrocinador: patrocinador.nombre_patrocinador,
+          email: patrocinador.email,
+          telefono: patrocinador.telefono,
+          logo: patrocinador.logo || "",
+        }
         : { nombre_patrocinador: "", email: "", telefono: "", logo: "" }
     );
 
@@ -196,7 +196,7 @@ export default function Patrocinadores() {
   const currentItems = filtered.slice(start, start + itemsPerPage);
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Patrocinadores / Gestión</h2>
@@ -321,11 +321,10 @@ export default function Patrocinadores() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Anterior
               </button>
@@ -335,11 +334,10 @@ export default function Patrocinadores() {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Siguiente
               </button>
@@ -355,9 +353,8 @@ export default function Patrocinadores() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-green-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -402,9 +399,8 @@ export default function Patrocinadores() {
                       value={form.nombre_patrocinador}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.nombre_patrocinador ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.nombre_patrocinador ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Ej: Nike"
                     />
                     {formErrors.nombre_patrocinador && (
@@ -420,9 +416,8 @@ export default function Patrocinadores() {
                       value={form.email}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.email ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.email ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Ej: contacto@nike.com"
                     />
                     {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
@@ -435,9 +430,8 @@ export default function Patrocinadores() {
                       value={form.telefono}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.telefono ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.telefono ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Ej: +57 300 123 4567"
                     />
                     {formErrors.telefono && <p className="text-red-500 text-xs mt-1">{formErrors.telefono}</p>}
@@ -450,9 +444,8 @@ export default function Patrocinadores() {
                       value={form.logo}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.logo ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.logo ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="https://cdn.com/logo.png"
                     />
                     {formErrors.logo && <p className="text-red-500 text-xs mt-1">{formErrors.logo}</p>}
@@ -562,7 +555,7 @@ export default function Patrocinadores() {
                 </h3>
 
                 <p className="text-gray-700 text-center">
-                  ¿Está seguro de eliminar a { " " }
+                  ¿Está seguro de eliminar a {" "}
                   <span className="font-bold">{selected.nombre_patrocinador}</span> ?
                   <br />
                   <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
@@ -587,6 +580,6 @@ export default function Patrocinadores() {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 }

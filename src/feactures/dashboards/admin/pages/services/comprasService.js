@@ -1,11 +1,8 @@
 // src/services/comprasService.js
-import axios from "axios";
+// src/services/comprasService.js
+import api from "../../../../../services/api";
 
-const api = axios.create({
-  baseURL: "http://localhost:3000/api", // confirma que coincide con tu backend
-  timeout: 30000, // 30s en vez de 10s
-  headers: { "Content-Type": "application/json" }
-});
+// const api = axios.create({ ... }); // Eliminado para usar la instancia global con interceptores
 
 // Wrap simple requests to centralizar errores (opcional)
 const handle = async (promise) => {

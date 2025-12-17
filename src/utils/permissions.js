@@ -29,6 +29,9 @@ export const getUserPermissions = () => {
  * @returns {boolean}
  */
 export const hasPermission = (permission) => {
+  // Administradores tienen acceso total
+  if (hasRole("administrador")) return true
+
   const permissions = getUserPermissions()
   return permissions.includes(permission)
 }
@@ -39,6 +42,8 @@ export const hasPermission = (permission) => {
  * @returns {boolean}
  */
 export const hasAllPermissions = (requiredPermissions) => {
+  if (hasRole("administrador")) return true
+
   const permissions = getUserPermissions()
   return requiredPermissions.every((p) => permissions.includes(p))
 }
@@ -49,6 +54,8 @@ export const hasAllPermissions = (requiredPermissions) => {
  * @returns {boolean}
  */
 export const hasAnyPermission = (requiredPermissions) => {
+  if (hasRole("administrador")) return true
+
   const permissions = getUserPermissions()
   return requiredPermissions.some((p) => permissions.includes(p))
 }
@@ -59,6 +66,7 @@ export const hasAnyPermission = (requiredPermissions) => {
  * @returns {boolean}
  */
 export const canView = (resource) => {
+  if (hasRole("administrador")) return true
   return hasPermission(`ver_${resource}`)
 }
 
@@ -68,6 +76,7 @@ export const canView = (resource) => {
  * @returns {boolean}
  */
 export const canManage = (resource) => {
+  if (hasRole("administrador")) return true
   return hasPermission(`gestionar_${resource}`)
 }
 

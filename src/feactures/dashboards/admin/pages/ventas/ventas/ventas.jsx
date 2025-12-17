@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout } from "../../../layout/layout";
+import { Link, useNavigate } from "react-router-dom";
+
 import {
   Search,
   Plus,
@@ -12,6 +13,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Ban,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -21,7 +23,8 @@ import {
   createVenta,
   updateVenta,
   deleteVenta,
-  // updateVentaStatus,
+  updateVentaStatus,
+  cancelVenta,
 } from "../../services/ventasService";
 
 import {
@@ -31,10 +34,11 @@ import {
   getVariantes,
 } from "../../services/productosServices";
 
-import { getUsuarios } from "../../services/usuariosServices"; 
+import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes, createCliente } from "../../services/clientesServices";
 
-    function Ventas() {
+function Ventas() {
+  const navigate = useNavigate();
   const [ventas, setVentas] = useState([]);
   const [usuarios, setUsuarios] = useState([]); // todos los usuarios (posibles clientes)
   const [clientes, setClientes] = useState([]); // solo quienes tienen perfil cliente
@@ -43,6 +47,7 @@ import { getClientes, createCliente } from "../../services/clientesServices";
   const [selectedVenta, setSelectedVenta] = useState(null);
   const [modal, setModal] = useState(null); // 'crear','editar','ver','eliminar','status','selectProducto','reviewProducts'
   const [parentModal, setParentModal] = useState(null);
+  const [modalCancel, setModalCancel] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [form, setForm] = useState({
     id_cliente: "",
@@ -148,17 +153,14 @@ import { getClientes, createCliente } from "../../services/clientesServices";
       setModal(type);
       return;
     } else if (type === "ver" && venta) {
-      try {
-        const ventaCompleta = await getVentaById(venta.id_venta);
-        setSelectedVenta(ventaCompleta);
-        setModal(type);
-      } catch (err) {
-        showNotification("Error al cargar detalles", "error");
-      }
+      // Navegar a la vista de detalle en lugar de abrir modal
+      navigate(`/admin/ventas/detalle/${venta.id_venta}`);
       return;
     }
+
     setModal(type);
     setSelectedVenta(venta);
+
     if (type === "crear") {
       setForm({
         id_cliente: "",
@@ -443,58 +445,59 @@ import { getClientes, createCliente } from "../../services/clientesServices";
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages]);
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [searchTerm, totalPages]);
 
-  // ===== UI =====
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Ventas / Gestión de Ventas</h2>
-
-          {/* Filtros y acciones */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-              <div className="relative w-full md:w-64">
-                <select
-                  value={clienteFiltro}
-                  onChange={(e) => {
-                    setClienteFiltro(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white text-gray-700"
-                >
-                  <option value="todos">Todos los clientes</option>
-                  {clientes.map((c) => (
-                    <option key={c.id_cliente} value={c.id_cliente}>
-                      {c.nombre_completo} ({c.documento})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="relative w-full md:w-96">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                  <Search size={18} />
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Buscar ventas..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                />
-              </div>
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Ventas</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate("/admin/ventas/crear")}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition"
+              >
+                <Plus size={18} />
+                Registrar venta
+              </button>
             </div>
-            <button
-              onClick={() => openModal("crear")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
-            >
-              <Plus size={18} />
-              Registrar nueva venta
-            </button>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-3 w-full mb-6">
+            <div className="relative w-full md:w-64">
+              <select
+                value={clienteFiltro}
+                onChange={(e) => {
+                  setClienteFiltro(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700"
+              >
+                <option value="todos">Todos los clientes</option>
+                {clientes.map((c) => (
+                  <option key={c.id_cliente} value={c.id_cliente}>
+                    {c.nombre_completo}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="relative w-full md:w-96">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <Search size={18} />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Buscar ventas..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
+            </div>
           </div>
 
           {/* Tabla ventas */}
@@ -536,59 +539,44 @@ import { getClientes, createCliente } from "../../services/clientesServices";
                           <td className="px-6 py-4">${v.total?.toLocaleString?.() ?? "0"}</td>
                           <td className="px-6 py-4">
                             <span
-                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                v.estado === "Entregada"
-                                  ? "bg-green-100 text-green-800"
-                                  : v.estado === "Pendiente"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : v.estado === "Procesada"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-pink-100 text-pink-800"
-                              }`}
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${v.estado === "Entregada"
+                                ? "bg-green-100 text-green-800"
+                                : v.estado === "Pendiente"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : v.estado === "Procesada"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-pink-100 text-pink-800"
+                                }`}
                             >
                               {v.estado}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-2 justify-center">
+
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => toggleRowExpansion(v.id_venta)}
-                                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                                title="Ver detalles"
-                              >
-                                {expandedRows.has(v.id_venta) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => openModal("ver", v)}
+                                onClick={() => navigate(`/admin/ventas/detalle/${v.id_venta}`)}
                                 className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
                                 title="Ver detalles"
                               >
                                 <Eye size={16} />
                               </motion.button>
+
+                              {/* Botón Editar - Solo si Pendiente */}
                               {v.estado === "Pendiente" && (
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => openModal("editar", v)}
+                                  onClick={() => navigate(`/admin/ventas/editar/${v.id_venta}`)}
                                   className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
                                   title="Editar"
                                 >
                                   <Pen size={16} />
                                 </motion.button>
                               )}
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => openModal("eliminar", v)}
-                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                                title="Eliminar"
-                              >
-                                <Trash2 size={16} />
-                              </motion.button>
+
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -598,63 +586,23 @@ import { getClientes, createCliente } from "../../services/clientesServices";
                               >
                                 <Package size={16} />
                               </motion.button>
+
+
+
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => openModal("eliminar", v)}
+                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </motion.button>
                             </div>
                           </td>
                         </tr>
                         {/* Detalle expandido */}
-                        {expandedRows.has(v.id_venta) && (
-                          <tr className="bg-gray-50">
-                            <td colSpan="7" className="p-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-white p-4 rounded-lg border">
-                                  <h4 className="font-semibold mb-2">Cliente</h4>
-                                  {getClienteInfo(v.id_cliente) ? (
-                                    <div className="text-sm space-y-1 text-gray-700">
-                                      <div><strong>Nombre:</strong> {getClienteInfo(v.id_cliente).nombre}</div>
-                                      <div><strong>Documento:</strong> {getClienteInfo(v.id_cliente).documento}</div>
-                                      <div><strong>Email:</strong> {getClienteInfo(v.id_cliente).email}</div>
-                                      <div><strong>Teléfono:</strong> {getClienteInfo(v.id_cliente).telefono}</div>
-                                      <div><strong>Dirección:</strong> {getClienteInfo(v.id_cliente).direccion}</div>
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-gray-500">Cliente no encontrado.</p>
-                                  )}
-                                </div>
-                                <div className="bg-white p-4 rounded-lg border">
-                                  <h4 className="font-semibold mb-2">Productos ({v.items?.length || 0})</h4>
-                                  {v.items?.length > 0 ? (
-                                    <div className="text-sm">
-                                      <table className="w-full text-sm">
-                                        <thead>
-                                          <tr className="text-left">
-                                            <th>Producto</th>
-                                            <th>Color</th>
-                                            <th>Talla</th>
-                                            <th className="text-right">Cant</th>
-                                            <th className="text-right">Subtotal</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {v.items.map((item, idx) => (
-                                            <tr key={idx} className="border-t">
-                                              <td className="py-2">{item.nombre_producto}</td>
-                                              <td className="py-2">{item.nombre_color}</td>
-                                              <td className="py-2">{item.nombre_talla}</td>
-                                              <td className="py-2 text-right">{item.qty}</td>
-                                              <td className="py-2 text-right">${(item.qty * item.price).toLocaleString()}</td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-gray-500">Sin productos.</p>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
+
                       </React.Fragment>
                     ))
                   )}
@@ -695,9 +643,8 @@ import { getClientes, createCliente } from "../../services/clientesServices";
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-green-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -1082,68 +1029,8 @@ import { getClientes, createCliente } from "../../services/clientesServices";
           )}
         </AnimatePresence>
 
-        {/* Modales: ver, eliminar, status (igual que compras) */}
+        {/* Modales: eliminar, status */}
         <AnimatePresence>
-          {modal === "ver" && selectedVenta && (
-            <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm">
-              <motion.div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
-                <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                  <X size={20} />
-                </button>
-                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">Detalles de la Venta</h3>
-                <div className="space-y-4 mb-6 text-gray-700">
-                  <div><div className="font-medium text-gray-600">ID</div><div>{selectedVenta.id_venta}</div></div>
-                  <div><div className="font-medium text-gray-600">Cliente</div><div>{getClienteNombre(selectedVenta.id_cliente)}</div></div>
-                  <div><div className="font-medium text-gray-600">Fecha</div><div>{new Date(selectedVenta.fecha_venta).toLocaleDateString()}</div></div>
-                  <div><div className="font-medium text-gray-600">Total</div><div>${selectedVenta.total?.toLocaleString()}</div></div>
-                  <div><div className="font-medium text-gray-600">Estado</div>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
-                      selectedVenta.estado === "Entregada" ? "bg-green-100 text-green-800" :
-                      selectedVenta.estado === "Pendiente" ? "bg-yellow-100 text-yellow-800" :
-                      selectedVenta.estado === "Procesada" ? "bg-blue-100 text-blue-800" : "bg-pink-100 text-pink-800"
-                    }`}>
-                      {selectedVenta.estado}
-                    </span>
-                  </div>
-                </div>
-                {selectedVenta.items?.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3">Productos</h4>
-                    <table className="w-full text-sm border border-gray-200 rounded-md overflow-hidden">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left">Producto</th>
-                          <th className="px-4 py-2 text-left">Color</th>
-                          <th className="px-4 py-2 text-left">Talla</th>
-                          <th className="px-4 py-2 text-left">Cant</th>
-                          <th className="px-4 py-2 text-left">Precio</th>
-                          <th className="px-4 py-2 text-left">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedVenta.items.map((it, i) => (
-                          <tr key={i} className="border-t">
-                            <td className="px-4 py-2">{it.nombre_producto}</td>
-                            <td className="px-4 py-2">{it.nombre_color}</td>
-                            <td className="px-4 py-2">{it.nombre_talla}</td>
-                            <td className="px-4 py-2">{it.qty}</td>
-                            <td className="px-4 py-2">${it.price?.toLocaleString()}</td>
-                            <td className="px-4 py-2">${(it.qty * it.price).toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <div className="flex justify-center pt-2">
-                  <button onClick={closeModal} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
           {modal === "eliminar" && selectedVenta && (
             <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm">
               <motion.div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
@@ -1199,8 +1086,9 @@ import { getClientes, createCliente } from "../../services/clientesServices";
             </motion.div>
           )}
         </AnimatePresence>
+
       </section>
-    </Layout>
+    </>
   );
 }
 export default Ventas;

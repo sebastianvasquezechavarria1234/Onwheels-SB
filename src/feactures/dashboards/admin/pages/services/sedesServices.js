@@ -1,46 +1,24 @@
 // services/sedesServices.js
-const API = "http://localhost:3000/api";
+import api from "../../../../../services/api";
+
+const API_Endpoint = "/sedes";
 
 export const getSedes = async () => {
-  const res = await fetch(`${API}/sedes`);
-  if (!res.ok) throw new Error("Error al obtener sedes");
-  return await res.json();
+  const res = await api.get(API_Endpoint);
+  return res.data;
 };
 
 export const createSede = async (data) => {
-  const res = await fetch(`${API}/sedes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const error = new Error("Error al crear sede");
-    error.response = res;
-    throw error;
-  }
-  return await res.json();
+  const res = await api.post(API_Endpoint, data);
+  return res.data;
 };
 
 export const updateSede = async (id, data) => {
-  const res = await fetch(`${API}/sedes/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const error = new Error("Error al actualizar sede");
-    error.response = res;
-    throw error;
-  }
-  return await res.json();
+  const res = await api.put(`${API_Endpoint}/${id}`, data);
+  return res.data;
 };
 
 export const deleteSede = async (id) => {
-  const res = await fetch(`${API}/sedes/${id}`, { method: "DELETE" });
-  if (!res.ok) {
-    const error = new Error("Error al eliminar sede");
-    error.response = res;
-    throw error;
-  }
-  return await res.json();
+  const res = await api.delete(`${API_Endpoint}/${id}`);
+  return res.data;
 };

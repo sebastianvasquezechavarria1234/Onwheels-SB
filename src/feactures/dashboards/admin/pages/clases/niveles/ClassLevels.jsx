@@ -1,6 +1,6 @@
 // src/feactures/dashboards/admin/pages/clases/niveles/ClassLevels.jsx
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -156,7 +156,7 @@ export const ClassLevels = () => {
   }, [currentPage, totalPages]);
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Niveles de Clase</h2>
@@ -261,11 +261,10 @@ export const ClassLevels = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Anterior
               </button>
@@ -275,11 +274,10 @@ export const ClassLevels = () => {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Siguiente
               </button>
@@ -295,9 +293,8 @@ export const ClassLevels = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -332,10 +329,10 @@ export const ClassLevels = () => {
                   {modal === "crear"
                     ? "Crear Nivel"
                     : modal === "editar"
-                    ? "Editar Nivel"
-                    : modal === "ver"
-                    ? "Detalles del Nivel"
-                    : "Eliminar Nivel"}
+                      ? "Editar Nivel"
+                      : modal === "ver"
+                        ? "Detalles del Nivel"
+                        : "Eliminar Nivel"}
                 </h3>
 
                 {modal === "crear" && (
@@ -488,7 +485,7 @@ export const ClassLevels = () => {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 };
 

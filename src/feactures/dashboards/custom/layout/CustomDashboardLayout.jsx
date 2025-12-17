@@ -1,6 +1,7 @@
 "use client"
 
 import { CustomSidebar } from "./CustomSidebar"
+import { AdminLayoutContext } from "../../context/AdminLayoutContext"
 import { useNavigate } from "react-router-dom"
 import { LogOut } from "lucide-react"
 
@@ -63,7 +64,11 @@ export const CustomDashboardLayout = ({ children }) => {
           </button>
         </div>
 
-        <div style={{ padding: "2rem" }}>{children}</div>
+        <div style={{ padding: "2rem" }}>
+          <AdminLayoutContext.Provider value={{ showSidebar: false }}>
+            {children}
+          </AdminLayoutContext.Provider>
+        </div>
       </main>
     </div>
   )
