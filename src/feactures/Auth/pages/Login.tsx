@@ -87,7 +87,7 @@ const Login = () => {
           <div className="lg:w-1/2 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-800/30 to-transparent"></div>
             <div className="relative z-10 text-center">
-              <h2 className="text-3xl font-bold mb-4">Inicia sección</h2>
+              <h2 className="text-3xl font-bold mb-4">Inicia sesión</h2>
               <div className="w-80 h-80 mx-auto mb-6 relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-800 to-blue-900 rounded-full opacity-20"></div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">

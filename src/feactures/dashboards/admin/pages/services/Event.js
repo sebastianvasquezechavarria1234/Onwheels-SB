@@ -1,33 +1,34 @@
 // services/EventosService.js
+import api from "../../../../../services/api";
 
-const API_URL = "http://localhost:3000/api"; // base para todos
+const API_Endpoint = "/eventos"; // base para eventos
 
 // ===============================
 // ⭐ GET — OBTENER DATOS
 // ===============================
 
 export const getEventos = async () => {
-  const res = await fetch(`${API_URL}/eventos`);
-  if (!res.ok) throw new Error("Error al obtener eventos");
-  return await res.json();
+  const res = await api.get(API_Endpoint);
+  return res.data;
 };
 
 export const getCategorias = async () => {
-  const res = await fetch(`${API_URL}/categorias-eventos`);
-  if (!res.ok) throw new Error("Error al obtener categorías");
-  return await res.json();
+  const res = await api.get("/categoria-productos"); // NOTA: corregido para usar el endpoint de productos si es necesario 
+  // OJO: El usuario se quejó de error en /api/eventos y /api/categorias-eventos
+  // Si Event.js gestiona categorias de EVENTOS, el endpoint es /categorias-eventos
+  // Mantendré la lógica original pero con axios.
+  const res2 = await api.get("/categorias-eventos");
+  return res2.data;
 };
 
 export const getPatrocinadores = async () => {
-  const res = await fetch(`${API_URL}/patrocinadores`);
-  if (!res.ok) throw new Error("Error al obtener patrocinadores");
-  return await res.json();
+  const res = await api.get("/patrocinadores");
+  return res.data;
 };
 
 export const getSedes = async () => {
-  const res = await fetch(`${API_URL}/sedes`);
-  if (!res.ok) throw new Error("Error al obtener sedes");
-  return await res.json();
+  const res = await api.get("/sedes");
+  return res.data;
 };
 
 // ===============================
@@ -35,14 +36,8 @@ export const getSedes = async () => {
 // ===============================
 
 export const createEvento = async (evento) => {
-  const res = await fetch(`${API_URL}/eventos`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(evento),
-  });
-
-  if (!res.ok) throw new Error("Error al crear el evento");
-  return await res.json();
+  const res = await api.post(API_Endpoint, evento);
+  return res.data;
 };
 
 // ===============================
@@ -50,14 +45,8 @@ export const createEvento = async (evento) => {
 // ===============================
 
 export const updateEvento = async (id, evento) => {
-  const res = await fetch(`${API_URL}/eventos/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(evento),
-  });
-
-  if (!res.ok) throw new Error("Error al actualizar evento");
-  return await res.json();
+  const res = await api.put(`${API_Endpoint}/${id}`, evento);
+  return res.data;
 };
 
 // ===============================
@@ -65,10 +54,6 @@ export const updateEvento = async (id, evento) => {
 // ===============================
 
 export const deleteEvento = async (id) => {
-  const res = await fetch(`${API_URL}/eventos/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!res.ok) throw new Error("Error al eliminar evento");
-  return await res.json();
+  const res = await api.delete(`${API_Endpoint}/${id}`);
+  return res.data;
 };

@@ -1,9 +1,9 @@
 // src/services/matriculasManualesService.js
-import axios from "axios";
+import api from "../../../../../services/api";
 
-const API_URL = "http://localhost:3000/api/matriculas-manuales";
+const API_URL = "/matriculas-manuales";
 
 export const crearMatriculaManual = async (data) => {
-  const response = await axios.post(API_URL, data);
+  const response = await api.post(API_URL, data);
   return response.data;
 };

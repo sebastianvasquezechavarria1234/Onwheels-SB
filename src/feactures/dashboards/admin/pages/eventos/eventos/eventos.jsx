@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/eventos/Eventos.jsx
 import React, { useEffect, useState } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Search, Plus, Pen, Trash2, Eye, X, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -296,7 +296,7 @@ export default function Eventos() {
 
   // ===================== RENDER =====================
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Eventos / Gestión de Eventos</h2>
@@ -377,9 +377,8 @@ export default function Eventos() {
                         <td className="px-6 py-4">{e.fecha_evento}</td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              e.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }`}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${e.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                              }`}
                           >
                             {e.estado}
                           </span>
@@ -431,11 +430,10 @@ export default function Eventos() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Anterior
               </button>
@@ -445,11 +443,10 @@ export default function Eventos() {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Siguiente
               </button>
@@ -466,9 +463,8 @@ export default function Eventos() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-green-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -512,9 +508,8 @@ export default function Eventos() {
                       value={form.nombre_evento}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.nombre_evento ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.nombre_evento ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="Nombre del evento"
                     />
                     {formErrors.nombre_evento && (
@@ -529,9 +524,8 @@ export default function Eventos() {
                       value={form.id_categoria_evento}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.id_categoria_evento ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.id_categoria_evento ? "border-red-500" : "border-gray-300"
+                        }`}
                     >
                       <option value="">Seleccionar...</option>
                       {categorias.map((c) => (
@@ -551,9 +545,8 @@ export default function Eventos() {
                       name="id_patrocinador"
                       value={form.id_patrocinador}
                       onChange={handleChange}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.id_patrocinador ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.id_patrocinador ? "border-red-500" : "border-gray-300"
+                        }`}
                     >
                       <option value="">Seleccionar...</option>
                       {patrocinadores.map((p) => (
@@ -574,9 +567,8 @@ export default function Eventos() {
                       value={form.id_sede}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.id_sede ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.id_sede ? "border-red-500" : "border-gray-300"
+                        }`}
                     >
                       <option value="">Seleccionar...</option>
                       {sedes.map((s) => (
@@ -598,9 +590,8 @@ export default function Eventos() {
                       value={form.fecha_evento}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.fecha_evento ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.fecha_evento ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
                     {formErrors.fecha_evento && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.fecha_evento}</p>
@@ -628,9 +619,8 @@ export default function Eventos() {
                       value={form.hora_inicio}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.hora_inicio ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.hora_inicio ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
                     {formErrors.hora_inicio && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.hora_inicio}</p>
@@ -645,9 +635,8 @@ export default function Eventos() {
                       value={form.hora_aproximada_fin} // ✅ CORREGIDO
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.hora_aproximada_fin ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.hora_aproximada_fin ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
                     {formErrors.hora_aproximada_fin && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.hora_aproximada_fin}</p>
@@ -661,9 +650,8 @@ export default function Eventos() {
                       value={form.descripcion}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.descripcion ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.descripcion ? "border-red-500" : "border-gray-300"
+                        }`}
                       rows={2}
                       placeholder="Descripción del evento"
                     />
@@ -679,9 +667,8 @@ export default function Eventos() {
                       value={form.imagen}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${
-                        formErrors.imagen ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full p-2 border rounded-md ${formErrors.imagen ? "border-red-500" : "border-gray-300"
+                        }`}
                       placeholder="https://ejemplo.com/imagen.jpg"
                     />
                     {formErrors.imagen && (
@@ -782,9 +769,8 @@ export default function Eventos() {
                       <div className="font-medium text-gray-600">Estado</div>
                       <div>
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
-                            selected.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                          }`}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${selected.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                            }`}
                         >
                           {selected.estado}
                         </span>
@@ -859,6 +845,6 @@ export default function Eventos() {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 }

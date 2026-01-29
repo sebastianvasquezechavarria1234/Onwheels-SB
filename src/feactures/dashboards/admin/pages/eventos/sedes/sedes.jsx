@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,12 +25,8 @@ export default function Sedes() {
     nombre_sede: "",
     direccion: "",
     ciudad: "",
-    telefono: "", 
+    telefono: "", // ✅ corregido
   });
-
-  // Validation State
-  const [formErrors, setFormErrors] = useState({});
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -122,7 +118,7 @@ export default function Sedes() {
         nombre_sede: "",
         direccion: "",
         ciudad: "",
-        telefono: "", 
+        telefono: "", // ✅ corregido
       });
       setSelected(null);
     } else if (type === "edit" && item) {
@@ -131,7 +127,9 @@ export default function Sedes() {
         nombre_sede: item.nombre_sede || "",
         direccion: item.direccion || "",
         ciudad: item.ciudad || "",
-        telefono: item.telefono || "", 
+
+        telefono: item.telefono || "", // ✅ corregido
+
       });
     } else {
       setSelected(item);
@@ -166,8 +164,14 @@ export default function Sedes() {
       nombre_sede: addForm.nombre_sede.trim(),
       direccion: addForm.direccion.trim(),
       ciudad: addForm.ciudad.trim(),
-      telefono: addForm.telefono.trim(),
+
+      telefono: addForm.telefono.trim(), // ✅ corregido
     };
+
+    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
+      showNotification("Todos los campos son obligatorios", "error");
+      return;
+    }
 
     try {
       const newSede = await createSede(payload);
@@ -192,8 +196,14 @@ export default function Sedes() {
       nombre_sede: editForm.nombre_sede.trim(),
       direccion: editForm.direccion.trim(),
       ciudad: editForm.ciudad.trim(),
-      telefono: editForm.telefono.trim(), 
+
+      telefono: editForm.telefono.trim(), // ✅ corregido
     };
+
+    if (!payload.nombre_sede || !payload.direccion || !payload.ciudad || !payload.telefono) {
+      showNotification("Todos los campos son obligatorios", "error");
+      return;
+    }
 
     try {
       await updateSede(selected.id_sede, payload);
@@ -236,7 +246,7 @@ export default function Sedes() {
   }, [totalPages, currentPage]);
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Configuración / Sedes</h2>
@@ -303,7 +313,6 @@ export default function Sedes() {
                         <td className="px-6 py-[18px] w-[30%] line-clamp-2">{s.direccion}</td>
                         <td className="px-6 py-[18px] w-[15%]">{s.ciudad}</td>
                         <td className="px-6 py-[18px] w-[10%]">{s.telefono}</td>
-
                         <td className="px-6 py-[18px] w-[15%] flex gap-[10px] items-center justify-center">
                           <motion.button
                             onClick={() => openModal("details", s)}
@@ -345,11 +354,10 @@ export default function Sedes() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 Anterior
               </button>
@@ -359,11 +367,10 @@ export default function Sedes() {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 Siguiente
               </button>
@@ -379,9 +386,8 @@ export default function Sedes() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -417,10 +423,10 @@ export default function Sedes() {
                   {modalType === "add"
                     ? "Registrar Nueva Sede"
                     : modalType === "edit"
-                    ? "Editar Sede"
-                    : modalType === "details"
-                    ? "Detalles de la Sede"
-                    : "Eliminar Sede"}
+                      ? "Editar Sede"
+                      : modalType === "details"
+                        ? "Detalles de la Sede"
+                        : "Eliminar Sede"}
                 </h3>
 
                 {modalType === "add" && (
@@ -461,7 +467,8 @@ export default function Sedes() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
                       <input
-                        name="telefono" 
+
+                        name="telefono" // ✅ corregido
                         value={addForm.telefono}
                         onChange={handleAddChange}
                         className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.telefono ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
@@ -526,7 +533,8 @@ export default function Sedes() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
                       <input
-                        name="telefono" 
+
+                        name="telefono" // ✅ corregido
                         value={editForm.telefono}
                         onChange={handleEditChange}
                         className={`w-full px-3 py-2 border rounded-lg outline-none ${formErrors.telefono ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
@@ -569,7 +577,7 @@ export default function Sedes() {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Teléfono:</span>
-                      <span>{selected.telefono}</span> 
+                      <span>{selected.telefono}</span> {/* ✅ corregido */}
                     </div>
                     <div className="flex justify-center pt-4">
                       <button
@@ -611,6 +619,6 @@ export default function Sedes() {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 }

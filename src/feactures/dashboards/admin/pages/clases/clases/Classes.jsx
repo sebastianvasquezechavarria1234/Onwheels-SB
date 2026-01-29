@@ -1,6 +1,6 @@
 // src/feactures/dashboards/admin/pages/clases/clases/Clases.jsx
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -271,7 +271,7 @@ export const Clases = () => {
   }, [currentPage, totalPages]);
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Gestión de Clases</h2>
@@ -941,7 +941,7 @@ export const Clases = () => {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 };
 

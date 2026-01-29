@@ -1,12 +1,12 @@
-import axios from "axios";
+import api from "../../../../../services/api";
 
 // Ajusta la URL si tu backend corre en otro puerto
-const API = "http://localhost:3000/api/admin/correos-masivos";
+const API = "/admin/correos-masivos";
 
 // Obtener roles disponibles
 export const obtenerRolesDisponibles = async () => {
   try {
-    const res = await axios.get(`${API}/roles-disponibles`);
+    const res = await api.get(`${API}/roles-disponibles`);
     return res.data;
   } catch (error) {
     console.error("Error obteniendo roles:", error);
@@ -17,7 +17,7 @@ export const obtenerRolesDisponibles = async () => {
 // Obtener vista previa de destinatarios
 export const obtenerVistaPreviaDestinatarios = async (idsRoles) => {
   try {
-    const res = await axios.post(`${API}/vista-previa`, {
+    const res = await api.post(`${API}/vista-previa`, {
       idsRoles,
     });
     return res.data;
@@ -31,7 +31,7 @@ export const obtenerVistaPreviaDestinatarios = async (idsRoles) => {
 // Enviar correos masivos
 export const enviarCorreosMasivos = async (asunto, mensaje, idsRoles, rolesNombres) => {
   try {
-    const res = await axios.post(`${API}/enviar`, {
+    const res = await api.post(`${API}/enviar`, {
       asunto,
       mensaje,
       idsRoles,
@@ -47,7 +47,7 @@ export const enviarCorreosMasivos = async (asunto, mensaje, idsRoles, rolesNombr
 // Obtener historial de envíos
 export const obtenerHistorialEnvios = async () => {
   try {
-    const res = await axios.get(`${API}/historial`);
+    const res = await api.get(`${API}/historial`);
     return res.data;
   } catch (error) {
     console.error("Error obteniendo historial:", error);
@@ -57,12 +57,12 @@ export const obtenerHistorialEnvios = async () => {
 
 // Eliminar envío
 export const eliminarEnvio = async (id) => {
-    try {
-        const res = await axios.delete(`${API}/${id}`);
-        return res.data;
-    } catch (error) {
-        console.error("Error eliminando envío:", error);
-        throw error;
-    }
+  try {
+    const res = await api.delete(`${API}/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error eliminando envío:", error);
+    throw error;
+  }
 };
 

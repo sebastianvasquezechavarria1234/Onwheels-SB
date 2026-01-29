@@ -126,7 +126,7 @@ const Sidebar = () => {
                 <span>Eventos</span>
               </div>
             </div>
-            
+
           )}
         </div>
 
@@ -191,11 +191,7 @@ const Sidebar = () => {
             <div className="ml-8 mt-2 space-y-3">
               <div className="flex items-center gap-2 hover:text-blue-600">
                 <ShoppingCart size={18} />
-                <span>Ventas</span>
-              </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <ClipboardList size={18} />
-                <span>Detalle ventas</span>
+                <span><BtnLink link="ventas" title="Ventas" /></span>
               </div>
             </div>
           )}

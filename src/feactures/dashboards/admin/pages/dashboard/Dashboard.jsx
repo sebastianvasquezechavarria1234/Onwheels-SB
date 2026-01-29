@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout } from "../../layout/layout";
+
 import {
   ResponsiveContainer,
   LineChart,
@@ -50,7 +50,7 @@ const PIE_COLORS = ["#60A5FA", "#FBBF24", "#34D399", "#F87171"];
 
 export default function Dashboard() {
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-scroll sidebar h-screen">
         <h2 className="dashboard__title font-primary p-[30px] font-secundaria">Dashboard</h2>
 
@@ -137,6 +137,6 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
-    </Layout>
+    </>
   );
 }
