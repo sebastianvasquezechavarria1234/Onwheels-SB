@@ -333,8 +333,8 @@ export default function Proveedores({ renderLayout = true }) {
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               className={`px-4 py-2 rounded-lg ${currentPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                 }`}
             >
               Anterior
@@ -347,8 +347,8 @@ export default function Proveedores({ renderLayout = true }) {
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               className={`px-4 py-2 rounded-lg ${currentPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                 }`}
             >
               Siguiente

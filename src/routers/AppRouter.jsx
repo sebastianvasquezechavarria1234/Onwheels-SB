@@ -230,10 +230,11 @@ const AppRouter = () => {
           <Route path="student/home" element={<StudentHome />} />
           <Route path="student/events" element={<StudentEvents />} />
           <Route path="student/store" element={<StudentStore />} />
-          <Route path="student/class" element={<StudentClass />} />
+          <Route path="student/training" element={<StudentClass />} />
           <Route path="student/abaut" element={<StudentAbout />} />
           <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
           <Route path="student/checkout" element={<StudentCheckout />} />
+          <Route path="student/orderConfirm" element={<StudentOrderConfirm />} />
         </Route>
 
         {/* Dashboard Instructor - PROTEGIDAS */}
@@ -252,10 +253,16 @@ const AppRouter = () => {
         {/* Users - PROTEGIDAS */}
         <Route element={<ProtectedRoute allowedRoles={["cliente", "usuario"]} />}>
           <Route path="users/home" element={<UsersHome />} />
+          <Route path="users/preinscriptions" element={<UsersPreinscriptions />} />
           <Route path="users/store" element={<UsersStore />} />
-          <Route path="users/class" element={<UsersClass />} />
+          <Route path="users/training" element={<UsersClass />} />
           <Route path="users/events" element={<UsersEvents />} />
           <Route path="users/abaut" element={<UsersAbaut />} />
+          <Route path="users/shoppingCart" element={<UsersShoppingCart />} />
+          <Route path="users/checkout" element={<UsersCheckout />} />
+          <Route path="users/orderConfirm" element={<UsersOrderConfirm />} />
+          <Route path="users/setting" element={<UsersSetting />} />
+          <Route path="users/myPurchases" element={<UsersMyPurchases />} />
         </Route>
 
         {/* Cualquier usuario con token puede acceder (verificación en ProtectedRoute) */}
@@ -297,4 +304,4 @@ const AppRouter = () => {
   )
 }
 
-export default AppRouter
+export default AppRouter;

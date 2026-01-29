@@ -4,7 +4,10 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import api from "../../../services/api"
+<<<<<<< HEAD
+=======
 import { getRoleHomePath } from "../../../utils/roleUtils"
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -39,9 +42,25 @@ const Login = () => {
 
       localStorage.setItem("token", response.data.token)
       localStorage.setItem("user", JSON.stringify(response.data.user))
+<<<<<<< HEAD
+
+      const roles = response.data.user.roles || []
+      const rol = roles[0]?.toLowerCase() || "cliente"
+
+      if (rol === "administrador") {
+        navigate("/admin/dashboard", { replace: true })
+      } else if (rol === "estudiante") {
+        navigate("/student/home", { replace: true })
+      } else if (rol === "instructor") {
+        navigate("/instructor/home", { replace: true })
+      } else {
+        navigate("/users/home", { replace: true })
+      }
+=======
 
       const homePath = getRoleHomePath()
       navigate(homePath, { replace: true })
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
     } catch (err) {
       console.error("Login error:", err)
       if (err.response) {
@@ -51,7 +70,11 @@ const Login = () => {
       } else {
         setError("Error al procesar la solicitud")
       }
+<<<<<<< HEAD
+      // Solo resetear loading cuando hay error
+=======
     } finally {
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
       setLoading(false)
       setFormSubmitted(false)
     }
@@ -59,7 +82,17 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-[20px] right-[20px] bg-white w-[60px] h-[60px] rounded-full flex items-center justify-center text-[33px] cursor-pointer font-medium! duration-300 transition-all hover:scale-[1.1]"
+      >
+        ×
+      </button>
+<<<<<<< HEAD
+      <div className="w-full max-w-6xl bg-slate-800 rounded-3xl shadow-2xl overflow-hidden relative">
+=======
       <div className="w-full max-w-6xl bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
+>>>>>>> ca002f4e9ae306c41985ab08f29d72fe7814f58c
         <div className="flex flex-col lg:flex-row min-h-[600px]">
           {/* Sección de ilustración */}
           <div className="lg:w-1/2 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden">
@@ -91,7 +124,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Ingresa tu correo aquí"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
+                    className="inputre"
                     required
                     disabled={loading}
                   />

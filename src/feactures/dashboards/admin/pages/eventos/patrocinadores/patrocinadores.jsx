@@ -41,31 +41,35 @@ export default function Patrocinadores() {
     let error = "";
 
     if (name === "nombre_patrocinador") {
-      if (!value.trim()) error = "El nombre es obligatorio";
-      else if (value.trim().length < 2) error = "Debe tener mínimo 2 caracteres";
-      else if (value.trim().length > 100) error = "Máximo 100 caracteres";
-      else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s0-9&.,\-]+$/.test(value.trim())) error = "Nombre inválido";
+      if (!value || !value.trim()) error = "El nombre es obligatorio";
+      else if (value.trim().length < 2) error = "El nombre debe tener al menos 2 caracteres";
+      else if (value.trim().length > 100) error = "El nombre no debe exceder 100 caracteres";
+      else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9\s.,&-]+$/.test(value.trim())) error = "Nombre inválido (caracteres no permitidos)";
     }
 
     if (name === "email") {
       if (!value.trim()) error = "El email es obligatorio";
       else {
+        // Regex estándar para email
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!re.test(value.trim())) error = "Email inválido";
+        if (!re.test(value.trim())) error = "Formato de correo inválido";
       }
     }
 
     if (name === "telefono") {
-      const re = /^[0-9+\s()-]{6,20}$/;
       if (!value.trim()) error = "El teléfono es obligatorio";
-      else if (!re.test(value.trim())) error = "Teléfono inválido";
+      else {
+          // Permite números, espacios, guiones, parentesis y signo más. Longitud entre 7 y 20
+          const re = /^[0-9+\s()-]{7,20}$/;
+          if (!re.test(value.trim())) error = "Número de teléfono inválido (7-20 caracteres, solo números y simbolos comunes)";
+      }
     }
 
     if (name === "logo" && value.trim() !== "") {
       try {
         new URL(value.trim());
       } catch {
-        error = "URL inválida";
+        error = "URL del logo inválida (debe comenzar con http/https)";
       }
     }
 

@@ -50,15 +50,15 @@ export default function CategoriaEventos() {
     let error = "";
 
     if (name === "nombre_categoria") {
-      if (!value.trim()) error = "El nombre es obligatorio";
-      else if (value.trim().length < 2) error = "Mínimo 2 caracteres";
-      else if (value.trim().length > 100) error = "Máximo 100 caracteres";
-      else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ\s0-9&.,\-]+$/.test(value.trim()))
-        error = "Nombre inválido";
+      if (!value || !value.trim()) error = "El nombre es obligatorio";
+      else if (value.trim().length < 3) error = "El nombre debe tener al menos 3 caracteres";
+      else if (value.trim().length > 50) error = "El nombre no debe exceder 50 caracteres";
+      else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9\s.,&-]+$/.test(value.trim()))
+        error = "Nombre inválido (evite caracteres especiales complejos)";
     }
 
-    if (name === "descripcion" && value && value.length > 150) {
-      error = "Máximo 150 caracteres";
+    if (name === "descripcion" && value) {
+        if (value.length > 200) error = "Máximo 200 caracteres";
     }
 
     setFormErrors((prev) => ({ ...prev, [name]: error }));

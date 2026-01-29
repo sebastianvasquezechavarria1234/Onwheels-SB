@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/compras/productos/Products.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search, Eye, Pen, Image as ImageIcon } from "lucide-react";
+import { X, Plus, Trash2, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getProductos,
@@ -449,13 +449,10 @@ export default function Productos({ renderLayout = true }) {
               </div>
               <input
                 type="text"
-                value={busqueda}
-                onChange={(e) => {
-                  setBusqueda(e.target.value);
-                  setPaginaActual(1);
-                }}
                 placeholder="Buscar productos..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="input !pl-[50px] w-full p-2"
               />
             </div>
             {canManage("productos") && (
