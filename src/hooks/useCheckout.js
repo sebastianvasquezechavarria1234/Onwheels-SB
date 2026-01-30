@@ -140,7 +140,9 @@ export const useCheckout = () => {
             const ventaPayload = {
                 id_usuario: user.id_usuario, // Importante para que el controller busque/cree el cliente
                 metodo_pago: form.metodo_pago,
-                direccion: form.direccion, // Se pasarán al update/create de cliente
+                direccion: form.instrucciones_entrega
+                    ? `${form.direccion} | Nota: ${form.instrucciones_entrega}`
+                    : form.direccion, // Se pasarán al update/create de cliente
                 telefono: form.telefono,     // Se pasarán al update/create de cliente
                 items: cart.items.map(item => ({
                     id_variante: item.id_variante,

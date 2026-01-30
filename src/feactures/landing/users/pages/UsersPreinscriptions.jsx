@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { UsersLayout } from "../layout/UsersLayout";
@@ -71,7 +73,7 @@ const UsersPreinscriptions = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+   
     try {
       if (!currentUser) {
         setError("Debes estar logueado para preinscribirte");
@@ -177,20 +179,22 @@ const UsersPreinscriptions = () => {
                 </div>
               )}
             </div>
-            <div className="w-full h-64 bg-linear-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+
+            <div className="w-full h-64 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+
               <svg width="80" height="80" viewBox="0 0 24 24" fill="none" className="text-white">
                 <path d="M12 2L2 7l10 5 10-5M2 12v5c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-5M2 17v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2M12 11v9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
           </div>
-          
+
           <div className="lg:w-1/2">
             {!showConfirm && !showFinal ? (
               <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
                 <h2 className="text-center text-3xl font-bold text-gray-900 mb-6">
                   Preinscripción
                 </h2>
-                
+               
                 <form onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
@@ -213,7 +217,7 @@ const UsersPreinscriptions = () => {
                         <option value="Avanzado">Avanzado</option>
                       </select>
                     </div>
-                    
+
                     <div>
                       <label
                         className="block text-sm font-medium text-gray-700 mb-2"
@@ -297,7 +301,7 @@ const UsersPreinscriptions = () => {
                             required
                           />
                         </div>
-                        
+                       
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label
@@ -321,7 +325,7 @@ const UsersPreinscriptions = () => {
                               required
                             />
                           </div>
-                          
+                         
                           <div>
                             <label
                               className="block text-sm font-medium text-gray-700 mb-2"
@@ -345,7 +349,7 @@ const UsersPreinscriptions = () => {
                             />
                           </div>
                         </div>
-                        
+                       
                         <div>
                           <label
                             className="block text-sm font-medium text-gray-700 mb-2"
@@ -397,7 +401,7 @@ const UsersPreinscriptions = () => {
                     Revisa que toda la información esté correcta antes de continuar.
                   </p>
                 </div>
-                
+
                 {error && (
                   <div className="mb-4 text-red-600 text-center bg-red-50 p-2 rounded">
                     {error}

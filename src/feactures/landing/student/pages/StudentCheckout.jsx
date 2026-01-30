@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentLayout } from "../layout/StudentLayout";
-import { Check, AlertTriangle, ShoppingBag } from "lucide-react";
+import { Check, AlertTriangle, ShoppingBag, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCheckout } from "../../../../hooks/useCheckout";
 
@@ -53,7 +53,16 @@ export const StudentCheckout = () => {
     <StudentLayout>
       <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px] max-lg:flex-col max-md:p-[10px] max-md:pt-[80px]">
         <div className="w-[65%] max-lg:w-full">
-          <h2 className="mb-[20px] max-md:mb-[20px]">Información de envío y pago</h2>
+          <div className="mb-6">
+            <button
+              onClick={() => navigate("/student/shoppingCart")}
+              className="flex items-center gap-2 text-gray-600 hover:text-black mb-4"
+            >
+              <ArrowLeft size={20} />
+              Volver al carrito
+            </button>
+            <h2 className="mb-[20px] max-md:mb-[20px]">Información de envío y pago</h2>
+          </div>
 
           <form onSubmit={onConfirm} className="p-[30px] border-1 border-black/20 rounded-[30px] max-md:p-[10px] max-md:rounded-[20px]">
             {/* Información de Envío */}
