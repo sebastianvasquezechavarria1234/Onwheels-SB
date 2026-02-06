@@ -5,14 +5,17 @@ import './index.css';
 import App from './App.jsx';
 import { BrowserRouter } from 'react-router-dom';
 import "./App.css";
-// import { AuthProvider } from "./feactures/dashboards/dinamico/context/AuthContext.jsx";
+import { AuthProvider } from "./feactures/dashboards/dinamico/context/AuthContext.jsx";
+import { ToastProvider } from "./context/ToastContext.jsx";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      {/* <AuthProvider>  */}
-        <App />
-      {/* </AuthProvider> */}
+      <AuthProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );
