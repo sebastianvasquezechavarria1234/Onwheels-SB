@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/clases/preinscripciones/PreinscripcionesAdmin.jsx
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Check, X, Search } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -104,11 +104,11 @@ const PreinscripcionesAdmin = () => {
       };
 
       await aceptarPreinscripcionYCrearMatricula(selectedPreinscripcion.id_estudiante, matriculaData);
-      
+
       await fetchPreinscripciones();
       showNotification("Preinscripción aceptada y matrícula creada correctamente");
       closeModal();
-      
+
     } catch (err) {
       console.error("Error aceptando preinscripción:", err);
       const errorMessage = err.response?.data?.mensaje || "Error al aceptar preinscripción";
@@ -127,7 +127,7 @@ const PreinscripcionesAdmin = () => {
   );
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Gestión de Preinscripciones</h2>
@@ -243,9 +243,8 @@ const PreinscripcionesAdmin = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -313,7 +312,7 @@ const PreinscripcionesAdmin = () => {
                   <div className="flex justify-between">
                     <span className="font-medium">Fecha Preinscripción:</span>
                     <span className="text-right">
-                      {selectedPreinscripcion.fecha_preinscripcion 
+                      {selectedPreinscripcion.fecha_preinscripcion
                         ? new Date(selectedPreinscripcion.fecha_preinscripcion).toLocaleDateString('es-ES')
                         : "—"
                       }
@@ -515,7 +514,7 @@ const PreinscripcionesAdmin = () => {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 };
 

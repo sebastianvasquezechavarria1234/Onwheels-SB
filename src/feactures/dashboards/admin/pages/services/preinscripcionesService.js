@@ -1,13 +1,13 @@
 // src/services/preinscripcionesServices.js
-import axios from "axios";
+import api from "../../../../../services/api";
 
-const API_URL = "http://localhost:3000/api/preinscripciones";
+const API_URL = "/preinscripciones";
 
 // -------------------------------------------------
 // Listar preinscripciones pendientes
 // -------------------------------------------------
 export const getPreinscripcionesPendientes = async () => {
-  const response = await axios.get(API_URL);
+  const response = await api.get(API_URL);
   return response.data;
 };
 
@@ -15,7 +15,7 @@ export const getPreinscripcionesPendientes = async () => {
 // Obtener preinscripción por ID
 // -------------------------------------------------
 export const getPreinscripcionById = async (id) => {
-  const response = await axios.get(`${API_URL}/${id}`);
+  const response = await api.get(`${API_URL}/${id}`);
   return response.data;
 };
 
@@ -23,7 +23,7 @@ export const getPreinscripcionById = async (id) => {
 // Crear preinscripción (USUARIO NORMAL)
 // -------------------------------------------------
 export const crearPreinscripcion = async (data) => {
-  const response = await axios.post(API_URL, data);
+  const response = await api.post(API_URL, data);
   return response.data;
 };
 
@@ -31,7 +31,7 @@ export const crearPreinscripcion = async (data) => {
 // Rechazar preinscripción (ADMIN) — usa la ruta correcta
 // -------------------------------------------------
 export const rechazarPreinscripcion = async (id) => {
-  const response = await axios.put(`${API_URL}/${id}/rechazar`);
+  const response = await api.put(`${API_URL}/${id}/rechazar`);
   return response.data;
 };
 
@@ -40,6 +40,6 @@ export const rechazarPreinscripcion = async (id) => {
 // -------------------------------------------------
 export const aceptarPreinscripcionYCrearMatricula = async (id, data) => {
   // data = { id_clase, id_plan, fecha_matricula }
-  const response = await axios.post(`${API_URL}/${id}/aceptar`, data);
+  const response = await api.post(`${API_URL}/${id}/aceptar`, data);
   return response.data;
 };

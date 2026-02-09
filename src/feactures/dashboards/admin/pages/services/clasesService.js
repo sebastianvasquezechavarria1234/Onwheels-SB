@@ -1,16 +1,17 @@
 // src/feactures/dashboards/admin/services/clasesService.js
-import axios from "axios";
+import api from "../../../../../services/api";
 
-const API_URL = "http://localhost:3000/api/clases";
+const API_URL = "/clases";
 
-export const getClases = () => axios.get(API_URL).then(r => r.data);
-export const getClaseById = (id) => axios.get(`${API_URL}/${id}`).then(r => r.data);
-export const createClase = (data) => axios.post(API_URL,{
-  ...data, instructores: data.instructores || []}).then(r => r.data);
-export const updateClase = (id, data) => axios.put(`${API_URL}/${id}`, data).then(r => r.data);
-export const deleteClase = (id) => axios.delete(`${API_URL}/${id}`).then(r => r.data);
+export const getClases = () => api.get(API_URL).then(r => r.data);
+export const getClaseById = (id) => api.get(`${API_URL}/${id}`).then(r => r.data);
+export const createClase = (data) => api.post(API_URL, {
+  ...data, instructores: data.instructores || []
+}).then(r => r.data);
+export const updateClase = (id, data) => api.put(`${API_URL}/${id}`, data).then(r => r.data);
+export const deleteClase = (id) => api.delete(`${API_URL}/${id}`).then(r => r.data);
 
 // Endpoints auxiliares para obtener datos relacionados
-export const getNiveles = () => axios.get("http://localhost:3000/api/niveles").then(r => r.data);
-export const getSedes = () => axios.get("http://localhost:3000/api/sedes").then(r => r.data);
-export const getInstructores = () => axios.get("http://localhost:3000/api/instructores").then(r => r.data);
+export const getNiveles = () => api.get("/niveles").then(r => r.data);
+export const getSedes = () => api.get("/sedes").then(r => r.data);
+export const getInstructores = () => api.get("/instructores").then(r => r.data);

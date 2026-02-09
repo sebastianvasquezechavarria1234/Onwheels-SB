@@ -1,64 +1,157 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Layout } from "../layout/Layout";
 import { BtnLinkIcon } from "../components/BtnLinkIcon";
-import { CreditCard } from "lucide-react";
+import { CreditCard, ShoppingBag, ArrowRight } from "lucide-react";
 import CardProduct from "../components/CardProduct";
+import { useCart } from "../../../context/CartContext";
+import { Link, useNavigate } from "react-router-dom";
 
 export const ShoppingCart = () => {
+    const { cart, clearCart, isLoaded } = useCart();
+    const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
+
+    const format = (n) =>
+        n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+
+    if (!isLoaded) return null; // Wait for cart to load
+
+    // 1. Unauthenticated State
+    if (!user) {
+        return (
+            <Layout>
+                <section className="pt-[150px] max-w-[1500px] mx-auto p-[20px] min-h-[60vh] flex flex-col items-center justify-center text-center">
+                    <div className="bg-blue-50 p-6 rounded-full mb-6">
+                        <ShoppingBag size={64} className="text-[var(--color-blue)]" />
+                    </div>
+                    <h2 className="text-3xl font-bold mb-4">Inicia sesión para ver tu carrito</h2>
+                    <p className="text-gray-600 mb-8 max-w-md">
+                        Guarda tus productos favoritos y accede a ellos desde cualquier dispositivo iniciando sesión.
+                    </p>
+                    <div className="flex gap-4">
+                        <Link to="/login" className="px-8 py-3 bg-[var(--color-blue)] text-white rounded-full font-semibold hover:opacity-90 transition-opacity">
+                            Iniciar Sesión
+                        </Link>
+                        <Link to="/register" className="px-8 py-3 bg-white text-[var(--color-blue)] border-2 border-[var(--color-blue)] rounded-full font-semibold hover:bg-blue-50 transition-colors">
+                            Registrarse
+                        </Link>
+                    </div>
+                </section>
+            </Layout>
+        );
+    }
+
+    // 2. Empty State
+    if (cart.items.length === 0) {
+        return (
+            <Layout>
+                <section className="pt-[150px] max-w-[1500px] mx-auto p-[20px] min-h-[60vh] flex flex-col items-center justify-center text-center">
+                    <div className="bg-gray-100 p-6 rounded-full mb-6">
+                        <ShoppingBag size={64} className="text-gray-400" />
+                    </div>
+                    <h2 className="text-3xl font-bold mb-4">Tu carrito está vacío</h2>
+                    <p className="text-gray-600 mb-8">¡Explora nuestra tienda y encuentra los mejores productos para ti!</p>
+                    <Link
+                        to={
+                            user?.rol?.toLowerCase() === 'estudiante' ? '/student/store' :
+                                user?.rol?.toLowerCase() === 'instructor' ? '/instructor/store' :
+                                    user?.rol?.toLowerCase() === 'administrador' ? '/admin/store' :
+                                        user?.rol?.toLowerCase() === 'cliente' ? '/users/store' :
+                                            '/store' // Fallback for unauth (though this block is for auth-empty) or custom
+                        }
+                        className="px-8 py-3 bg-[var(--color-blue)] text-white rounded-full font-semibold hover:opacity-90 transition-opacity"
+                    >
+                        Ir a la Tienda
+                    </Link>
+                </section>
+            </Layout>
+        );
+    }
+
+    // 3. Cart with Items
     return (
         <Layout>
             <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px] max-lg:flex-col max-md:p-[10px] max-md:pt-[80px]">
-                <div className="w-[75%] max-lg:w-full">
-                    <h2 className="mb-[20px] max-md:mb-[20px]">Carrito de compras.</h2>
+                <div className="w-[70%] max-lg:w-full">
+                    <div className="flex items-center justify-between mb-[20px]">
+                        <h2 className="text-3xl font-bold">Carrito de compras</h2>
+                        <button
+                            onClick={clearCart}
+                            className="text-red-500 hover:text-red-700 text-sm font-medium underline"
+                        >
+                            Vaciar carrito
+                        </button>
+                    </div>
 
-                        <article className="p-[30px] border-1 border-black/20 rounded-[30px] max-md:p-[10px] max-md:rounded-[20px]">
-                            {/* Header  */}
-                            <div className="flex border-b border-black/20 pb-[30px] max-md:pb-[10px]">
-                                <h4 className="w-[40%] max-md:text-[11px]! max-md:w-[50%]">Producto</h4>
-                                <h4 className="w-[25%] max-md:text-[11px]! max-md:w-[20%]">Cantidad</h4>
-                                <h4 className="w-[20%] max-md:text-[11px]! max-md:w-[15%]">Total</h4>
-                                <h4 className="w-[10%] max-md:text-[11px]! max-md:w-[5%]">Acciones</h4>
+                    <article className="p-[30px] border border-gray-200 shadow-sm rounded-[30px] max-md:p-[15px] max-md:rounded-[20px] bg-white">
+                        {/* Header  */}
+                        <div className="flex border-b border-gray-100 pb-[20px] mb-[20px] text-gray-500 font-medium text-sm">
+                            <h4 className="w-[40%] max-lg:w-[50%]">Producto</h4>
+                            <h4 className="w-[25%] max-lg:w-[22%]">Cantidad</h4>
+                            <h4 className="w-[25%] max-lg:w-[20%]">Total</h4>
+                            <h4 className="w-[10%] max-lg:w-[5%] text-right"></h4>
+                        </div>
 
-                            </div>
-                            <div className="flex flex-col gap-[20px] pt-[30px] max-md:pt-[10px]">
-                                <CardProduct />
-                                <CardProduct />
-                                <CardProduct />
-
-                            </div>
-                        </article>
+                        <div className="flex flex-col gap-[20px]">
+                            {cart.items.map((item) => (
+                                <CardProduct key={item.id_variante} item={item} />
+                            ))}
+                        </div>
+                    </article>
 
                 </div>
-                <div className="w-[25%] mt-[115px] border-1 rounded-[30px] border-black/20  p-[30px] max-lg:w-full max-md:p-[10px] max-lg:pl-0 max-lg:mt-[0px] max-md:rounded-[20px]">
 
-                    <div className="sticky top-[200px] max-lg:top-[00px]">
-                        <div className="">
-                            <div className="flex justify-between mb-[10px]">
-                                <p className="font-bold!">Subtotal</p>
-                                <p>$1.200.000</p>
+                {/* Summary Section */}
+                <div className="w-[30%] mt-[60px] max-lg:w-full max-lg:mt-0">
+                    <div className="sticky top-[120px] border border-gray-200 shadow-sm rounded-[30px] p-[30px] bg-white max-md:p-[20px]">
+                        <h3 className="text-xl font-bold mb-6">Resumen de compra</h3>
+
+                        <div className="flex flex-col gap-4 mb-6">
+                            <div className="flex justify-between text-gray-600">
+                                <p>Subtotal</p>
+                                <p>{format(cart.total)}</p>
                             </div>
-                            <div className="flex justify-between">
-                                <p className="font-bold!">Total</p>
-                                <p>$1.200.000</p>
+                            <div className="flex justify-between text-gray-600">
+                                <p>Envío</p>
+                                <p className="text-green-600 font-medium">Gratis</p>
                             </div>
-                            <form className="mt-[20px]" action="">
-                                <label className="mb-[20px] block">
-                                    <p className="mb-[10px]">Ingrese una  instrucciones especiales de entrega a continuación:
-                                    </p>
-                                    <textarea name="" id="" className="input"></textarea>
-
-
-
-
-                                </label>
-                            </form>
-
+                            <div className="border-t border-gray-100 my-2"></div>
+                            <div className="flex justify-between text-xl font-bold text-gray-900">
+                                <p>Total</p>
+                                <p>{format(cart.total)}</p>
+                            </div>
                         </div>
-                        <BtnLinkIcon title="Comprar productos" style="bg-[var(--color-blue)]! text-white w-full max-md:w-[200px]" styleIcon="bg-white!">
-                            <CreditCard className="text-[var(--color-blue)]!" />
 
+                        <form className="mb-6">
+                            <label className="block">
+                                <p className="mb-2 text-sm font-medium text-gray-700">Instrucciones especiales (opcional):</p>
+                                <textarea
+                                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all text-sm"
+                                    rows="3"
+                                    placeholder="Notas para el envío..."
+                                ></textarea>
+                            </label>
+                        </form>
+
+                        <BtnLinkIcon
+                            title="Continuar Compra"
+                            link="/users/checkout"
+                            style="bg-[var(--color-blue)]! text-white w-full hover:shadow-lg transition-all"
+                            styleIcon="bg-white/20 text-white!"
+                        >
+                            <ArrowRight className="text-white" />
                         </BtnLinkIcon>
 
+                        <p className="mt-4 text-xs text-center text-gray-400">
+                            Impuestos incluidos. El envío se calcula en el checkout.
+                        </p>
                     </div>
                 </div>
 

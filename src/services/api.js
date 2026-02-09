@@ -39,4 +39,7 @@ api.interceptors.response.use(
 )
 
 export default api
+<<<<<<< HEAD
 
+=======
+>>>>>>> f20af8f076c041c0046085f144d17bc608a865c8

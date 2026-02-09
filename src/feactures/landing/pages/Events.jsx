@@ -513,7 +513,7 @@ const Events = () => {
                                 <div className="p-2 bg-purple-100 text-purple-700 rounded-lg"><Info size={18} /></div>
                                 <div>
                                   <span className="block text-xs uppercase text-gray-400 font-bold">Organizador</span>
-                                  <span className="font-semibold text-gray-800">OnWheels SB</span>
+                                  <span className="font-semibold text-gray-800">Performance SB SB</span>
                                 </div>
                              </li>
                            </ul>

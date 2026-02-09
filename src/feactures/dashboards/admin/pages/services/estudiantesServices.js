@@ -1,63 +1,58 @@
+import api from "../../../../../services/api";
 
-import axios from "axios";
-// ⚠️ ASEGÚRATE DE USAR EL MISMO PUERTO QUE TU BACKEND (3000 según tus logs)
-const API_URL = "http://localhost:3000/api/estudiantes";
-const API_USUARIOS = "http://localhost:3000/api/usuarios";
-const API_ACUDIENTES = "http://localhost:3000/api/acudientes";
+const ENDPOINT = "/estudiantes";
+const ENDPOINT_USUARIOS = "/usuarios";
+const ENDPOINT_ACUDIENTES = "/acudientes";
 
 export const getEstudiantes = async () => {
-  const response = await axios.get(API_URL);
+  const response = await api.get(ENDPOINT);
   return response.data;
 };
 
 export const getEstudianteById = async (id) => {
-  const response = await axios.get(`${API_URL}/${id}`);
+  const response = await api.get(`${ENDPOINT}/${id}`);
   return response.data;
 };
 
 export const createEstudiante = async (estudianteData) => {
-  const response = await axios.post(API_URL, estudianteData);
+  const response = await api.post(ENDPOINT, estudianteData);
   return response.data;
 };
 
 export const updateEstudiante = async (id, estudianteData) => {
-  const response = await axios.put(`${API_URL}/${id}`, estudianteData, {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+  const response = await api.put(`${ENDPOINT}/${id}`, estudianteData);
   return response.data;
 };
 
 export const deleteEstudiante = async (id) => {
-  const response = await axios.delete(`${API_URL}/${id}`);
+  const response = await api.delete(`${ENDPOINT}/${id}`);
   return response.data;
 };
 
 // Servicios para datos relacionados
 export const getUsuariosActivos = async () => {
-  const response = await axios.get(`${API_USUARIOS}`);
+  const response = await api.get(ENDPOINT_USUARIOS);
   // Filtrar solo usuarios activos si es necesario
-  return response.data.filter(usuario => usuario.estado !== false);
+  return response.data ? response.data.filter(usuario => usuario.estado !== false) : [];
 };
 
 export const getAcudientes = async () => {
-  const response = await axios.get(API_ACUDIENTES);
+  const response = await api.get(ENDPOINT_ACUDIENTES);
   return response.data;
 };
 
 export const createAcudiente = async (acudienteData) => {
-  const response = await axios.post(API_ACUDIENTES, acudienteData);
+  const response = await api.post(ENDPOINT_ACUDIENTES, acudienteData);
   return response.data;
 };
 
 // Servicios adicionales para preinscripciones
 export const getPreinscripcionesPendientes = async () => {
-  const response = await axios.get(`${API_URL}/preinscripciones/pendientes`);
+  const response = await api.get(`${ENDPOINT}/preinscripciones/pendientes`);
   return response.data;
 };
 
 export const updateEstadoEstudiante = async (id, estado) => {
-  const response = await axios.put(`${API_URL}/${id}/estado`, { estado });
+  const response = await api.put(`${ENDPOINT}/${id}/estado`, { estado });
   return response.data;
 };

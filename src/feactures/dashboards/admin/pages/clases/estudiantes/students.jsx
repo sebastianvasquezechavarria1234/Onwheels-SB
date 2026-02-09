@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion"; 
+import { AnimatePresence, motion } from "framer-motion";
 import {
   getEstudiantes,
   createEstudiante,
@@ -21,7 +21,7 @@ const Estudiantes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [modal, setModal] = useState(null); 
+  const [modal, setModal] = useState(null);
   const [selectedEstudiante, setSelectedEstudiante] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -69,13 +69,13 @@ const Estudiantes = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [estudiantesData, usuariosData, acudientesData] = await Promise.all([
         getEstudiantes(),
         getUsuariosActivos(),
         getAcudientes()
       ]);
-      
+
       setEstudiantes(Array.isArray(estudiantesData) ? estudiantesData : []);
       setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
       setAcudientes(Array.isArray(acudientesData) ? acudientesData : []);
@@ -122,7 +122,7 @@ const Estudiantes = () => {
       }
 
       let id_acudiente_final = null;
-      
+
       // Si es menor de edad, manejar acudiente
       if (edad && edad < 18) {
         if (crearAcudiente) {
@@ -177,7 +177,7 @@ const Estudiantes = () => {
       }
 
       let id_acudiente_final = null;
-      
+
       // Si es menor de edad, manejar acudiente
       if (edad && edad < 18) {
         if (crearAcudiente) {
@@ -274,14 +274,14 @@ const Estudiantes = () => {
         edad: estudiante.edad ? estudiante.edad.toString() : "",
         id_acudiente: estudiante.id_acudiente ? estudiante.id_acudiente.toString() : "",
       });
-      
+
       // Establecer estado de enfermedad
       if (estudiante.enfermedad && estudiante.enfermedad !== "No aplica") {
         setTieneEnfermedad(true);
       } else {
         setTieneEnfermedad(false);
       }
-      
+
       // Establecer si se debe crear acudiente nuevo o usar existente
       if (estudiante.id_acudiente) {
         setCrearAcudiente(false);
@@ -344,7 +344,7 @@ const Estudiantes = () => {
   }, [totalPages, currentPage]);
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Estudiantes Gestión de Estudiantes</h2>
@@ -434,13 +434,12 @@ const Estudiantes = () => {
                           <select
                             value={e.estado}
                             onChange={(event) => handleActualizarEstado(e, event.target.value)}
-                            className={`text-xs font-medium rounded-full px-2 py-1 ${
-                              e.estado === 'Activo' 
-                                ? 'bg-green-100 text-green-800' 
+                            className={`text-xs font-medium rounded-full px-2 py-1 ${e.estado === 'Activo'
+                                ? 'bg-green-100 text-green-800'
                                 : e.estado === 'Pendiente'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
                           >
                             <option value="Activo">Activo</option>
                             <option value="Pendiente">Pendiente</option>
@@ -491,11 +490,10 @@ const Estudiantes = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Anterior
               </button>
@@ -505,11 +503,10 @@ const Estudiantes = () => {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Siguiente
               </button>
@@ -525,9 +522,8 @@ const Estudiantes = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -563,10 +559,10 @@ const Estudiantes = () => {
                   {modal === "crear"
                     ? "Registrar Estudiante"
                     : modal === "editar"
-                    ? "Editar Estudiante"
-                    : modal === "ver"
-                    ? "Detalles del Estudiante"
-                    : "Eliminar Estudiante"}
+                      ? "Editar Estudiante"
+                      : modal === "ver"
+                        ? "Detalles del Estudiante"
+                        : "Eliminar Estudiante"}
                 </h3>
 
                 {modal === "crear" && (
@@ -656,28 +652,26 @@ const Estudiantes = () => {
                             <button
                               type="button"
                               onClick={() => setCrearAcudiente(false)}
-                              className={`py-2 px-1 text-sm font-medium ${
-                                !crearAcudiente
+                              className={`py-2 px-1 text-sm font-medium ${!crearAcudiente
                                   ? 'border-b-2 border-blue-500 text-blue-600'
                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                              }`}
+                                }`}
                             >
                               Acudiente existente
                             </button>
                             <button
                               type="button"
                               onClick={() => setCrearAcudiente(true)}
-                              className={`py-2 px-1 text-sm font-medium ${
-                                crearAcudiente
+                              className={`py-2 px-1 text-sm font-medium ${crearAcudiente
                                   ? 'border-b-2 border-blue-500 text-blue-600'
                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                              }`}
+                                }`}
                             >
                               Nuevo acudiente
                             </button>
                           </nav>
                         </div>
-                        
+
                         {!crearAcudiente ? (
                           <div>
                             <select
@@ -796,7 +790,7 @@ const Estudiantes = () => {
                         {selectedEstudiante.nombre_completo} ({selectedEstudiante.email})
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
@@ -864,28 +858,26 @@ const Estudiantes = () => {
                             <button
                               type="button"
                               onClick={() => setCrearAcudiente(false)}
-                              className={`py-2 px-1 text-sm font-medium ${
-                                !crearAcudiente
+                              className={`py-2 px-1 text-sm font-medium ${!crearAcudiente
                                   ? 'border-b-2 border-blue-500 text-blue-600'
                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                              }`}
+                                }`}
                             >
                               Acudiente existente
                             </button>
                             <button
                               type="button"
                               onClick={() => setCrearAcudiente(true)}
-                              className={`py-2 px-1 text-sm font-medium ${
-                                crearAcudiente
+                              className={`py-2 px-1 text-sm font-medium ${crearAcudiente
                                   ? 'border-b-2 border-blue-500 text-blue-600'
                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                              }`}
+                                }`}
                             >
                               Nuevo acudiente
                             </button>
                           </nav>
                         </div>
-                        
+
                         {!crearAcudiente ? (
                           <div>
                             <select
@@ -978,12 +970,12 @@ const Estudiantes = () => {
                     {formData.edad && parseInt(formData.edad) >= 18 && selectedEstudiante.id_acudiente && (
                       <div className="bg-yellow-50 p-3 rounded-lg">
                         <p className="text-sm text-yellow-800">
-                          <strong>Atención:</strong> El estudiante ahora es mayor de edad. 
+                          <strong>Atención:</strong> El estudiante ahora es mayor de edad.
                           ¿Desea eliminar el acudiente asociado?
                         </p>
                         <button
                           type="button"
-                          onClick={() => setFormData({...formData, id_acudiente: ""})}
+                          onClick={() => setFormData({ ...formData, id_acudiente: "" })}
                           className="mt-2 px-3 py-1 bg-yellow-200 text-yellow-800 rounded text-sm hover:bg-yellow-300"
                         >
                           Eliminar acudiente
@@ -1061,8 +1053,8 @@ const Estudiantes = () => {
                           </div>
                         ) : (
                           <span className="text-gray-500 italic">
-                            {selectedEstudiante.edad && selectedEstudiante.edad < 18 
-                              ? "Sin acudiente asignado" 
+                            {selectedEstudiante.edad && selectedEstudiante.edad < 18
+                              ? "Sin acudiente asignado"
                               : "No aplica (mayor de edad)"
                             }
                           </span>
@@ -1071,13 +1063,12 @@ const Estudiantes = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Estado:</span>
-                      <span className={`font-medium ${
-                        selectedEstudiante.estado === 'Activo' 
-                          ? 'text-green-600' 
+                      <span className={`font-medium ${selectedEstudiante.estado === 'Activo'
+                          ? 'text-green-600'
                           : selectedEstudiante.estado === 'Pendiente'
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
-                      }`}>
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
+                        }`}>
                         {selectedEstudiante.estado}
                       </span>
                     </div>
@@ -1121,7 +1112,7 @@ const Estudiantes = () => {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/clases/matriculas/MatriculasAdmin.jsx
 import React, { useEffect, useState, useCallback } from "react";
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Edit, Trash2, Search, Plus, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,7 +18,7 @@ const MatriculasAdmin = () => {
   const [search, setSearch] = useState("");
   const [selectedMatricula, setSelectedMatricula] = useState(null);
   const [modal, setModal] = useState(null); // "details" | "delete" | "editar" | "nuevaClase"
-  
+
   // Para el modal de nueva matrícula
   const [modoMatricula, setModoMatricula] = useState('existente');
   const [estudiantes, setEstudiantes] = useState([]);
@@ -27,7 +27,7 @@ const MatriculasAdmin = () => {
   const [estudianteSeleccionado, setEstudianteSeleccionado] = useState("");
   const [claseSeleccionada, setClaseSeleccionada] = useState("");
   const [planSeleccionado, setPlanSeleccionado] = useState("");
-  
+
   // Para nuevo estudiante
   const [usuariosElegibles, setUsuariosElegibles] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState("");
@@ -43,19 +43,19 @@ const MatriculasAdmin = () => {
   const [acudienteNombre, setAcudienteNombre] = useState("");
   const [acudienteTelefono, setAcudienteTelefono] = useState("");
   const [acudienteEmail, setAcudienteEmail] = useState("");
-  
+
   // Para editar
   const [claseEditada, setClaseEditada] = useState("");
   const [planEditado, setPlanEditado] = useState("");
   const [estadoEditado, setEstadoEditado] = useState("");
-  
+
   // Para maestro-detalle
   const [expandedEstudiante, setExpandedEstudiante] = useState(null);
-  
+
   // Confirmación de eliminación
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [matriculaToDelete, setMatriculaToDelete] = useState(null);
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -287,7 +287,7 @@ const MatriculasAdmin = () => {
   };
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Gestión de Matrículas</h2>
@@ -362,13 +362,12 @@ const MatriculasAdmin = () => {
                               })}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                matriculaPrincipal.estado === 'Activa' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : matriculaPrincipal.estado === 'Vencida'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-gray-100 text-gray-800'
-                              }`}>
+                              <span className={`px-2 py-1 rounded-full text-xs ${matriculaPrincipal.estado === 'Activa'
+                                ? 'bg-green-100 text-green-800'
+                                : matriculaPrincipal.estado === 'Vencida'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
+                                }`}>
                                 {matriculaPrincipal.estado}
                               </span>
                             </td>
@@ -431,13 +430,12 @@ const MatriculasAdmin = () => {
                                         <div className="font-medium">{m.nombre_nivel} - {m.nombre_plan}</div>
                                         <div className="text-xs text-gray-500">{new Date(m.fecha_matricula).toLocaleDateString('es-ES')}</div>
                                       </div>
-                                      <span className={`px-2 py-1 rounded-full text-xs ${
-                                        m.estado === 'Activa' 
-                                          ? 'bg-green-100 text-green-800' 
-                                          : m.estado === 'Vencida'
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-gray-100 text-gray-800'
-                                      }`}>
+                                      <span className={`px-2 py-1 rounded-full text-xs ${m.estado === 'Activa'
+                                        ? 'bg-green-100 text-green-800'
+                                        : m.estado === 'Vencida'
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : 'bg-gray-100 text-gray-800'
+                                        }`}>
                                         {m.estado}
                                       </span>
                                       <motion.button
@@ -468,11 +466,10 @@ const MatriculasAdmin = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
               >
                 Anterior
               </button>
@@ -482,11 +479,10 @@ const MatriculasAdmin = () => {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
               >
                 Siguiente
               </button>
@@ -500,9 +496,8 @@ const MatriculasAdmin = () => {
               initial={{ opacity: 0, x: 300 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -557,13 +552,12 @@ const MatriculasAdmin = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-500">Estado</label>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                        selectedMatricula.estado === 'Activa' 
-                          ? 'bg-green-100 text-green-800' 
-                          : selectedMatricula.estado === 'Vencida'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs ${selectedMatricula.estado === 'Activa'
+                        ? 'bg-green-100 text-green-800'
+                        : selectedMatricula.estado === 'Vencida'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-gray-100 text-gray-800'
+                        }`}>
                         {selectedMatricula.estado}
                       </span>
                     </div>
@@ -720,21 +714,19 @@ const MatriculasAdmin = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Nueva Matrícula</h3>
                 <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
                   <button
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${
-                      modoMatricula === 'existente' 
-                        ? 'bg-white text-blue-600 shadow-sm' 
-                        : 'text-gray-600'
-                    }`}
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${modoMatricula === 'existente'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600'
+                      }`}
                     onClick={() => setModoMatricula('existente')}
                   >
                     Estudiante existente
                   </button>
                   <button
-                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${
-                      modoMatricula === 'nuevo' 
-                        ? 'bg-white text-blue-600 shadow-sm' 
-                        : 'text-gray-600'
-                    }`}
+                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${modoMatricula === 'nuevo'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600'
+                      }`}
                     onClick={() => setModoMatricula('nuevo')}
                   >
                     Nuevo estudiante
@@ -919,7 +911,7 @@ const MatriculasAdmin = () => {
                   <button onClick={closeModal} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
                     Cancelar
                   </button>
-                  <button 
+                  <button
                     onClick={modoMatricula === 'existente' ? handleAsignarNuevaClase : handleCrearParaUsuarioExistente}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
@@ -931,7 +923,7 @@ const MatriculasAdmin = () => {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 };
 

@@ -1,16 +1,17 @@
 // src/pages/usuarios/Usuarios.jsx
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Layout } from "../../../layout/layout";
+
 import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence } from "framer-motion"; 
+import { AnimatePresence } from "framer-motion";
 import {
   getUsuarios,
   createUsuario,
   updateUsuario,
   deleteUsuario,
 } from "../../services/usuariosServices";
-import { getRoles } from "../../services/RolesService"; // ✅ Corregido: minúscula en el nombre del archivo
+import { getRoles } from "../../services/RolesService";
+import { canManage } from "../../../../../../utils/permissions";
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -246,7 +247,7 @@ export default function Usuarios() {
   }, [totalPages, currentPage]);
 
   return (
-    <Layout>
+    <>
       <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Usuarios\Registro de Usuarios</h2>
@@ -264,13 +265,15 @@ export default function Usuarios() {
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
-            <button
-              onClick={() => openModal("crear")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
-            >
-              <Plus size={18} />
-              Registrar Nuevo Usuario
-            </button>
+            {canManage("usuarios") && (
+              <button
+                onClick={() => openModal("crear")}
+                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
+              >
+                <Plus size={18} />
+                Registrar Nuevo Usuario
+              </button>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -328,24 +331,28 @@ export default function Usuarios() {
                             >
                               <Eye size={16} />
                             </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("editar", u)}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                              title="Editar"
-                            >
-                              <Pencil size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("eliminar", u)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={16} />
-                            </motion.button>
+                            {canManage("usuarios") && (
+                              <>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => openModal("editar", u)}
+                                  className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                                  title="Editar"
+                                >
+                                  <Pencil size={16} />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => openModal("eliminar", u)}
+                                  className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={16} />
+                                </motion.button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -361,11 +368,10 @@ export default function Usuarios() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-lg ${currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 Anterior
               </button>
@@ -375,11 +381,10 @@ export default function Usuarios() {
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${
-                  currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 Siguiente
               </button>
@@ -395,9 +400,8 @@ export default function Usuarios() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
+              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                }`}
             >
               {notification.message}
             </motion.div>
@@ -433,10 +437,10 @@ export default function Usuarios() {
                   {modal === "crear"
                     ? "Registrar Usuario"
                     : modal === "editar"
-                    ? "Editar Usuario"
-                    : modal === "ver"
-                    ? "Detalles del Usuario"
-                    : "Eliminar Usuario"}
+                      ? "Editar Usuario"
+                      : modal === "ver"
+                        ? "Detalles del Usuario"
+                        : "Eliminar Usuario"}
                 </h3>
 
                 {modal === "crear" && (
@@ -749,6 +753,6 @@ export default function Usuarios() {
           )}
         </AnimatePresence>
       </section>
-    </Layout>
+    </>
   );
 }
