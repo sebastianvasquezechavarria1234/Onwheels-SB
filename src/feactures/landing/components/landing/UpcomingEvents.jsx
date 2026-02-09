@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getEventosFuturos } from "../../../../services/eventoServices";
+import { getEventos } from "../../../../services/eventoServices";
 
 export const UpcomingEvents = () => {
     const [events, setEvents] = useState([]);
@@ -11,11 +11,29 @@ export const UpcomingEvents = () => {
     useEffect(() => {
         const fetch = async () => {
             try {
-                const data = await getEventosFuturos();
-                const eventsArray = Array.isArray(data) ? data : (data.eventos || []);
-                setEvents(eventsArray.slice(0, 3));
+                // Using generic logic to fetch all and filter in frontend for robustness
+                const data = await getEventos();
+
+                let allEvents = [];
+                if (Array.isArray(data)) {
+                    allEvents = data;
+                } else if (data.eventos && Array.isArray(data.eventos)) {
+                    allEvents = data.eventos;
+                }
+
+                // Filter future events
+                const now = new Date();
+                const futureEvents = allEvents
+                    .filter(e => {
+                        const eventDate = new Date(e.fecha_evento || e.fecha);
+                        return eventDate >= now;
+                    })
+                    .sort((a, b) => new Date(a.fecha_evento || a.fecha) - new Date(b.fecha_evento || b.fecha));
+
+                setEvents(futureEvents.slice(0, 3));
             } catch (error) {
-                console.error(error);
+                console.error("Error fetching events:", error);
+                // If API fails, we keep events empty, UI handles empty state
                 setEvents([]);
             } finally {
                 setLoading(false);
