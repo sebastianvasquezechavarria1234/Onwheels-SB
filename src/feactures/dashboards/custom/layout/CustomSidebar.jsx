@@ -13,7 +13,7 @@ import {
   BookOpen,
   GraduationCap,
   UserCheck,
-  FileText,
+  FileText, 
   CreditCard,
   Layers,
 } from "lucide-react"
@@ -260,7 +260,7 @@ export const CustomSidebar = () => {
             }}
           >
             Cerrar Dashboard
-          </Link>
+          </Link>crear un dashbard de acurdo alos reglamentos
         </div>
       </div>
     </aside>
