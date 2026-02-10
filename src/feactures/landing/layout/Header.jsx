@@ -30,7 +30,8 @@ export const Header = () => {
     <>
       {/* Navbar container - Fixed full width */}
       <motion.header
-        className="fixed top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 transition-all duration-300 pointer-events-none"
+        className=" top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 transition-all duration-300 pointer-events-none sticky top-0 mb-[-120px]"
+        style={{ perspective: "1200px" }}
       >
         <div
           className={`

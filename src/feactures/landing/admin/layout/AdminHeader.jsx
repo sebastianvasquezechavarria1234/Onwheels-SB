@@ -1,29 +1,130 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { LogOut, Menu, ShoppingCart, User, X, LayoutDashboard } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { BtnLinkIcon } from "../../components/BtnLinkIcon"
 import { BtnLink } from "../../components/BtnLink"
 
-// Header para Admin con botón destacado de Dashboard
+// Helper: wrapper para íconos con tooltip animado (blanco con texto negro y animación "pro")
+const IconWithTooltip = ({ label, children, className = "", onClick }) => {
+  const [hover, setHover] = useState(false)
+
+  const tooltipVariants = {
+    hidden: {
+      opacity: 0,
+      y: -10,
+      scale: 0.9,
+      rotateX: 18,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      rotateX: 0,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+      transition: {
+        type: "spring",
+        stiffness: 700,
+        damping: 20,
+        mass: 0.7,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -6,
+      scale: 0.98,
+      transition: { duration: 0.14, ease: "easeIn" },
+    },
+  }
+
+  const popPulse = {
+    initial: { scale: 1 },
+    hover: { scale: 1.03, transition: { yoyo: Infinity, duration: 0.9 } },
+  }
+
+  return (
+    <div
+      className={`relative inline-flex ${className}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
+    >
+      <motion.div
+        onClick={onClick}
+        aria-describedby={`tooltip-${label ? label.replace(/\s+/g, "-") : "null"}`}
+        className="flex items-center"
+        initial="initial"
+        animate={hover ? "hover" : "initial"}
+        variants={popPulse}
+      >
+        {children}
+      </motion.div>
+
+      <AnimatePresence>
+        {hover && label && (
+          <motion.div
+            key="tooltip"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tooltipVariants}
+            role="status"
+            aria-hidden={!hover}
+            className="absolute left-1/2 top-full z-50 mt-3 -translate-x-1/2 whitespace-nowrap"
+            style={{ pointerEvents: "none", perspective: 800 }}
+          >
+            <div className="inline-flex flex-col items-center">
+              <svg
+                width="16"
+                height="8"
+                viewBox="0 0 16 8"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ marginBottom: -6 }}
+                aria-hidden="true"
+              >
+                <path d="M8 0 L16 8 H0 Z" fill="white" stroke="rgba(0,0,0,0.06)" strokeWidth="0.6" />
+              </svg>
+
+              <div
+                className="inline-block rounded-lg px-3 py-1.5 text-[13px] font-semibold italic shadow-[0_8px_30px_rgba(16,24,40,0.18)] bg-white text-black"
+                style={{ minWidth: 96, textAlign: "center" }}
+              >
+                {label}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export const AdminHeader = () => {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const firstLinkRef = useRef(null)
   const closeButtonRef = useRef(null)
   const modalRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Bloqueo de scroll cuando modal abierto
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  useEffect(() => {
     document.body.style.overflow = open ? "hidden" : ""
 
-    // foco automático al abrir
     if (open) {
-      const t = setTimeout(() => {
-        firstLinkRef.current?.focus()
-      }, 120)
+      const t = setTimeout(() => firstLinkRef.current?.focus(), 120)
       return () => clearTimeout(t)
     }
   }, [open])
@@ -36,7 +137,6 @@ export const AdminHeader = () => {
         return
       }
 
-      // Simple focus trap: si el modal está abierto, cicla entre primer link y el botón cerrar
       if (e.key === "Tab") {
         const focusable = modalRef.current?.querySelectorAll(
           'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -60,11 +160,8 @@ export const AdminHeader = () => {
   }, [open])
 
   const handleLogout = () => {
-    // Eliminar token y usuario del localStorage
     localStorage.removeItem("token")
     localStorage.removeItem("user")
-
-    // Redirigir a login
     navigate("/login")
   }
 
@@ -87,102 +184,121 @@ export const AdminHeader = () => {
   const items = [
     { title: "Inicio", to: "/admin/home" },
     { title: "Tienda", to: "/admin/store" },
-    { title: "Clases", to: "/admin/class" },
+    { title: "Clases", to: "/admin/training" },
     { title: "Eventos", to: "/admin/events" },
     { title: "Sobre nosotros", to: "/admin/about" },
   ]
 
   return (
-    <header className="w-full flex justify-center fixed z-50 text-white">
-      <nav className="flex items-center justify-between w-full bg-[var(--color-blue)] backdrop-blur-[16px] p-[5px]">
-        <ul className="flex gap-[20px] items-center">
-          <li>
-            <Link to="/">
-              <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">
-                Performance-SB admin
-              </h4>
-            </Link>
-          </li>
+    <>
+      {/* HEADER FLOTANTE: idéntico a los otros headers */}
+      <motion.header
+        className="top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 pointer-events-none sticky top-0 mb-[-120px]"
+        style={{ perspective: "1200px" }}
+      >
+        <div
+          className={`
+            flex items-center justify-between px-3 py-1 rounded-full
+            backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
+            ${scrolled
+              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[60%] max-w-[1400px] mx-auto"
+              : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
+            }
+          `}
+        >
+          {/* LOGO */}
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="font-bold text-lg uppercase tracking-tighter text-white">
+              Performance SB admin
+            </span>
+          </Link>
 
-          {items.map((it) => (
-            <li key={it.to} className="max-xl:hidden">
-              <BtnLink link={it.to + "#"} title={it.title} />
-            </li>
-          ))}
-        </ul>
+          {/* NAV DESKTOP */}
+          <nav className="hidden md:flex items-center gap-6">
+            {items.map((it) => (
+              <Link
+                key={it.to}
+                to={it.to}
+                className="group relative text-xs font-bold uppercase tracking-widest text-white/90"
+              >
+                {it.title}
+                <span
+                  className="
+                    absolute left-0 top-[110%]
+                    block h-[1px] w-full
+                    bg-white
+                    opacity-0
+                    transition-opacity duration-300
+                    group-hover:opacity-100
+                  "
+                />
+              </Link>
+            ))}
+          </nav>
 
-        <ul className="flex gap-[5px] items-center">
-          {/* BOTON DASHBOARD DESTACADO - Exclusivo del admin */}
-          <li>
-            <Link
-              to="/admin/dashboard"
-              title="Ir al Dashboard"
-              className="cursor-pointer bg-emerald-200 text-emerald-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] hover:bg-emerald-300 transition-colors max-xl:hidden"
-              aria-label="Ir al Dashboard"
-            >
-              <div className="w-[60px] h-[60px] flex justify-center items-center bg-emerald-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <LayoutDashboard color="white" strokeWidth={1.8} size={20} />
-              </div>
-            
-            </Link>
-          </li>
+          {/* ACCIONES */}
+          <div className="flex items-center gap-2">
+            {/* Dashboard destacado pero con el estilo del header ejemplo (círculo, coherente) */}
+            <IconWithTooltip label="Dashboard">
+              <Link
+                to="/admin/dashboard"
+                className="inline-flex items-center justify-center w-[60px] h-[60px] rounded-full bg-emerald-600 overflow-hidden"
+                aria-label="Ir al Dashboard"
+              >
+                <LayoutDashboard color="white" strokeWidth={1.5} size={18} />
+              </Link>
+            </IconWithTooltip>
 
-          <li>
-            <BtnLinkIcon
-              title=""
-              link="../admin/shoppingCart"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
-            >
-              <ShoppingCart color="black" strokeWidth={1.5} size={20} />
-            </BtnLinkIcon>
-          </li>
+            <IconWithTooltip label="Carrito de compras">
+              <BtnLinkIcon
+                title=""
+                link="../admin/shoppingCart"
+                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
+              >
+                <ShoppingCart size={18} />
+              </BtnLinkIcon>
+            </IconWithTooltip>
 
-          <li>
-            <BtnLinkIcon
-              link="../admin/profile"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
-            >
-              <User className="text-black" strokeWidth={1.8} size={20} />
-            </BtnLinkIcon>
-          </li>
+            <IconWithTooltip label="Mi perfil">
+              <BtnLinkIcon
+                title=""
+                link="../admin/profile"
+                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
+              >
+                <User size={18} />
+              </BtnLinkIcon>
+            </IconWithTooltip>
 
-          <li>
-            <button
-              type="button"
-              onClick={handleLogout}
-              title="Cerrar sesión"
-              className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-2xl:p-12px_11px_1px_1px]"
-              aria-label="Cerrar sesión"
-            >
-              <div className=" w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <LogOut color="white" strokeWidth={1.8} size={20} />
-              </div>
-              {/* <p>Cerrar sesión</p> */}
-            </button>
-          </li>
+            <IconWithTooltip label="Cerrar sesión">
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Cerrar sesión"
+                className="w-[60px] cursor-pointer h-[60px] bg-red-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+                aria-label="Cerrar sesión"
+              >
+                <LogOut size={16} color="white" />
+              </button>
+            </IconWithTooltip>
 
-          {/* Botón de menú móvil */}
-          <li>
+            {/* Botón de menú móvil */}
             <button
               type="button"
               onClick={() => setOpen(true)}
-              aria-expanded={open}
+              className="md:hidden text-white p-2"
               aria-label="Abrir menú"
-              title="Menu"
-              className="hidden! max-xl:flex! bg-white p-[1px_8px_1px_1px] rounded-full justify-center items-center gap-[3px] cursor-pointer"
             >
-              <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <Menu className="text-white" strokeWidth={1.5} size={20} />
-              </span>
-              <h4 className="text-black">Menu</h4>
+              <Menu size={20} />
             </button>
-          </li>
-        </ul>
-      </nav>
+          </div>
+        </div>
+      </motion.header>
 
-      <AnimatePresence initial={false}>
+      {/* MENÚ / SHEET - MOBILE (idéntico al pattern usado en los otros headers) */}
+      <AnimatePresence>
         {open && (
           <>
             {/* overlay (z-40) */}
@@ -199,16 +315,17 @@ export const AdminHeader = () => {
               <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
             </motion.div>
 
-            {/* sheet/modal container (z-50) */}
+            {/* drawer/ sheet centrado */}
             <motion.div
-              className="fixed left-0 right-0 top-[20px] z-50 mx-auto max-w-[900px] px-4"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ duration: 0.28 }}
             >
               <motion.div
                 ref={modalRef}
-                className="relative rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
+                className="relative w-full max-w-[900px] rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
                 variants={sheetVariants}
                 role="dialog"
                 aria-modal="true"
@@ -218,12 +335,7 @@ export const AdminHeader = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-primary text-xl">Menú</h3>
                   <div className="flex items-center gap-2">
-                    <BtnLinkIcon
-                      title="Carrito"
-                      link="../admin/shoppingCart"
-                      style="hidden! max-xl:flex! border-1 border-black/10 "
-                      styleIcon="bg-white!"
-                    >
+                    <BtnLinkIcon title="Carrito" link="../admin/shoppingCart" style="hidden! max-xl:flex! border-1 border-black/10 " styleIcon="bg-white!">
                       <ShoppingCart color="black" strokeWidth={1.5} size={18} />
                     </BtnLinkIcon>
 
@@ -247,22 +359,24 @@ export const AdminHeader = () => {
                           to={it.to}
                           onClick={() => setOpen(false)}
                           ref={idx === 0 ? firstLinkRef : null}
-                          className="text-[14px]! italic py-[5px] block"
+                          className="text-[18px] font-bold italic py-[8px] block"
                         >
                           {it.title}
                         </Link>
                       </li>
                     ))}
-                    {/* Opción Dashboard en el modal móvil */}
+
+                    {/* Dashboard (opción adicional en el modal móvil) */}
                     <li>
                       <Link
                         to="/admin/dashboard"
                         onClick={() => setOpen(false)}
-                        className="text-[14px]! italic py-[5px] block font-semibold text-emerald-600"
+                        className="text-[18px] font-bold italic py-[8px] block"
                       >
                         Dashboard (Administración)
                       </Link>
                     </li>
+
                     <li>
                       <Link
                         to="/admin/profile"
@@ -272,6 +386,7 @@ export const AdminHeader = () => {
                         Mi Perfil
                       </Link>
                     </li>
+
                     <li>
                       <Link
                         to="/admin/purchases"
@@ -285,7 +400,6 @@ export const AdminHeader = () => {
                 </nav>
 
                 <div className="mt-6 flex items-center gap-3 justify-end">
-                  {/* BOTÓN DE CERRAR SESIÓN EN EL MODAL */}
                   <button
                     onClick={() => {
                       handleLogout()
@@ -302,6 +416,6 @@ export const AdminHeader = () => {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </>
   )
 }
