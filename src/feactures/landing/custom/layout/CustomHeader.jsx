@@ -9,10 +9,18 @@ import { BtnLink } from "../../components/BtnLink"
 
 export const CustomHeader = () => {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const firstLinkRef = useRef(null)
   const closeButtonRef = useRef(null)
   const modalRef = useRef(null)
   const navigate = useNavigate()
+
+  // Scroll detection
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   useEffect(() => {
     // Bloqueo de scroll cuando modal abierto
@@ -91,31 +99,47 @@ export const CustomHeader = () => {
   ]
 
   return (
-    <header className="w-full flex justify-center fixed z-50 text-white">
-      <nav className="flex items-center justify-between w-full bg-[var(--color-blue)] backdrop-blur-[16px] p-[5px]">
+    <motion.header
+      className="fixed top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 transition-all duration-300 pointer-events-none"
+    >
+      <nav
+        className={`
+          flex items-center justify-between px-6 py-2 rounded-full 
+          backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
+          w-[95%] max-w-[1400px]
+          ${scrolled
+            ? "bg-black/80 border border-white/10 shadow-2xl"
+            : "bg-black/40 border border-white/5"
+          }
+        `}
+      >
         <ul className="flex gap-[20px] items-center">
           <li>
             <Link to="/custom/home">
-              <h4 className="font-primary text-[30px]! px-4 max-lg:text-[18px]! max-lg:px-[10px]">Performance-SB</h4>
+              <h4 className={`font-primary transition-all duration-300 px-4 ${scrolled ? "text-[18px]" : "text-[30px] max-lg:text-[18px] max-lg:px-[10px]"}`}>Performance-SB</h4>
             </Link>
           </li>
 
           {items.map((it) => (
             <li key={it.to} className="max-xl:hidden">
-              <BtnLink link={it.to + "#"} title={it.title} />
+              <BtnLink
+                link={it.to + "#"}
+                title={it.title}
+                className={`transition-all duration-300 ${scrolled ? 'text-xs' : 'text-sm'}`}
+              />
             </li>
           ))}
 
           <li className="max-xl:hidden">
             <Link
               to="/custom/dashboard"
-              className="cursor-pointer bg-purple-200 text-purple-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] hover:bg-purple-300 transition-colors"
+              className={`cursor-pointer bg-purple-200 text-purple-700 inline-flex items-center rounded-full gap-[8px] hover:bg-purple-300 transition-colors ${scrolled ? 'p-[2px_10px_2px_2px]' : 'p-[3px_13px_3px_3px]'}`}
               title="Ir al Dashboard"
             >
-              <div className="w-[60px] h-[60px] flex justify-center items-center bg-purple-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <LayoutDashboard color="white" strokeWidth={1.8} size={20} />
+              <div className={`flex justify-center items-center bg-purple-600 rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
+                <LayoutDashboard color="white" strokeWidth={1.8} size={scrolled ? 16 : 20} />
               </div>
-              <p>Dashboard</p>
+              <p className={`transition-all ${scrolled ? 'text-xs' : 'text-sm'}`}>Dashboard</p>
             </Link>
           </li>
         </ul>
@@ -128,7 +152,7 @@ export const CustomHeader = () => {
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >
-              <ShoppingCart color="black" strokeWidth={1.5} size={20} />
+              <ShoppingCart color="black" strokeWidth={1.5} size={scrolled ? 18 : 20} className="transition-all" />
             </BtnLinkIcon>
           </li>
 
@@ -139,7 +163,7 @@ export const CustomHeader = () => {
               style="bg-[transparent]! text-white! max-xl:hidden"
               styleIcon="bg-white!"
             >
-              <User className="text-black" strokeWidth={1.8} size={20} />
+              <User className="text-black transition-all" strokeWidth={1.8} size={scrolled ? 18 : 20} />
             </BtnLinkIcon>
           </li>
 
@@ -148,13 +172,13 @@ export const CustomHeader = () => {
               type="button"
               onClick={handleLogout}
               title="Cerrar sesión"
-              className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px] max-2xl:p-[2px_13px_2px_2px] max-xl:hidden"
+              className={`cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] transition-all max-xl:hidden ${scrolled ? 'p-[2px_10px_2px_2px]' : 'p-[3px_13px_3px_3px]'}`}
               aria-label="Cerrar sesión"
             >
-              <div className="w-[60px] h-[60px] flex justify-center items-center bg-red-600 rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <LogOut color="white" strokeWidth={1.8} size={20} />
+              <div className={`flex justify-center items-center bg-red-600 rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
+                <LogOut color="white" strokeWidth={1.8} size={scrolled ? 16 : 20} />
               </div>
-              <p>Cerrar sesión</p>
+              <p className={`transition-all ${scrolled ? 'text-xs' : 'text-sm'}`}>Cerrar sesión</p>
             </button>
           </li>
 
@@ -168,10 +192,10 @@ export const CustomHeader = () => {
               title="Menu"
               className="hidden! max-xl:flex! bg-white p-[1px_8px_1px_1px] rounded-full justify-center items-center gap-[3px] cursor-pointer"
             >
-              <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]">
-                <Menu className="text-white" strokeWidth={1.5} size={20} />
+              <span className={`flex justify-center items-center bg-[var(--color-blue)] rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
+                <Menu className="text-white" strokeWidth={1.5} size={scrolled ? 16 : 20} />
               </span>
-              <h4 className="text-black">Menu</h4>
+              <h4 className={`text-black transition-all ${scrolled ? "text-xs" : ""}`}>Menu</h4>
             </button>
           </li>
         </ul>
@@ -200,11 +224,11 @@ export const CustomHeader = () => {
               initial="hidden"
               animate="visible"
               exit="exit"
+              variants={sheetVariants}
             >
               <motion.div
                 ref={modalRef}
                 className="relative rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
-                variants={sheetVariants}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Menú principal"
@@ -277,6 +301,6 @@ export const CustomHeader = () => {
           </>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   )
 }

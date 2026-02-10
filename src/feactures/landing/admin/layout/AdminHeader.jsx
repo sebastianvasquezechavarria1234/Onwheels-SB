@@ -109,6 +109,7 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
 export const AdminHeader = () => {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const firstLinkRef = useRef(null)
   const closeButtonRef = useRef(null)
   const modalRef = useRef(null)
