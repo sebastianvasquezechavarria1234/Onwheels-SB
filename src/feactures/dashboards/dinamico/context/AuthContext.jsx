@@ -1,61 +1,62 @@
-// // src/feactures/dashboards/dinamico/context/AuthContext.jsx
-// import { createContext, useContext, useEffect, useState } from "react";
-// import axios from "axios";
+import { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
 
-// const AuthContext = createContext();
+const AuthContext = createContext();
 
-// // Hook personalizado con validación
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) {
-//     throw new Error("useAuth must be used within an AuthProvider");
-//   }
-//   return context;
-// };
+// Hook personalizado con validación
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};
 
-// // Proveedor del contexto
-// export const AuthProvider = ({ children }) => {
-//   const [user, setUser] = useState(null);
-//   const [loading, setLoading] = useState(true);
+// Proveedor del contexto
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-//   useEffect(() => {
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//       setLoading(false);
-//       return;
-//     }
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
 
-//     // Asegúrate de que esta URL coincida con tu backend
-//     axios.get("http://localhost:3000/api/auth/me", {
-//       headers: { Authorization: `Bearer ${token}` }
-//     })
-//     .then(res => {
-//       setUser(res.data);
-//     })
-//     .catch(err => {
-//       console.error("Error al cargar usuario:", err);
-//       localStorage.removeItem("token");
-//     })
-//     .finally(() => setLoading(false));
-//   }, []);
+        // Hydrate from localStorage
+        if (token && storedUser) {
+            try {
+                const parsedUser = JSON.parse(storedUser);
+                setUser(parsedUser);
+            } catch (e) {
+                console.error("Error parsing user from storage", e);
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+            }
+        }
 
-//   const login = (token) => {
-//     localStorage.setItem("token", token);
-//     window.location.reload();
-//   };
+        setLoading(false);
+    }, []);
 
-//   const logout = () => {
-//     localStorage.removeItem("token");
-//     setUser(null);
-//   };
+    const login = (token, userData) => {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+        // window.location.reload(); // Avoid full reload if possible, but keeping for safety if needed
+    };
 
-//   const hasPermission = (permiso) => {
-//     return user?.roles?.includes("administrador") || user?.permisos?.includes(permiso);
-//   };
+    const logout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+        window.location.href = "/login";
+    };
 
-//   return (
-//     <AuthContext.Provider value={{ user, loading, login, logout, hasPermission }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
+    const hasPermission = (permiso) => {
+        return user?.roles?.includes("administrador") || user?.permisos?.includes(permiso);
+    };
+
+    return (
+        <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, isAuthenticated: !!user }}>
+            {children}
+        </AuthContext.Provider>
+    );
+};

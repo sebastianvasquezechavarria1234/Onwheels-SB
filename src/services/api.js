@@ -29,7 +29,7 @@ api.interceptors.response.use(
         localStorage.removeItem("user")
         window.location.href = "/login"
       } else if (hasToken && isLoginPage) {
-        // Credenciales incorrectas, solo limpiamos storage sin redirigir
+      
         localStorage.removeItem("token")
         localStorage.removeItem("user")
       }

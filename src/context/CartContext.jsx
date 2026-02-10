@@ -12,62 +12,108 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState({ items: [], total: 0, itemCount: 0 });
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Cargar carrito al iniciar y escuchar cambios externos
-    useEffect(() => {
-        const loadCart = () => {
-            const savedCart = localStorage.getItem("shopping-cart");
-            if (savedCart) {
-                try {
-                    setCart(JSON.parse(savedCart));
-                } catch (e) {
-                    console.error("Error parsing cart:", e);
-                }
+    // Helper para obtener usuario actual
+    const getCurrentUser = () => {
+        try {
+            const userStr = localStorage.getItem("user");
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    // Helper para obtener key del storage
+    const getStorageKey = () => {
+        const user = getCurrentUser();
+        // Si hay usuario, key única. Si no, null (no soportamos carrito invitado)
+        return user ? `shopping-cart-${user.id_usuario || user.id}` : null;
+    };
+
+    // Cargar carrito
+    const loadCart = () => {
+        const key = getStorageKey();
+        if (!key) {
+            // Usuario no autenticado: Carrito vacío
+            setCart({ items: [], total: 0, itemCount: 0 });
+            setIsLoaded(true);
+            return;
+        }
+
+        const savedCart = localStorage.getItem(key);
+        if (savedCart) {
+            try {
+                setCart(JSON.parse(savedCart));
+            } catch (e) {
+                console.error("Error parsing cart:", e);
+                setCart({ items: [], total: 0, itemCount: 0 });
             }
-        };
+        } else {
+            setCart({ items: [], total: 0, itemCount: 0 });
+        }
+        setIsLoaded(true);
+    };
 
+    // Efecto inicial y escucha de cambios de auth/storage
+    useEffect(() => {
         loadCart();
 
         const handleStorageChange = (e) => {
-            if (e.key === "shopping-cart") {
+            // Si cambia el usuario (login/logout) o el carrito en otra pestaña
+            if (e.key === "user" || e.key === "token" || (e.key && e.key.startsWith("shopping-cart"))) {
                 loadCart();
             }
         };
 
-        // Escuchar eventos de otras pestañas o componentes legado
+        // Custom event para forzar recarga (login/logout desde app)
+        const handleAuthChange = () => loadCart();
+
         window.addEventListener("storage", handleStorageChange);
-        window.addEventListener("cartUpdated", loadCart); // Para compatibilidad con cartService.js
+        window.addEventListener("authChanged", handleAuthChange); // Disparar este evento al hacer login/logout
+        window.addEventListener("cartUpdated", loadCart);
 
         return () => {
             window.removeEventListener("storage", handleStorageChange);
+            window.removeEventListener("authChanged", handleAuthChange);
             window.removeEventListener("cartUpdated", loadCart);
         };
     }, []);
 
     // Guardar carrito al cambiar
     useEffect(() => {
-        localStorage.setItem("shopping-cart", JSON.stringify(cart));
-    }, [cart]);
+        if (!isLoaded) return;
+        const key = getStorageKey();
+        if (key) {
+            localStorage.setItem(key, JSON.stringify(cart));
+        }
+    }, [cart, isLoaded]);
 
     // Agregar item
-    const addToCart = (product, quantity = 1) => {
+    const addToCart = (product, variant, quantity = 1) => {
+        const user = getCurrentUser();
+        if (!user) {
+            throw new Error("Debes iniciar sesión para agregar productos al carrito.");
+        }
+
         setCart((prev) => {
             const currentItems = [...prev.items];
 
             // La clave única es id_variante
+            // Si el producto no tiene variantes (legacy?), usar id_producto como fallback
+            const variantId = variant?.id_variante || product.id_producto;
+
             const existingItemIndex = currentItems.findIndex(
-                (item) => item.id_variante === product.id_variante
+                (item) => item.id_variante === variantId
             );
 
             if (existingItemIndex > -1) {
                 // Actualizar cantidad
                 const newQty = currentItems[existingItemIndex].qty + quantity;
+                const maxStock = variant?.stock || product.stock || 999;
 
-                // Validación básica de stock (si el producto trae datos de stock)
-                if (product.stock && newQty > product.stock) {
-                    // Opcional: Notificar error si hay sistema de notificaciones
-                    console.warn("Stock insuficiente");
-                    return prev;
+                if (newQty > maxStock) {
+                    throw new Error(`No puedes agregar más de ${maxStock} unidades.`);
                 }
 
                 currentItems[existingItemIndex] = {
@@ -77,9 +123,14 @@ export const CartProvider = ({ children }) => {
             } else {
                 // Nuevo item
                 currentItems.push({
-                    ...product,
+                    ...product, // Info producto base
+                    ...variant, // Info variante (sobreescribe stock especifico, precio si aplica)
+                    id_variante: variantId,
+                    nombre_producto: product.nombre_producto, // Asegurar nombre base
+                    id_producto: product.id_producto,
                     qty: quantity,
-                    price: Number(product.precio_venta) || 0, // Asegurar numero
+                    price: Number(product.precio_venta), // Precio base
+                    imagen: product.imagen // Imagen base (podría ser de variante si existiera)
                 });
             }
 
@@ -104,13 +155,15 @@ export const CartProvider = ({ children }) => {
             const index = currentItems.findIndex((item) => item.id_variante === id_variante);
 
             if (index > -1) {
-                // Validación Stock
-                if (currentItems[index].stock && quantity > currentItems[index].stock) {
-                    console.warn("Stock insuficiente");
-                    quantity = currentItems[index].stock;
+                const item = currentItems[index];
+                const maxStock = item.stock || 999;
+
+                if (quantity > maxStock) {
+                    // No actualizamos si supera stock
+                    return prev;
                 }
 
-                currentItems[index] = { ...currentItems[index], qty: quantity };
+                currentItems[index] = { ...item, qty: quantity };
                 return calculateTotals(currentItems);
             }
             return prev;
@@ -124,7 +177,7 @@ export const CartProvider = ({ children }) => {
 
     // Calcular totales
     const calculateTotals = (items) => {
-        const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const total = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
         const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
         return { items, total, itemCount };
     };
@@ -137,6 +190,7 @@ export const CartProvider = ({ children }) => {
                 removeFromCart,
                 updateQuantity,
                 clearCart,
+                isLoaded
             }}
         >
             {children}

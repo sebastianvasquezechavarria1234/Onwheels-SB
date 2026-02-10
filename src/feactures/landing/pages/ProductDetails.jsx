@@ -1,15 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Layout } from "../layout/Layout";
-import { CreditCard, ShoppingCart, ArrowLeft } from "lucide-react";
+import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle } from "lucide-react";
+import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
+import { useCart } from "../../../context/CartContext";
+import { useToast } from "../../../context/ToastContext";
+import { getStoreHomePath } from "../../../utils/roleHelpers";
 
 export const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { user } = useAuth();
+  const toast = useToast();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedColor, setSelectedColor] = useState(null); // id_color
-  const [selectedSize, setSelectedSize] = useState(null);   // id_talla
+  const [selectedColor, setSelectedColor] = useState(null); // id_color (obj)
+  const [selectedSize, setSelectedSize] = useState(null);   // id_talla (obj)
   const [qty, setQty] = useState(1);
+
+  const backLink = getStoreHomePath(user);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -18,7 +29,6 @@ export const ProductDetails = () => {
         if (res.ok) {
           const data = await res.json();
           setProduct(data);
-          // Opcional: Auto-seleccionar primera variante si existe
         }
       } catch (error) {
         console.error("Error fetching product details:", error);
@@ -32,7 +42,9 @@ export const ProductDetails = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="pt-[150px] text-center min-h-[50vh]">Cargando detalles...</div>
+        <div className="pt-[150px] min-h-[60vh] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
       </Layout>
     );
   }
@@ -40,7 +52,11 @@ export const ProductDetails = () => {
   if (!product) {
     return (
       <Layout>
-        <div className="pt-[150px] text-center min-h-[50vh]">Producto no encontrado.</div>
+        <div className="pt-[150px] min-h-[60vh] flex flex-col items-center justify-center text-center p-4">
+          <AlertTriangle size={48} className="text-gray-300 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Producto no encontrado</h2>
+          <Link to={backLink} className="text-blue-600 hover:underline">Volver a la tienda</Link>
+        </div>
       </Layout>
     );
   }
@@ -48,178 +64,269 @@ export const ProductDetails = () => {
   const {
     nombre_producto,
     descripcion,
-    precio, // precio_venta viene como "precio" desde el controller
+    precio, // precio_venta comes as "precio" from controller
     imagen_producto,
     variantes = []
   } = product;
 
-  // Formateador dinero
+  // Helpers
   const formatPrice = (val) => {
     const num = Number(val);
     return isNaN(num) ? val : `$${new Intl.NumberFormat("es-CO").format(num)}`;
   };
 
-  // Lógica de Variantes:
-  // 1. Obtener colores únicos disponibles
+  // Logic: Unique Colors
   const uniqueColors = [];
   const colorMap = new Map();
   variantes.forEach(v => {
     if (v.id_color && !colorMap.has(v.id_color)) {
       colorMap.set(v.id_color, true);
-      uniqueColors.push({ 
-        id: v.id_color, 
-        name: v.nombre_color, 
-        hex: v.color_hex 
-      });
+      uniqueColors.push({ id: v.id_color, name: v.nombre_color, hex: v.color_hex });
     }
   });
 
-  // 2. Obtener tallas disponibles para el color seleccionado (si hay color seleccionado)
-  //    Si no hay color seleccionado, mostramos todas las tallas únicas o deshabilitadas.
-  //    Aquí filtraremos las tallas válidas para el color actual.
+  // Logic: Available Sizes based on Color
   let availableSizes = [];
   if (selectedColor) {
     availableSizes = variantes
-      .filter(v => v.id_color === selectedColor && v.stock > 0)
+      .filter(v => v.id_color === selectedColor.id && v.stock > 0)
       .map(v => ({ id: v.id_talla, name: v.nombre_talla, stock: v.stock, id_variante: v.id_variante }));
   } else {
-    // Si no ha elegido color, podríamos mostrar todas las tallas únicas disponibles en general
-    const sizeMap = new Map();
-    variantes.forEach(v => {
-       if(v.id_talla && !sizeMap.has(v.id_talla) && v.stock > 0) {
-         sizeMap.set(v.id_talla, true);
-         availableSizes.push({ id: v.id_talla, name: v.nombre_talla, stock: null }); 
-       }
-    });
+    // Show all unique sizes as enabled if no color selected (optional UX choice, strictly speaking usually disabled until color picked)
+    // But better UX: Show all unique sizes but visually distinct. 
+    // Simplify: User must pick Color first.
   }
 
-  // Manejadores
-  const handleColorSelect = (cId) => {
-    setSelectedColor(cId);
-    setSelectedSize(null); // Reset talla al cambiar color
-  };
+  // Get current variant (for stock check)
+  const currentVariant = selectedColor && selectedSize
+    ? variantes.find(v => v.id_color === selectedColor.id && v.id_talla === selectedSize.id)
+    : null;
 
-  const handleSizeSelect = (sId) => {
-    setSelectedSize(sId);
-  };
+  const maxStock = currentVariant ? currentVariant.stock : 0;
 
+  // Actions
   const handleAddToCart = () => {
-    if (variantes.length > 0) {
-       if (!selectedColor) return alert("Por favor selecciona un color");
-       if (!selectedSize) return alert("Por favor selecciona una talla");
+    // 1. Strict Auth
+    if (!user) {
+      toast.warning("Debes iniciar sesión para agregar productos al carrito", { login: true, register: true });
+      return;
     }
-    alert(`Añadido al carrito: ${nombre_producto} (Cant: ${qty})`);
-    // Aquí iría la lógica real del contexto de carrito
+
+    // 2. Validations
+    if (variantes.length > 0) {
+      if (!selectedColor) {
+        toast.error("Por favor selecciona un color");
+        return;
+      }
+      if (!selectedSize) {
+        toast.error("Por favor selecciona una talla");
+        return;
+      }
+    }
+
+    if (!currentVariant && variantes.length > 0) {
+      toast.error("Variante no disponible");
+      return;
+    }
+
+    // 3. Action
+    try {
+      // Construct product object compatible with addToCart expectations
+      // ProductDetails API returns `precio`, stored items expect `precio_venta`
+      // We normalize here
+      const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
+
+      addToCart(productToAdd, currentVariant, qty);
+
+      // RICH SUCCESS TOAST
+      toast.custom(
+        <div className="p-5 font-primary">
+          <div className="flex items-center gap-2 mb-3 text-green-400 text-sm font-medium">
+            <Check size={16} /> Artículo agregado a tu carrito
+          </div>
+          <div className="flex gap-4 mb-4">
+            <img src={imagen_producto || "/bg_hero_shop.jpg"} alt={nombre_producto} className="w-16 h-16 rounded-lg object-cover bg-white" />
+            <div>
+              <p className="text-white font-bold text-sm line-clamp-2">{nombre_producto}</p>
+              <p className="text-gray-400 text-xs mt-1">{selectedColor?.name} / {selectedSize?.name}</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Link to="/users/shoppingCart" className="block w-full text-center py-2.5 rounded-full border border-white text-white font-bold text-sm hover:bg-white hover:text-black transition-colors">
+              Ver carrito
+            </Link>
+            <Link to="/users/checkout" className="block w-full text-center py-2.5 rounded-full bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+              <ShoppingBag size={16} />
+              PAGAR AHORA
+            </Link>
+            <button
+              onClick={() => toast.dismiss()}
+              className="block w-full text-center text-xs text-gray-400 hover:text-white mt-2 underline"
+            >
+              Seguir comprando
+            </button>
+          </div>
+        </div>
+      );
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      toast.warning("Debes iniciar sesión para comprar", { login: true, register: true });
+      return;
+    }
+
+    if (variantes.length > 0 && (!selectedColor || !selectedSize)) {
+      toast.error("Selecciona color y talla para comprar");
+      return;
+    }
+
+    try {
+      const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
+      addToCart(productToAdd, currentVariant, qty);
+      navigate("/users/checkout"); // Or determine checkout based on role if needed
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   return (
     <Layout>
-      <section className="pt-[120px] max-w-[1200px] mx-auto p-[20px] max-md:p-[10px] flex gap-[40px] max-lg:flex-col min-h-[80vh]">
-        
-        {/* Gallery / Image */}
-        <article className="w-[60%] max-lg:w-full max-lg:pt-[45px]">
-          <picture className="w-full h-[500px] block rounded-[30px] overflow-hidden max-lg:h-[90vw] border border-gray-100 shadow-sm relative sticky top-[120px]">
-            <Link to="/store" className="absolute top-5 left-5 bg-white/80 p-2 rounded-full hover:bg-white transition z-10">
-                <ArrowLeft size={24} />
-            </Link>
-            <img
-              className="w-full h-full object-cover object-center"
-              src={imagen_producto || "/bg_hero_shop.jpg"}
-              alt={nombre_producto}
-            />
-          </picture>
-        </article>
+      <section className="pt-[140px] max-w-[1200px] mx-auto p-4 md:p-8 min-h-[90vh]">
+        <Link to={backLink} className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-8 transition-colors group">
+          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+            <ArrowLeft size={16} />
+          </div>
+          <span className="font-medium">Volver a la tienda</span>
+        </Link>
 
-        {/* Info & Selectors */}
-        <article className="w-[40%] max-lg:w-full">
-          <div className="flex gap-[20px] items-center mb-[20px]">
-            <p className="text-green-700 font-medium text-sm flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                Disponible
-            </p>
-            <span className="w-[1px] h-[15px] block bg-gray-300"></span>
-            <p className="text-gray-500 text-sm">Envío a todo Medellín</p>
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+          {/* Left: Image */}
+          <div className="w-full lg:w-[55%]">
+            <div className="bg-gray-50 rounded-[2rem] aspect-[4/5] lg:aspect-square overflow-hidden shadow-sm relative">
+              <img
+                src={imagen_producto && imagen_producto.length > 30 ? imagen_producto : "/bg_hero_shop.jpg"}
+                alt={nombre_producto}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
 
-          <h1 className="font-primary text-4xl mb-2">{nombre_producto}</h1>
-          <h2 className="font-primary text-3xl mb-[20px] text-[var(--color-blue)]">
-            {formatPrice(precio)}
-          </h2>
-          
-          <p className="mb-[30px] text-gray-600 leading-relaxed">
-            {descripcion}
-          </p>
+          {/* Right: Info */}
+          <div className="w-full lg:w-[45%] flex flex-col">
+            <div className="mb-2">
+              <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">
+                Nuevo Ingreso
+              </span>
+              <h1 className="font-primary text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
+                {nombre_producto}
+              </h1>
+              <p className="font-primary text-3xl text-gray-900 font-medium">
+                {formatPrice(precio)}
+              </p>
+            </div>
 
-          {/* Variants Section */}
-          {uniqueColors.length > 0 && (
-            <div className="mb-6">
-              <p className="font-medium mb-3">Color:</p>
-              <div className="flex flex-wrap gap-3">
-                {uniqueColors.map((c) => (
+            <div className="h-px bg-gray-100 w-full my-8"></div>
+
+            <p className="text-gray-600 leading-relaxed text-lg mb-8 font-light">
+              {descripcion}
+            </p>
+
+            {/* Selectors */}
+            {uniqueColors.length > 0 && (
+              <div className="mb-8">
+                <span className="block text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Color</span>
+                <div className="flex flex-wrap gap-3">
+                  {uniqueColors.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => { setSelectedColor(c); setSelectedSize(null); }}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ring-offset-2
+                                        ${selectedColor?.id === c.id ? 'ring-2 ring-gray-900 scale-110' : 'hover:scale-110'}
+                                    `}
+                      style={{ backgroundColor: c.hex || '#000' }}
+                      title={c.name}
+                    >
+                      {selectedColor?.id === c.id && <Check size={16} className="text-white invert mix-blend-difference" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {uniqueColors.length > 0 && (
+              <div className="mb-8 opacity-100 transition-opacity">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Talla</span>
+                  {!selectedColor && (
+                    <span className="text-xs text-red-500 font-medium">* Selecciona un color primero</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {/* If no color selected, we can show placeholder sizes or nothing. Requirement says "Chips well defined" */}
+                  {selectedColor ? (
+                    availableSizes.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setSelectedSize(s)}
+                        disabled={s.stock === 0}
+                        className={`min-w-[3.5rem] h-12 px-4 rounded-xl border flex items-center justify-center text-sm font-medium transition-all
+                                            ${selectedSize?.id === s.id
+                            ? 'bg-gray-900 text-white border-gray-900 shadow-lg'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'}
+                                            ${s.stock === 0 ? 'opacity-40 cursor-not-allowed bg-gray-50 decoration-slice' : ''}
+                                        `}
+                      >
+                        {s.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="text-gray-400 text-sm italic">Opciones disponibles según color...</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Quantity */}
+            <div className="mb-10">
+              <span className="block text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Cantidad</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center bg-gray-100 rounded-full p-1 w-fit">
                   <button
-                    key={c.id}
-                    onClick={() => handleColorSelect(c.id)}
-                    className={`w-[50px] h-[50px] rounded-full border-2 transition-all flex justify-center items-center
-                        ${selectedColor === c.id ? "border-blue-600 ring-2 ring-blue-100 scale-110" : "border-gray-200 hover:border-gray-400"}
-                    `}
-                    style={{ backgroundColor: c.hex }}
-                    title={c.name}
-                  >
-                    {selectedColor === c.id && <span className="block w-2 h-2 bg-white rounded-full shadow-md"></span>}
-                  </button>
-                ))}
+                    onClick={() => setQty(q => Math.max(1, q - 1))}
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white transition-colors text-lg font-medium"
+                  >-</button>
+                  <span className="w-12 text-center font-bold text-gray-900">{qty}</span>
+                  <button
+                    onClick={() => setQty(q => q + 1)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white transition-colors text-lg font-medium"
+                  >+</button>
+                </div>
+                {currentVariant && <span className="text-sm text-gray-500">{currentVariant.stock} disponibles</span>}
               </div>
             </div>
-          )}
 
-          {(availableSizes.length > 0 || uniqueColors.length === 0) && variantes.length > 0 && (
-             <div className="mb-8">
-                <p className="font-medium mb-3">Talla {selectedColor ? "" : "(Selecciona un color primero)"}:</p>
-                <div className="flex flex-wrap gap-3">
-                    {availableSizes.map((s) => (
-                        <button
-                            key={s.id}
-                            onClick={() => handleSizeSelect(s.id)}
-                            disabled={!selectedColor && uniqueColors.length > 0} 
-                            className={`min-w-[50px] h-[50px] px-4 rounded-xl border-2 font-medium text-sm transition-all
-                                ${selectedSize === s.id 
-                                    ? "border-blue-600 bg-blue-50 text-blue-700" 
-                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-400"}
-                                ${(!selectedColor && uniqueColors.length > 0) ? "opacity-50 cursor-not-allowed" : ""}
-                            `}
-                        >
-                            {s.name}
-                        </button>
-                    ))}
-                </div>
-             </div>
-          )}
-
-          {/* Quantity */}
-          <div className="mb-8 flex items-center gap-5">
-             <div className="flex items-center border border-gray-300 rounded-full h-[50px]">
-                <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-[50px] h-full hover:bg-gray-100 rounded-l-full font-bold text-xl">-</button>
-                <span className="w-[50px] text-center font-medium text-lg">{qty}</span>
-                <button onClick={() => setQty(q => q + 1)} className="w-[50px] h-full hover:bg-gray-100 rounded-r-full font-bold text-xl">+</button>
-             </div>
-             {/* Stock Info could go here if selectedSize is set */}
-          </div>
-
-          <div className="flex flex-col gap-[15px]">
-            <button 
+            {/* Buttons */}
+            <div className="flex gap-4 mt-auto">
+              <button
                 onClick={handleAddToCart}
-                className="btn bg-[var(--color-blue)] text-white flex items-center justify-center gap-[10px] h-[55px] rounded-xl hover:brightness-110 transition shadow-lg shadow-blue-500/30"
-            >
-              <ShoppingCart size={22} />
-              Añadir al carrito
-            </button>
-            <button className="btn bg-gray-900 text-white flex justify-center gap-[10px] items-center h-[55px] rounded-xl hover:bg-black transition">
-              <CreditCard size={22} />
-              Comprar ahora
-            </button>
+                className="flex-1 h-14 bg-white border-2 border-gray-200 text-gray-900 rounded-2xl font-bold text-lg hover:border-gray-900 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+              >
+                <ShoppingCart size={20} />
+                Agregar
+              </button>
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 h-14 bg-gray-900 text-white rounded-2xl font-bold text-lg hover:bg-black hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+              >
+                Comprar ahora
+              </button>
+            </div>
           </div>
-
-        </article>
+        </div>
       </section>
     </Layout>
   );

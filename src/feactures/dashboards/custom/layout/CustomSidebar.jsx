@@ -17,11 +17,8 @@ import {
   FileText,
   CreditCard,
   Layers,
-  ChevronDown,
-  ChevronRight,
   LogOut
 } from "lucide-react"
-// import { BtnSideBar } from "../../BtnSideBar" // Integraré el botón directamente para mejor control
 import { canView, canManage, getUserPermissions } from "../../../../utils/permissions"
 
 const SidebarItem = ({ title, link, icon, isActive }) => (
@@ -44,19 +41,17 @@ export const CustomSidebar = () => {
   const location = useLocation()
   const [permissions, setPermissions] = useState([])
 
-  // Actualizar permisos al montar para asegurar reactividad si cambia localStorage
   useEffect(() => {
     const perms = getUserPermissions()
     setPermissions(perms)
   }, [])
 
-  // Configuración Centralizada
   const sidebarConfig = [
     {
       title: "Dashboard",
       link: "/custom/dashboard",
       icon: <Home size={20} />,
-      permission: null, // Siempre visible
+      permission: null,
     },
     {
       section: "Administración",
@@ -65,7 +60,7 @@ export const CustomSidebar = () => {
           title: "Usuarios",
           link: "/custom/usuarios",
           icon: <Users size={20} />,
-          permission: "usuarios", // Busca ver_usuarios o gestionar_usuarios
+          permission: "usuarios",
         },
         {
           title: "Roles y Permisos",
@@ -188,20 +183,15 @@ export const CustomSidebar = () => {
     },
   ]
 
-  // Función mejorada para validar acceso
   const hasAccess = (resource) => {
     if (!resource) return true
-    // Valida contra el estado local de permisos para reactividad inmediata si se actualizara el estado
-    // Aunque permissions.js lee de localStorage, pasaremos por las funciones utilitarias
     return canView(resource) || canManage(resource)
   }
 
   return (
     <aside className="w-[280px] h-screen bg-[#0f172a] flex flex-col sticky top-0 border-r border-slate-800 overflow-hidden shadow-2xl">
-      {/* Header Logo */}
       <div className="p-6 pb-2">
         <Link to="/custom/home" className="block">
-          {/* Placeholder de logo si no existe imagen */}
           <div className="flex items-center gap-2 mb-6">
             <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/30">
               OW
@@ -211,10 +201,8 @@ export const CustomSidebar = () => {
         </Link>
       </div>
 
-      {/* Scrollable Nav */}
       <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         {sidebarConfig.map((item, index) => {
-          // Renderizar item individual (Dashboard)
           if (!item.section) {
             if (!hasAccess(item.permission)) return null
             return (
@@ -228,9 +216,7 @@ export const CustomSidebar = () => {
             )
           }
 
-          // Renderizar Sección
           const visibleItems = item.items.filter(subItem => hasAccess(subItem.permission))
-
           if (visibleItems.length === 0) return null
 
           return (
@@ -255,7 +241,6 @@ export const CustomSidebar = () => {
         })}
       </nav>
 
-      {/* Footer / Logout */}
       <div className="p-4 bg-[#0B1120] border-t border-slate-800">
         <Link
           to="/custom/home"

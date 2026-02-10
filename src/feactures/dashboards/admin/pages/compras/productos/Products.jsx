@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/compras/productos/Products.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search } from "lucide-react";
+import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getProductos,
@@ -26,7 +26,7 @@ export default function Productos({ renderLayout = true }) {
   const [colores, setColores] = useState([]);
   const [tallas, setTallas] = useState([]);
   const [variantesGlobales, setVariantesGlobales] = useState([]);
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isProductModalOpen, setIsfbbbProductModalOpen] = useState(false);
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
   const [isCreateColorOpen, setIsCreateColorOpen] = useState(false);
   const [isCreateTallaOpen, setIsCreateTallaOpen] = useState(false);

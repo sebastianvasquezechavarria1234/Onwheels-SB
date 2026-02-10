@@ -186,6 +186,7 @@ const AppRouter = () => {
           <Route path="admin/purchases" element={<AdminPurchases />} />
           <Route path="admin/shoppingCart" element={<AdminShoppingCart />} />
           <Route path="admin/checkout" element={<AdminCheckout />} />
+          <Route path="admin/store/product/:id" element={withAnimation(ProductDetails)} />
 
           {/* Admin Dashboard Pages (Management tools, WITH Sidebar) */}
           <Route element={<AdminLayoutWrapper />}>
@@ -235,6 +236,7 @@ const AppRouter = () => {
           <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
           <Route path="student/checkout" element={<StudentCheckout />} />
           <Route path="student/orderConfirm" element={<StudentOrderConfirm />} />
+          <Route path="student/store/product/:id" element={withAnimation(ProductDetails)} />
         </Route>
 
         {/* Dashboard Instructor - PROTEGIDAS */}
@@ -247,6 +249,7 @@ const AppRouter = () => {
           <Route path="instructor/store" element={<InstructorStore />} />
           <Route path="instructor/checkout" element={<UsersCheckout />} />
           <Route path="instructor/orderConfirm" element={<UsersOrderConfirm />} />
+          <Route path="instructor/store/product/:id" element={withAnimation(ProductDetails)} />
 
         </Route>
 
@@ -263,6 +266,7 @@ const AppRouter = () => {
           <Route path="users/orderConfirm" element={<UsersOrderConfirm />} />
           <Route path="users/setting" element={<UsersSetting />} />
           <Route path="users/myPurchases" element={<UsersMyPurchases />} />
+          <Route path="users/store/product/:id" element={withAnimation(ProductDetails)} />
         </Route>
 
         {/* Cualquier usuario con token puede acceder (verificación en ProtectedRoute) */}
