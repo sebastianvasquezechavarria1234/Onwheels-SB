@@ -109,7 +109,6 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
 export const AdminHeader = () => {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
   const firstLinkRef = useRef(null)
   const closeButtonRef = useRef(null)
   const modalRef = useRef(null)
@@ -199,11 +198,11 @@ export const AdminHeader = () => {
       >
         <div
           className={`
-            flex items-center justify-between px-3 py-1 rounded-full
+            flex items-center justify-between px-7 py-4 rounded-full
             backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
             ${scrolled
               ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[60%] max-w-[1400px] mx-auto"
-              : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
+              : "bg-black/40 border border-white/5 w-full max-w-[1600px]"
             }
           `}
         >
