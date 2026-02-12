@@ -17,29 +17,20 @@ import {
   FileText,
   CreditCard,
   Layers,
-  LogOut,
+  LogOut
 } from "lucide-react"
-
 import { canView, canManage, getUserPermissions } from "../../../../utils/permissions"
 
-interface SidebarItemProps {
-  title: string
-  link: string
-  icon: React.ReactNode
-  isActive: boolean
-}
-
-const SidebarItem = ({ title, link, icon, isActive }: SidebarItemProps) => (
+const SidebarItem = ({ title, link, icon, isActive }) => (
   <Link
     to={link}
-    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium
-      ${
-        isActive
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-          : "text-slate-400 hover:bg-slate-800 hover:text-white"
+    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-sm font-medium
+      ${isActive
+        ? "bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)] border border-emerald-500/20"
+        : "text-slate-400 hover:bg-slate-800 hover:text-white"
       }`}
   >
-    <span className={isActive ? "text-emerald-400" : "text-slate-500"}>
+    <span className={`${isActive ? "text-emerald-400" : "text-slate-500 group-hover:text-white"}`}>
       {icon}
     </span>
     {title}
@@ -48,10 +39,11 @@ const SidebarItem = ({ title, link, icon, isActive }: SidebarItemProps) => (
 
 export const CustomSidebar = () => {
   const location = useLocation()
-  const [permissions, setPermissions] = useState<string[]>([])
+  const [permissions, setPermissions] = useState([])
 
   useEffect(() => {
-    setPermissions(getUserPermissions())
+    const perms = getUserPermissions()
+    setPermissions(perms)
   }, [])
 
   const sidebarConfig = [
@@ -191,27 +183,25 @@ export const CustomSidebar = () => {
     },
   ]
 
-  const hasAccess = (resource: string | null) => {
+  const hasAccess = (resource) => {
     if (!resource) return true
     return canView(resource) || canManage(resource)
   }
 
   return (
-    <aside className="w-[280px] h-screen bg-[#0f172a] flex flex-col sticky top-0 border-r border-slate-800">
-      {/* Logo */}
-      <div className="p-6">
-        <Link to="/custom/home" className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold">
-            OW
+    <aside className="w-[280px] h-screen bg-[#0f172a] flex flex-col sticky top-0 border-r border-slate-800 overflow-hidden shadow-2xl">
+      <div className="p-6 pb-2">
+        <Link to="/custom/home" className="block">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/30">
+              OW
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">OnWheels<span className="text-emerald-500">.</span></span>
           </div>
-          <span className="text-xl font-bold text-white">
-            OnWheels<span className="text-emerald-500">.</span>
-          </span>
         </Link>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-4 space-y-6">
+      <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         {sidebarConfig.map((item, index) => {
           if (!item.section) {
             if (!hasAccess(item.permission)) return null
@@ -226,25 +216,23 @@ export const CustomSidebar = () => {
             )
           }
 
-          const visibleItems = item.items.filter(sub =>
-            hasAccess(sub.permission)
-          )
-
+          const visibleItems = item.items.filter(subItem => hasAccess(subItem.permission))
           if (visibleItems.length === 0) return null
 
           return (
-            <div key={index}>
-              <h4 className="px-4 mb-2 text-xs font-bold text-slate-500 uppercase">
+            <div key={index} className="animate-in fade-in duration-500">
+              <h4 className="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
                 {item.section}
               </h4>
               <div className="space-y-1">
-                {visibleItems.map((sub, subIndex) => (
+                {visibleItems.map((subItem, subIndex) => (
                   <SidebarItem
                     key={`${index}-${subIndex}`}
-                    title={sub.title}
-                    link={sub.link}
-                    icon={sub.icon}
-                    isActive={location.pathname === sub.link}
+                    title={subItem.title}
+                    link={subItem.link}
+                    icon={subItem.icon}
+                    isActive={location.pathname === subItem.link}
                   />
                 ))}
               </div>
@@ -253,16 +241,16 @@ export const CustomSidebar = () => {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-4 bg-[#0B1120] border-t border-slate-800">
         <Link
           to="/custom/home"
-          className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-red-500/10 hover:text-red-400 transition"
+          className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 border border-transparent transition-all duration-300 group"
         >
           <LogOut size={18} />
-          <span className="text-sm font-medium">Salir del Dashboard</span>
+          <span className="font-medium text-sm">Salir del Dashboard</span>
         </Link>
       </div>
     </aside>
   )
 }
+ 

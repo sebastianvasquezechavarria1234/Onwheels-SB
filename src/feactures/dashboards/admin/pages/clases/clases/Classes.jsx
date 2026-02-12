@@ -308,17 +308,17 @@ export const Clases = () => {
         <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
 
           {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between bg-[#040529] rounded-xl px-4 py-2 shadow-md">
+          <div className="flex items-center justify-between ">
             <div className="flex items-center gap-4">
-              <h1 className="text-sm font-bold text-[#F0E6E6] whitespace-nowrap uppercase tracking-wider">
+              <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
                 Gestión de Clases
-              </h1>
+              </h2>
 
               {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l border-[#F0E6E6]/10 pl-4">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#F0E6E6]/10">
-                  <Hash className="h-3 w-3 text-[#F0E6E6]/70" />
-                  <span className="text-xs font-bold text-[#F0E6E6]">{filteredAndSorted.length}</span>
+              <div className="flex items-center gap-2 border-l pl-4">
+                <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md ">
+                  <Hash className="h-3 w-3 " />
+                  <span className="text-xs font-bold!">{filteredAndSorted.length}</span>
                 </div>
               </div>
             </div>
