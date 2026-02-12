@@ -1,3 +1,4 @@
+"use client";
 
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -20,7 +21,7 @@ export const CommunityReels = () => {
     ];
 
     return (
-        <section className="bg-black py-24 border-t border-zinc-900">
+        <section ref={containerRef} className="bg-black py-24 border-t border-zinc-900">
             <div className="max-w-[1200px] mx-auto px-6 mb-12 flex flex-col md:flex-row justify-between items-end gap-6 text-center md:text-left">
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-2">
@@ -49,12 +50,7 @@ export const CommunityReels = () => {
                                 poster="/bg_hero_shop.jpg" // Fallback poster if available, or just black
                             />
 
-                            {/* Overlay info - Visible only when paused or initial? 
-                                Native controls might hide this. 
-                                Let's keep a subtle gradient at bottom for text if controls don't overlay it.
-                                Actually with native controls, overlays can get in the way. 
-                                Let's put info BELOW the video or strictly overlay with pointer-events-none.
-                            */}
+
                             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-100" />
 
                             <div className="absolute bottom-3 left-3 pointer-events-none">

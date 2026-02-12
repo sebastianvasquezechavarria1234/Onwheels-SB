@@ -25,23 +25,19 @@ export const CartProvider = ({ children }) => {
     };
 
     // Helper para obtener key del storage
-    const getStorageKey = () => {
-        const user = getCurrentUser();
-        // Si hay usuario, key única. Si no, null (no soportamos carrito invitado)
-        return user ? `shopping-cart-${user.id_usuario || user.id}` : null;
+    const getStorageKey = (specificUser = null) => {
+        const user = specificUser || getCurrentUser();
+        if (user) {
+            return `shopping-cart-${user.id_usuario || user.id}`;
+        }
+        return "shopping-cart-guest";
     };
 
     // Cargar carrito
     const loadCart = () => {
         const key = getStorageKey();
-        if (!key) {
-            // Usuario no autenticado: Carrito vacío
-            setCart({ items: [], total: 0, itemCount: 0 });
-            setIsLoaded(true);
-            return;
-        }
-
         const savedCart = localStorage.getItem(key);
+
         if (savedCart) {
             try {
                 setCart(JSON.parse(savedCart));
@@ -84,25 +80,38 @@ export const CartProvider = ({ children }) => {
     useEffect(() => {
         if (!isLoaded) return;
         const key = getStorageKey();
-        if (key) {
-            localStorage.setItem(key, JSON.stringify(cart));
-        }
+        localStorage.setItem(key, JSON.stringify(cart));
     }, [cart, isLoaded]);
+
+    // Calcular totales
+    const calculateTotals = (items) => {
+        const total = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
+        return { items, total, itemCount };
+    };
 
     // Agregar item
     const addToCart = (product, variant, quantity = 1) => {
-        const user = getCurrentUser();
-        if (!user) {
-            throw new Error("Debes iniciar sesión para agregar productos al carrito.");
+        // Validation Logic (Outside checking against current state to prevent render crash)
+        const currentItems = cart.items;
+        const variantId = variant?.id_variante || product.id_producto;
+        const existingItem = currentItems.find((item) => item.id_variante === variantId);
+        const maxStock = variant?.stock || product.stock || 999;
+
+        if (existingItem) {
+            const newQty = existingItem.qty + quantity;
+            if (newQty > maxStock) {
+                throw new Error(`No puedes agregar más de ${maxStock} unidades.`);
+            }
+        } else {
+            // New item check (usually 1, but just in case)
+            if (quantity > maxStock) {
+                throw new Error(`No puedes agregar más de ${maxStock} unidades.`);
+            }
         }
 
         setCart((prev) => {
             const currentItems = [...prev.items];
-
-            // La clave única es id_variante
-            // Si el producto no tiene variantes (legacy?), usar id_producto como fallback
-            const variantId = variant?.id_variante || product.id_producto;
-
             const existingItemIndex = currentItems.findIndex(
                 (item) => item.id_variante === variantId
             );
@@ -110,11 +119,8 @@ export const CartProvider = ({ children }) => {
             if (existingItemIndex > -1) {
                 // Actualizar cantidad
                 const newQty = currentItems[existingItemIndex].qty + quantity;
-                const maxStock = variant?.stock || product.stock || 999;
-
-                if (newQty > maxStock) {
-                    throw new Error(`No puedes agregar más de ${maxStock} unidades.`);
-                }
+                // Double check inside (clamping instead of throwing to be safe)
+                if (newQty > maxStock) return prev;
 
                 currentItems[existingItemIndex] = {
                     ...currentItems[existingItemIndex],
@@ -175,12 +181,69 @@ export const CartProvider = ({ children }) => {
         setCart({ items: [], total: 0, itemCount: 0 });
     };
 
-    // Calcular totales
-    const calculateTotals = (items) => {
-        const total = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
-        return { items, total, itemCount };
+    // Fusionar carrito de invitado al iniciar sesión
+    const mergeGuestCart = (user) => {
+        if (!user) return;
+
+        const guestKey = "shopping-cart-guest";
+        const guestCartStr = localStorage.getItem(guestKey);
+
+        if (!guestCartStr) {
+            // Si no hay carrito de invitado, solo cargamos el del usuario
+            loadCart();
+            return;
+        }
+
+        try {
+            const guestCart = JSON.parse(guestCartStr);
+            if (guestCart.items.length === 0) {
+                loadCart();
+                return;
+            }
+
+            const userKey = getStorageKey(user);
+            const userCartStr = localStorage.getItem(userKey);
+            let userCart = userCartStr ? JSON.parse(userCartStr) : { items: [], total: 0, itemCount: 0 };
+
+            // Merge items
+            guestCart.items.forEach(guestItem => {
+                const existingIndex = userCart.items.findIndex(ui => ui.id_variante === guestItem.id_variante);
+                if (existingIndex > -1) {
+                    // Sumar cantidades, respetando stock si es posible (simple check here)
+                    userCart.items[existingIndex].qty += guestItem.qty;
+                } else {
+                    userCart.items.push(guestItem);
+                }
+            });
+
+            // Recalculate totals
+            userCart = calculateTotals(userCart.items);
+
+            // Save new user cart
+            localStorage.setItem(userKey, JSON.stringify(userCart));
+
+            // Clear guest cart
+            localStorage.removeItem(guestKey);
+
+            // Update state
+            setCart(userCart);
+
+        } catch (e) {
+            console.error("Error merging carts:", e);
+        }
     };
+
+    // Listen for login event to merge cart
+    useEffect(() => {
+        const handleLoginMerge = (e) => {
+            if (e.detail) {
+                mergeGuestCart(e.detail);
+            }
+        };
+
+        window.addEventListener("auth:login", handleLoginMerge);
+        return () => window.removeEventListener("auth:login", handleLoginMerge);
+    }, []);
 
     return (
         <CartContext.Provider
@@ -190,6 +253,7 @@ export const CartProvider = ({ children }) => {
                 removeFromCart,
                 updateQuantity,
                 clearCart,
+                mergeGuestCart, // Exposed for AuthContext
                 isLoaded
             }}
         >

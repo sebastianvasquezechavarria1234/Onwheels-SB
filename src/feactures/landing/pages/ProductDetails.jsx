@@ -106,11 +106,7 @@ export const ProductDetails = () => {
 
   // Actions
   const handleAddToCart = () => {
-    // 1. Strict Auth
-    if (!user) {
-      toast.warning("Debes iniciar sesión para agregar productos al carrito", { login: true, register: true });
-      return;
-    }
+    // 1. Strict Auth REMOVED for Guest Cart
 
     // 2. Validations
     if (variantes.length > 0) {
