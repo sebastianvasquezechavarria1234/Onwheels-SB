@@ -317,13 +317,16 @@ export default function Eventos() {
                 placeholder="Buscar eventos..."
                 className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
+
+ 
+              
             </div>
 
             <button
               onClick={() => openModal("crear")}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus size={18} /> Registrar nuevo evento
+              <Plus size={18} color="white" /> Registrar nuevo evento
             </button>
           </div>
 

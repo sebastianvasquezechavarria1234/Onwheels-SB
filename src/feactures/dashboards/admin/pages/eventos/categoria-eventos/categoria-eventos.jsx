@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { Search, Plus, Pen, Trash2, Eye, X } from "lucide-react";
+import { Search, Plus, Pen, Trash2, Eye, X, Tag, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getCategoriasEventos as getCategorias,
@@ -19,7 +19,7 @@ export default function CategoriaEventos() {
   // UI state
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 7;
 
   // Modal & selection
   const [modal, setModal] = useState(null); // crear | editar | ver | eliminar
@@ -51,10 +51,10 @@ export default function CategoriaEventos() {
 
     if (name === "nombre_categoria") {
       if (!value || !value.trim()) error = "El nombre es obligatorio";
-      else if (value.trim().length < 3) error = "El nombre debe tener al menos 3 caracteres";
-      else if (value.trim().length > 50) error = "El nombre no debe exceder 50 caracteres";
+      else if (value.trim().length < 3) error = "Mínimo 3 caracteres";
+      else if (value.trim().length > 50) error = "Máximo 50 caracteres";
       else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9\s.,&-]+$/.test(value.trim()))
-        error = "Nombre inválido (evite caracteres especiales complejos)";
+        error = "Nombre inválido (caracteres no permitidos)";
     }
 
     if (name === "descripcion" && value) {
@@ -117,7 +117,7 @@ export default function CategoriaEventos() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    validateField(name, value); // Validar en tiempo real al escribir
+    validateField(name, value);
   };
 
   const handleBlur = (e) => {
@@ -179,13 +179,12 @@ export default function CategoriaEventos() {
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const start = (currentPage - 1) * itemsPerPage;
+  const currentItems = filtered.slice(start, start + itemsPerPage);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(1);
   }, [totalPages]);
-
-  const start = (currentPage - 1) * itemsPerPage;
-  const currentItems = filtered.slice(start, start + itemsPerPage);
 
   return (
     <>
@@ -229,23 +228,22 @@ export default function CategoriaEventos() {
               <table className="w-full text-sm text-left text-gray-700">
                 <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                   <tr>
-                    <th className="px-6 py-3 w-[10%]">ID</th>
-                    <th className="px-6 py-3 w-[35%]">Nombre</th>
-                    <th className="px-6 py-3 w-[45%]">Descripción</th>
-                    <th className="px-6 py-3 w-[10%]">Acciones</th>
+                    <th className="px-6 py-3">Nombre</th>
+                    <th className="px-6 py-3">Descripción</th>
+                    <th className="px-6 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-10 text-gray-500 italic">
+                      <td colSpan="3" className="text-center py-10 text-gray-500 italic">
                         Cargando...
                       </td>
                     </tr>
                   ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-10 text-gray-500 italic">
+                      <td colSpan="3" className="text-center py-10 text-gray-500 italic">
                         No hay categorías registradas
                       </td>
                     </tr>
@@ -255,9 +253,8 @@ export default function CategoriaEventos() {
                         key={c.id_categoria_evento}
                         className="border-b border-gray-100 hover:bg-gray-50 transition"
                       >
-                        <td className="px-6 py-4">{c.id_categoria_evento}</td>
-                        <td className="px-6 py-4 font-medium">{c.nombre_categoria}</td>
-                        <td className="px-6 py-4">{c.descripcion || "—"}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900">{c.nombre_categoria}</td>
+                        <td className="px-6 py-4 text-gray-600">{c.descripcion || "—"}</td>
 
                         <td className="px-6 py-4">
                           <div className="flex gap-2 justify-center">
@@ -375,21 +372,24 @@ export default function CategoriaEventos() {
                   {modal === "crear" ? "Registrar Categoría" : "Editar Categoría"}
                 </h3>
 
-                <div className="grid grid-cols-1 gap-4 mb-5">
+                <form className="space-y-4">
                   {/* Nombre */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Nombre *
                     </label>
-                    <input
-                      name="nombre_categoria"
-                      value={form.nombre_categoria}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="Ej: Conferencias"
-                      className={`w-full p-2 border rounded-md ${formErrors.nombre_categoria ? "border-red-500" : "border-gray-300"
-                        }`}
-                    />
+                    <div className="relative">
+                        <input
+                        name="nombre_categoria"
+                        value={form.nombre_categoria}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Ej: Conferencias"
+                        className={`w-full p-2.5 border rounded-lg ${formErrors.nombre_categoria ? "border-red-500" : "border-gray-300"
+                            } focus:ring-2 focus:ring-blue-100 outline-none`}
+                        />
+                         <Tag size={16} className="absolute right-3 top-3 text-gray-400" />
+                    </div>
                     {formErrors.nombre_categoria && (
                       <p className="text-red-500 text-xs mt-1">
                         {formErrors.nombre_categoria}
@@ -402,39 +402,44 @@ export default function CategoriaEventos() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Descripción
                     </label>
-                    <textarea
-                      name="descripcion"
-                      value={form.descripcion}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      placeholder="Descripción de la categoría"
-                      rows={3}
-                      className={`w-full p-2 border rounded-md ${formErrors.descripcion ? "border-red-500" : "border-gray-300"
-                        }`}
-                    />
+                    <div className="relative">
+                        <textarea
+                        name="descripcion"
+                        value={form.descripcion}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Descripción de la categoría"
+                        rows={3}
+                        className={`w-full p-2.5 border rounded-lg ${formErrors.descripcion ? "border-red-500" : "border-gray-300"
+                            } focus:ring-2 focus:ring-blue-100 outline-none`}
+                        />
+                        <FileText size={16} className="absolute right-3 top-3 text-gray-400" />
+                    </div>
                     {formErrors.descripcion && (
                       <p className="text-red-500 text-xs mt-1">
                         {formErrors.descripcion}
                       </p>
                     )}
                   </div>
-                </div>
 
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md"
-                  >
-                    Cancelar
-                  </button>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                    <button
+                        type="button"
+                      onClick={closeModal}
+                      className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
+                    >
+                      Cancelar
+                    </button>
 
-                  <button
-                    onClick={handleSave}
-                    className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md"
-                  >
-                    Guardar
-                  </button>
-                </div>
+                    <button
+                        type="button"
+                      onClick={handleSave}
+                      className="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-md transition"
+                    >
+                      {modal === "crear" ? "Guardar" : "Actualizar"}
+                    </button>
+                  </div>
+                </form>
               </motion.div>
             </motion.div>
           )}
@@ -458,31 +463,38 @@ export default function CategoriaEventos() {
                 transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
+                 <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+                <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
                   Detalles de Categoría
                 </h3>
 
-                <div className="space-y-4 text-gray-700">
-                  <div>
-                    <div className="font-medium text-gray-600">ID</div>
-                    <div>{selected.id_categoria_evento}</div>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Tag size={20} /></div>
+                     <div>
+                        <p className="text-xs text-gray-400 font-bold uppercase">Nombre</p>
+                        <p className="text-gray-800 font-medium">{selected.nombre_categoria}</p>
+                     </div>
                   </div>
 
-                  <div>
-                    <div className="font-medium text-gray-600">Nombre</div>
-                    <div>{selected.nombre_categoria}</div>
-                  </div>
-
-                  <div>
-                    <div className="font-medium text-gray-600">Descripción</div>
-                    <div>{selected.descripcion || "—"}</div>
+                  <div className="flex items-start gap-3">
+                     <div className="p-2 bg-gray-50 text-gray-600 rounded-lg"><FileText size={20} /></div>
+                     <div>
+                        <p className="text-xs text-gray-400 font-bold uppercase">Descripción</p>
+                        <p className="text-gray-600">{selected.descripcion || "Sin descripción"}</p>
+                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-center pt-2">
+                <div className="flex justify-center pt-6">
                   <button
                     onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
                   >
                     Cerrar
                   </button>
@@ -503,36 +515,35 @@ export default function CategoriaEventos() {
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative text-center"
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-xl font-bold text-red-600 mb-4 text-center">
+                <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={24} /></div>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">
                   Eliminar Categoría
                 </h3>
 
-                <p className="text-gray-700 text-center">
-                  ¿Está seguro de eliminar la categoría {" "}
-                  <span className="font-bold">{selected.nombre_categoria}</span> ?
-                  <br />
-                  <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                <p className="text-gray-500 text-sm mb-6">
+                  ¿Está seguro de eliminar la categoría <span className="font-bold text-gray-800">{selected.nombre_categoria}</span>?
+                  Esta acción no se puede deshacer.
                 </p>
 
-                <div className="flex justify-center gap-3 pt-6">
+                <div className="flex justify-center gap-3">
                   <button
                     onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-md"
                   >
-                    Eliminar
+                    Sí, Eliminar
                   </button>
                 </div>
               </motion.div>

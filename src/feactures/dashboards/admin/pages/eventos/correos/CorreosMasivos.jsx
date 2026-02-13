@@ -1,6 +1,6 @@
+// src/feactures/dashboards/admin/pages/eventos/correos/CorreosMasivos.jsx
 import React, { useState, useEffect } from "react";
-
-import { Plus, X, Eye, Mail, AlertCircle, Trash2, Calendar, Users, FileText } from 'lucide-react';
+import { Plus, X, Eye, Mail, AlertCircle, Trash2, Calendar, Users, FileText, Send } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   obtenerRolesDisponibles,
@@ -8,36 +8,42 @@ import {
   enviarCorreosMasivos,
   obtenerHistorialEnvios,
   eliminarEnvio
-} from "../../services/emailMasivoServices"; // Ajusta el path si es necesario, parece que estaba en "../../services" antes pero la busqueda dio en "pages/services"
+} from "../../services/emailMasivoServices";
 
 export default function EnviarCorreosMasivos() {
   const [roles, setRoles] = useState([]);
   const [historial, setHistorial] = useState([]);
-  const [rolesSeleccionados, setRolesSeleccionados] = useState([]);
-  const [modal, setModal] = useState(false);
+  
+  // Modal states
+  const [modal, setModal] = useState(false); // New Email Modal
   const [modalPreview, setModalPreview] = useState(false);
   const [modalDetalle, setModalDetalle] = useState(false);
+  
+  // Selection states
+  const [rolesSeleccionados, setRolesSeleccionados] = useState([]);
   const [detalleEnvio, setDetalleEnvio] = useState(null);
-
   const [previewData, setPreviewData] = useState(null);
+
+  // Loading states
   const [loading, setLoading] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
 
+  // Form
   const [form, setForm] = useState({
     asunto: "",
     mensaje: "",
   });
-
   const [errores, setErrores] = useState({});
 
+  // Notification
   const [notification, setNotification] = useState({
     show: false,
-    type: "",
+    type: "success",
     message: "",
   });
 
-  // Cargar roles y historial
+  // Load initial data
   useEffect(() => {
     cargarRoles();
     cargarHistorial();
@@ -71,9 +77,10 @@ export default function EnviarCorreosMasivos() {
 
   const mostrarNotificacion = (message, type = "success") => {
     setNotification({ show: true, message, type });
-    setTimeout(() => setNotification({ show: false }), 4000);
+    setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 4000);
   };
 
+  // Form handling
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -96,23 +103,18 @@ export default function EnviarCorreosMasivos() {
     }
   };
 
-  // Validar formulario
   const validarFormulario = () => {
     const nuevosErrores = {};
 
     if (!form.asunto.trim() || form.asunto.trim().length < 3) {
       nuevosErrores.asunto = "Asunto debe tener al menos 3 caracteres";
-    }
-
-    if (form.asunto.trim().length > 255) {
+    } else if (form.asunto.trim().length > 255) {
       nuevosErrores.asunto = "Asunto no puede exceder 255 caracteres";
     }
 
     if (!form.mensaje.trim() || form.mensaje.trim().length < 10) {
       nuevosErrores.mensaje = "Mensaje debe tener al menos 10 caracteres";
-    }
-
-    if (form.mensaje.trim().length > 10000) {
+    } else if (form.mensaje.trim().length > 10000) {
       nuevosErrores.mensaje = "Mensaje no puede exceder 10000 caracteres";
     }
 
@@ -124,7 +126,7 @@ export default function EnviarCorreosMasivos() {
     return Object.keys(nuevosErrores).length === 0;
   };
 
-  // Obtener vista previa
+  // Actions
   const handleVistaPrevia = async () => {
     if (rolesSeleccionados.length === 0) {
       mostrarNotificacion("Selecciona al menos un rol", "error");
@@ -148,11 +150,8 @@ export default function EnviarCorreosMasivos() {
     }
   };
 
-  // Enviar correos
   const handleEnviarCorreos = async () => {
-    if (!validarFormulario()) {
-      return;
-    }
+    if (!validarFormulario()) return;
 
     setLoading(true);
     try {
@@ -167,12 +166,7 @@ export default function EnviarCorreosMasivos() {
       );
 
       if (respuesta.success) {
-        mostrarNotificacion(
-          `✓ ${respuesta.data.mensaje}`,
-          "success"
-        );
-
-        // Limpiar formulario y recargar historial
+        mostrarNotificacion(`✓ ${respuesta.data.mensaje}`, "success");
         setForm({ asunto: "", mensaje: "" });
         setRolesSeleccionados([]);
         setModal(false);
@@ -193,7 +187,6 @@ export default function EnviarCorreosMasivos() {
     }
   };
 
-  // Eliminar envío
   const handleEliminar = async (idEnvio) => {
     if (!window.confirm("¿Seguro que deseas eliminar este registro del historial?")) return;
 
@@ -213,105 +206,115 @@ export default function EnviarCorreosMasivos() {
 
   return (
     <>
-      <section className="dashboard__pages w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="flex justify-between items-center mb-8">
+      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
+        <div className="p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Envío Masivo de Correos
-              </h2>
-              <p className="text-gray-600">
-                Gestiona y envía comunicados a tus usuarios
-              </p>
+                <h2 className="text-2xl font-bold text-gray-800">
+                    Envío Masivo de Correos
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">Gestiona comunicados para tus usuarios</p>
             </div>
+            
             <button
               onClick={() => setModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200"
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
             >
-              <Plus size={20} /> Nuevo Envío
+              <Plus size={18} /> Nuevo Envío
             </button>
           </div>
 
-          {/* Historial de Envíos */}
+          {/* Historial Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <FileText size={20} /> Historial de Envíos
-              </h3>
-            </div>
-
-            {loadingHistorial ? (
-              <div className="p-8 text-center text-gray-500">Cargando historial...</div>
-            ) : historial.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">No hay envíos registrados aún.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
-                      <th className="px-6 py-3 font-medium">Fecha</th>
-                      <th className="px-6 py-3 font-medium">Asunto</th>
-                      <th className="px-6 py-3 font-medium">Destinatarios</th>
-                      <th className="px-6 py-3 font-medium">Total</th>
-                      <th className="px-6 py-3 font-medium text-right">Acciones</th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-gray-700">
+                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-3">Fecha</th>
+                    <th className="px-6 py-3">Asunto</th>
+                    <th className="px-6 py-3">Destinatarios</th>
+                    <th className="px-6 py-3">Total</th>
+                    <th className="px-6 py-3 text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loadingHistorial ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-10 text-gray-500 italic">Cargando historial...</td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {historial.map((envio) => (
+                  ) : historial.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-10 text-gray-500 italic">No hay envíos registrados aún.</td>
+                    </tr>
+                  ) : (
+                    historial.map((envio) => (
                       <tr key={envio.id_envio} className="hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <Calendar size={16} className="text-gray-400" />
-                            {new Date(envio.fecha_envio).toLocaleDateString()}
-                            <span className="text-xs text-gray-400 ml-1">
+                            <Calendar size={14} className="text-gray-400" />
+                            <span className="font-medium text-gray-900">
+                                {new Date(envio.fecha_envio).toLocaleDateString()}
+                            </span>
+                            <span className="text-xs text-gray-400">
                               {new Date(envio.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 font-medium text-gray-800">
                           {envio.asunto}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <Users size={16} className="text-gray-400" />
-                            {envio.roles_destinatarios || "N/A"}
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {envio.roles_destinatarios?.split(',').map((rol, idx) => (
+                                <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    {rol.trim()}
+                                </span>
+                            )) || "N/A"}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          {envio.total_destinatarios}
+                        <td className="px-6 py-4">
+                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                             <Users size={12} className="mr-1"/> {envio.total_destinatarios}
+                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button
-                            onClick={() => verDetalle(envio)}
-                            className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-50 rounded transition"
-                            title="Ver detalle"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleEliminar(envio.id_envio)}
-                            className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition"
-                            title="Eliminar registro"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2 justify-center">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => verDetalle(envio)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Ver detalle"
+                            >
+                              <Eye size={16} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleEliminar(envio.id_envio)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar registro"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Notificación */}
+          {/* Toast Notification */}
           <AnimatePresence>
             {notification.show && (
               <motion.div
-                initial={{ opacity: 0, x: 200 }}
+                initial={{ opacity: 0, x: 300 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 200 }}
-                className={`fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white text-sm z-50 ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
+                exit={{ opacity: 0, x: 300 }}
+                className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
                   }`}
               >
                 {notification.message}
@@ -319,42 +322,41 @@ export default function EnviarCorreosMasivos() {
             )}
           </AnimatePresence>
 
-          {/* Modal Principal (Nuevo Envío) */}
+          {/* Modal Create Email */}
           <AnimatePresence>
             {modal && (
               <motion.div
-                className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setModal(false)}
               >
                 <motion.div
-                  className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
-                  initial={{ scale: 0.9, y: 20 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={{ scale: 0.9, y: 20 }}
+                  className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative p-6"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Crear Envío Masivo
-                    </h3>
-                    <button
-                      className="text-gray-400 hover:text-gray-600"
-                      onClick={() => {
+                   <button
+                    onClick={() => {
                         setModal(false);
                         setErrores({});
                       }}
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={20} />
+                  </button>
 
-                  <div className="p-6 space-y-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <Mail className="text-blue-600" /> Crear Envío Masivo
+                  </h3>
+
+                  <div className="space-y-5">
                     {/* Asunto */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Asunto *
                       </label>
                       <input
@@ -364,22 +366,22 @@ export default function EnviarCorreosMasivos() {
                         value={form.asunto}
                         onChange={handleChange}
                         maxLength={255}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${errores.asunto ? "border-red-500 bg-red-50" : "border-gray-300"
+                        className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-100 outline-none transition ${errores.asunto ? "border-red-500" : "border-gray-300"
                           }`}
                       />
                       {errores.asunto && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <AlertCircle size={16} /> {errores.asunto}
+                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                          <AlertCircle size={12} /> {errores.asunto}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-gray-500">
-                        {form.asunto.length}/255 caracteres
+                      <p className="mt-1 text-xs text-right text-gray-400">
+                        {form.asunto.length}/255
                       </p>
                     </div>
 
                     {/* Mensaje */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Mensaje *
                       </label>
                       <textarea
@@ -389,50 +391,50 @@ export default function EnviarCorreosMasivos() {
                         value={form.mensaje}
                         onChange={handleChange}
                         maxLength={10000}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none ${errores.mensaje ? "border-red-500 bg-red-50" : "border-gray-300"
+                        className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-100 outline-none transition resize-none ${errores.mensaje ? "border-red-500" : "border-gray-300"
                           }`}
                       />
                       {errores.mensaje && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <AlertCircle size={16} /> {errores.mensaje}
+                        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                          <AlertCircle size={12} /> {errores.mensaje}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-gray-500">
-                        {form.mensaje.length}/10000 caracteres
+                      <p className="mt-1 text-xs text-right text-gray-400">
+                        {form.mensaje.length}/10000
                       </p>
                     </div>
 
-                    {/* Seleccionar Roles */}
+                    {/* Roles */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Destinatarios por Rol *
                       </label>
                       {errores.roles && (
-                        <p className="mb-3 text-sm text-red-600 flex items-center gap-1">
-                          <AlertCircle size={16} /> {errores.roles}
+                        <p className="mb-2 text-xs text-red-600 flex items-center gap-1">
+                          <AlertCircle size={12} /> {errores.roles}
                         </p>
                       )}
                       <div className="grid grid-cols-2 gap-3">
                         {roles.map((rol) => (
                           <label
                             key={rol.id_rol}
-                            className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition ${rolesSeleccionados.some((r) => r.idRol === rol.id_rol)
-                                ? "border-blue-500 bg-blue-50"
-                                : "border-gray-300 hover:border-gray-400"
+                            className={`flex items-center p-3 border rounded-lg cursor-pointer transition hover:bg-gray-50 ${rolesSeleccionados.some((r) => r.idRol === rol.id_rol)
+                                ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                : "border-gray-200"
                               }`}
                           >
                             <input
                               type="checkbox"
                               checked={rolesSeleccionados.some((r) => r.idRol === rol.id_rol)}
                               onChange={() => handleRoleToggle(rol.id_rol, rol.nombre_rol)}
-                              className="w-4 h-4 text-blue-600 rounded"
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                             />
-                            <span className="ml-2 flex-1">
-                              <span className="font-medium text-gray-900">
-                                {rol.nombre_rol.charAt(0).toUpperCase() + rol.nombre_rol.slice(1)}
+                            <span className="ml-3 flex-1">
+                              <span className="block text-sm font-semibold text-gray-900 capitalize">
+                                {rol.nombre_rol}
                               </span>
-                              <span className="text-xs text-gray-500 block">
-                                {rol.cantidad_usuarios} usuario(s)
+                              <span className="block text-xs text-gray-500">
+                                {rol.cantidad_usuarios} usuarios
                               </span>
                             </span>
                           </label>
@@ -440,12 +442,12 @@ export default function EnviarCorreosMasivos() {
                       </div>
                     </div>
 
-                    {/* Botones de Acción */}
-                    <div className="border-t border-gray-200 pt-6 flex gap-3">
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-4 border-t border-gray-100">
                       <button
                         onClick={handleVistaPrevia}
                         disabled={rolesSeleccionados.length === 0 || loadingPreview}
-                        className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
                       >
                         <Eye size={18} />
                         {loadingPreview ? "Cargando..." : "Vista Previa"}
@@ -453,10 +455,13 @@ export default function EnviarCorreosMasivos() {
                       <button
                         onClick={handleEnviarCorreos}
                         disabled={loading}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        className="flex-[2] flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
                       >
-                        <Mail size={18} />
-                        {loading ? "Enviando..." : "Enviar Correos"}
+                         {loading ? "Enviando..." : (
+                            <>
+                                <Send size={18} /> Enviar Correos
+                            </>
+                         )}
                       </button>
                     </div>
                   </div>
@@ -465,131 +470,151 @@ export default function EnviarCorreosMasivos() {
             )}
           </AnimatePresence>
 
-          {/* Modal Vista Previa */}
+          {/* Modal Preview */}
           <AnimatePresence>
             {modalPreview && previewData && (
               <motion.div
-                className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setModalPreview(false)}
               >
                 <motion.div
-                  className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
-                  initial={{ scale: 0.9, y: 20 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={{ scale: 0.9, y: 20 }}
+                  className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative p-6"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Vista Previa de Destinatarios
-                    </h3>
-                    <button
-                      className="text-gray-400 hover:text-gray-600"
-                      onClick={() => setModalPreview(false)}
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
+                  <button
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    onClick={() => setModalPreview(false)}
+                  >
+                    <X size={20} />
+                  </button>
 
-                  <div className="p-6">
-                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-900">
-                        <strong>Total de destinatarios:</strong> {previewData.total}
-                      </p>
+                  <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-4">
+                    Vista Previa de Destinatarios
+                  </h3>
+
+                  <div className="grid gap-6">
+                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-3 text-blue-800">
+                      <Users size={20} />
+                      <span className="font-semibold">Total: {previewData.total} destinatarios</span>
                     </div>
 
-                    {Object.entries(previewData.porRol).map(([rol, usuarios]) => (
-                      <div key={rol} className="mb-6">
-                        <h4 className="font-semibold text-gray-900 mb-3 capitalize">
-                          {rol} ({usuarios.length})
-                        </h4>
-                        <div className="bg-gray-50 rounded-lg divide-y max-h-64 overflow-y-auto">
-                          {usuarios.map((usuario) => (
-                            <div
-                              key={usuario.id_usuario}
-                              className="p-3 flex items-center justify-between"
-                            >
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {usuario.nombre_completo}
-                                </p>
-                                <p className="text-sm text-gray-600">{usuario.correo}</p>
-                              </div>
+                    <div className="space-y-6">
+                        {Object.entries(previewData.porRol).map(([rol, usuarios]) => (
+                        <div key={rol}>
+                            <h4 className="font-bold text-gray-700 mb-3 capitalize flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                {rol} <span className="text-gray-400 font-normal">({usuarios.length})</span>
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                            {usuarios.map((usuario) => (
+                                <div
+                                key={usuario.id_usuario}
+                                className="p-3 flex items-center justify-between hover:bg-white transition"
+                                >
+                                <div>
+                                    <p className="font-medium text-gray-900 text-sm">
+                                    {usuario.nombre_completo}
+                                    </p>
+                                    <p className="text-xs text-gray-500">{usuario.correo}</p>
+                                </div>
+                                </div>
+                            ))}
                             </div>
-                          ))}
                         </div>
-                      </div>
-                    ))}
+                        ))}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-6 pt-4 border-t border-gray-100">
+                     <button
+                        onClick={() => setModalPreview(false)}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
+                      >
+                        Cerrar Vista Previa
+                      </button>
                   </div>
                 </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Modal Detalle Historial */}
+          {/* Modal Detail */}
           <AnimatePresence>
             {modalDetalle && detalleEnvio && (
               <motion.div
-                className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setModalDetalle(false)}
               >
                 <motion.div
-                  className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
-                  initial={{ scale: 0.9, y: 20 }}
-                  animate={{ scale: 1, y: 0 }}
-                  exit={{ scale: 0.9, y: 20 }}
+                  className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative p-6"
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Detalle del Envío
-                    </h3>
-                    <button
-                      className="text-gray-400 hover:text-gray-600"
-                      onClick={() => setModalDetalle(false)}
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
+                  <button
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    onClick={() => setModalDetalle(false)}
+                  >
+                    <X size={20} />
+                  </button>
 
-                  <div className="p-6 space-y-4">
-                    <div className="flex justify-between items-start border-b border-gray-100 pb-4">
-                      <div>
-                        <p className="text-sm text-gray-500">Asunto</p>
-                        <p className="font-semibold text-lg text-gray-900">{detalleEnvio.asunto}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Fecha</p>
-                        <p className="text-sm font-medium text-gray-700">
-                          {new Date(detalleEnvio.fecha_envio).toLocaleString()}
-                        </p>
-                      </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-4">
+                    Detalle del Envío
+                  </h3>
+
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-start">
+                       <div>
+                          <p className="text-xs text-gray-400 uppercase font-bold mb-1">Asunto</p>
+                          <p className="text-lg font-bold text-gray-900">{detalleEnvio.asunto}</p>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-xs text-gray-400 uppercase font-bold mb-1">Fecha</p>
+                          <p className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+                            {new Date(detalleEnvio.fecha_envio).toLocaleString()}
+                          </p>
+                       </div>
                     </div>
 
-                    <div className="border-b border-gray-100 pb-4">
-                      <p className="text-sm text-gray-500 mb-1">Destinatarios</p>
-                      <div className="flex gap-2">
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                          {detalleEnvio.roles_destinatarios}
-                        </span>
-                        <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-medium">
-                          Total: {detalleEnvio.total_destinatarios}
-                        </span>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase font-bold mb-2">Destinatarios</p>
+                      <div className="flex flex-wrap gap-2">
+                         {detalleEnvio.roles_destinatarios?.split(',').map((rol, idx) => (
+                            <span key={idx} className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md font-medium border border-blue-100">
+                                {rol.trim()}
+                            </span>
+                         ))}
+                         <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md font-medium border border-gray-200">
+                           Total: {detalleEnvio.total_destinatarios}
+                         </span>
                       </div>
                     </div>
 
                     <div>
-                      <p className="text-sm text-gray-500 mb-2">Mensaje Enviado</p>
-                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-800 text-sm whitespace-pre-wrap">
+                      <p className="text-xs text-gray-400 uppercase font-bold mb-2">Mensaje</p>
+                      <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 text-gray-800 text-sm whitespace-pre-wrap leading-relaxed shadow-inner">
                         {detalleEnvio.mensaje}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="flex justify-center mt-8">
+                     <button
+                        onClick={() => setModalDetalle(false)}
+                        className="px-8 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
+                      >
+                        Cerrar
+                      </button>
                   </div>
                 </motion.div>
               </motion.div>
