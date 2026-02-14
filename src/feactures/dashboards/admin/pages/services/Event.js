@@ -36,7 +36,22 @@ export const getSedes = async () => {
 // ===============================
 
 export const createEvento = async (evento) => {
-  const res = await api.post(API_Endpoint, evento);
+  let data = evento;
+
+  // Si hay un archivo de imagen, usar FormData
+  if (evento.imagenArchivo) {
+    const formData = new FormData();
+    Object.keys(evento).forEach(key => {
+      if (key === 'imagenArchivo') {
+        formData.append('imagen', evento.imagenArchivo);
+      } else if (evento[key] !== null && evento[key] !== undefined) {
+        formData.append(key, evento[key]);
+      }
+    });
+    data = formData;
+  }
+
+  const res = await api.post(API_Endpoint, data);
   return res.data;
 };
 
@@ -45,7 +60,22 @@ export const createEvento = async (evento) => {
 // ===============================
 
 export const updateEvento = async (id, evento) => {
-  const res = await api.put(`${API_Endpoint}/${id}`, evento);
+  let data = evento;
+
+  // Si hay un archivo de imagen, usar FormData
+  if (evento.imagenArchivo) {
+    const formData = new FormData();
+    Object.keys(evento).forEach(key => {
+      if (key === 'imagenArchivo') {
+        formData.append('imagen', evento.imagenArchivo);
+      } else if (evento[key] !== null && evento[key] !== undefined) {
+         formData.append(key, evento[key]);
+      }
+    });
+    data = formData;
+  }
+
+  const res = await api.put(`${API_Endpoint}/${id}`, data);
   return res.data;
 };
 

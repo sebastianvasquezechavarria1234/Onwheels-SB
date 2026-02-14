@@ -188,6 +188,9 @@ export const Layout = ({ children }) => {
                           <BtnSideBar title="Correos" link="../admin/correos-masivos">
                             <Mails size={18} />
                           </BtnSideBar>
+                           <BtnSideBar title="Patrocinadores" link="../admin/patrocinadores">
+                            <MapPinHouse size={18} />
+                          </BtnSideBar>
                           <BtnSideBar title="Sedes" link="../admin/sedes">
                             <MapPinHouse size={18} />
                           </BtnSideBar>
