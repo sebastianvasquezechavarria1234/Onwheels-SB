@@ -56,7 +56,7 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
       {/* elemento visible (ícono / button / link) */}
       <motion.div
         onClick={onClick}
-        aria-describedby={`tooltip-${label.replace(/\s+/g, "-")}`}
+        aria-describedby={`tooltip-${label ? label.replace(/\s+/g, "-") : "null"}`}
         className="flex items-center"
         initial="initial"
         animate={hover ? "hover" : "initial"}
@@ -67,7 +67,7 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
 
       {/* tooltip animado blanco con texto negro y flecha encima del texto */}
       <AnimatePresence>
-        {hover && (
+        {hover && label !== "" && (
           <motion.div
             key="tooltip"
             initial="hidden"
@@ -109,7 +109,7 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
   );
 };
 
-// Header con modal (sheet) pulido y sin errores
+// Header con estilos AL ESTILO del header de ejemplo (flotante, contenedor redondeado centrado)
 export const InstructorHeader = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -118,11 +118,10 @@ export const InstructorHeader = () => {
   const modalRef = useRef(null);
   const navigate = useNavigate();
 
-  // Scroll detection
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -171,11 +170,11 @@ export const InstructorHeader = () => {
 
   const handleLogout = () => {
     // Eliminar token y usuario del localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
     // Redirigir a login
-    navigate('/login');
+    navigate("/login");
   };
 
   const overlayVariants = {
@@ -203,115 +202,104 @@ export const InstructorHeader = () => {
   ];
 
   return (
-    <motion.header
-      className="fixed top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 transition-all duration-300 pointer-events-none"
-    >
-      <nav
-        className={`
-          flex items-center justify-between px-6 py-2 rounded-full 
-          backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
-          w-[95%] max-w-[1400px]
-          ${scrolled
-            ? "bg-black/80 border border-white/10 shadow-2xl"
-            : "bg-black/40 border border-white/5"
-          }
-        `}
+    <>
+      {/* HEADER FLOTANTE - estilo igual al ejemplo */}
+      <motion.header
+        className="top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 pointer-events-none sticky top-0 mb-[-120px]"
+        style={{ perspective: "1200px" }}
       >
-        <ul className="flex gap-[20px] items-center">
-          <li>
-            <Link to="../instructor/home" className="flex gap-[0px] items-center">
-              <div className={`
-                bg-white p-[5px] rounded-full overflow-hidden transition-all duration-300
-                ${scrolled ? "w-[40px] h-[40px]" : "w-[60px] h-[60px]"}
-             `}>
-                <img className="w-full h-full object-cover" src="/logo.png" alt="logo" />
+        <div
+          className={`
+            flex items-center justify-between px-3 py-1 rounded-full
+            backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
+            ${scrolled
+              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[60%] max-w-[1400px] mx-auto"
+              : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
+            }
+          `}
+        >
+          {/* LOGO */}
+          <Link to="../instructor/home" className="flex items-center gap-2">
+            <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="font-bold text-lg uppercase tracking-tighter text-white">
+              Performance SB
+            </span>
+          </Link>
 
-              </div>
-              <h4 className={`font-primary transition-all duration-300 ${scrolled ? "text-[18px] px-2" : "text-[30px] px-4 max-lg:text-[18px] max-lg:px-[10px]"}`}>
-                Performance-SB
-              </h4>
-            </Link>
-          </li>
+          {/* NAV DESKTOP */}
+          <nav className="hidden md:flex items-center gap-6">
+            {items.map((it) => (
+              <Link
+                key={it.to}
+                to={it.to}
+                className="group relative text-xs font-bold uppercase tracking-widest text-white/90"
+              >
+                {it.title}
+                <span
+                  className="
+                    absolute left-0 top-[110%]
+                    block h-[1px] w-full
+                    bg-white
+                    opacity-0
+                    transition-opacity duration-300
+                    group-hover:opacity-100
+                  "
+                />
+              </Link>
+            ))}
+          </nav>
 
-          {items.map((it) => (
-            <li key={it.to} className="max-xl:hidden">
-              <BtnLink
-                link={it.to + "#"}
-                title={it.title}
-                className={`transition-all duration-300 ${scrolled ? 'text-xs' : 'text-sm'}`}
-              />
-            </li>
-          ))}
-        </ul>
-
-        <ul className="flex items-center">
-          <li>
-            {/* Carrito con tooltip */}
-            <IconWithTooltip label="">
+          {/* ACCIONES */}
+          <div className="flex items-center gap-2">
+            <IconWithTooltip label="Carrito de compras">
               <BtnLinkIcon
                 title=""
                 link="../instructor/shoppingCart"
-                style="bg-[transparent]! text-white! max-xl:hidden p-[0px]!"
-                styleIcon="bg-white!"
+                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
               >
-                <ShoppingCart color="black" strokeWidth={1.5} size={scrolled ? 18 : 20} className="transition-all" />
+                <ShoppingCart size={18} />
               </BtnLinkIcon>
             </IconWithTooltip>
-          </li>
 
-          {/* BOTÓN DE CERRAR SESIÓN CON LOS ESTILOS ORIGINALES */}
-
-          <li>
-            {/* Mi cuenta con tooltip */}
             <IconWithTooltip label="Mi cuenta">
               <BtnLinkIcon
                 title=""
                 link="../instructor/setting"
-                style="bg-[transparent]! text-white! max-xl:hidden p-[0px]!"
-                styleIcon="bg-white!"
+                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
               >
-                <User className="text-black transition-all" strokeWidth={1.8} size={scrolled ? 18 : 20} />
+                <User size={18} />
               </BtnLinkIcon>
             </IconWithTooltip>
-          </li>
 
-          <li>
-            {/* Cerrar sesión con tooltip */}
             <IconWithTooltip label="Cerrar sesión">
               <button
                 type="button"
                 onClick={handleLogout}
                 title="Cerrar sesión"
-                className="cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] p-[1px_1px_1px_1px]"
+                className="w-[60px] cursor-pointer h-[60px] bg-red-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform max-2xl:w-[45px]! max-2xl:h-[45px]! max-xld:w-[30px]! max-md:h-[30px]!"
                 aria-label="Cerrar sesión"
               >
-                <div className={`flex justify-center items-center bg-red-600 rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
-                  <LogOut color="white" strokeWidth={1.8} size={scrolled ? 16 : 20} />
-                </div>
+                <LogOut size={16} color="white" />
               </button>
             </IconWithTooltip>
-          </li>
 
-
-          <li>
+            {/* Botón de menú móvil */}
             <button
               type="button"
               onClick={() => setOpen(true)}
-              aria-expanded={open}
+              className="md:hidden text-white p-2"
               aria-label="Abrir menú"
-              title="Menu"
-              className="hidden! max-xl:flex! bg-white p-[1px_8px_1px_1px] rounded-full justify-center items-center gap-[3px] cursor-pointer"
             >
-              <span className={`flex justify-center items-center bg-[var(--color-blue)] rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
-                <Menu className="text-white" strokeWidth={1.5} size={scrolled ? 16 : 20} />
-              </span>
-              <h4 className={`text-black transition-all ${scrolled ? "text-xs" : ""}`}>Menu</h4>
+              <Menu size={20} />
             </button>
-          </li>
-        </ul>
-      </nav>
+          </div>
+        </div>
+      </motion.header>
 
-      <AnimatePresence initial={false}>
+      {/* MENÚ / SHEET - MOBILE (estilo acorde al ejemplo: drawer/full overlay) */}
+      <AnimatePresence>
         {open && (
           <>
             {/* overlay (z-40) */}
@@ -328,16 +316,17 @@ export const InstructorHeader = () => {
               <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
             </motion.div>
 
-            {/* sheet/modal container (z-50) */}
+            {/* drawer desde la derecha, centrado en pantalla (similar al menú móvil del ejemplo) */}
             <motion.div
-              className="fixed left-0 right-0 top-[20px] z-50 mx-auto max-w-[900px] px-4"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ duration: 0.28 }}
             >
               <motion.div
                 ref={modalRef}
-                className="relative rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
+                className="relative w-full max-w-[900px] rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
                 variants={sheetVariants}
                 role="dialog"
                 aria-modal="true"
@@ -347,7 +336,12 @@ export const InstructorHeader = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-primary text-xl">Menú</h3>
                   <div className="flex items-center gap-2">
-                    <BtnLinkIcon title="Carrito" link="../shoppingCart" style="hidden! max-xl:flex! border-1 border-black/10 " styleIcon="bg-white!">
+                    <BtnLinkIcon
+                      title="Carrito"
+                      link="../shoppingCart"
+                      style="hidden! max-xl:flex! border-1 border-black/10 "
+                      styleIcon="bg-white!"
+                    >
                       <ShoppingCart color="black" strokeWidth={1.5} size={18} />
                     </BtnLinkIcon>
 
@@ -371,7 +365,7 @@ export const InstructorHeader = () => {
                           to={it.to}
                           onClick={() => setOpen(false)}
                           ref={idx === 0 ? firstLinkRef : null}
-                          className="text-[14px]! italic py-[5px] block"
+                          className="text-[18px] font-bold italic py-[8px] block"
                         >
                           {it.title}
                         </Link>
@@ -398,6 +392,6 @@ export const InstructorHeader = () => {
           </>
         )}
       </AnimatePresence>
-    </motion.header>
+    </>
   );
-}
+};

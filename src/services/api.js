@@ -13,6 +13,8 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+
+
 // Manejar errores de autenticación
 api.interceptors.response.use(
   (response) => response,

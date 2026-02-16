@@ -14,23 +14,40 @@ function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
+// Helper para clases condicionales
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
 const PreinscripcionesAdmin = () => {
   // --- ESTADOS ---
   const [preinscripciones, setPreinscripciones] = useState([]);
+  const [clases, setClases] = useState([]);
+  const [planes, setPlanes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [backendError, setBackendError] = useState(false);
   const [search, setSearch] = useState("");
+  const [formErrors, setFormErrors] = useState({});
 
+  // Sorting state
+  const [sortField, setSortField] = useState("nombre_completo");
+  const [sortDirection, setSortDirection] = useState("asc");
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Modal state
+  const [modal, setModal] = useState(null); // "details" | "matricula" | "rechazar"
+  const [selectedPreinscripcion, setSelectedPreinscripcion] = useState(null);
+  
   // Datos para el modal de matrícula
-  const [clases, setClases] = useState([]);
-  const [planes, setPlanes] = useState([]);
   const [claseSeleccionada, setClaseSeleccionada] = useState("");
   const [planSeleccionado, setPlanSeleccionado] = useState("");
   const [fechaMatricula, setFechaMatricula] = useState(new Date().toISOString().split('T')[0]);
 
-  const [modal, setModal] = useState(null); // "details" | "matricula" | "rechazar"
-  const [selectedPreinscripcion, setSelectedPreinscripcion] = useState(null);
+  // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   // Paginación
@@ -41,6 +58,15 @@ const PreinscripcionesAdmin = () => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
+
+  // Cerrar modal con Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // --- CARGAR DATOS ---
   const fetchPreinscripciones = useCallback(async () => {
@@ -69,7 +95,7 @@ const PreinscripcionesAdmin = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchPreinscripciones();
@@ -106,6 +132,8 @@ const PreinscripcionesAdmin = () => {
   const openModal = (type, preinscripcion = null) => {
     setModal(type);
     setSelectedPreinscripcion(preinscripcion);
+    setFormErrors({});
+    
     if (type === "matricula") {
       setClaseSeleccionada("");
       setPlanSeleccionado("");
@@ -116,6 +144,7 @@ const PreinscripcionesAdmin = () => {
   const closeModal = () => {
     setModal(null);
     setSelectedPreinscripcion(null);
+    setFormErrors({});
   };
 
   // --- CRUD OPERATIONS ---
@@ -133,12 +162,12 @@ const PreinscripcionesAdmin = () => {
   };
 
   const handleAceptarYMatricular = async () => {
+    if (!validateMatriculaForm()) {
+      showNotification("Por favor completa todos los campos obligatorios", "error");
+      return;
+    }
+    
     try {
-      if (!claseSeleccionada || !planSeleccionado) {
-        showNotification("Debes seleccionar clase y plan", "error");
-        return;
-      }
-
       const matriculaData = {
         id_clase: parseInt(claseSeleccionada),
         id_plan: parseInt(planSeleccionado),
@@ -218,6 +247,7 @@ const PreinscripcionesAdmin = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     <tr><td colSpan="7" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
                   ) : error ? (
@@ -234,6 +264,7 @@ const PreinscripcionesAdmin = () => {
                         </div>
                       </td>
                     </tr>
+                  ) : currentItems.length === 0 ? (
                   ) : currentItems.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="p-12 text-center text-gray-400">
@@ -304,6 +335,7 @@ const PreinscripcionesAdmin = () => {
         </div>
 
         {/* --- NOTIFICATIONS & MODALS --- */}
+        {/* --- NOTIFICATIONS & MODALS --- */}
         <AnimatePresence>
           {notification.show && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
@@ -313,6 +345,7 @@ const PreinscripcionesAdmin = () => {
         </AnimatePresence>
 
         <AnimatePresence>
+          {modal && (
           {modal && (
             <motion.div
               className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
@@ -508,6 +541,7 @@ const PreinscripcionesAdmin = () => {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
       </div>
     </>
   );

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { AdminLayout } from "../layout/AdminLayout"
 import { Mail, Phone, User, Edit, Save, X, Camera } from "lucide-react"
 import api from "../../../../services/api"
-import { toast } from "sonner" // Asumiendo que usas sonner o similar, si no, usar alert o console
 
 export const AdminProfile = () => {
   const [userData, setUserData] = useState(null)
