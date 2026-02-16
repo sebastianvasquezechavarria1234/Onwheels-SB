@@ -10,7 +10,7 @@ import { Coment } from "../components/landing/Coment";
 export const Home = () => {
     return (
         <Layout>
-            <Hero />
+           
             
             <FeaturedProducts />
             <UpcomingEvents />
