@@ -21,26 +21,26 @@ export const Grid = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-        try {
-            // 1. Fetch Productos (Traemos todos y cortamos, o idealmente un endpoint 'featured')
-            const resProd = await fetch("http://localhost:3000/api/productos");
-            if (resProd.ok) {
-                const dataProd = await resProd.json();
-                setProducts(dataProd.slice(0, 3)); // Solo 3
-            }
-
-            // 2. Fetch Eventos Futuros
-            try {
-                const dataEvents = await getEventosFuturos();
-                setEvents(dataEvents.slice(0, 3));
-            } catch (err) {
-                 console.error("Error fetching future events:", err);
-            }
-        } catch (error) {
-            console.error("Error cargando datos home:", error);
-        } finally {
-            setLoading(false);
+      try {
+        // 1. Fetch Productos (Traemos todos y cortamos, o idealmente un endpoint 'featured')
+        const resProd = await fetch("http://localhost:3000/api/productos");
+        if (resProd.ok) {
+          const dataProd = await resProd.json();
+          setProducts(dataProd.slice(0, 3)); // Solo 3
         }
+
+        // 2. Fetch Eventos Futuros
+        try {
+          const dataEvents = await getEventosFuturos();
+          setEvents(dataEvents.slice(0, 3));
+        } catch (err) {
+          console.error("Error fetching future events:", err);
+        }
+      } catch (error) {
+        console.error("Error cargando datos home:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
@@ -65,10 +65,10 @@ export const Grid = () => {
         </div>
 
         <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px] ">
-           {loading ? <p>Cargando productos...</p> : products.map(p => (
-               <ProductCard key={p.id_producto} product={p} />
-           ))}
-           {!loading && products.length === 0 && <p>No hay productos destacados.</p>}
+          {loading ? <p>Cargando productos...</p> : products.map(p => (
+            <ProductCard key={p.id_producto} product={p} />
+          ))}
+          {!loading && products.length === 0 && <p>No hay productos destacados.</p>}
         </div>
       </section>
 
@@ -86,17 +86,17 @@ export const Grid = () => {
             </div>
           </div>
           <div className="grid grid-cols-3 gap-[20px] max-lg:grid-cols-2 max-md:gap-[10px]">
-             {loading ? <p>Cargando eventos...</p> : events.map(e => (
-                 <GenericCard 
-                    key={e.id_evento}
-                    img={e.imagen || "./bg_eventosL.jpg"}
-                    text="Próximo evento"
-                    descripcion={e.descripcion}
-                    dato={new Date(e.fecha_evento).toLocaleDateString()}
-                    styleImage=""
-                 />
-             ))}
-             {!loading && events.length === 0 && <p>No hay eventos próximos.</p>}
+            {loading ? <p>Cargando eventos...</p> : events.map(e => (
+              <GenericCard
+                key={e.id_evento}
+                img={e.imagen || "./bg_eventosL.jpg"}
+                text="Próximo evento"
+                descripcion={e.descripcion}
+                dato={new Date(e.fecha_evento).toLocaleDateString()}
+                styleImage=""
+              />
+            ))}
+            {!loading && events.length === 0 && <p>No hay eventos próximos.</p>}
           </div>
         </div>
       </section>
@@ -107,7 +107,7 @@ export const Grid = () => {
         <div className="w-[50%] max-lg:w-full">
           <h2 className="text-4xl font-bold mb-4">
             ¿Te <span className="font-primary"> gustaría</span>
-            <h2>aprender con</h2>
+            <span className="block">aprender con</span>
             <span className="font-primary"> nosotros?</span>
           </h2>
           <h4 className="text-black text-lg mb-4 opacity-60">

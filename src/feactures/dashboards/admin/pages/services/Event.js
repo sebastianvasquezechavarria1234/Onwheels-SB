@@ -13,7 +13,8 @@ export const getEventos = async () => {
 };
 
 export const getCategorias = async () => {
-  const res = await api.get("/categoria-productos"); // NOTA: corregido para usar el endpoint de productos si es necesario 
+  const res = await api.get("/categoria-productos"); 
+  // NOTA: corregido para usar el endpoint de productos si es necesario 
   // OJO: El usuario se quejó de error en /api/eventos y /api/categorias-eventos
   // Si Event.js gestiona categorias de EVENTOS, el endpoint es /categorias-eventos
   // Mantendré la lógica original pero con axios.

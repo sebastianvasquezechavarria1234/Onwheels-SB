@@ -1,20 +1,25 @@
 // src/features/dashboards/admin/pages/clases/preinscripciones/PreinscripcionesAdmin.jsx
-import React, { useEffect, useState, useCallback } from "react";
-
-import { Eye, Check, X, Search } from "lucide-react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { Eye, Check, X, Search, Hash, User, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getPreinscripcionesPendientes,
   rechazarPreinscripcion,
   aceptarPreinscripcionYCrearMatricula
 } from "../../services/preinscripcionesService";
-
 import axios from "axios";
 
+// Helper para clases condicionales
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
 const PreinscripcionesAdmin = () => {
+  // --- ESTADOS ---
   const [preinscripciones, setPreinscripciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [backendError, setBackendError] = useState(false);
   const [search, setSearch] = useState("");
 
   // Datos para el modal de matrícula
@@ -28,28 +33,39 @@ const PreinscripcionesAdmin = () => {
   const [selectedPreinscripcion, setSelectedPreinscripcion] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  // Cargar preinscripciones pendientes y datos para matrícula
+  // --- CARGAR DATOS ---
   const fetchPreinscripciones = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      setBackendError(false);
+
       const [preinscripcionesData, clasesData, planesData] = await Promise.all([
         getPreinscripcionesPendientes(),
         axios.get("http://localhost:3000/api/clases").then(r => r.data),
         axios.get("http://localhost:3000/api/planes").then(r => r.data)
       ]);
+
       setPreinscripciones(Array.isArray(preinscripcionesData) ? preinscripcionesData : []);
       setClases(Array.isArray(clasesData) ? clasesData : []);
       setPlanes(Array.isArray(planesData) ? planesData : []);
     } catch (err) {
       console.error("Error cargando datos:", err);
       setError("Error al cargar los datos.");
-      showNotification("Error al cargar datos", "error");
+      if (err.message && (err.message.includes("Network Error") || err.code === "ERR_CONNECTION_REFUSED")) {
+        setBackendError(true);
+        setError("No se pudo conectar con el servidor. Verifica que el Backend esté encendido.");
+      }
+      showNotification("Error de conexión", "error");
     } finally {
       setLoading(false);
     }
@@ -59,7 +75,34 @@ const PreinscripcionesAdmin = () => {
     fetchPreinscripciones();
   }, [fetchPreinscripciones]);
 
-  // Abrir modal
+  // --- FILTRADO Y PAGINACIÓN ---
+  const preinscripcionesFiltradas = useMemo(() => {
+    let result = [...preinscripciones];
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(p =>
+        (p.nombre_completo || "").toLowerCase().includes(q) ||
+        (p.email || "").toLowerCase().includes(q) ||
+        (p.documento || "").includes(q) ||
+        (p.nivel_experiencia || "").toLowerCase().includes(q) ||
+        (p.enfermedad || "").toLowerCase().includes(q) ||
+        (p.nombre_acudiente || "").toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [preinscripciones, search]);
+
+  const totalPages = Math.max(1, Math.ceil(preinscripcionesFiltradas.length / itemsPerPage));
+  const currentItems = preinscripcionesFiltradas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  // --- MODAL HANDLERS ---
   const openModal = (type, preinscripcion = null) => {
     setModal(type);
     setSelectedPreinscripcion(preinscripcion);
@@ -75,7 +118,7 @@ const PreinscripcionesAdmin = () => {
     setSelectedPreinscripcion(null);
   };
 
-  // Rechazar preinscripción
+  // --- CRUD OPERATIONS ---
   const handleRechazar = async () => {
     try {
       await rechazarPreinscripcion(selectedPreinscripcion.id_estudiante);
@@ -89,7 +132,6 @@ const PreinscripcionesAdmin = () => {
     }
   };
 
-  // Aceptar preinscripción y crear matrícula
   const handleAceptarYMatricular = async () => {
     try {
       if (!claseSeleccionada || !planSeleccionado) {
@@ -104,11 +146,9 @@ const PreinscripcionesAdmin = () => {
       };
 
       await aceptarPreinscripcionYCrearMatricula(selectedPreinscripcion.id_estudiante, matriculaData);
-
       await fetchPreinscripciones();
       showNotification("Preinscripción aceptada y matrícula creada correctamente");
       closeModal();
-
     } catch (err) {
       console.error("Error aceptando preinscripción:", err);
       const errorMessage = err.response?.data?.mensaje || "Error al aceptar preinscripción";
@@ -116,114 +156,128 @@ const PreinscripcionesAdmin = () => {
     }
   };
 
-  // Filtrado por búsqueda
-  const preinscripcionesFiltradas = preinscripciones.filter((p) =>
-    (p.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
-    (p.email || "").toLowerCase().includes(search.toLowerCase()) ||
-    (p.documento || "").includes(search) ||
-    (p.nivel_experiencia || "").toLowerCase().includes(search.toLowerCase()) ||
-    (p.enfermedad || "").toLowerCase().includes(search.toLowerCase()) ||
-    (p.nombre_acudiente || "").toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <>
-      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Gestión de Preinscripciones</h2>
+      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="relative w-full md:w-96">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                <Search size={18} />
+        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
+        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
+
+          {/* Row 1: Minimal Header */}
+          <div className="flex items-center justify-between  rounded-xl px-4 py-2 ">
+            <div className="flex items-center gap-4">
+              <h1 className="text-sm whitespace-nowrap uppercase tracking-wider">
+                Gestión de Preinscripciones
+              </h1>
+
+              {/* Compact Stats */}
+              <div className="flex items-center gap-2 border-l pl-4">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md">
+                  <Hash className="h-3 w-3 " />
+                  <span className="text-xs font-bold ">{preinscripcionesFiltradas.length}</span>
+                </div>
               </div>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar preinscripciones (Nombre, Email, Documento, Enfermedad)"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+          {/* Row 2: Active Toolbar */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
+            <div className="relative flex-1 w-full sm:w-auto">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                placeholder="Buscar preinscripción..."
+                className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* --- SECTION 2: TABLE AREA --- */}
+        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
+          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
+
+            {/* Table Content */}
+            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+              <table className="w-full text-left relative">
+                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
                   <tr>
-                    <th className="px-6 py-3 w-[15%]">Estudiante</th>
-                    <th className="px-6 py-3 w-[15%]">Email</th>
-                    <th className="px-6 py-3 w-[8%]">Edad</th>
-                    <th className="px-6 py-3 w-[12%]">Nivel Experiencia</th>
-                    <th className="px-6 py-3 w-[10%]">Documento</th>
-                    <th className="px-6 py-3 w-[15%]">Enfermedad</th>
-                    <th className="px-6 py-3 w-[15%]">Acudiente</th>
-                    <th className="px-6 py-3 w-[10%]">Acciones</th>
+                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Estudiante</th>
+                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Email</th>
+                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Edad</th>
+                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Nivel</th>
+                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Enfermedad</th>
+                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Acudiente</th>
+                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {loading ? (
-                    <tr>
-                      <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
-                        Cargando preinscripciones...
-                      </td>
-                    </tr>
+                    <tr><td colSpan="7" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-8 text-center text-red-600">
-                        {error}
+                      <td colSpan="7" className="p-12 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2 text-red-500">
+                          <AlertCircle className="h-8 w-8 opacity-80" />
+                          <p className="font-medium">{error}</p>
+                          {backendError && (
+                            <p className="text-xs text-red-400 bg-red-50 px-3 py-1 rounded-full">
+                              Intenta iniciar el backend en el puerto 3000
+                            </p>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  ) : preinscripcionesFiltradas.length === 0 ? (
+                  ) : currentItems.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-6 py-8 text-center text-gray-500 italic">
-                        No hay preinscripciones pendientes.
+                      <td colSpan="7" className="p-12 text-center text-gray-400">
+                        <div className="flex flex-col items-center gap-2 opacity-50">
+                          <Hash className="h-8 w-8" />
+                          <p className="text-sm">No se encontraron preinscripciones pendientes</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
-                    preinscripcionesFiltradas.map((p) => (
-                      <tr key={p.id_estudiante} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-medium">
-                          <div className="text-sm font-medium">{p.nombre_completo}</div>
+                    currentItems.map((p) => (
+                      <tr key={p.id_estudiante} className="group hover:bg-[#F0E6E6]/30 transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
+                              {p.nombre_completo?.substring(0, 2).toUpperCase() || "PR"}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-[#040529] text-sm leading-tight mb-0.5">{p.nombre_completo}</p>
+                              <p className="text-xs text-gray-500 font-medium">{p.documento || "Sin documento"}</p>
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-600">{p.email}</td>
-                        <td className="px-6 py-4 text-gray-600">{p.edad || "—"}</td>
-                        <td className="px-6 py-4 text-gray-600">{p.nivel_experiencia || "—"}</td>
-                        <td className="px-6 py-4 text-gray-600">{p.documento || "—"}</td>
-                        <td className="px-6 py-4 text-gray-600">{p.enfermedad || "—"}</td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {p.nombre_acudiente ? `${p.nombre_acudiente} (${p.telefono_acudiente || "—"})` : "—"}
+                        <td className="px-5 py-4 text-sm text-gray-600">{p.email}</td>
+                        <td className="px-5 py-4 text-center">
+                          <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-xs font-bold border border-gray-200">
+                            {p.edad || "—"}
+                          </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("details", p)}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                              title="Ver detalles"
-                            >
-                              <Eye size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("matricula", p)}
-                              className="p-2 rounded-lg text-green-600 hover:bg-green-50 transition"
-                              title="Aceptar y crear matrícula"
-                            >
-                              <Check size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("rechazar", p)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                              title="Rechazar preinscripción"
-                            >
-                              <X size={16} />
-                            </motion.button>
+                        <td className="px-5 py-4 text-sm text-gray-600">{p.nivel_experiencia || "—"}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600">{p.enfermedad || "—"}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600">
+                          {p.nombre_acudiente ? (
+                            <div className="flex flex-col">
+                              <span className="font-medium">{p.nombre_acudiente}</span>
+                              <span className="text-xs text-gray-400">{p.telefono_acudiente || "—"}</span>
+                            </div>
+                          ) : "—"}
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => openModal("details", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
+                            <button onClick={() => openModal("matricula", p)} className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition shadow-sm border border-green-100" title="Aceptar"><Check className="h-4 w-4" /></button>
+                            <button onClick={() => openModal("rechazar", p)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Rechazar"><X className="h-4 w-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -232,288 +286,229 @@ const PreinscripcionesAdmin = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Footer Pagination */}
+            {totalPages > 1 && (
+              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
+                <p className="text-xs text-gray-500 font-medium">
+                  Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{preinscripcionesFiltradas.length}</span> resultados
+                </p>
+                <div className="flex items-center gap-2">
+                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
+                  <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
+                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Notificación Toast */}
+        {/* --- NOTIFICATIONS & MODALS --- */}
         <AnimatePresence>
           {notification.show && (
-            <motion.div
-              initial={{ opacity: 0, x: 300 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 300 }}
-              transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-                }`}
-            >
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
               {notification.message}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Modales */}
         <AnimatePresence>
-          {modal === "details" && selectedPreinscripcion && (
+          {modal && (
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
+                className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "rechazar" ? "max-w-sm w-full" : "max-w-4xl w-full"}`}
+                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <button
-                  onClick={closeModal}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
+                {/* --- MODAL RECHAZAR --- */}
+                {modal === "rechazar" && selectedPreinscripcion && (
+                  <div className="p-6 text-center">
+                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><X size={24} /></div>
+                    <h3 className="text-lg font-bold text-[#040529] mb-2">Rechazar Preinscripción</h3>
+                    <p className="text-sm text-gray-500 mb-6">
+                      ¿Estás seguro de rechazar la preinscripción de <span className="font-bold text-red-600">{selectedPreinscripcion.nombre_completo}</span>?
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
+                      <button onClick={handleRechazar} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Rechazar</button>
+                    </div>
+                  </div>
+                )}
 
-                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
-                  Detalles de Preinscripción
-                </h3>
+                {/* --- MODAL DETAILS --- */}
+                {modal === "details" && selectedPreinscripcion && (
+                  <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
+                    {/* Left Side (Visual) */}
+                    <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
+                      <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
+                        <User size={48} strokeWidth={1.5} />
+                      </div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Detalles de Preinscripción</p>
+                    </div>
 
-                <div className="space-y-3 text-gray-700">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Nombre Completo:</span>
-                    <span className="text-right">{selectedPreinscripcion.nombre_completo}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Email:</span>
-                    <span className="text-right">{selectedPreinscripcion.email}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Documento:</span>
-                    <span className="text-right">{selectedPreinscripcion.documento || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Teléfono:</span>
-                    <span className="text-right">{selectedPreinscripcion.telefono || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Edad:</span>
-                    <span className="text-right">{selectedPreinscripcion.edad || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Nivel Experiencia:</span>
-                    <span className="text-right">{selectedPreinscripcion.nivel_experiencia || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Enfermedad:</span>
-                    <span className="text-right">{selectedPreinscripcion.enfermedad || "—"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Fecha Preinscripción:</span>
-                    <span className="text-right">
-                      {selectedPreinscripcion.fecha_preinscripcion
-                        ? new Date(selectedPreinscripcion.fecha_preinscripcion).toLocaleDateString('es-ES')
-                        : "—"
-                      }
-                    </span>
-                  </div>
-                  {selectedPreinscripcion.nombre_acudiente && (
-                    <>
-                      <div className="border-t pt-3">
-                        <h4 className="font-medium text-gray-800 mb-2">Información del Acudiente</h4>
-                        <div className="text-sm space-y-1">
-                          <div><span className="font-medium">Nombre:</span> {selectedPreinscripcion.nombre_acudiente}</div>
-                          {selectedPreinscripcion.telefono_acudiente && (
-                            <div><span className="font-medium">Teléfono:</span> {selectedPreinscripcion.telefono_acudiente}</div>
-                          )}
-                          {selectedPreinscripcion.email_acudiente && (
-                            <div><span className="font-medium">Email:</span> {selectedPreinscripcion.email_acudiente}</div>
-                          )}
-                          {selectedPreinscripcion.relacion && (
-                            <div><span className="font-medium">Relación:</span> {selectedPreinscripcion.relacion}</div>
-                          )}
+                    {/* Right Side (Content) */}
+                    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-[#040529]">Información del Estudiante</h3>
+                        <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Completo</label>
+                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.nombre_completo}</p>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email</label>
+                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Documento</label>
+                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.documento || "—"}</p>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
+                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.telefono || "—"}</p>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Edad</label>
+                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.edad || "—"}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nivel Experiencia</label>
+                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.nivel_experiencia || "—"}</p>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Enfermedad</label>
+                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.enfermedad || "—"}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Fecha Preinscripción</label>
+                          <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">
+                            {selectedPreinscripcion.fecha_preinscripcion ? new Date(selectedPreinscripcion.fecha_preinscripcion).toLocaleDateString('es-ES') : "—"}
+                          </p>
+                        </div>
+
+                        {selectedPreinscripcion.nombre_acudiente && (
+                          <div className="border-t pt-4 mt-4">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Información del Acudiente</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre</label>
+                                <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.nombre_acudiente}</p>
+                              </div>
+                              {selectedPreinscripcion.telefono_acudiente && (
+                                <div>
+                                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
+                                  <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.telefono_acudiente}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+                          <button onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50">Cerrar</button>
                         </div>
                       </div>
-                    </>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="font-medium">Estado:</span>
-                    <span className="text-right">
-                      <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full">
-                        Pendiente
-                      </span>
-                    </span>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="flex justify-center pt-4">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+                {/* --- MODAL MATRICULA --- */}
+                {modal === "matricula" && selectedPreinscripcion && (
+                  <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
+                    {/* Left Side (Visual) */}
+                    <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
+                      <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
+                        <Check size={48} strokeWidth={1.5} />
+                      </div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Crear Matrícula</p>
+                    </div>
 
-          {modal === "rechazar" && selectedPreinscripcion && (
-            <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={closeModal}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
+                    {/* Right Side (Form) */}
+                    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-[#040529]">Aceptar y Matricular</h3>
+                        <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                      </div>
 
-                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-                  Rechazar Preinscripción
-                </h3>
+                      <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
+                        <p className="text-sm text-blue-800"><strong>Estudiante:</strong> {selectedPreinscripcion.nombre_completo}</p>
+                        <p className="text-sm text-blue-800"><strong>Email:</strong> {selectedPreinscripcion.email}</p>
+                      </div>
 
-                <p className="text-gray-700 text-center mb-6">
-                  ¿Estás seguro de rechazar la preinscripción de{" "}
-                  <span className="font-bold text-red-600">{selectedPreinscripcion.nombre_completo}</span>?
-                </p>
+                      <form className="space-y-5">
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Clase</label>
+                          <select
+                            className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
+                            value={claseSeleccionada}
+                            onChange={(e) => setClaseSeleccionada(e.target.value)}
+                            required
+                          >
+                            <option value="">Seleccionar clase</option>
+                            {clases.map(clase => (
+                              <option key={clase.id_clase} value={clase.id_clase}>
+                                {clase.nombre_nivel} - {clase.dia_semana} {clase.hora_inicio} ({clase.nombre_sede})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                <div className="flex justify-center gap-3 pt-2">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleRechazar}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                  >
-                    Rechazar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Plan</label>
+                          <select
+                            className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
+                            value={planSeleccionado}
+                            onChange={(e) => setPlanSeleccionado(e.target.value)}
+                            required
+                          >
+                            <option value="">Seleccionar plan</option>
+                            {planes.map(plan => (
+                              <option key={plan.id_plan} value={plan.id_plan}>
+                                {plan.nombre_plan} - ${plan.precio}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-          {modal === "matricula" && selectedPreinscripcion && (
-            <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={closeModal}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Fecha de matrícula</label>
+                          <input
+                            type="date"
+                            className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
+                            value={fechaMatricula}
+                            onChange={(e) => setFechaMatricula(e.target.value)}
+                          />
+                        </div>
 
-                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-                  Crear Matrícula
-                </h3>
-
-                <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Estudiante:</strong> {selectedPreinscripcion.nombre_completo}
-                  </p>
-                  <p className="text-sm text-blue-800">
-                    <strong>Email:</strong> {selectedPreinscripcion.email}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Clase
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      value={claseSeleccionada}
-                      onChange={(e) => setClaseSeleccionada(e.target.value)}
-                      required
-                    >
-                      <option value="">Seleccionar clase</option>
-                      {clases.map(clase => (
-                        <option key={clase.id_clase} value={clase.id_clase}>
-                          {clase.nombre_nivel} - {clase.dia_semana} {clase.hora_inicio} ({clase.nombre_sede})
-                        </option>
-                      ))}
-                    </select>
+                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
+                          <button type="button" onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50">Cancelar</button>
+                          <button type="button" onClick={handleAceptarYMatricular} className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10">Aceptar y Matricular</button>
+                        </div>
+                      </form>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Plan
-                    </label>
-                    <select
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      value={planSeleccionado}
-                      onChange={(e) => setPlanSeleccionado(e.target.value)}
-                      required
-                    >
-                      <option value="">Seleccionar plan</option>
-                      {planes.map(plan => (
-                        <option key={plan.id_plan} value={plan.id_plan}>
-                          {plan.nombre_plan} - ${plan.precio}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Fecha de matrícula
-                    </label>
-                    <input
-                      type="date"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      value={fechaMatricula}
-                      onChange={(e) => setFechaMatricula(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-center gap-3 pt-4">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleAceptarYMatricular}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                  >
-                    Aceptar y Matricular
-                  </button>
-                </div>
+                )}
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-      </section>
+      </div>
     </>
   );
 };

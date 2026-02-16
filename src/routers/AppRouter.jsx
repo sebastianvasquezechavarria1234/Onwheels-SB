@@ -17,6 +17,7 @@ import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
 // auth
 import Login from "../feactures/Auth/pages/Login"
 import Register from "../feactures/Auth/pages/Register"
+import ActivationPage from "../feactures/Auth/pages/ActivationPage"
 
 // Dashboard admin
 
@@ -160,6 +161,7 @@ const AppRouter = () => {
         {/* Landing */}
         <Route path="recover" element={<RecoverPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
+        <Route path="activar-cuenta" element={<ActivationPage />} />
 
 
         <Route index element={withAnimation(Home)} />
