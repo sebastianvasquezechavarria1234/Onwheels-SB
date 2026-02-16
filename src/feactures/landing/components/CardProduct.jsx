@@ -83,6 +83,8 @@ export default function CardProduct({ item }) {
           <Trash2 size={18} strokeWidth={2} />
         </button>
       </div>
+      
     </article>
+    
   );
 }

@@ -33,7 +33,7 @@ export const FeaturedProducts = () => {
                 className="group flex flex-col gap-4 bg-transparent transition-all duration-300 hover:-translate-y-1"
             >
                 {/* Image Container - Light */}
-                <div className="relative aspect-square overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm group-hover:border-[var(--color-blue)]/50 transition-all">
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm group-hover:border-(--color-blue)/50 transition-all">
 
                     {/* Badge */}
                     {badge && (
@@ -54,7 +54,7 @@ export const FeaturedProducts = () => {
                 {/* Content */}
                 <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-start gap-4">
-                        <h3 className="text-slate-900 font-bold text-sm md:text-base leading-tight group-hover:text-[var(--color-blue)] transition-colors">
+                        <h3 className="text-slate-900 font-bold text-sm md:text-base leading-tight group-hover:text-(--color-blue) transition-colors">
                             {product?.nombre_producto}
                         </h3>
                         <span className="text-slate-900 font-mono font-bold text-sm">
@@ -72,7 +72,7 @@ export const FeaturedProducts = () => {
 
                     {/* Add to Cart Button */}
                     <button
-                        className="mt-3 w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider py-2 rounded-lg hover:bg-[var(--color-blue)] transition-all shadow-md z-20 relative"
+                        className="mt-3 w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider py-2 rounded-lg hover:bg-(--color-blue) transition-all shadow-md z-20 relative"
                         onClick={(e) => {
                             e.preventDefault();
                             console.log("Add to cart", product?.id_producto);
@@ -88,7 +88,7 @@ export const FeaturedProducts = () => {
     return (
         <section className="bg-gray-50 py-24 px-4 relative z-0">
             {/* Background decorations - Lighter */}
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[60%] h-[300px] bg-[var(--color-blue)]/5 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[60%] h-[300px] bg-(--color-blue)/5 blur-[120px] rounded-full pointer-events-none" />
 
             <div className="max-w-[1200px] mx-auto relative z-10">
                 {/* Section Header */}
@@ -126,7 +126,7 @@ export const FeaturedProducts = () => {
                         className="
                             group flex items-center gap-2 px-8 py-3 
                             bg-slate-900 text-white font-bold uppercase tracking-widest text-xs rounded-full 
-                            hover:bg-[var(--color-blue)] hover:text-white transition-all shadow-lg hover:shadow-[var(--color-blue)]/40
+                            hover:bg-(--color-blue) hover:text-white transition-all shadow-lg hover:shadow-(--color-blue)/40
                         "
                     >
                         Ver Todo
