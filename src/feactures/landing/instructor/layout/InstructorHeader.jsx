@@ -278,7 +278,7 @@ export const InstructorHeader = () => {
                 type="button"
                 onClick={handleLogout}
                 title="Cerrar sesión"
-                className="w-[60px] cursor-pointer h-[60px] bg-red-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+                className="w-[60px] cursor-pointer h-[60px] bg-red-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform max-2xl:w-[45px]! max-2xl:h-[45px]! max-xld:w-[30px]! max-md:h-[30px]!"
                 aria-label="Cerrar sesión"
               >
                 <LogOut size={16} color="white" />
