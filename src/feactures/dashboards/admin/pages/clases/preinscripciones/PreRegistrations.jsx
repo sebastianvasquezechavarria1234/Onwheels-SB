@@ -92,7 +92,7 @@ const PreinscripcionesAdmin = () => {
     fetchPreinscripciones();
   }, [fetchPreinscripciones]);
 
-  // --- FILTRADO Y PAGINACIÓN ---
+ 
   const preinscripcionesFiltradas = useMemo(() => {
     let result = [...preinscripciones];
     if (search) {
@@ -163,8 +163,8 @@ const PreinscripcionesAdmin = () => {
   };
 
   const handleAceptarYMatricular = async () => {
-    if (!validateMatriculaForm()) {
-      showNotification("Por favor completa todos los campos obligatorios", "error");
+    if (!claseSeleccionada || !planSeleccionado) {
+      showNotification("Debes seleccionar clase y plan", "error");
       return;
     }
     

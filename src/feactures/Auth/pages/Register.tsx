@@ -1,6 +1,8 @@
+
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../../../services/api";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -16,7 +18,6 @@ const Register = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // Función para validar la fortaleza de la contraseña
   const validatePasswordStrength = (password) => {
     const hasNumber = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
@@ -27,16 +28,13 @@ const Register = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    // VALIDACIÓN EN TIEMPO REAL
     if (name === "password") {
-      // Validar fortaleza de la contraseña
       const isStrong = validatePasswordStrength(value);
       setErrors(prev => ({
         ...prev,
         passwordStrength: !isStrong && value ? "La contraseña debe contener al menos un número o carácter especial" : ""
       }));
 
-      // Validar coincidencia con confirmación si ya hay valor en confirmPassword
       if (formData.confirmPassword !== "") {
         setErrors(prev => ({
           ...prev,
@@ -55,12 +53,11 @@ const Register = () => {
     e.preventDefault();
     setServerMsg(null);
 
-    // Validar fortaleza de la contraseña antes de enviar
     const isPasswordStrong = validatePasswordStrength(formData.password);
     if (!isPasswordStrong) {
       setErrors(prev => ({
         ...prev,
-        passwordStrength: "La contraseña debe contener al menos un número o carácter especial"
+        passwordStrength: "La contraseña debe ser más segura (incluye números o símbolos)"
       }));
       return;
     }
@@ -83,18 +80,10 @@ const Register = () => {
         contrasena: formData.password,
       };
 
-      const response = await fetch("http://localhost:3000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await api.post("/auth/register", payload);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setServerMsg(data.message || "Registro exitoso");
+      if (response.status === 200 || response.status === 201) {
+        setServerMsg("¡Registro exitoso! Redirigiendo...");
         setFormData({
           fullName: "",
           email: "",
@@ -107,170 +96,178 @@ const Register = () => {
         setTimeout(() => {
           navigate("/login");
         }, 1500);
-      } else {
-        setServerMsg(data.message || "Error en el registro");
       }
-    } catch (err) {
+
+    } catch (err: any) {
       console.error("Error al registrar usuario:", err);
-      setServerMsg("No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:3000");
+      const msg = err.response?.data?.message || err.message || "Error al conectar con el servidor";
+      setServerMsg(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="text-white! h-screen bg-slate-900 flex items-center justify-center p-4">
-      
-      <div className=" min-w-[1300px] mx-auto h-full flex gap-[20px] max-2xl:min-w-[900px] max-2xl:gap-[10px] max-lg:min-w-[500px] max-md:min-w-[350px]">
+    <div className="h-screen w-full flex overflow-hidden bg-slate-900">
 
-
-        <div className="relative w-[50%] h-full block bg-white rounded-[30px] overflow-hidden max-lg:hidden">
-          <header className="absolute z-50 top-0 lef-0 w-full p-[20px]">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)] max-2xl:w-[40px] max-2xl:h-[40px]">
-                <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
-              </div>
-              <span className="font-bold text-lg uppercase tracking-tighter text-white">
-                Performance SB
-              </span>
-            </Link>
-
-
-
-          </header>
-            <picture className="absolute top-0 left-0 h-full!
-          w-full">
-              <img
-                src="https://streetsskaters.com/images/large/kryptonics-skateboard-classic-design.webp"
-                alt="background"
-                className="w-full h-full object-cover" />
-
-            </picture>
-
-            <div className="absolute z-40 top-0 left-0 w-full h-full gradient flex justify-center items-end">
-              <div className="max-w-[300px] text-center pb-[20px]">
-                <h3 className="italic mb-[20px]">Sé parte de la comunidad</h3>
-                <p>Conecta con skaters, comparte tus mejores trucos y encuentra sesiones y encuentros locales.</p>
-              </div>
+      {/* LEFT: Image Section (50%) */}
+      <div className="hidden lg:block w-1/2 h-full relative">
+        <header className="absolute z-50 top-0 left-0 w-full p-8">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-[var(--color-blue)]">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
-        </div>
+            <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
+              OnWheels
+            </span>
+          </Link>
+        </header>
 
-        {/* FORMULARIO */}
-        <div className="w-[50%] p-8 lg:p-12 flex flex-col justify-center max-lg:w-[100%] max-lg:p-[20px]">
-          <div className="">
-            <form onSubmit={handleSubmit} className="space-y-[20px] max-2xl:space-y-[10px]">
-              <Link to="/"  className="inline-flex gap-[5px] items-center cursor-pointer">
-              <ArrowLeft size={20}/>
-                <p className="italic hover:underline">Regresar</p>
-              </Link>
-              <h2>Crear cuenta</h2>
+        <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none"></div>
+        <img
+          src="/bg_hero_landing.jpg"
+          alt="background"
+          className="w-full h-full object-cover filter brightness-75 contrast-110"
+        />
 
-              <div>
-
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  placeholder="Ingresa tu nombre completo"
-                  className="w-full p-[16px_18px] text-white/70! bg-white/10 rounded-lg focus:ring-1 focus:ring-white/60 focus:border-transparent outline-none transition-all max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-[20px] max-2xl:gap-[10px]">
-                <div>
-
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Ingresa tu correo"
-                    className="w-full p-[16px_18px] text-white/70! bg-white/10 rounded-lg focus:ring-1 focus:ring-white/60 focus:border-transparent outline-none transition-all max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                    required
-                  />
-                </div>
-
-                <div>
-
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="text"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Número"
-                    className="w-full p-[16px_18px] text-white/70! bg-white/10 rounded-lg focus:ring-1 focus:ring-white/60 focus:border-transparent outline-none transition-all max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Contraseña"
-                  className="w-full p-[16px_18px] text-white/70! bg-white/10 rounded-lg focus:ring-1 focus:ring-white/60 focus:border-transparent outline-none transition-all max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                  required
-                  minLength="6"
-                />
-                {errors.passwordStrength && (
-                  <p className="text-red-600 text-sm mt-1">{errors.passwordStrength}</p>
-                )}
-              </div>
-
-              <div>
-
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirmar contraseña"
-                  className="w-full p-[16px_18px] text-white/70! bg-white/10 rounded-lg focus:ring-1 focus:ring-white/60 focus:border-transparent outline-none transition-all max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                  required
-                  minLength="6"
-                />
-                {errors.passwordMatch && (
-                  <p className="text-red-600 text-sm mt-1">{errors.passwordMatch}</p>
-                )}
-              </div>
-
-              <p className=" mb-4 mt-4">
-                ¿Ya tienes una cuenta?{" "}
-                <Link to="/login" className="underline text-blue-400 font-medium">
-                  Iniciar sesión
-                </Link>
-              </p>
-              <button
-                type="submit"
-                className="w-full bg-blue-800 cursor-pointer text-white font-medium p-[16px_18px] rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl  disabled:opacity-80 max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                disabled={submitting}
-              >
-                {submitting ? "Registrando..." : "Registrarse"}
-              </button>
-
-              {serverMsg && (
-                <p className="text-center mt-2 text-sm text-gray-700">{serverMsg}</p>
-              )}
-
-
-            </form>
+        <div className="absolute inset-0 z-20 flex items-end justify-center pb-24 px-12 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
+          <div className="max-w-xl text-center text-white">
+            <h3 className="text-4xl lg:text-5xl font-black mb-6 leading-tight tracking-tight uppercase">
+              Únete a la <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-[var(--color-blue)]">
+                Revolución
+              </span>
+            </h3>
+            <p className="text-xl text-gray-300 font-light leading-relaxed">
+              Conecta con skaters locales, accede a eventos exclusivos y lleva tu pasión al siguiente nivel.
+            </p>
           </div>
         </div>
+      </div>
 
+      {/* RIGHT: Form Section (50%) */}
+      <div className="w-full lg:w-1/2 h-full flex items-center justify-center bg-zinc-950 text-white p-6 lg:p-12 overflow-y-auto relative">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
 
+        <div className="w-full max-w-[480px] space-y-6 my-auto relative z-10"> {/* Slightly reduced max-width */}
+          <Link to="/login" className="inline-flex gap-2 items-center text-gray-500 hover:text-[var(--color-blue)] transition-colors mb-2 group font-medium">
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Volver a Login</span>
+          </Link>
 
+          <div className="space-y-1">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Crear Cuenta</h2>
+            <p className="text-gray-400 text-base">Completa tus datos para empezar</p>
+          </div>
 
+          <form onSubmit={handleSubmit} className="space-y-4 mt-6"> {/* Reduced spacing */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Nombre Completo</label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Ej. Juan Pérez"
+                // Reduced padding
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="usuario@email.com"
+                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Teléfono</label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="text"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+57..."
+                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Contraseña</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Mínimo 6 carc."
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+                minLength={6}
+              />
+              {errors.passwordStrength && (
+                <p className="text-amber-500 text-xs mt-1 font-medium">{errors.passwordStrength}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Confirmar</label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Repite tu contraseña"
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+                minLength={6}
+              />
+              {errors.passwordMatch && (
+                <p className="text-red-500 text-xs mt-1 font-medium">{errors.passwordMatch}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-[var(--color-blue)] hover:bg-blue-600 text-white font-bold text-base p-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-[var(--color-blue)]/20 disabled:opacity-50 disabled:cursor-not-allowed mt-4 uppercase tracking-wide transform active:scale-[0.98]"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  Creando cuenta...
+                </span>
+              ) : "Registrarse"}
+            </button>
+
+            {serverMsg && (
+              <div className={`text-center p-3 rounded-xl text-xs font-medium border ${serverMsg.includes("exitoso") ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+                {serverMsg}
+              </div>
+            )}
+
+            <p className="text-center text-gray-400 text-sm">
+              ¿Ya tienes una cuenta?{" "}
+              <Link to="/login" className="text-[var(--color-blue)] font-bold hover:text-white transition-colors">
+                Inicia sesión
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );
