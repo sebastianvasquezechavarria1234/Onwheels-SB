@@ -14,11 +14,6 @@ function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
-
 const PreinscripcionesAdmin = () => {
   // --- ESTADOS ---
   const [preinscripciones, setPreinscripciones] = useState([]);
@@ -49,10 +44,6 @@ const PreinscripcionesAdmin = () => {
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
-
-  // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -95,13 +86,13 @@ const PreinscripcionesAdmin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPreinscripciones();
   }, [fetchPreinscripciones]);
 
-  // --- FILTRADO Y PAGINACIÓN ---
+ 
   const preinscripcionesFiltradas = useMemo(() => {
     let result = [...preinscripciones];
     if (search) {
@@ -162,8 +153,8 @@ const PreinscripcionesAdmin = () => {
   };
 
   const handleAceptarYMatricular = async () => {
-    if (!validateMatriculaForm()) {
-      showNotification("Por favor completa todos los campos obligatorios", "error");
+    if (!claseSeleccionada || !planSeleccionado) {
+      showNotification("Debes seleccionar clase y plan", "error");
       return;
     }
     
@@ -247,7 +238,6 @@ const PreinscripcionesAdmin = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     <tr><td colSpan="7" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
                   ) : error ? (
@@ -264,7 +254,6 @@ const PreinscripcionesAdmin = () => {
                         </div>
                       </td>
                     </tr>
-                  ) : currentItems.length === 0 ? (
                   ) : currentItems.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="p-12 text-center text-gray-400">
@@ -345,7 +334,6 @@ const PreinscripcionesAdmin = () => {
         </AnimatePresence>
 
         <AnimatePresence>
-          {modal && (
           {modal && (
             <motion.div
               className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
@@ -541,7 +529,6 @@ const PreinscripcionesAdmin = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
       </div>
     </>
   );
