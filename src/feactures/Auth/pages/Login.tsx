@@ -61,7 +61,7 @@ const Login = () => {
       <div className="hidden lg:block w-1/2 h-full relative">
         <header className="absolute z-50 top-0 left-0 w-full p-8">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-[var(--color-blue)]">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-(--color-blue)">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
@@ -79,11 +79,11 @@ const Login = () => {
         />
 
         {/* Overlay Content */}
-        <div className="absolute inset-0 z-20 flex items-end justify-center pb-24 px-12 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
+        <div className="absolute inset-0 z-20 flex items-end justify-center pb-24 px-12 bg-linear-to-t from-black/90 via-black/20 to-transparent">
           <div className="max-w-xl text-center">
             <h3 className="text-4xl lg:text-5xl font-black text-white mb-6 leading-tight tracking-tight uppercase">
               Bienvenido al <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-400">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-(--color-blue) to-cyan-400">
                 Nivel Pro
               </span>
             </h3>
@@ -101,14 +101,14 @@ const Login = () => {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
 
         <div className="w-full max-w-[480px] space-y-8 relative z-10"> {/* Slightly reduced max-width */}
-          <Link to="/" className="inline-flex gap-2 items-center text-gray-500 hover:text-[var(--color-blue)] transition-colors mb-4 group font-medium">
+          <Link to="/" className="inline-flex gap-2 items-center text-white  hover:text-(--color-gray) transition-colors mb-4 group font-medium">
             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
             <span>Regresar</span>
           </Link>
 
           <div className="space-y-2">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Iniciar Sesión</h2>
-            <p className="text-gray-400 text-base">Accede a tu cuenta OnWheels</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray">Iniciar Sesión</h2>
+            <p className="text-gray-400 text-base">Accede a tu cuenta Performance Sb</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 mt-6">
@@ -120,7 +120,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ejemplo@correo.com"
                 // Reduced padding: p-3.5 instead of p-4
-                className="w-full p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                className="w-full p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all placeholder:text-gray text-gray-50 font-medium text-sm"
                 required
                 disabled={loading}
               />
@@ -129,7 +129,7 @@ const Login = () => {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Contraseña</label>
-                <Link to="/recover" className="text-xs text-[var(--color-blue)] font-bold hover:text-blue-300 hover:underline">
+                <Link to="/recover" className="text-xs text-white font-bold hover:text-blue-300 hover:underline">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
@@ -139,7 +139,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 // Reduced padding: p-3.5 instead of p-4
-                className="w-full p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                className="w-full p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
                 required
                 disabled={loading}
               />
@@ -157,7 +157,7 @@ const Login = () => {
               type="submit"
               disabled={loading}
               // Reduced padding: p-3.5 instead of p-4
-              className="w-full bg-[var(--color-blue)] hover:bg-blue-600 text-white font-bold text-base p-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-[var(--color-blue)]/20 disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide transform active:scale-[0.98]"
+              className="w-full bg-(--color-blue) hover:bg-blue-600 text-white font-bold text-base p-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-(--color-blue)/20 disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide transform active:scale-[0.98]"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -178,7 +178,7 @@ const Login = () => {
 
             <p className="text-center text-gray-400 text-sm">
               ¿Aún no tienes cuenta?{" "}
-              <Link to="/register" className="text-[var(--color-blue)] font-bold hover:text-white transition-colors">
+              <Link to="/register" className="text-white font-bold hover:text-white transition-colors">
                 Regístrate gratis
               </Link>
             </p>
