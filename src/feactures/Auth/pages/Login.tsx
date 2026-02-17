@@ -38,7 +38,7 @@ const Login = () => {
 
       const homePath = getRoleHomePath();
       navigate(homePath, { replace: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
 
       if (err.response) {
@@ -55,98 +55,134 @@ const Login = () => {
   };
 
   return (
-    <div className="text-white! h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="min-w-[1300px] mx-auto h-full flex gap-[20px] max-2xl:min-w-[900px] max-2xl:gap-[10px] max-lg:min-w-[500px] max-md:min-w-[350px]">
-        
-        {/* Panel izquierdo con imagen - IDENTICO al Register */}
-        <div className="relative w-[50%] h-full block bg-white rounded-[30px] overflow-hidden max-lg:hidden">
-          <header className="absolute z-50 top-0 left-0 w-full p-[20px]">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)] max-2xl:w-[40px] max-2xl:h-[40px]">
-                <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
-              </div>
-              <span className="font-bold text-lg uppercase tracking-tighter text-white">
-                Performance SB
-              </span>
-            </Link>
-          </header>
-          
-          <picture className="absolute top-0 left-0 h-full! w-full">
-            <img
-              src="https://surfsflow.com/images/large/comprehensive-guide-beginner-skateboard-types.webp"
-              alt="background"
-              className="w-full h-full object-cover"
-            />
-          </picture>
-          
-          <div className="absolute z-40 top-0 left-0 w-full h-full gradient flex justify-center items-end">
-            <div className="max-w-[300px] text-center pb-[20px]">
-              <h3 className="italic mb-[20px]">¡Bienvenido de nuevo!</h3>
-              <p>Inicia sesión para conectarte con la comunidad de skaters y compartir tus mejores trucos.</p>
+    <div className="h-screen w-full flex overflow-hidden bg-slate-900">
+
+      {/* LEFT: Image Section (50%) */}
+      <div className="hidden lg:block w-1/2 h-full relative">
+        <header className="absolute z-50 top-0 left-0 w-full p-8">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-[var(--color-blue)]">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
+            <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
+              OnWheels
+            </span>
+          </Link>
+        </header>
+
+        {/* HERO Image with Dark Filter */}
+        <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none"></div>
+        <img
+          src="/bg_hero_landing.jpg"
+          alt="Login Background"
+          className="w-full h-full object-cover filter brightness-75 contrast-110"
+        />
+
+        {/* Overlay Content */}
+        <div className="absolute inset-0 z-20 flex items-end justify-center pb-24 px-12 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
+          <div className="max-w-xl text-center">
+            <h3 className="text-4xl lg:text-5xl font-black text-white mb-6 leading-tight tracking-tight uppercase">
+              Bienvenido al <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-400">
+                Nivel Pro
+              </span>
+            </h3>
+            <p className="text-xl text-gray-300 font-light leading-relaxed">
+              Tu comunidad, tus eventos, tu progreso. <br />
+              Todo lo que necesitas para dominar el asfalto.
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* FORMULARIO - IDENTICO al Register en estructura y estilos */}
-        <div className="w-[50%] p-8 lg:p-12 flex flex-col justify-center max-lg:w-[100%] max-lg:p-[20px]">
-          <div>
-            <form onSubmit={handleSubmit} className="space-y-[20px] max-2xl:space-y-[10px]">
-             <Link to="/"  className="inline-flex gap-[5px] items-center cursor-pointer">
-              <ArrowLeft size={20}/>
-                <p className="italic hover:underline">Regresar</p>
-              </Link>
-              
-              <h2 className="text-3xl font-bold">Iniciar sesión</h2>
+      {/* RIGHT: Form Section (50%) */}
+      <div className="w-full lg:w-1/2 h-full flex items-center justify-center bg-zinc-950 text-white p-8 lg:p-16 relative">
+        {/* Background Grid Pattern */}
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
 
-              <div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Ingresa tu correo"
-                  className="w-full p-[16px_18px] text-white/70! bg-white/10 rounded-lg focus:ring-1 focus:ring-white/60 focus:border-transparent outline-none transition-all max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                  required
-                  disabled={loading}
-                />
-              </div>
+        <div className="w-full max-w-[480px] space-y-8 relative z-10"> {/* Slightly reduced max-width */}
+          <Link to="/" className="inline-flex gap-2 items-center text-gray-500 hover:text-[var(--color-blue)] transition-colors mb-4 group font-medium">
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Regresar</span>
+          </Link>
 
-              <div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Contraseña"
-                  className="w-full p-[16px_18px] text-white/70! bg-white/10 rounded-lg focus:ring-1 focus:ring-white/60 focus:border-transparent outline-none transition-all max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-                  required
-                  disabled={loading}
-                />
-                {error && (
-                  <p className="text-red-600 text-sm mt-1">{error}</p>
-                )}
-              </div>
-
-              <Link to="/recover" className="text-sm text-blue-400 underline hover:text-blue-300">
-                ¿Olvidaste tu contraseña?
-              </Link>
-
-                <p className="mb-4 mt-4">
-                ¿No tienes una cuenta?{" "}
-                <Link to="/register" className="underline text-blue-400 font-medium">
-                  Regístrate
-                </Link>
-              </p>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-800 cursor-pointer text-white font-medium p-[16px_18px] rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl disabled:opacity-80 max-2xl:p-[12px_14px] max-2xl:text-[12px]!"
-              >
-                {loading ? "Iniciando..." : "Iniciar sesión"}
-              </button>
-
-            
-            </form>
+          <div className="space-y-2">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Iniciar Sesión</h2>
+            <p className="text-gray-400 text-base">Accede a tu cuenta OnWheels</p>
           </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5 mt-6">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Correo Electrónico</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ejemplo@correo.com"
+                // Reduced padding: p-3.5 instead of p-4
+                className="w-full p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-gray-300 ml-1 uppercase tracking-wider">Contraseña</label>
+                <Link to="/recover" className="text-xs text-[var(--color-blue)] font-bold hover:text-blue-300 hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                // Reduced padding: p-3.5 instead of p-4
+                className="w-full p-3.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+                disabled={loading}
+              />
+              {error && (
+                <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg mt-2">
+                  <p className="text-red-500 text-xs font-medium flex items-center gap-2">
+                    <span className="block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    {error}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              // Reduced padding: p-3.5 instead of p-4
+              className="w-full bg-[var(--color-blue)] hover:bg-blue-600 text-white font-bold text-base p-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-[var(--color-blue)]/20 disabled:opacity-50 disabled:cursor-not-allowed mt-6 uppercase tracking-wide transform active:scale-[0.98]"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  Iniciando...
+                </span>
+              ) : "Ingresar"}
+            </button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-zinc-800"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-3 bg-zinc-950 text-gray-500">O</span>
+              </div>
+            </div>
+
+            <p className="text-center text-gray-400 text-sm">
+              ¿Aún no tienes cuenta?{" "}
+              <Link to="/register" className="text-[var(--color-blue)] font-bold hover:text-white transition-colors">
+                Regístrate gratis
+              </Link>
+            </p>
+          </form>
         </div>
       </div>
     </div>
