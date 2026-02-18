@@ -8,6 +8,7 @@ import { FeaturedProducts } from "../components/landing/FeaturedProducts";
 import { UpcomingEvents } from "../components/landing/UpcomingEvents";
 import { LearningSection } from "../components/landing/LearningSection";
 import { CommunityReels } from "../components/landing/CommunityReels";
+import { Coment } from "../components/landing/Coment";
 
 export const Home = () => {
     return (
@@ -17,6 +18,7 @@ export const Home = () => {
             <UpcomingEvents />
             <LearningSection />
             <CommunityReels />
+            <Coment />
         </Layout>
     )
 }

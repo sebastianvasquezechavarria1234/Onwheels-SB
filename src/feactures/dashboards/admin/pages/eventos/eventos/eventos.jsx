@@ -1,7 +1,10 @@
 // src/features/dashboards/admin/pages/eventos/Eventos.jsx
-import React, { useEffect, useState } from "react";
-
-import { Search, Plus, Pen, Trash2, Eye, X, Image as ImageIcon } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
+import { 
+    Search, Plus, Pen, Trash2, Eye, X, Image as ImageIcon, 
+    Calendar, Clock, MapPin, Tag, User, Hash, ChevronLeft, ChevronRight,
+    ArrowUpDown, CheckCircle, AlertCircle, ExternalLink
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getEventos,
@@ -13,12 +16,26 @@ import {
   deleteEvento,
 } from "../../services/Event.js";
 
+// Helper para clases condicionales
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export default function Eventos() {
   const [eventos, setEventos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [patrocinadores, setPatrocinadores] = useState([]);
   const [sedes, setSedes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // UI State
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Sorting
+  const [sortField, setSortField] = useState("nombre_evento");
+  const [sortDirection, setSortDirection] = useState("asc");
 
   const [selected, setSelected] = useState(null);
   const [modal, setModal] = useState(null);
@@ -30,14 +47,15 @@ export default function Eventos() {
     nombre_evento: "",
     fecha_evento: "",
     hora_inicio: "",
-    hora_aproximada_fin: "", // ✅ CORREGIDO
+    hora_aproximada_fin: "",
     descripcion: "",
     imagen: "",
+    imagenArchivo: null,
+    imageMode: "file", // "file" | "url"
     estado: "activo",
   });
 
   const [formErrors, setFormErrors] = useState({});
-
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
@@ -46,29 +64,25 @@ export default function Eventos() {
   };
 
   // ===================== VALIDACIONES =====================
-  // ===================== VALIDACIONES MEJORADAS =====================
   const validateField = (name, value, currentForm) => {
-    // Usamos currentForm para validaciones cruzadas (ej: hora inicio vs fin)
-    // Si no se pasa, usamos el estado 'form' actual
     const formData = currentForm || form; 
     let error = "";
 
     if (name === "nombre_evento") {
       if (!value || !value.trim()) error = "El nombre es obligatorio";
-      else if (value.trim().length < 5) error = "Mínimo 5 caracteres para mayor descriptividad";
+      else if (value.trim().length < 5) error = "Mínimo 5 caracteres";
       else if (value.trim().length > 150) error = "Máximo 150 caracteres";
-      // Regex más flexible: permite letras, números, espacios, guiones, puntos y comas.
       else if (!/^[A-Za-zÁÉÍÓÚÑáéíóúñ0-9\s.,&:-]+$/.test(value.trim())) {
-        error = "Caracteres no permitidos (solo letras, números y signos básicos)";
+        error = "Caracteres no permitidos";
       }
     }
 
     if (name === "id_categoria_evento") {
-      if (!value) error = "Seleccione una categoría válida";
+      if (!value) error = "Seleccione una categoría";
     }
 
     if (name === "id_sede") {
-      if (!value) error = "Seleccione una sede donde se realizará el evento";
+      if (!value) error = "Seleccione una sede";
     }
 
     if (name === "fecha_evento") {
@@ -76,9 +90,7 @@ export default function Eventos() {
       else {
         const date = new Date(value);
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Ignorar hora actual
-        // Permitimos eventos de hoy en adelante
-        // Ajuste zona horaria simple: comparamos timestamps de medianoche local
+        today.setHours(0, 0, 0, 0);
         const dateTimestamp = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
         const todayTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
 
@@ -100,7 +112,7 @@ export default function Eventos() {
     }
 
     if (name === "descripcion") {
-        if (!value || value.trim().length < 10) error = "La descripción debe tener al menos 10 caracteres";
+        if (!value || value.trim().length < 10) error = "Mínimo 10 caracteres";
         if (value && value.length > 500) error = "Máximo 500 caracteres";
     }
 
@@ -109,7 +121,7 @@ export default function Eventos() {
             try {
                 new URL(value.trim());
             } catch {
-                error = "URL de imagen inválida (debe comenzar con http/https)";
+                error = "URL inválida";
             }
         }
     }
@@ -161,18 +173,22 @@ export default function Eventos() {
     setModal(type);
     setSelected(evento);
     setForm(
-      evento || {
-        id_categoria_evento: "",
-        id_patrocinador: "",
-        id_sede: "",
-        nombre_evento: "",
-        fecha_evento: "",
-        hora_inicio: "",
-        hora_aproximada_fin: "", // ✅ CORREGIDO
-        descripcion: "",
-        imagen: "",
-        estado: "activo",
-      }
+      evento 
+        ? { ...evento, imagenArchivo: null } 
+        : {
+            id_categoria_evento: "",
+            id_patrocinador: "",
+            id_sede: "",
+            nombre_evento: "",
+            fecha_evento: "",
+            hora_inicio: "",
+            hora_aproximada_fin: "",
+            descripcion: "",
+            imagen: "",
+            imagenArchivo: null,
+            imageMode: "file",
+            estado: "activo",
+          }
     );
     setFormErrors({});
   };
@@ -187,25 +203,47 @@ export default function Eventos() {
       nombre_evento: "",
       fecha_evento: "",
       hora_inicio: "",
-      hora_aproximada_fin: "", // ✅ CORREGIDO
+      hora_aproximada_fin: "",
       descripcion: "",
       imagen: "",
+      imagenArchivo: null,
+      imageMode: "file",
       estado: "activo",
     });
     setFormErrors({});
   };
 
   // ===================== FORM HANDLERS =====================
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        setForm(prev => ({
+            ...prev,
+            imagen: URL.createObjectURL(file),
+            imagenArchivo: file
+        }));
+        // Limpiar error si existe
+        if (formErrors.imagen) {
+             setFormErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.imagen;
+                return newErrors;
+             });
+        }
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "id_categoria_evento" || name === "id_patrocinador" || name === "id_sede") {
       const numericValue = value === "" ? "" : Number(value);
-      setForm((prev) => ({ ...prev, [name]: numericValue }));
-      setTimeout(() => validateField(name, numericValue), 0);
+      const nextForm = { ...form, [name]: numericValue };
+      setForm(nextForm);
+      setTimeout(() => validateField(name, numericValue, nextForm), 0);
     } else {
       const nextForm = { ...form, [name]: value };
       setForm(nextForm);
-      validateField(name, value, nextForm);
+    //   validateField(name, value, nextForm); // Validación en tiempo real puede ser molesta si es muy estricta, pero aqui esta bien
     }
   };
 
@@ -214,7 +252,7 @@ export default function Eventos() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    // e.preventDefault(); // No usamos submit nativo, sino onClick en el boton
 
     if (!validateAll()) {
       showNotification("Corrige los errores del formulario", "error");
@@ -268,583 +306,577 @@ export default function Eventos() {
     return sed ? sed.nombre_sede : "—";
   };
 
-  // ===================== BUSQUEDA Y PAGINACIÓN =====================
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  // ===================== FILTROS + SORT + PAGINACIÓN =====================
+  const filteredAndSorted = useMemo(() => {
+    let result = [...eventos];
 
-  const filtered = eventos.filter((e) => {
-    const q = search.toLowerCase().trim();
-    return (
-      e.nombre_evento.toLowerCase().includes(q) ||
-      getNombreCategoria(e.id_categoria_evento)?.toLowerCase().includes(q) ||
-      getNombrePatrocinador(e.id_patrocinador)?.toLowerCase().includes(q) ||
-      getNombreSede(e.id_sede)?.toLowerCase().includes(q) ||
-      e.fecha_evento.toLowerCase().includes(q)
-    );
-  });
+    // Filter
+    if (search) {
+        const q = search.toLowerCase().trim();
+        result = result.filter((e) =>
+            e.nombre_evento.toLowerCase().includes(q) ||
+            getNombreCategoria(e.id_categoria_evento)?.toLowerCase().includes(q) ||
+            getNombrePatrocinador(e.id_patrocinador)?.toLowerCase().includes(q) ||
+            getNombreSede(e.id_sede)?.toLowerCase().includes(q) ||
+            e.fecha_evento.toLowerCase().includes(q)
+        );
+    }
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+    // Sort
+    result.sort((a, b) => {
+        let aVal = a[sortField];
+        let bVal = b[sortField];
+
+        // Handle calculated fields if needed, or just sort by raw data
+        if (sortField === "categoria") {
+            aVal = getNombreCategoria(a.id_categoria_evento);
+            bVal = getNombreCategoria(b.id_categoria_evento);
+        } else if (sortField === "sede") {
+            aVal = getNombreSede(a.id_sede);
+            bVal = getNombreSede(b.id_sede);
+        }
+
+        if (aVal === null || aVal === undefined) return 1;
+        if (bVal === null || bVal === undefined) return -1;
+        
+        if (typeof aVal === "string" && typeof bVal === "string") {
+            return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        }
+        if (typeof aVal === "number" && typeof bVal === "number") {
+             return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+        }
+        return 0;
+    });
+
+    return result;
+  }, [eventos, search, sortField, sortDirection, categorias, sedes, patrocinadores]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / itemsPerPage));
+  const currentItems = filteredAndSorted.slice(
+      (currentPage - 1) * itemsPerPage, 
+      currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(1);
   }, [totalPages, currentPage]);
 
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = filtered.slice(indexOfFirst, indexOfLast);
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
-  // ===================== RENDER =====================
   return (
     <>
-      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Eventos / Gestión de Eventos</h2>
+      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+        
+        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
+        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
+            
+            {/* Row 1: Minimal Header */}
+            <div className="flex items-center justify-between ">
+                <div className="flex items-center gap-4">
+                    <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
+                        Gestión de Eventos
+                    </h2>
 
-          {/* ===================== BUSCADOR Y BOTON ===================== */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="relative w-full md:w-96">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                <Search size={18} />
-              </div>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Buscar eventos..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
+                    {/* Compact Stats */}
+                    <div className="flex items-center gap-2 border-l pl-4">
+                        <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md ">
+                            <Hash className="h-3 w-3 " />
+                            <span className="text-xs font-bold!">{filteredAndSorted.length}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <button
-              onClick={() => openModal("crear")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
-            >
-              <Plus size={18} /> Registrar nuevo evento
-            </button>
-          </div>
+            {/* Row 2: Active Toolbar (Big Buttons) */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
+                 {/* Search & Create Group */}
+                 <div className="flex flex-1 w-full sm:w-auto gap-3">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input 
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                            placeholder="Buscar eventos..."
+                            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                        />
+                        {search && (
+                            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <X className="h-4 w-4" />
+                            </button>
+                        )}
+                    </div>
+                    <button 
+                        onClick={() => openModal("crear")} 
+                        className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Nuevo Evento
+                    </button>
+                 </div>
 
-          {/* ===================== TABLA ===================== */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-3 w-[5%]">ID</th>
-                    <th className="px-6 py-3 w-[8%]">Imagen</th>
-                    <th className="px-6 py-3 w-[15%]">Nombre</th>
-                    <th className="px-6 py-3 w-[12%]">Categoría</th>
-                    <th className="px-6 py-3 w-[12%]">Patrocinador</th>
-                    <th className="px-6 py-3 w-[12%]">Sede</th>
-                    <th className="px-6 py-3 w-[8%]">Fecha</th>
-                    <th className="px-6 py-3 w-[7%]">Estado</th>
-                    <th className="px-6 py-3 w-[10%]">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="9" className="text-center py-10 text-gray-500 italic">
-                        Cargando...
-                      </td>
-                    </tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="9" className="text-center py-10 text-gray-500 italic">
-                        No hay eventos registrados
-                      </td>
-                    </tr>
-                  ) : (
-                    currentItems.map((e) => (
-                      <tr key={e.id_evento} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4">{e.id_evento}</td>
-                        <td className="px-6 py-4">
-                          {e.imagen ? (
-                            <img src={e.imagen} className="w-10 h-10 object-cover rounded border" />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-100 border rounded flex items-center justify-center">
-                              <ImageIcon size={16} className="text-gray-400" />
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 font-medium">{e.nombre_evento}</td>
-                        <td className="px-6 py-4">{getNombreCategoria(e.id_categoria_evento)}</td>
-                        <td className="px-6 py-4">{getNombrePatrocinador(e.id_patrocinador)}</td>
-                        <td className="px-6 py-4">{getNombreSede(e.id_sede)}</td>
-                        <td className="px-6 py-4">{e.fecha_evento}</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${e.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                              }`}
-                          >
-                            {e.estado}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2 justify-center">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("ver", e)}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                              title="Ver detalles"
-                            >
-                              <Eye size={16} />
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("editar", e)}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                              title="Editar"
-                            >
-                              <Pen size={16} />
-                            </motion.button>
-
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("eliminar", e)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={16} />
-                            </motion.button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                 {/* Filters (Sort) */}
+                 <div className="flex flex-1 w-full justify-start sm:justify-end items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                    {[
+                        { id: "nombre_evento", label: "Nombre" },
+                        { id: "categoria", label: "Categoría" },
+                        { id: "fecha_evento", label: "Fecha" },
+                        { id: "sede", label: "Sede" }
+                    ].map((field) => (
+                        <button
+                            key={field.id}
+                            onClick={() => toggleSort(field.id)}
+                            className={cn(
+                                "px-4 py-2 text-xs uppercase font-bold tracking-wide rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
+                                sortField === field.id 
+                                    ? "bg-[#040529] text-white border-[#040529] shadow-sm transform scale-105" 
+                                    : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                            )}
+                        >
+                            {field.label}
+                            {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
+                        </button>
+                    ))}
+                </div>
             </div>
-          </div>
-
-          {/* ===================== PAGINACIÓN ===================== */}
-          {filtered.length > 0 && (
-            <div className="flex justify-center items-center gap-2 mt-6 py-4">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-600">
-                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
-              </span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
-
         </div>
 
-        {/* ===================== NOTIFICACIONES ===================== */}
+        {/* --- SECTION 2: TABLE AREA --- */}
+        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
+            <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
+                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                    <table className="w-full text-left relative">
+                         <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Imagen</th>
+                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[20%]">Nombre</th>
+                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Categoría</th>
+                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Sede</th>
+                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Fecha</th>
+                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Estado</th>
+                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right w-[15%]">Acciones</th>
+                            </tr>
+                        </thead>
+                         <tbody className="divide-y divide-gray-100">
+                             {loading ? (
+                                <tr><td colSpan="7" className="p-8 text-center text-gray-400 text-sm">Cargando eventos...</td></tr>
+                             ) : currentItems.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="p-12 text-center text-gray-400">
+                                        <div className="flex flex-col items-center gap-2 opacity-50">
+                                            <Calendar className="h-8 w-8" />
+                                            <p className="text-sm">No se encontraron eventos</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                             ) : (
+                                currentItems.map((e) => (
+                                    <tr key={e.id_evento} className="group hover:bg-[#F0E6E6]/30 transition-colors">
+                                        <td className="px-5 py-4">
+                                             <div className="h-12 w-16 shrink-0 bg-white border border-gray-100 rounded-lg overflow-hidden flex items-center justify-center shadow-sm">
+                                                {e.imagen ? (
+                                                     <img src={e.imagen} alt="Event" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <ImageIcon className="h-5 w-5 text-gray-300" />
+                                                )}
+                                             </div>
+                                        </td>
+                                        <td className="px-5 py-4 font-bold text-[#040529] text-sm">{e.nombre_evento}</td>
+                                        <td className="px-5 py-4 text-sm text-gray-600">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                                {getNombreCategoria(e.id_categoria_evento)}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-4 text-sm text-gray-600 flex items-center gap-1">
+                                            <MapPin size={14} className="text-gray-400" />
+                                            {getNombreSede(e.id_sede)}
+                                        </td>
+                                        <td className="px-5 py-4 text-sm text-gray-600">
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{e.fecha_evento}</span>
+                                                <span className="text-xs text-gray-400">{e.hora_inicio} - {e.hora_aproximada_fin}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${e.estado === 'activo' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
+                                                <span className={`h-1.5 w-1.5 rounded-full ${e.estado === 'activo' ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                                                {e.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </td>
+                                         <td className="px-5 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button onClick={() => openModal("ver", e)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
+                                                <button onClick={() => openModal("editar", e)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pen className="h-4 w-4" /></button>
+                                                <button onClick={() => openModal("eliminar", e)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                             )}
+                         </tbody>
+                    </table>
+                </div>
+
+                 {/* Footer Pagination */}
+                 {totalPages > 1 && (
+                    <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
+                        <p className="text-xs text-gray-500 font-medium">
+                            Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
+                            <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
+                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+
+        {/* --- NOTIFICATIONS --- */}
         <AnimatePresence>
-          {notification.show && (
-            <motion.div
-              initial={{ opacity: 0, x: 300 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 300 }}
-              transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
-                }`}
-            >
-              {notification.message}
-            </motion.div>
-          )}
+            {notification.show && (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
+                    {notification.message}
+                </motion.div>
+            )}
         </AnimatePresence>
 
-        {/* ===================== MODAL CREAR / EDITAR ===================== */}
+        {/* --- MODALS --- */}
         <AnimatePresence>
-          {(modal === "crear" || modal === "editar") && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
+          {(modal === "crear" || modal === "editar" || modal === "ver") && (
+             <motion.div 
+                className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={closeModal}
             >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={closeModal}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                <motion.div 
+                    className="bg-white rounded-2xl shadow-2xl relative overflow-hidden max-w-4xl w-full"
+                    initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                    onClick={(e) => e.stopPropagation()}
                 >
-                  <X size={20} />
-                </button>
+                    <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
+                        
+                        {/* Left Side (Image Preview & Summary) */}
+                        <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col border-r border-gray-100 relative overflow-hidden">
+                             <div className="absolute inset-0 opacity-5 pattern-grid-lg" />
+                             
+                             {/* Image Area */}
+                             <div className="h-1/2 w-full p-6 flex flex-col items-center justify-center relative z-10 border-b border-gray-200/50">
+                                {form.imagen ? (
+                                    <div className="w-full h-full rounded-xl overflow-hidden shadow-sm bg-white p-2 border border-gray-100">
+                                        <img src={form.imagen} alt="Preview" className="w-full h-full object-contain rounded-lg" onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-50 hidden text-xs text-gray-400">Error al cargar imagen</div>
+                                    </div>
+                                ) : (
+                                    <div className="w-full h-full rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-white/50 text-gray-400 gap-2">
+                                        <ImageIcon size={32} />
+                                        <span className="text-xs font-medium">Sin imagen</span>
+                                    </div>
+                                )}
+                             </div>
 
-                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
-                  {modal === "crear" ? "Registrar Evento" : "Editar Evento"}
-                </h3>
+                             {/* Summary Info */}
+                             <div className="flex-1 p-6 z-10 overflow-y-auto">
+                                <h4 className="text-[#040529] font-bold text-lg leading-tight mb-4">{form.nombre_evento || "Nuevo Evento"}</h4>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-3 text-sm text-gray-600">
+                                        <Tag size={16} className="mt-0.5 text-blue-500 shrink-0" />
+                                        <span>{getNombreCategoria(form.id_categoria_evento) || "Categoría sin definir"}</span>
+                                    </div>
+                                    <div className="flex items-start gap-3 text-sm text-gray-600">
+                                        <MapPin size={16} className="mt-0.5 text-red-500 shrink-0" />
+                                        <span>{getNombreSede(form.id_sede) || "Sede sin definir"}</span>
+                                    </div>
+                                    <div className="flex items-start gap-3 text-sm text-gray-600">
+                                        <User size={16} className="mt-0.5 text-purple-500 shrink-0" />
+                                        <span>{getNombrePatrocinador(form.id_patrocinador) || "Patrocinador sin definir"}</span>
+                                    </div>
+                                    <div className="flex items-start gap-3 text-sm text-gray-600">
+                                        <Calendar size={16} className="mt-0.5 text-green-500 shrink-0" />
+                                        <span>{form.fecha_evento || "Fecha sin definir"}</span>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
 
-                <form id="form-evento" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                    <input
-                      name="nombre_evento"
-                      value={form.nombre_evento}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.nombre_evento ? "border-red-500" : "border-gray-300"
-                        }`}
-                      placeholder="Nombre del evento"
-                    />
-                    {formErrors.nombre_evento && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.nombre_evento}</p>
-                    )}
-                  </div>
+                        {/* Right Side (Form) */}
+                         <div className="flex-1 flex flex-col h-full overflow-hidden">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
+                                <h3 className="text-xl font-bold text-[#040529]">
+                                    {modal === "crear" ? "Registrar Evento" : modal === "editar" ? "Editar Evento" : "Detalles del Evento"}
+                                </h3>
+                                <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                            </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
-                    <select
-                      name="id_categoria_evento"
-                      value={form.id_categoria_evento}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.id_categoria_evento ? "border-red-500" : "border-gray-300"
-                        }`}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {categorias.map((c) => (
-                        <option key={c.id_categoria_evento} value={c.id_categoria_evento}>
-                          {c.nombre_categoria}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.id_categoria_evento && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.id_categoria_evento}</p>
-                    )}
-                  </div>
+                            <div className="flex-1 overflow-y-auto p-6 lg:p-8">
+                                <form className="space-y-6">
+                                    
+                                    {/* Group 1: Basics */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Evento *</label>
+                                            <input
+                                                autoFocus
+                                                name="nombre_evento"
+                                                value={form.nombre_evento}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                readOnly={modal === "ver"} disabled={modal === "ver"}
+                                                placeholder="Ej: Torneo de Verano 2024"
+                                                className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.nombre_evento ? "border-red-500" : "border-gray-200"}`}
+                                            />
+                                            {formErrors.nombre_evento && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.nombre_evento}</p>}
+                                        </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Patrocinador</label>
-                    <select
-                      name="id_patrocinador"
-                      value={form.id_patrocinador}
-                      onChange={handleChange}
-                      className={`w-full p-2 border rounded-md ${formErrors.id_patrocinador ? "border-red-500" : "border-gray-300"
-                        }`}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {patrocinadores.map((p) => (
-                        <option key={p.id_patrocinador} value={p.id_patrocinador}>
-                          {p.nombre_patrocinador}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.id_patrocinador && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.id_patrocinador}</p>
-                    )}
-                  </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Categoría *</label>
+                                            <div className="relative mt-1">
+                                                <select
+                                                    name="id_categoria_evento"
+                                                    value={form.id_categoria_evento}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    disabled={modal === "ver"}
+                                                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] appearance-none ${formErrors.id_categoria_evento ? "border-red-500" : "border-gray-200"}`}
+                                                >
+                                                    <option value="">Seleccionar...</option>
+                                                    {categorias.map(c => <option key={c.id_categoria_evento} value={c.id_categoria_evento}>{c.nombre_categoria}</option>)}
+                                                </select>
+                                                <Tag className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                            </div>
+                                            {formErrors.id_categoria_evento && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.id_categoria_evento}</p>}
+                                        </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sede *</label>
-                    <select
-                      name="id_sede"
-                      value={form.id_sede}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.id_sede ? "border-red-500" : "border-gray-300"
-                        }`}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {sedes.map((s) => (
-                        <option key={s.id_sede} value={s.id_sede}>
-                          {s.nombre_sede}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.id_sede && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.id_sede}</p>
-                    )}
-                  </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Sede *</label>
+                                            <div className="relative mt-1">
+                                                <select
+                                                    name="id_sede"
+                                                    value={form.id_sede}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    disabled={modal === "ver"}
+                                                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] appearance-none ${formErrors.id_sede ? "border-red-500" : "border-gray-200"}`}
+                                                >
+                                                    <option value="">Seleccionar...</option>
+                                                    {sedes.map(s => <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>)}
+                                                </select>
+                                                <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                            </div>
+                                            {formErrors.id_sede && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.id_sede}</p>}
+                                        </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
-                    <input
-                      name="fecha_evento"
-                      type="date"
-                      value={form.fecha_evento}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.fecha_evento ? "border-red-500" : "border-gray-300"
-                        }`}
-                    />
-                    {formErrors.fecha_evento && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.fecha_evento}</p>
-                    )}
-                  </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Patrocinador</label>
+                                            <div className="relative mt-1">
+                                                <select
+                                                    name="id_patrocinador"
+                                                    value={form.id_patrocinador}
+                                                    onChange={handleChange}
+                                                    disabled={modal === "ver"}
+                                                    className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] appearance-none border-gray-200`}
+                                                >
+                                                    <option value="">Seleccionar...</option>
+                                                    {patrocinadores.map(p => <option key={p.id_patrocinador} value={p.id_patrocinador}>{p.nombre_patrocinador}</option>)}
+                                                </select>
+                                                <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                            </div>
+                                        </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                    <select
-                      name="estado"
-                      value={form.estado}
-                      onChange={handleChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
-                  </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Estado</label>
+                                            <div className="relative mt-1">
+                                                <select
+                                                    name="estado"
+                                                    value={form.estado}
+                                                    onChange={handleChange}
+                                                    disabled={modal === "ver"}
+                                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] appearance-none"
+                                                >
+                                                    <option value="activo">Activo</option>
+                                                    <option value="inactivo">Inactivo</option>
+                                                </select>
+                                                <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                            </div>
+                                        </div>
+                                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora inicio</label>
-                    <input
-                      name="hora_inicio"
-                      type="time"
-                      value={form.hora_inicio}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.hora_inicio ? "border-red-500" : "border-gray-300"
-                        }`}
-                    />
-                    {formErrors.hora_inicio && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.hora_inicio}</p>
-                    )}
-                  </div>
+                                    {/* Group 2: Date & Time */}
+                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                        <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2"><Clock size={14} /> Fecha y Hora</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Fecha *</label>
+                                                <input
+                                                    name="fecha_evento"
+                                                    type="date"
+                                                    value={form.fecha_evento}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    readOnly={modal === "ver"} disabled={modal === "ver"}
+                                                    className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm ${formErrors.fecha_evento ? "border-red-500" : "border-gray-200"}`}
+                                                />
+                                                 {formErrors.fecha_evento && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.fecha_evento}</p>}
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Hora Inicio *</label>
+                                                <input
+                                                    name="hora_inicio"
+                                                    type="time"
+                                                    value={form.hora_inicio}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    readOnly={modal === "ver"} disabled={modal === "ver"}
+                                                    className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm ${formErrors.hora_inicio ? "border-red-500" : "border-gray-200"}`}
+                                                />
+                                                {formErrors.hora_inicio && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.hora_inicio}</p>}
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Hora Fin *</label>
+                                                <input
+                                                    name="hora_aproximada_fin"
+                                                    type="time"
+                                                    value={form.hora_aproximada_fin}
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
+                                                    readOnly={modal === "ver"} disabled={modal === "ver"}
+                                                    className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm ${formErrors.hora_aproximada_fin ? "border-red-500" : "border-gray-200"}`}
+                                                />
+                                                {formErrors.hora_aproximada_fin && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.hora_aproximada_fin}</p>}
+                                            </div>
+                                        </div>
+                                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hora fin estimada</label>
-                    <input
-                      name="hora_aproximada_fin" // ✅ CORREGIDO
-                      type="time"
-                      value={form.hora_aproximada_fin} // ✅ CORREGIDO
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.hora_aproximada_fin ? "border-red-500" : "border-gray-300"
-                        }`}
-                    />
-                    {formErrors.hora_aproximada_fin && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.hora_aproximada_fin}</p>
-                    )}
-                  </div>
+                                    {/* Group 3: Description & Image */}
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Descripción</label>
+                                            <textarea
+                                                name="descripcion"
+                                                value={form.descripcion}
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
+                                                readOnly={modal === "ver"} disabled={modal === "ver"}
+                                                placeholder="Detalles del evento..."
+                                                rows={3}
+                                                className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.descripcion ? "border-red-500" : "border-gray-200"}`}
+                                            />
+                                            {formErrors.descripcion && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.descripcion}</p>}
+                                        </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                    <textarea
-                      name="descripcion"
-                      value={form.descripcion}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.descripcion ? "border-red-500" : "border-gray-300"
-                        }`}
-                      rows={2}
-                      placeholder="Descripción del evento"
-                    />
-                    {formErrors.descripcion && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.descripcion}</p>
-                    )}
-                  </div>
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Imagen del Evento</label>
+                                                <div className="flex bg-gray-100 rounded-lg p-0.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setForm(prev => ({ ...prev, imageMode: "file" }))}
+                                                        className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition ${form.imageMode === "file" ? "bg-white text-[#040529] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                                                    >
+                                                        Subir Archivo
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setForm(prev => ({ ...prev, imageMode: "url" }))}
+                                                        className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition ${form.imageMode === "url" ? "bg-white text-[#040529] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+                                                    >
+                                                        URL Imagen
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="relative mt-1">
+                                                {form.imageMode === "file" ? (
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleFileChange}
+                                                        disabled={modal === "ver"}
+                                                        className={`w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#040529] file:text-white hover:file:bg-[#040529]/90 bg-gray-50 border rounded-lg ${formErrors.imagen ? "border-red-500" : "border-gray-200"}`}
+                                                    />
+                                                ) : (
+                                                    <div className="relative">
+                                                        <input
+                                                            name="imagen"
+                                                            value={typeof form.imagen === 'string' ? form.imagen : ''} 
+                                                            onChange={(e) => {
+                                                                // Cuando es modo URL, actualizamos imagen directamente y limpiamos el archivo
+                                                                setForm(prev => ({ ...prev, imagen: e.target.value, imagenArchivo: null }));
+                                                                if (formErrors.imagen) setFormErrors(prev => ({ ...prev, imagen: undefined }));
+                                                            }}
+                                                            onBlur={handleBlur}
+                                                            readOnly={modal === "ver"} disabled={modal === "ver"}
+                                                            placeholder="https://ejemplo.com/imagen.jpg"
+                                                            className={`w-full pl-3 pr-10 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.imagen ? "border-red-500" : "border-gray-200"}`}
+                                                        />
+                                                        <ExternalLink className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {formErrors.imagen && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.imagen}</p>}
+                                        </div>
+                                    </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (URL)</label>
-                    <input
-                      name="imagen"
-                      value={form.imagen}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-2 border rounded-md ${formErrors.imagen ? "border-red-500" : "border-gray-300"
-                        }`}
-                      placeholder="https://ejemplo.com/imagen.jpg"
-                    />
-                    {formErrors.imagen && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.imagen}</p>
-                    )}
-                  </div>
-                </form>
-
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    form="form-evento"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-                  >
-                    {modal === "crear" ? "Registrar" : "Actualizar"}
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
+                                </form>
+                            </div>
+                            
+                            {/* Footer Actions */}
+                            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
+                                <button type="button" onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition shadow-sm">{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
+                                {modal !== "ver" && (
+                                    <button type="button" onClick={handleSubmit} className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10 transition">
+                                        {modal === "crear" ? "Guardar Evento" : "Actualizar Evento"}
+                                    </button>
+                                )}
+                            </div>
+                         </div>
+                    </div>
+                </motion.div>
+             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ===================== MODAL VER ===================== */}
-        <AnimatePresence>
-          {modal === "ver" && selected && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">Detalles del Evento</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                  <div>
-                    {selected.imagen ? (
-                      <img
-                        src={selected.imagen}
-                        alt="Evento"
-                        className="w-full h-48 object-contain border rounded-md"
-                      />
-                    ) : (
-                      <div className="w-full h-48 bg-gray-100 border rounded-md flex items-center justify-center">
-                        <ImageIcon size={32} className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-4 text-gray-700">
-                    <div>
-                      <div className="font-medium text-gray-600">ID</div>
-                      <div>{selected.id_evento}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Nombre</div>
-                      <div>{selected.nombre_evento}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Categoría</div>
-                      <div>{getNombreCategoria(selected.id_categoria_evento)}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Patrocinador</div>
-                      <div>{getNombrePatrocinador(selected.id_patrocinador)}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Sede</div>
-                      <div>{getNombreSede(selected.id_sede)}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Fecha</div>
-                      <div>{selected.fecha_evento}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Hora inicio</div>
-                      <div>{selected.hora_inicio || "—"}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Hora fin estimada</div>
-                      <div>{selected.hora_aproximada_fin || "—"}</div> {/* ✅ CORREGIDO */}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Estado</div>
-                      <div>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${selected.estado === "activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }`}
-                        >
-                          {selected.estado}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-medium text-gray-600 mb-1">Descripción</div>
-                  <div>{selected.descripcion || "—"}</div>
-                </div>
-
-                <div className="flex justify-center pt-2">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ===================== MODAL ELIMINAR ===================== */}
+        {/* --- MODAL ELIMINAR --- */}
         <AnimatePresence>
           {modal === "eliminar" && selected && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+                className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative text-center"
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-xl font-bold text-red-600 mb-4 text-center">
-                  Eliminar Evento
-                </h3>
-
-                <p className="text-gray-700 text-center">
-                  ¿Está seguro de eliminar el evento{" "}
-                  <span className="font-bold">{selected.nombre_evento}</span>?
-                  <br />
-                  <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+                <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={24} /></div>
+                <h3 className="text-lg font-bold text-[#040529] mb-2">Eliminar Evento</h3>
+                <p className="text-gray-500 text-sm mb-6">
+                  ¿Confirma que desea eliminar el evento <span className="font-bold text-[#040529]">{selected.nombre_evento}</span>? <br/>
+                  Esta acción es irreversible.
                 </p>
 
-                <div className="flex justify-center gap-3 pt-6">
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                  >
-                    Eliminar
-                  </button>
+                <div className="flex justify-center gap-3">
+                  <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
+                  <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-md">Sí, Eliminar</button>
                 </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-      </section>
+
+      </div>
     </>
   );
 }

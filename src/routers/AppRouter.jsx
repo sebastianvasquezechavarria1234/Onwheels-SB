@@ -13,10 +13,13 @@ import Class from "../feactures/landing/pages/Class";
 import { About } from "../feactures/landing/pages/About";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
+// import { Event } from "../feactures/landing/pages/Eventos";
+
 
 // auth
 import Login from "../feactures/Auth/pages/Login"
 import Register from "../feactures/Auth/pages/Register"
+import ActivationPage from "../feactures/Auth/pages/ActivationPage"
 
 // Dashboard admin
 
@@ -129,6 +132,7 @@ import AdminShoppingCart from "../feactures/dashboards/admin/pages/AdminShopping
 import { AdminCheckout } from "../feactures/dashboards/admin/pages/AdminCheckout";
 import { CustomShoppingCart } from "../feactures/dashboards/custom/pages/CustomShoppingCart";
 import { CustomCheckout } from "../feactures/dashboards/custom/pages/CustomCheckout";
+import Events from "../feactures/landing/pages/Events"
 
 const AppRouter = () => {
   const location = useLocation()
@@ -160,11 +164,12 @@ const AppRouter = () => {
         {/* Landing */}
         <Route path="recover" element={<RecoverPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
+        <Route path="activar-cuenta" element={<ActivationPage />} />
 
 
         <Route index element={withAnimation(Home)} />
         <Route path="store" element={withAnimation(Store)} />
-        <Route path="events" element={withAnimation(Eventos)} />
+        <Route path="events" element={withAnimation(Events)} />
         <Route path="training" element={withAnimation(Class)} />
         {/* <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} /> */}
         <Route path="about" element={withAnimation(About)} />

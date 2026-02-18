@@ -6,7 +6,6 @@ const Class = () => {
   return (
     <Layout>
       <div className="min-h-screen flex flex-col font-sans">
-
         {/* === HERO: FULLSCREEN VIDEO / IMAGE + TEXT OVERLAY === */}
         <section className="relative h-screen flex items-center justify-center overflow-hidden">
           {/* Video de fondo (opcional) o imagen con overlay */}
@@ -39,7 +38,12 @@ const Class = () => {
 
             {/* Subtítulo inspirador — más largo, más creativo */}
             <p className="max-w-3xl mx-auto text-base md:text-lg opacity-90 mb-10 font-light leading-relaxed">
-              Donde cada caída es un paso hacia el primer kickflip. Donde los errores no son fracasos, sino lecciones grabadas en asfalto. Clases reales, con profesores que fueron patinadores antes de ser instructores. Comunidad que crece, se apoya y celebra cada truco logrado —por pequeño que sea. Porque aquí no enseñamos a patinar. Enseñamos a volar.
+              Donde cada caída es un paso hacia el primer kickflip. Donde los
+              errores no son fracasos, sino lecciones grabadas en asfalto.
+              Clases reales, con profesores que fueron patinadores antes de ser
+              instructores. Comunidad que crece, se apoya y celebra cada truco
+              logrado —por pequeño que sea. Porque aquí no enseñamos a patinar.
+              Enseñamos a volar.
             </p>
 
             {/* Botones como en tu imagen */}
@@ -76,7 +80,9 @@ const Class = () => {
         {/* === GALLERY: IMÁGENES GRANDES CON ESPACIO === */}
         <section id="gallery" className="py-20 bg-white">
           <div className="container mx-auto px-6">
-            <h2 className="text-4xl md:text-5xl font-bold text-center text-blue-900 mb-16">Mira cómo sucede</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-center text-blue-900 mb-16">
+              Mira cómo sucede
+            </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="bg-black/10 rounded-3xl overflow-hidden h-96 flex items-center justify-center">
                 <img
@@ -109,9 +115,13 @@ const Class = () => {
         <section id="por-why" className="py-20 bg-gray-50">
           <div className="container mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-6xl font-bold text-blue-900 mb-4">No es solo una clase.</h2>
+              <h2 className="text-4xl md:text-6xl font-bold text-blue-900 mb-4">
+                No es solo una clase.
+              </h2>
               <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-                Es tu primera comunidad real sobre ruedas. Donde los errores se celebran, los trucos se comparten, y el progreso se mide en sonrisas, no en metros.
+                Es tu primera comunidad real sobre ruedas. Donde los errores se
+                celebran, los trucos se comparten, y el progreso se mide en
+                sonrisas, no en metros.
               </p>
             </div>
 
@@ -120,17 +130,17 @@ const Class = () => {
                 {
                   title: "Profesores que skatan",
                   desc: "No son ‘instructores’. Son skaters que han vivido la calle, las caídas, los triunfos y las frustraciones. Te enseñan desde la experiencia, no desde un manual. Porque saben que lo más importante no es el truco, sino cómo te sientes al intentarlo.",
-                  img: "https://images.unsplash.com/photo-1543090848-bd32b4a4e006?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                  img: "https://images.unsplash.com/photo-1543090848-bd32b4a4e006?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
                 },
                 {
                   title: "Espacio 100% seguro",
                   desc: "Pista diseñada para aprender sin miedo. Suelo de goma, rampas suaves, equipo de primeros auxilios siempre listo. Aquí no importa si eres principiante o avanzado: todos tienen su lugar, su ritmo y su espacio para crecer. Porque el skate no es competencia. Es libertad.",
-                  img: "https://images.unsplash.com/photo-1600817179420-1a1b6a1b5b5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                  img: "https://images.unsplash.com/photo-1600817179420-1a1b6a1b5b5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
                 },
                 {
                   title: "Progreso real, no promesas vacías",
                   desc: "Seguimiento semanal, videos de tu evolución, metas personalizadas y retroalimentación honesta. No te diremos que eres ‘el mejor’ si aún no lo eres. Pero sí te diremos qué hacer para llegar allí. Porque tu progreso es nuestro orgullo.",
-                  img: "https://images.unsplash.com/photo-1600814863151-8f7b9b8a6a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                  img: "https://images.unsplash.com/photo-1600814863151-8f7b9b8a6a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
                 },
               ].map((item, i) => (
                 <div
@@ -142,7 +152,9 @@ const Class = () => {
                     alt={item.title}
                     className="w-full h-48 object-cover rounded-lg mb-6"
                   />
-                  <h3 className="text-2xl font-bold text-blue-900 mb-3">{item.title}</h3>
+                  <h3 className="text-2xl font-bold text-blue-900 mb-3">
+                    {item.title}
+                  </h3>
                   <p className="text-gray-700">{item.desc}</p>
                 </div>
               ))}
@@ -154,24 +166,40 @@ const Class = () => {
         <section className="py-20 bg-white">
           <div className="container mx-auto px-6 max-w-5xl">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-blue-900">Elige tu ruta</h2>
-              <p className="text-gray-700 mt-4">No hay “uno para todos”. Aquí tu plan crece contigo —como tu habilidad, como tu pasión.</p>
+              <h2 className="text-4xl md:text-5xl font-bold text-blue-900">
+                Elige tu ruta
+              </h2>
+              <p className="text-gray-700 mt-4">
+                No hay “uno para todos”. Aquí tu plan crece contigo —como tu
+                habilidad, como tu pasión.
+              </p>
             </div>
 
             <div className="flex flex-col md:flex-row gap-8">
               <div className="flex-1 p-8 border-2 border-gray-200 rounded-3xl hover:border-red-500 transition-colors">
-                <h3 className="text-2xl font-bold text-blue-900 mb-4">RUTA INICIAL</h3>
-                <p className="text-4xl font-extrabold text-red-600 mb-6">$45.000/mes</p>
+                <h3 className="text-2xl font-bold text-blue-900 mb-4">
+                  RUTA INICIAL
+                </h3>
+                <p className="text-4xl font-extrabold text-red-600 mb-6">
+                  $45.000/mes
+                </p>
                 <ul className="space-y-3 mb-8">
-                  {["2 clases semanales", "Acceso a pista", "Seguro incluido", "Reporte mensual"].map((item, i) => (
+                  {[
+                    "2 clases semanales",
+                    "Acceso a pista",
+                    "Seguro incluido",
+                    "Reporte mensual",
+                  ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-red-500 mt-1">•</span> {item}
                     </li>
                   ))}
                 </ul>
-                <p className="text-gray-600 mb-6">Ideal para quienes empiezan, pero no quieren quedarse atrás.</p>
+                <p className="text-gray-600 mb-6">
+                  Ideal para quienes empiezan, pero no quieren quedarse atrás.
+                </p>
                 <a
-                  href="/preinscripcion"
+                  href="/login"
                   className="inline-block text-red-600 font-bold border-b-2 border-red-600 pb-1 hover:border-red-800"
                 >
                   Empieza tu camino →
@@ -185,15 +213,23 @@ const Class = () => {
                 <h3 className="text-2xl font-bold mb-4">RUTA PRO</h3>
                 <p className="text-4xl font-extrabold mb-6">$75.000/mes</p>
                 <ul className="space-y-3 mb-8">
-                  {["4 clases semanales", "Equipo incluido", "Videos de análisis", "Acceso a eventos", "Mentoría 1:1"].map((item, i) => (
+                  {[
+                    "4 clases semanales",
+                    "Equipo incluido",
+                    "Videos de análisis",
+                    "Acceso a eventos",
+                    "Mentoría 1:1",
+                  ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-red-300 mt-1">•</span> {item}
                     </li>
                   ))}
                 </ul>
-                <p className="text-white/80 mb-6">Para quienes ya no quieren solo aprender. Quieren dominar.</p>
+                <p className="text-white/80 mb-6">
+                  Para quienes ya no quieren solo aprender. Quieren dominar.
+                </p>
                 <a
-                  href="/preinscripcion"
+                  href="/login"
                   className="inline-block bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 transition"
                 >
                   Únete a la élite
@@ -206,9 +242,13 @@ const Class = () => {
         {/* === CTA FINAL — EMOCIONAL Y DIRECTO === */}
         <section className="py-24 bg-gradient-to-r from-blue-900 to-red-700 text-white text-center">
           <div className="container mx-auto px-6">
-            <h2 className="text-4xl md:text-6xl font-black mb-6">¿Y si hoy fuera el día?</h2>
+            <h2 className="text-4xl md:text-6xl font-black mb-6">
+              ¿Y si hoy fuera el día?
+            </h2>
             <p className="text-xl max-w-2xl mx-auto mb-10 opacity-90">
-              No necesitas ser bueno. Solo necesitas empezar. Porque el mejor truco no es el que más altura tiene, sino el que te hace sentir libre. ¿Listo para subirte a tu tabla?
+              No necesitas ser bueno. Solo necesitas empezar. Porque el mejor
+              truco no es el que más altura tiene, sino el que te hace sentir
+              libre. ¿Listo para subirte a tu tabla?
             </p>
             <a
               href="/preinscripcion"

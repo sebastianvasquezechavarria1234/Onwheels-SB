@@ -39,7 +39,7 @@ export const Layout = ({ children }) => {
       {/* Sidebar */}
       <nav className="h-full w-[20%] p-[30px] border-r border-black/20 z-10">
         <h2 className="mb-[20px] border-b pb-[30px] border-black/20 font-primary">
-          Estudiante
+          Cliente
         </h2>
         <div className="flex flex-col justify-between h-[83%]">
           <ul>

@@ -143,16 +143,21 @@ export const UsersHeader = () => {
           className={`
             flex items-center justify-between px-3 py-1 rounded-full
             backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
-            ${scrolled
-              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[60%] max-w-[1400px] mx-auto"
-              : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
+            ${
+              scrolled
+                ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[80%] max-w-[1400px] mx-auto"
+                : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
             }
           `}
         >
           {/* LOGO */}
           <Link to="/users/home" className="flex items-center gap-2">
             <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
-              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+              <img
+                src="/logo.png"
+                alt="logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="font-bold text-lg uppercase tracking-tighter text-white">
               Performance SB
@@ -162,15 +167,15 @@ export const UsersHeader = () => {
           {/* NAV DESKTOP */}
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
-             <Link
-  key={link.path}
-  to={link.path}
-  className="group relative text-xs font-bold uppercase tracking-widest text-white/90"
->
-  {link.title}
+              <Link
+                key={link.path}
+                to={link.path}
+                className="group relative text-xs font-bold uppercase tracking-widest text-white/90"
+              >
+                {link.title}
 
-  <span
-    className="
+                <span
+                  className="
       absolute left-0 top-[110%]
       block h-[1px] w-full
       bg-white
@@ -178,9 +183,8 @@ export const UsersHeader = () => {
       transition-opacity duration-300
       group-hover:opacity-100
     "
-  />
-</Link>
-
+                />
+              </Link>
             ))}
           </nav>
 
@@ -219,7 +223,6 @@ export const UsersHeader = () => {
                 <User size={18} />
               </BtnLinkIcon>
             </IconWithTooltip>
-
 
             <IconWithTooltip label="Cerrar sesión">
               <button

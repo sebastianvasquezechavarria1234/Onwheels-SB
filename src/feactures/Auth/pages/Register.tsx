@@ -1,6 +1,8 @@
+
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { getCheckoutPath } from "../../../utils/roleHelpers";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../../../services/api";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -17,26 +19,23 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Función para validar la fortaleza de la contraseña
   const validatePasswordStrength = (password) => {
     const hasNumber = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     return hasNumber || hasSpecialChar;
   };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    // VALIDACIÓN EN TIEMPO REAL
     if (name === "password") {
-      // Validar fortaleza de la contraseña
       const isStrong = validatePasswordStrength(value);
       setErrors(prev => ({
         ...prev,
         passwordStrength: !isStrong && value ? "La contraseña debe contener al menos un número o carácter especial" : ""
       }));
 
-      // Validar coincidencia con confirmación si ya hay valor en confirmPassword
       if (formData.confirmPassword !== "") {
         setErrors(prev => ({
           ...prev,
@@ -55,12 +54,11 @@ const Register = () => {
     e.preventDefault();
     setServerMsg(null);
 
-    // Validar fortaleza de la contraseña antes de enviar
     const isPasswordStrong = validatePasswordStrength(formData.password);
     if (!isPasswordStrong) {
       setErrors(prev => ({
         ...prev,
-        passwordStrength: "La contraseña debe contener al menos un número o carácter especial"
+        passwordStrength: "La contraseña debe ser más segura (incluye números o símbolos)"
       }));
       return;
     }
@@ -83,18 +81,10 @@ const Register = () => {
         contrasena: formData.password,
       };
 
-      const response = await fetch("http://localhost:3000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await api.post("/auth/register", payload);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setServerMsg(data.message || "Registro exitoso");
+      if (response.status === 200 || response.status === 201) {
+        setServerMsg("¡Registro exitoso! Redirigiendo...");
         setFormData({
           fullName: "",
           email: "",
@@ -118,165 +108,177 @@ const Register = () => {
             navigate("/login", { state: location.state });
           }
         }, 1500);
-      } else {
-        setServerMsg(data.message || "Error en el registro");
       }
-    } catch (err) {
+
+    } catch (err: any) {
       console.error("Error al registrar usuario:", err);
-      setServerMsg("No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:3000");
+      const msg = err.response?.data?.message || err.message || "Error al conectar con el servidor";
+      setServerMsg(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <button
-        onClick={() => navigate("/")}
-        className="absolute top-[20px] right-[20px] bg-white w-[60px] h-[60px] rounded-full flex items-center justify-center text-[33px] cursor-pointer font-medium! duration-300 transition-all hover:scale-[1.1]"
-      >
-        ×
-      </button>
-      <div className="w-full max-w-6xl bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
-        <div className="flex flex-col lg:flex-row min-h-[700px]">
+    <div className="h-screen w-full flex overflow-hidden bg-slate-900">
 
-          {/* FORMULARIO */}
-          <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center bg-slate-50">
-            <div className="max-w-md mx-auto w-full">
-              <form onSubmit={handleSubmit} className="space-y-4">
-
-                <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-2">
-                    Nombre completo
-                  </label>
-                  <input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Ingresa tu nombre completo"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                      Correo
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="Ingresa tu correo"
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-2">
-                      Teléfono
-                    </label>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="text"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="Número"
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-                    Contraseña
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Contraseña"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
-                    required
-                    minLength="6"
-                  />
-                  {errors.passwordStrength && (
-                    <p className="text-red-600 text-sm mt-1">{errors.passwordStrength}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
-                    Confirmar contraseña
-                  </label>
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Confirmar contraseña"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-800 focus:border-transparent outline-none transition-all"
-                    required
-                    minLength="6"
-                  />
-                  {errors.passwordMatch && (
-                    <p className="text-red-600 text-sm mt-1">{errors.passwordMatch}</p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-blue-800 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl mt-6 disabled:opacity-60"
-                  disabled={submitting}
-                >
-                  {submitting ? "Registrando..." : "Registrarse"}
-                </button>
-
-                {serverMsg && (
-                  <p className="text-center mt-2 text-sm text-gray-700">{serverMsg}</p>
-                )}
-
-                <p className="text-slate-600 mb-8 mt-4">
-                  ¿Ya tienes una cuenta?{" "}
-                  <Link to="/login" className="underline text-blue-800 hover:text-red-600 font-medium">
-                    Iniciar sesión
-                  </Link>
-                </p>
-
-              </form>
+      {/* LEFT: Image Section (50%) */}
+      <div className="hidden lg:block w-1/2 h-full relative">
+        <header className="absolute z-50 top-0 left-0 w-full p-8">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-[var(--color-blue)]">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
+            <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
+              OnWheels
+            </span>
+          </Link>
+        </header>
+
+        <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none"></div>
+        <img
+          src="/bg_hero_landing.jpg"
+          alt="background"
+          className="w-full h-full object-cover filter brightness-75 contrast-110"
+        />
+
+        <div className="absolute inset-0 z-20 flex items-end justify-center pb-24 px-12 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
+          <div className="max-w-xl text-center text-white">
+            <h3 className="text-4xl lg:text-5xl font-black mb-6 leading-tight tracking-tight uppercase">
+              Únete a la <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-[var(--color-blue)]">
+                Revolución
+              </span>
+            </h3>
+            <p className="text-xl text-gray-300 font-light leading-relaxed">
+              Conecta con skaters locales, accede a eventos exclusivos y lleva tu pasión al siguiente nivel.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT: Form Section (50%) */}
+      <div className="w-full lg:w-1/2 h-full flex items-center justify-center bg-zinc-950 text-white p-6 lg:p-12 overflow-y-auto relative">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
+
+        <div className="w-full max-w-[480px] space-y-6 my-auto relative z-10"> {/* Slightly reduced max-width */}
+          <Link to="/login" className="inline-flex gap-2 items-center text-gray-500 hover:text-[var(--color-blue)] transition-colors mb-2 group font-medium">
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Volver a Login</span>
+          </Link>
+
+          <div className="space-y-1">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">Crear Cuenta</h2>
+            <p className="text-gray-400 text-base">Completa tus datos para empezar</p>
           </div>
 
-          {/* Imagen derecha */}
-          <div className="lg:w-1/2 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-800/30 to-transparent"></div>
-            <div className="relative z-10 text-center">
-              <h2 className="text-3xl font-bold mb-4">Recuperar contraseña</h2>
-              <div className="w-80 h-80 mx-auto mb-6 relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-800 to-blue-900 rounded-full opacity-20"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="w-32 h-32 bg-slate-700 rounded-2xl shadow-xl flex items-center justify-center">
-                    <div className="w-16 h-16 bg-blue-700 rounded-lg"></div>
-                  </div>
-                </div>
-                <div className="absolute top-20 right-20 w-8 h-8 bg-white rounded opacity-80"></div>
-                <div className="absolute bottom-20 left-20 w-6 h-6 bg-red-500 rounded-full"></div>
-                <div className="absolute top-32 left-16 w-4 h-4 bg-white rounded-full opacity-60"></div>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-6"> {/* Reduced spacing */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Nombre Completo</label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Ej. Juan Pérez"
+                // Reduced padding
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Email</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="usuario@email.com"
+                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Teléfono</label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="text"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+57..."
+                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                  required
+                />
               </div>
             </div>
-          </div>
 
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Contraseña</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Mínimo 6 carc."
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+                minLength={6}
+              />
+              {errors.passwordStrength && (
+                <p className="text-amber-500 text-xs mt-1 font-medium">{errors.passwordStrength}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Confirmar</label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Repite tu contraseña"
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                required
+                minLength={6}
+              />
+              {errors.passwordMatch && (
+                <p className="text-red-500 text-xs mt-1 font-medium">{errors.passwordMatch}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-[var(--color-blue)] hover:bg-blue-600 text-white font-bold text-base p-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-[var(--color-blue)]/20 disabled:opacity-50 disabled:cursor-not-allowed mt-4 uppercase tracking-wide transform active:scale-[0.98]"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  Creando cuenta...
+                </span>
+              ) : "Registrarse"}
+            </button>
+
+            {serverMsg && (
+              <div className={`text-center p-3 rounded-xl text-xs font-medium border ${serverMsg.includes("exitoso") ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+                {serverMsg}
+              </div>
+            )}
+
+            <p className="text-center text-gray-400 text-sm">
+              ¿Ya tienes una cuenta?{" "}
+              <Link to="/login" className="text-[var(--color-blue)] font-bold hover:text-white transition-colors">
+                Inicia sesión
+              </Link>
+            </p>
+          </form>
         </div>
       </div>
     </div>

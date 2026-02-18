@@ -1,7 +1,7 @@
 import React from "react";
 import { Hero } from "../../components/landing/Hero";
 import { StudentLayout } from "../layout/StudentLayout";
-import { Grid } from "../../components/landing/Grid";
+import { Home } from "../../pages/Home"
 
 
 
@@ -9,7 +9,7 @@ export const StudentHome = () => {
     return (
         <StudentLayout>
             <Hero></Hero>
-            <Grid></Grid>
+            <Home></Home>
         </StudentLayout>
     )
 }
