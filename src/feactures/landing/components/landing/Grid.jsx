@@ -49,8 +49,8 @@ export const Grid = () => {
     <>
       {/* ================== SECCIÓN PRODUCTOS ================== */}
       <section className="Products max-w-[1400px] mx-auto p-[20px] max-md:p-[10px] mt-[60px]">
-        <div className="flex gap-[10px] justify-between max-md:flex-col max-md:gap-0">
-          <h3 className="mb-[30px]">
+        <div className="flex gap-[5px] justify-between max-md:flex-col max-md:gap-0">
+          <h3 className="mb-[20px]">
             Explora
             <span className="opacity-90 mx-[15px] font-primary">
               Nuestros productos

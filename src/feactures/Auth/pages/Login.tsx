@@ -1,8 +1,10 @@
 // src/features/Auth/pages/Login.tsx
 import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import api from "../../../services/api"
 import { getRoleHomePath } from "../../../utils/roleUtils"
+import { getCheckoutPath } from "../../../utils/roleHelpers"
+import { useAuth } from "../../dashboards/dinamico/context/AuthContext"
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -12,6 +14,8 @@ const Login = () => {
   const [formSubmitted, setFormSubmitted] = useState(false)
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth() // Usar context para login (dispara merge carrito)
 
   useEffect(() => {
     if (error && formSubmitted) {
@@ -33,11 +37,24 @@ const Login = () => {
         contrasena: password,
       })
 
-      localStorage.setItem("token", response.data.token)
-      localStorage.setItem("user", JSON.stringify(response.data.user))
+      // USAR LOGIN DEL CONTEXTO (Importante: esto dispara evento para merge del carrito)
+      login(response.data.token, response.data.user);
 
-      const homePath = getRoleHomePath()
-      navigate(homePath, { replace: true })
+      // REDIRECCIÓN INTELIGENTE
+      // 1. Check for specific intent (e.g., checkout)
+      if (location.state?.intent === 'checkout') {
+        const checkoutPath = getCheckoutPath(response.data.user);
+        navigate(checkoutPath, { replace: true });
+        return;
+      }
+
+      // 2. Si viene con estado 'from' (ej: protected route redirect), volver ahí.
+      const from = location.state?.from?.pathname || getRoleHomePath();
+
+      // Prevent redirect loop if from is login
+      const targetPath = from === "/login" ? getRoleHomePath() : from;
+
+      navigate(targetPath, { replace: true })
     } catch (err: any) {
       console.error("Login error:", err)
 
@@ -131,9 +148,8 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full ${
-                    loading ? "opacity-70 cursor-wait" : "hover:bg-red-600"
-                  } bg-blue-800 text-white font-medium py-3 rounded-lg transition`}
+                  className={`w-full ${loading ? "opacity-70 cursor-wait" : "hover:bg-red-600"
+                    } bg-blue-800 text-white font-medium py-3 rounded-lg transition`}
                 >
                   {loading ? "Iniciando..." : "Iniciar sesión"}
                 </button>

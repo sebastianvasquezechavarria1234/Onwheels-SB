@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Layout } from "../layout/Layout";
-import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle } from "lucide-react";
+import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle, ShoppingBag } from "lucide-react";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
 import { getStoreHomePath } from "../../../utils/roleHelpers";
+import { LoginRequiredModal } from "../components/LoginRequiredModal";
 
 export const ProductDetails = () => {
   const { id } = useParams();
@@ -19,6 +20,7 @@ export const ProductDetails = () => {
   const [selectedColor, setSelectedColor] = useState(null); // id_color (obj)
   const [selectedSize, setSelectedSize] = useState(null);   // id_talla (obj)
   const [qty, setQty] = useState(1);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const backLink = getStoreHomePath(user);
 
@@ -104,10 +106,11 @@ export const ProductDetails = () => {
 
   const maxStock = currentVariant ? currentVariant.stock : 0;
 
+
+
   // Actions
   const handleAddToCart = () => {
-    // 1. Strict Auth REMOVED for Guest Cart
-
+    // ... (existing logic)
     // 2. Validations
     if (variantes.length > 0) {
       if (!selectedColor) {
@@ -136,30 +139,30 @@ export const ProductDetails = () => {
 
       // RICH SUCCESS TOAST
       toast.custom(
-        <div className="p-5 font-primary">
-          <div className="flex items-center gap-2 mb-3 text-green-400 text-sm font-medium">
-            <Check size={16} /> Artículo agregado a tu carrito
+        <div className="p-5 font-primary bg-white rounded-xl shadow-2xl border border-gray-100 max-w-sm">
+          <div className="flex items-center gap-2 mb-3 text-green-600 text-sm font-bold uppercase tracking-wide">
+            <Check size={16} strokeWidth={3} /> Artículo agregado
           </div>
           <div className="flex gap-4 mb-4">
-            <img src={imagen_producto || "/bg_hero_shop.jpg"} alt={nombre_producto} className="w-16 h-16 rounded-lg object-cover bg-white" />
+            <img src={imagen_producto || "/bg_hero_shop.jpg"} alt={nombre_producto} className="w-16 h-16 rounded-lg object-cover bg-gray-100" />
             <div>
-              <p className="text-white font-bold text-sm line-clamp-2">{nombre_producto}</p>
-              <p className="text-gray-400 text-xs mt-1">{selectedColor?.name} / {selectedSize?.name}</p>
+              <p className="text-gray-900 font-bold text-sm line-clamp-2">{nombre_producto}</p>
+              <p className="text-gray-500 text-xs mt-1 font-medium">{selectedColor?.name} / {selectedSize?.name}</p>
             </div>
           </div>
           <div className="space-y-2">
-            <Link to="/users/shoppingCart" className="block w-full text-center py-2.5 rounded-full border border-white text-white font-bold text-sm hover:bg-white hover:text-black transition-colors">
+            <Link to="/shoppingCart" className="block w-full text-center py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-bold text-xs hover:border-gray-900 hover:text-gray-900 transition-all uppercase tracking-wide">
               Ver carrito
             </Link>
-            <Link to="/users/checkout" className="block w-full text-center py-2.5 rounded-full bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
-              <ShoppingBag size={16} />
-              PAGAR AHORA
-            </Link>
             <button
-              onClick={() => toast.dismiss()}
-              className="block w-full text-center text-xs text-gray-400 hover:text-white mt-2 underline"
+              onClick={() => {
+                toast.dismiss();
+                handleBuyNow();
+              }}
+              className="block w-full text-center py-2.5 rounded-xl bg-gray-900 text-white font-bold text-xs hover:bg-black transition-colors flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-gray-900/20"
             >
-              Seguir comprando
+              <ShoppingBag size={14} />
+              Pagar Ahora
             </button>
           </div>
         </div>
@@ -170,8 +173,9 @@ export const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
-    if (!user) {
-      toast.warning("Debes iniciar sesión para comprar", { login: true, register: true });
+    // Strict check for user AND token
+    if (!user || Object.keys(user).length === 0 || !localStorage.getItem("token")) {
+      setShowLoginModal(true);
       return;
     }
 
@@ -181,9 +185,19 @@ export const ProductDetails = () => {
     }
 
     try {
+      // Logic for immediate checkout (add to cart then redirect)
       const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
       addToCart(productToAdd, currentVariant, qty);
-      navigate("/users/checkout"); // Or determine checkout based on role if needed
+      import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers";
+
+      // ... inside handleBuyNow ...
+
+      // Logic for immediate checkout (add to cart then redirect)
+      const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
+      addToCart(productToAdd, currentVariant, qty);
+
+      const checkoutPath = getCheckoutPath(user);
+      navigate(checkoutPath);
     } catch (err) {
       toast.error(err.message);
     }
@@ -192,6 +206,7 @@ export const ProductDetails = () => {
   return (
     <Layout>
       <section className="pt-[140px] max-w-[1200px] mx-auto p-4 md:p-8 min-h-[90vh]">
+        {/* ... existing content ... */}
         <Link to={backLink} className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-8 transition-colors group">
           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
             <ArrowLeft size={16} />
@@ -199,6 +214,7 @@ export const ProductDetails = () => {
           <span className="font-medium">Volver a la tienda</span>
         </Link>
 
+        {/* ... existing product detail structure ... */}
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
           {/* Left: Image */}
           <div className="w-full lg:w-[55%]">
@@ -324,6 +340,8 @@ export const ProductDetails = () => {
           </div>
         </div>
       </section>
+
+      <LoginRequiredModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </Layout>
   );
 };

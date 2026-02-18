@@ -6,12 +6,14 @@ import { useCart } from "../../../../context/CartContext";
 import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { useToast } from "../../../../context/ToastContext";
 import { getProductDetailPath } from "../../../../utils/roleHelpers";
+import { LoginRequiredModal } from "../LoginRequiredModal";
 
 export const Card = ({ product }) => {
   const [showSelector, setShowSelector] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -103,6 +105,8 @@ export const Card = ({ product }) => {
     try {
       addToCart(product, selectedVariant, 1);
 
+
+
       // RICH SUCCESS TOAST - Enhanced Visibility
       toast.custom(
         <div className="p-6 font-primary bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl">
@@ -122,13 +126,45 @@ export const Card = ({ product }) => {
             </div>
           </div>
           <div className="space-y-3">
-            <Link to={user ? "/users/shoppingCart" : "/shoppingCart"} className="block w-full text-center py-2.5 rounded-xl border border-zinc-600 text-zinc-300 font-bold text-xs hover:bg-zinc-800 hover:text-white transition-all uppercase tracking-wide">
+            <Link to="/shoppingCart" className="block w-full text-center py-2.5 rounded-xl border border-zinc-600 text-zinc-300 font-bold text-xs hover:bg-zinc-800 hover:text-white transition-all uppercase tracking-wide">
               Ver carrito
             </Link>
-            <Link to={user ? "/users/checkout" : "/shoppingCart"} className="block w-full text-center py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-white/10">
-              <ShoppingBag size={14} />
-              {user ? "Pagar Ahora" : "Ir a Pagar"}
-            </Link>
+
+            {/* Logic for Pay Now Button inside Toast */}
+            {user && Object.keys(user).length > 0 ? (
+              <button
+                onClick={() => {
+                  toast.dismiss();
+                  if (!localStorage.getItem("token")) {
+                    setShowLoginModal(true);
+                  } else {
+                    // Use window.location or navigate if available, but here we are in a Toast component context.
+                    // Since Card is used inside Grid/Store which are routed, we might not have 'navigate' available easily inside the toast render function closure?
+                    // Actually, Card uses `Link` so it has router context. We can use `useNavigate` in Card.
+                    // But we are inside `handleAddToCart`.
+                    // Let's use window.location.href for safety or better yet, pass navigate if possible.
+                    // Card has no `useNavigate`. We need to add it.
+                    window.location.href = "/users/checkout";
+                  }
+                }}
+                className="block w-full text-center py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-white/10"
+              >
+                <ShoppingBag size={14} />
+                Pagar Ahora
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  toast.dismiss();
+                  setShowLoginModal(true);
+                }}
+                className="block w-full text-center py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-white/10"
+              >
+                <ShoppingBag size={14} />
+                Ir a Pagar
+              </button>
+            )}
           </div>
         </div>
       );
@@ -140,120 +176,133 @@ export const Card = ({ product }) => {
     }
   };
 
+
   return (
-    <div className="group block bg-white rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300 relative">
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
-        <Link to={productDetailLink}>
-          <img
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            src={imgSrc}
-            alt={nombre_producto}
-          />
-        </Link>
+    <>
+      <div className="group block bg-[#0F172A] rounded-2xl overflow-hidden border border-slate-700/50 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 relative">
+        {/* ... existing Card content ... */}
+        <div className="relative aspect-[4/5] overflow-hidden bg-slate-800">
+          <Link to={productDetailLink}>
+            <img
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              src={imgSrc}
+              alt={nombre_producto}
+            />
+          </Link>
 
-        {/* Selector Overlay - Inline Slide Up */}
-        <AnimatePresence>
-          {showSelector && (
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute inset-0 bg-white/95 backdrop-blur-md z-20 flex flex-col p-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Opciones</span>
-                <button onClick={toggleSelector} className="text-gray-400 hover:text-black p-1 hover:bg-gray-100 rounded-full transition-colors">
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4">
-                {/* Colors */}
-                <div>
-                  <span className="text-xs font-bold text-gray-900 mb-2 block uppercase">1. Color</span>
-                  <div className="flex flex-wrap gap-2">
-                    {uniqueColors.map((c) => (
-                      <button
-                        key={c.id_color}
-                        onClick={() => { setSelectedColor(c); setSelectedSize(null); }}
-                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedColor?.id_color === c.id_color ? 'border-gray-900 scale-110' : 'border-gray-200'}`}
-                        style={{ backgroundColor: c.color_hex || c.codigo_hex || '#000' }}
-                        title={c.nombre_color}
-                      >
-                        {selectedColor?.id_color === c.id_color && <Check size={12} className="text-white invert mix-blend-difference" />}
-                      </button>
-                    ))}
-                  </div>
+          {/* Selector Overlay - Inline Slide Up */}
+          <AnimatePresence>
+            {showSelector && (
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="absolute inset-0 bg-[#0F172A]/95 backdrop-blur-md z-20 flex flex-col p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Opciones</span>
+                  <button onClick={toggleSelector} className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-full transition-colors">
+                    <X size={18} />
+                  </button>
                 </div>
 
-                {/* Sizes */}
-                <div className={`transition-opacity duration-300 ${!selectedColor ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-                  <span className="text-xs font-bold text-gray-900 mb-2 block uppercase">2. Talla</span>
-                  <div className="flex flex-wrap gap-2">
-                    {availableSizes.map((s) => (
-                      <button
-                        key={s.id_talla}
-                        onClick={() => setSelectedSize(s)}
-                        disabled={s.stock === 0}
-                        className={`px-3 py-1 text-xs rounded-md border font-medium transition-colors
-                                    ${selectedSize?.id_talla === s.id_talla ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'}
-                                    ${s.stock === 0 ? 'opacity-40 cursor-not-allowed bg-gray-50' : ''}
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4">
+                  {/* Colors */}
+                  <div>
+                    <span className="text-xs font-bold text-slate-200 mb-2 block uppercase">1. Color</span>
+                    <div className="flex flex-wrap gap-2">
+                      {uniqueColors.map((c) => (
+                        <button
+                          key={c.id_color}
+                          onClick={() => { setSelectedColor(c); setSelectedSize(null); }}
+                          className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedColor?.id_color === c.id_color ? 'border-blue-500 scale-110' : 'border-slate-600'}`}
+                          style={{ backgroundColor: c.color_hex || c.codigo_hex || '#000' }}
+                          title={c.nombre_color}
+                        >
+                          {selectedColor?.id_color === c.id_color && <Check size={12} className="text-white invert mix-blend-difference" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sizes */}
+                  <div className={`transition-opacity duration-300 ${!selectedColor ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                    <span className="text-xs font-bold text-slate-200 mb-2 block uppercase">2. Talla</span>
+                    <div className="flex flex-wrap gap-2">
+                      {availableSizes.map((s) => (
+                        <button
+                          key={s.id_talla}
+                          onClick={() => setSelectedSize(s)}
+                          disabled={s.stock === 0}
+                          className={`px-3 py-1 text-xs rounded-lg border font-medium transition-colors
+                                    ${selectedSize?.id_talla === s.id_talla ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-500'}
+                                    ${s.stock === 0 ? 'opacity-40 cursor-not-allowed bg-slate-900' : ''}
                                 `}
-                      >
-                        {s.nombre_talla}
-                      </button>
-                    ))}
-                    {availableSizes.length === 0 && selectedColor && <p className="text-xs text-red-500 font-medium">Sin stock</p>}
+                        >
+                          {s.nombre_talla}
+                        </button>
+                      ))}
+                      {availableSizes.length === 0 && selectedColor && <p className="text-xs text-red-500 font-medium">Sin stock</p>}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Add Button */}
-              <div className="mt-auto pt-3 border-t border-gray-100">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!selectedVariant || maxStock === 0}
-                  className="w-full h-10 bg-black text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {maxStock === 0 && selectedVariant ? 'Agotado' : 'Agregar'}
-                </button>
-              </div>
+                {/* Add Button */}
+                <div className="mt-auto pt-3 border-t border-slate-700">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!selectedVariant || maxStock === 0}
+                    className="w-full h-10 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:bg-slate-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                  >
+                    {maxStock === 0 && selectedVariant ? 'Agotado' : 'Agregar al carrito'}
+                  </button>
+                </div>
 
-            </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Badge */}
+          {!showSelector && variantes?.length > 0 && (
+            <span className="absolute top-2 right-2 px-2 py-1 bg-[#0F172A]/80 backdrop-blur-md text-[10px] font-bold uppercase tracking-wide rounded-md shadow-lg text-white border border-slate-700">
+              {variantes.length > 1 ? `+${variantes.length}` : '1'} opc
+            </span>
           )}
-        </AnimatePresence>
+        </div>
 
-        {/* Badge */}
-        {!showSelector && variantes?.length > 0 && (
-          <span className="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold uppercase tracking-wide rounded-md shadow-sm text-gray-800 border border-gray-100">
-            {variantes.length > 1 ? `+${variantes.length}` : '1'} opc
-          </span>
-        )}
-      </div>
+        {/* Info Compacta */}
+        <div className="p-4 bg-[#0F172A]">
+          <Link to={productDetailLink} className="block mb-2">
+            <h4 className="font-primary font-bold text-white text-lg leading-tight line-clamp-2 hover:text-blue-400 transition-colors cursor-pointer">
+              {nombre_producto}
+            </h4>
+          </Link>
 
-      {/* Info Compacta */}
-      <div className="p-3">
-        <Link to={productDetailLink} className="block mb-1">
-          <h4 className="font-primary font-black text-gray-950 text-xl leading-none tracking-tight line-clamp-2 hover:text-blue-600 transition-colors cursor-pointer">
-            {nombre_producto}
-          </h4>
-        </Link>
+          {/* Category/Tag placeholder if needed, otherwise just space */}
+          {/* <p className="text-xs text-slate-400 font-medium mb-3">Categoria</p> */}
 
-        <div className="flex items-center justify-between mt-2">
-          <span className="font-bold text-gray-900 text-lg">{formatPrice(precio_venta)}</span>
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Precio</span>
+              <span className="font-bold text-slate-100 text-lg">{formatPrice(precio_venta)}</span>
+            </div>
 
-          <button
-            onClick={toggleSelector}
-            className={`w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 shadow-sm
-                ${showSelector ? 'bg-gray-900 text-white rotate-180' : 'bg-black text-white hover:bg-gray-800'}`}
-            title="Seleccionar opciones"
-          >
-            {showSelector ? <X size={16} /> : <ShoppingCart size={16} strokeWidth={2.5} />}
-          </button>
+            <button
+              onClick={toggleSelector}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 shadow-lg
+                ${showSelector ? 'bg-slate-700 text-white rotate-180' : 'bg-blue-600 text-white hover:bg-blue-500 hover:scale-105 shadow-blue-600/20'}`}
+              title="Seleccionar opciones"
+            >
+              {showSelector ? <X size={18} /> : <ShoppingCart size={18} strokeWidth={2.5} />}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <LoginRequiredModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+    </>
   );
+
 };

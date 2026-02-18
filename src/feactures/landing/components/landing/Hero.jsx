@@ -25,7 +25,7 @@ export const Hero = () => {
 
                     {/* SCALED DOWN Typography */}
                     <h1 className="text-4xl md:text-5xl lg:text-7xl leading-[0.95] font-black mb-6 relative tracking-tight">
-                        FLUJO
+                        TALENTO
                         <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-500 pl-1">
                             URBANO
                         </span>

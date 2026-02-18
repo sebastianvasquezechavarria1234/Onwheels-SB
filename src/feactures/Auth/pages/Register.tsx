@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { getCheckoutPath } from "../../../utils/roleHelpers";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ const Register = () => {
   const [serverMsg, setServerMsg] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Función para validar la fortaleza de la contraseña
   const validatePasswordStrength = (password) => {
@@ -33,7 +35,7 @@ const Register = () => {
         ...prev,
         passwordStrength: !isStrong && value ? "La contraseña debe contener al menos un número o carácter especial" : ""
       }));
-      
+
       // Validar coincidencia con confirmación si ya hay valor en confirmPassword
       if (formData.confirmPassword !== "") {
         setErrors(prev => ({
@@ -102,8 +104,19 @@ const Register = () => {
         });
         setErrors({ passwordMatch: "", passwordStrength: "" });
 
+        setErrors({ passwordMatch: "", passwordStrength: "" });
+
         setTimeout(() => {
-          navigate("/login");
+          // Check for checkout intent
+          if (location.state?.intent === 'checkout') {
+            // Since register doesn't return the user object in standard flow often (or we need to auto-login), 
+            // usually we redirect to login to force login OR if your backend returns token on register, auto-login.
+            // Based on code, it directs to /login.
+            // We keep the state so Login.tsx can handle it.
+            navigate("/login", { state: location.state });
+          } else {
+            navigate("/login", { state: location.state });
+          }
         }, 1500);
       } else {
         setServerMsg(data.message || "Error en el registro");
@@ -118,12 +131,12 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-       <button
-          onClick={() => navigate("/")}
-          className="absolute top-[20px] right-[20px] bg-white w-[60px] h-[60px] rounded-full flex items-center justify-center text-[33px] cursor-pointer font-medium! duration-300 transition-all hover:scale-[1.1]"
-        >
-          ×
-        </button>
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-[20px] right-[20px] bg-white w-[60px] h-[60px] rounded-full flex items-center justify-center text-[33px] cursor-pointer font-medium! duration-300 transition-all hover:scale-[1.1]"
+      >
+        ×
+      </button>
       <div className="w-full max-w-6xl bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
         <div className="flex flex-col lg:flex-row min-h-[700px]">
 

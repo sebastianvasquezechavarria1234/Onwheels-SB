@@ -57,3 +57,24 @@ export const getStoreHomePath = (user) => {
     }
     return `/${roleSlug}/store`;
 };
+// ... existing code ...
+/**
+ * Get the checkout path for the current user based on their role.
+ * @param {Object} user 
+ * @returns {string}
+ */
+export const getCheckoutPath = (user) => {
+    const roleSlug = getUserRoleSlug(user);
+    if (roleSlug === 'store') {
+        return '/login'; // Should technically not happen if guard is correct, but safe fallback
+    }
+    // Map 'users' (client) to their specific checkout if different, or standard convention
+    // Based on AppRouter:
+    // Student -> /student/checkout
+    // Instructor -> /instructor/checkout
+    // Client (users) -> /users/checkout
+    // Admin -> /admin/checkout
+    // Custom -> /custom/checkout
+
+    return `/${roleSlug}/checkout`;
+};
