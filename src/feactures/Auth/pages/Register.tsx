@@ -114,7 +114,7 @@ const Register = () => {
       <div className="hidden lg:block w-1/2 h-full relative">
         <header className="absolute z-50 top-0 left-0 w-full p-8">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-[var(--color-blue)]">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-(--color-blue)">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
@@ -130,11 +130,11 @@ const Register = () => {
           className="w-full h-full object-cover filter brightness-75 contrast-110"
         />
 
-        <div className="absolute inset-0 z-20 flex items-end justify-center pb-24 px-12 bg-gradient-to-t from-black/90 via-black/20 to-transparent">
+        <div className="absolute inset-0 z-20 flex items-end justify-center pb-24 px-12 bg-linear-to-t from-black/90 via-black/20 to-transparent">
           <div className="max-w-xl text-center text-white">
             <h3 className="text-4xl lg:text-5xl font-black mb-6 leading-tight tracking-tight uppercase">
               Únete a la <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-[var(--color-blue)]">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-500 to-(--color-blue)">
                 Revolución
               </span>
             </h3>
@@ -150,7 +150,7 @@ const Register = () => {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5 pointer-events-none"></div>
 
         <div className="w-full max-w-[480px] space-y-6 my-auto relative z-10"> {/* Slightly reduced max-width */}
-          <Link to="/login" className="inline-flex gap-2 items-center text-gray-500 hover:text-[var(--color-blue)] transition-colors mb-2 group font-medium">
+          <Link to="/login" className="inline-flex gap-2 items-center text-gray-500 hover:text-(--color-blue) transition-colors mb-2 group font-medium">
             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
             <span>Volver a Login</span>
           </Link>
@@ -171,7 +171,7 @@ const Register = () => {
                 onChange={handleChange}
                 placeholder="Ej. Juan Pérez"
                 // Reduced padding
-                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
                 required
               />
             </div>
@@ -186,7 +186,7 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="usuario@email.com"
-                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
                   required
                 />
               </div>
@@ -199,7 +199,7 @@ const Register = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+57..."
-                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
                   required
                 />
               </div>
@@ -214,7 +214,7 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Mínimo 6 carc."
-                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
                 required
                 minLength={6}
               />
@@ -232,7 +232,7 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="Repite tu contraseña"
-                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-[var(--color-blue)] focus:border-[var(--color-blue)] outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
                 required
                 minLength={6}
               />
@@ -243,7 +243,7 @@ const Register = () => {
 
             <button
               type="submit"
-              className="w-full bg-[var(--color-blue)] hover:bg-blue-600 text-white font-bold text-base p-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-[var(--color-blue)]/20 disabled:opacity-50 disabled:cursor-not-allowed mt-4 uppercase tracking-wide transform active:scale-[0.98]"
+              className="w-full bg-(--color-blue) hover:bg-blue-600 text-white font-bold text-base p-3.5 rounded-xl transition-all duration-300 shadow-lg hover:shadow-(--color-blue)/20 disabled:opacity-50 disabled:cursor-not-allowed mt-4 uppercase tracking-wide transform active:scale-[0.98]"
               disabled={submitting}
             >
               {submitting ? (
@@ -262,7 +262,7 @@ const Register = () => {
 
             <p className="text-center text-gray-400 text-sm">
               ¿Ya tienes una cuenta?{" "}
-              <Link to="/login" className="text-[var(--color-blue)] font-bold hover:text-white transition-colors">
+              <Link to="/login" className="text-(--color-blue) font-bold hover:text-white transition-colors">
                 Inicia sesión
               </Link>
             </p>
