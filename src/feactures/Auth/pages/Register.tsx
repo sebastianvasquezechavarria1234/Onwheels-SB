@@ -17,6 +17,7 @@ const Register = () => {
   const [serverMsg, setServerMsg] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const validatePasswordStrength = (password) => {
     const hasNumber = /\d/.test(password);
@@ -93,8 +94,19 @@ const Register = () => {
         });
         setErrors({ passwordMatch: "", passwordStrength: "" });
 
+        setErrors({ passwordMatch: "", passwordStrength: "" });
+
         setTimeout(() => {
-          navigate("/login");
+          // Check for checkout intent
+          if (location.state?.intent === 'checkout') {
+            // Since register doesn't return the user object in standard flow often (or we need to auto-login), 
+            // usually we redirect to login to force login OR if your backend returns token on register, auto-login.
+            // Based on code, it directs to /login.
+            // We keep the state so Login.tsx can handle it.
+            navigate("/login", { state: location.state });
+          } else {
+            navigate("/login", { state: location.state });
+          }
         }, 1500);
       }
 

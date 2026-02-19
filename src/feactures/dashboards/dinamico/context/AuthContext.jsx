@@ -40,7 +40,12 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
-        // window.location.reload(); // Avoid full reload if possible, but keeping for safety if needed
+
+        // Dispatch simple event for standard reload listeners
+        window.dispatchEvent(new Event("authChanged"));
+
+        // Dispatch specific event for Cart merging with user data
+        window.dispatchEvent(new CustomEvent("auth:login", { detail: userData }));
     };
 
     const logout = () => {
