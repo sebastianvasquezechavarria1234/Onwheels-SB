@@ -1,56 +1,68 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import bg_hero_shop from '/bg_hero_shop.jpg'
-import { ArrowDown, ArrowRight, ArrowUpToLine, Calendar, Shirt } from "lucide-react";
-import { BtnLinkIcon } from "../BtnLinkIcon";
-
+import { Shirt, Calendar } from "lucide-react";
 
 export const Hero = () => {
     return (
-        <>
-            <section className="relative w-full h-[60vh] min-h-[500px] max-h-[700px]">
-                {/* Picture */}
-                <picture className="absolute left-0 top-0 w-full h-full">
-                    <img className="w-full h-full object-cover object-center" src="/bg_hero_shop.jpg" alt="Hero" />
+        <section className="relative w-full h-[90vh] min-h-[650px] bg-black text-white overflow-hidden flex items-center">
+            
+            {/* Background Image */}
+            <div className="absolute inset-0">
+                <img 
+                    src="/bg_hero_shop.jpg" 
+                    alt="Hero Shop"
+                    className="w-full h-full object-cover scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30"></div>
+            </div>
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-black/40"></div>
+            {/* Content */}
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-8 md:px-16">
+                
+                {/* Top Label */}
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="h-[1px] w-10 bg-[var(--color-blue)]"></div>
+                    <span className="uppercase tracking-[0.25em] text-xs text-gray-400 font-medium">
+                        Tienda Oficial
+                    </span>
+                </div>
 
-                    {/* Container */}
-                    <div className="absolute inset-0 flex items-center justify-start p-[80px] text-white max-md:p-[30px]">
-                        <div className="max-w-[600px] relative z-10 animate-fade-in-up">
-                            <p className="italic mb-4 text-gray-200 font-medium tracking-wider uppercase text-sm">--- Tienda Oficial</p>
-                            <h1 className="mb-6 text-5xl lg:text-7xl font-bold leading-tight">
-                                Todo lo que
-                                <span className="font-primary text-[var(--color-blue)] block mt-2">
-                                    un skater
-                                </span>
-                                necesita.
-                            </h1>
-                            <p className="mb-8 text-lg text-gray-200 font-light leading-relaxed max-w-[90%]">
-                                Descubre una selección premium hecha para skaters auténticos.
-                                La esencia del skate, ahora a un clic de distancia.
-                            </p>
+                {/* Heading */}
+                <h1 className="text-5xl md:text-7xl lg:text-8xl leading-[0.95] font-black tracking-tight mb-8 max-w-4xl">
+                    TODO LO QUE
+                    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-400">
+                        UN SKATER
+                    </span>
+                    NECESITA.
+                </h1>
 
+                {/* Description */}
+                <p className="text-gray-300 text-base md:text-lg max-w-xl leading-relaxed mb-10 border-l border-white/20 pl-6">
+                    Descubre una selección premium hecha para skaters auténticos.
+                    Diseño, resistencia y estilo callejero en cada producto.
+                </p>
 
-                            {/* Buttons */}
-                            <div className="flex gap-4">
-                                <Link to="#products" className="px-6 py-3 bg-white text-black font-bold rounded-full hover:bg-[var(--color-blue)] hover:text-white transition-all flex items-center gap-2">
-                                    <Shirt size={18} strokeWidth={2.5} />
-                                    Ver productos
-                                </Link>
-                                <Link to="/events" className="px-6 py-3 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-black transition-all flex items-center gap-2">
-                                    <Calendar size={18} strokeWidth={2.5} />
-                                    Próximos eventos
-                                </Link>
-                            </div>
+                {/* Buttons */}
+                <div className="flex flex-wrap gap-4">
+                    <Link 
+                        to="#products" 
+                        className="group relative px-8 py-4 bg-white text-black rounded-full font-bold overflow-hidden uppercase text-sm tracking-wide"
+                    >
+                        <span className="relative z-10 flex items-center gap-2 transition-all group-hover:gap-3">
+                            <Shirt size={18} strokeWidth={2.5} />
+                            Ver productos
+                        </span>
+                        <div className="absolute inset-0 bg-[var(--color-blue)] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+                        <span className="absolute inset-0 z-10 flex items-center justify-center gap-2 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 uppercase">
+                            <Shirt size={18} strokeWidth={2.5} />
+                            Ver productos
+                        </span>
+                    </Link>
 
-                        </div>
-                    </div>
+                    
+                </div>
 
-                </picture>
-            </section>
-        </>
-
-    )
-}
+            </div>
+        </section>
+    );
+};

@@ -8,7 +8,6 @@ import { UsersLayout } from "../layout/UsersLayout";
 export const UsersHome = () => {
     return (
         <UsersLayout>
-            <Hero></Hero>
             <Home></Home>
         </UsersLayout>
     )

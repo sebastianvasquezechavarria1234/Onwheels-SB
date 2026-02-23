@@ -138,6 +138,16 @@ const PreinscripcionesAdmin = () => {
     setFormErrors({});
   };
 
+  // Validar formulario de matrícula
+  const validateMatriculaForm = () => {
+    const errors = {};
+    if (!claseSeleccionada) errors.claseSeleccionada = "La clase es requerida";
+    if (!planSeleccionado) errors.planSeleccionado = "El plan es requerido";
+    if (!fechaMatricula) errors.fechaMatricula = "La fecha es requerida";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // --- CRUD OPERATIONS ---
   const handleRechazar = async () => {
     try {
@@ -178,7 +188,7 @@ const PreinscripcionesAdmin = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <div className="flex flex-col h-dvh bg-gray-50 overflow-hidden">
 
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
         <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
@@ -323,7 +333,6 @@ const PreinscripcionesAdmin = () => {
           </div>
         </div>
 
-        {/* --- NOTIFICATIONS & MODALS --- */}
         {/* --- NOTIFICATIONS & MODALS --- */}
         <AnimatePresence>
           {notification.show && (

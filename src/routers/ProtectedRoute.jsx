@@ -4,7 +4,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const location = useLocation();
-  
+
   // Si no hay token, redirigir a login
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -22,16 +22,8 @@ const ProtectedRoute = ({ allowedRoles }) => {
   const hasValidRole = allowedRoles.includes(userRole.toLowerCase());
 
   if (!hasValidRole) {
-    // Redirigir según el rol del usuario
-    if (userRole.toLowerCase() === 'estudiante') {
-      return <Navigate to="/student/home" replace />;
-    } else if (userRole.toLowerCase() === 'instructor') {
-      return <Navigate to="/instructor/home" replace />;
-    } else if (userRole.toLowerCase() === 'administrador') {
-      return <Navigate to="/admin/home" replace />;
-    } else {
-      return <Navigate to="/users/home" replace />;
-    }
+    // Generic redirect for unauthorized access (prevents Admin force-redirect loops)
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
