@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getEventos } from "../../../../services/eventoServices";
+import { getEventosFuturos } from "../../../../services/eventoServices";
 
 export const UpcomingEvents = () => {
   const [events, setEvents] = useState([]);
@@ -14,7 +14,7 @@ export const UpcomingEvents = () => {
         setLoading(true);
         setError(null);
 
-        const data = await getEventos();
+        const data = await getEventosFuturos();
 
         let allEvents = [];
 

@@ -17,6 +17,12 @@ const UsersPreinscriptions = () => {
     nivel_experiencia: "",
     edad: "",
     id_acudiente: null,
+    tipo_preinscripcion: "PROPIA", // Valores: 'PROPIA' | 'TERCERO'
+    datos_tercero: {
+      nombre_completo: "",
+      email: "",
+      fecha_nacimiento: ""
+    },
     nuevoAcudiente: {
       nombre_acudiente: "",
       telefono: "",
@@ -73,7 +79,7 @@ const UsersPreinscriptions = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-   
+
     try {
       if (!currentUser) {
         setError("Debes estar logueado para preinscribirte");
@@ -91,7 +97,8 @@ const UsersPreinscriptions = () => {
         return;
       }
 
-      if (edadNum < 18) {
+      // Validar acudiente solo si es PROPIA y es menor de edad
+      if (formData.tipo_preinscripcion === 'PROPIA' && edadNum < 18) {
         const { nombre_acudiente, telefono, email, relacion } = formData.nuevoAcudiente;
         if (!nombre_acudiente || !telefono || !email || !relacion) {
           setError("Por favor completa todos los datos del acudiente");
@@ -116,27 +123,33 @@ const UsersPreinscriptions = () => {
         nivel_experiencia: formData.nivel_experiencia,
         edad: edadNum,
         id_acudiente: null,
-        ...(edadNum < 18 && { nuevoAcudiente: formData.nuevoAcudiente })
+        tipo_preinscripcion: formData.tipo_preinscripcion,
+        // Solo enviar datos_tercero si es TERCERO
+        ...(formData.tipo_preinscripcion === 'TERCERO' && {
+          datos_tercero: formData.datos_tercero
+        }),
+        // Solo enviar nuevoAcudiente si es PROPIA y es Menor
+        ...(formData.tipo_preinscripcion === 'PROPIA' && edadNum < 18 && {
+          nuevoAcudiente: formData.nuevoAcudiente
+        })
       };
 
-      // ✅ Si estás en desarrollo, no enviamos al backend real (opcional)
-      // Puedes comentar esta línea si quieres probar el envío real más adelante
-      // const response = await axios.post("http://localhost:3000/api/preinscripciones", payload);
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
 
-      // Simular éxito inmediato en desarrollo
-      setShowConfirm(false);
-      setShowFinal(true);
-      setError(null);
+      const response = await axios.post("http://localhost:3000/api/preinscripciones", payload, config);
 
-      // Si quieres probar el POST real, descomenta lo siguiente:
-      /*
-      const response = await axios.post("http://localhost:3000/api/preinscripciones", payload);
       if (response.status === 201) {
+        // Verificar si la respuesta trae credenciales
+        if (response.data.credenciales) {
+          setFormData(prev => ({ ...prev, credenciales: response.data.credenciales }));
+        }
         setShowConfirm(false);
         setShowFinal(true);
         setError(null);
       }
-      */
     } catch (err) {
       console.error("Error creando preinscripción:", err);
       setError(err.response?.data?.mensaje || "Error al crear preinscripción");
@@ -170,20 +183,12 @@ const UsersPreinscriptions = () => {
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-gray-900">¡Bienvenido a Performace-SB!</h3>
               <p className="text-gray-600 mt-2">Tu camino hacia el aprendizaje comienza aquí.</p>
-              {currentUser && (
-                <div className="mt-4 p-3 bg-white rounded-lg shadow">
-                  <p className="text-sm font-medium text-gray-700">
-                    Preinscribiendo como: <span className="text-blue-600">{currentUser.nombre_completo}</span>
-                  </p>
-                  <p className="text-xs text-gray-500">{currentUser.email}</p>
-                </div>
-              )}
             </div>
 
-            <div className="w-full h-64 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-full h-64 bg-linear-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
 
               <svg width="80" height="80" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M12 2L2 7l10 5 10-5M2 12v5c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-5M2 17v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2M12 11v9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2L2 7l10 5 10-5M2 12v5c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-5M2 17v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2M12 11v9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           </div>
@@ -194,8 +199,83 @@ const UsersPreinscriptions = () => {
                 <h2 className="text-center text-3xl font-bold text-gray-900 mb-6">
                   Preinscripción
                 </h2>
-               
+
+                {/* Selector de Tipo de Preinscripción */}
+                <div className="mb-8 flex justify-center">
+                  <div className="inline-flex bg-gray-100 p-1 rounded-lg">
+                    <button
+                      type="button"
+                      className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${formData.tipo_preinscripcion === 'PROPIA'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      onClick={() => setFormData(prev => ({ ...prev, tipo_preinscripcion: 'PROPIA' }))}
+                    >
+                      Para mí
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${formData.tipo_preinscripcion === 'TERCERO'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      onClick={() => setFormData(prev => ({ ...prev, tipo_preinscripcion: 'TERCERO' }))}
+                    >
+                      Para otra persona
+                    </button>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSubmit}>
+
+                  {/* Campos específicos si es para TERCERO */}
+                  {formData.tipo_preinscripcion === 'TERCERO' && (
+                    <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                      <h3 className="text-lg font-semibold text-blue-800 mb-4">Datos del Estudiante</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo:</label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                            value={formData.datos_tercero?.nombre_completo || ''}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              datos_tercero: { ...prev.datos_tercero, nombre_completo: e.target.value }
+                            }))}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Email:</label>
+                          <input
+                            type="email"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                            value={formData.datos_tercero?.email || ''}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              datos_tercero: { ...prev.datos_tercero, email: e.target.value }
+                            }))}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Fecha Nacimiento:</label>
+                          <input
+                            type="date"
+                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
+                            value={formData.datos_tercero?.fecha_nacimiento || ''}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              datos_tercero: { ...prev.datos_tercero, fecha_nacimiento: e.target.value }
+                            }))}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                       <label
@@ -273,7 +353,9 @@ const UsersPreinscriptions = () => {
                     </div>
                   )}
 
-                  {isMinor && (
+                  {/* Solo mostrar Acudiente si es PROPIA y es Menor (lógica original) */}
+                  {/* Si es TERCERO, el acudiente ES el usuario logueado automáticamente */}
+                  {formData.tipo_preinscripcion === 'PROPIA' && isMinor && (
                     <div className="mt-8 p-6 rounded-xl border-t-4 border-yellow-500 bg-yellow-50">
                       <h3 className="text-lg font-semibold text-yellow-800 mb-4 text-center">
                         ⚠️ Información del Acudiente
@@ -301,7 +383,7 @@ const UsersPreinscriptions = () => {
                             required
                           />
                         </div>
-                       
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label
@@ -325,7 +407,7 @@ const UsersPreinscriptions = () => {
                               required
                             />
                           </div>
-                         
+
                           <div>
                             <label
                               className="block text-sm font-medium text-gray-700 mb-2"
@@ -349,7 +431,7 @@ const UsersPreinscriptions = () => {
                             />
                           </div>
                         </div>
-                       
+
                         <div>
                           <label
                             className="block text-sm font-medium text-gray-700 mb-2"
@@ -416,7 +498,11 @@ const UsersPreinscriptions = () => {
                     <div className="grid grid-cols-1 gap-3 text-sm">
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-600">Nombre:</span>
-                        <span className="font-medium text-gray-900">{currentUser?.nombre_completo}</span>
+                        <span className="font-medium text-gray-900">
+                          {formData.tipo_preinscripcion === 'TERCERO'
+                            ? formData.datos_tercero?.nombre_completo
+                            : currentUser?.nombre_completo}
+                        </span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <span className="text-gray-600">Nivel de experiencia:</span>
@@ -435,7 +521,7 @@ const UsersPreinscriptions = () => {
                     </div>
                   </div>
 
-                  {isMinor && formData.nuevoAcudiente.nombre_acudiente && (
+                  {formData.tipo_preinscripcion === 'PROPIA' && isMinor && formData.nuevoAcudiente.nombre_acudiente && (
                     <div className="bg-white rounded-xl p-5 shadow border border-gray-100">
                       <h3 className="text-base font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-2">
                         Datos del acudiente
@@ -484,8 +570,8 @@ const UsersPreinscriptions = () => {
                 <div className="flex flex-col items-center mb-6">
                   <div className="bg-green-100 rounded-full p-4 mb-4">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="12" fill="#22c55e" opacity="0.15"/>
-                      <path d="M7 13l3 3 7-7" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      <circle cx="12" cy="12" r="12" fill="#22c55e" opacity="0.15" />
+                      <path d="M7 13l3 3 7-7" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                     </svg>
                   </div>
                   <h2 className="text-center text-2xl font-bold text-gray-900 mb-2">
@@ -495,6 +581,20 @@ const UsersPreinscriptions = () => {
                     Hemos recibido tu solicitud de preinscripción.<br />
                     Nuestro equipo revisará tu información y te contactará pronto.
                   </p>
+
+                  {/* Mostrar mensaje de activación si es tercero */}
+                  {formData.tipo_preinscripcion === 'TERCERO' && (
+                    <div className="mt-6 w-full bg-blue-50 border border-blue-200 rounded-lg p-6">
+                      <h4 className="text-blue-800 font-bold text-lg mb-2 text-center">¡Preinscripción Exitosa!</h4>
+                      <p className="text-sm text-gray-700 mb-4 text-center">
+                        Se ha enviado un correo electrónico a <span className="font-bold">{formData.datos_tercero.email}</span> con las instrucciones para activar la cuenta.
+                      </p>
+                      <p className="mt-4 text-xs text-blue-600 text-center font-medium">
+                        Por favor revisa tu bandeja de entrada (y spam) para continuar.
+                      </p>
+                    </div>
+                  )}
+
                 </div>
                 <div className="flex justify-center mt-8">
                   <button
@@ -514,3 +614,4 @@ const UsersPreinscriptions = () => {
 };
 
 export default UsersPreinscriptions;
+

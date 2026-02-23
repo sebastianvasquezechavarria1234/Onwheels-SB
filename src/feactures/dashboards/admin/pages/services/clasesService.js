@@ -15,3 +15,6 @@ export const deleteClase = (id) => api.delete(`${API_URL}/${id}`).then(r => r.da
 export const getNiveles = () => api.get("/niveles").then(r => r.data);
 export const getSedes = () => api.get("/sedes").then(r => r.data);
 export const getInstructores = () => api.get("/instructores").then(r => r.data);
+
+export const getClasesPorInstructor = (idInstructor) => 
+  api.get(`${API_URL}/instructor/${idInstructor}`).then(r => r.data);

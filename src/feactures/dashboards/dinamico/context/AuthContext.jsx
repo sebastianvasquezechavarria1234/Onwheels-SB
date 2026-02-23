@@ -3,6 +3,7 @@ import axios from "axios";
 
 const AuthContext = createContext();
 
+
 // Hook personalizado con validación
 export const useAuth = () => {
     const context = useContext(AuthContext);
