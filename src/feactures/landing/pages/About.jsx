@@ -1,12 +1,12 @@
+
 import React from "react";
 import { Hero } from "../components/abaut/Hero";
 import { Layout } from "../layout/Layout";
 
 
-export const About = () => {
+export const AboutContent = () => {
     return (
-        <Layout>
-
+        <>
             <Hero />
             <section className="mt-[120px] max-w-[1500px] mx-auto p-[20px] max-lg:mt-[60px]">
                 <section className="mt-[20px] flex items-center gap-[40px] max-lg:flex-col ">
@@ -56,8 +56,16 @@ export const About = () => {
 
                 </section>
             </section>
+        </>
+
+
+    )
+}
+
+export const About = () => {
+    return (
+        <Layout>
+            <AboutContent />
         </Layout>
-
-
     )
 }

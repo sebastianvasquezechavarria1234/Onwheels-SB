@@ -1,264 +1,429 @@
-// src/pages/LandingSkate.jsx
-import React from "react";
+// src/feactures/landing/pages/Class.jsx
+import React, { useEffect, useState } from "react";
 import { Layout } from "../layout/Layout";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowUpRight, Calendar, MapPin, Clock, Star, Check, Shield, Zap, Target, Play, BarChart, Users, Trophy } from "lucide-react";
+import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
+import { getPreinscriptionPath } from "../../../utils/roleHelpers";
+import { getClases, getPlanes } from "../../../services/claseServices";
 
-const Class = () => {
+export const ClassContent = () => {
+  const { user } = useAuth();
+  const joinPath = getPreinscriptionPath(user);
+
+  const [clases, setClases] = useState([]);
+  const [planes, setPlanes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [clasesData, planesData] = await Promise.all([
+          getClases(),
+          getPlanes()
+        ]);
+        setClases(clasesData.slice(0, 3));
+        setPlanes(planesData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
-    <Layout>
-      <div className="min-h-screen flex flex-col font-sans">
-        {/* === HERO: FULLSCREEN VIDEO / IMAGE + TEXT OVERLAY === */}
-        <section className="relative h-screen flex items-center justify-center overflow-hidden">
-          {/* Video de fondo (opcional) o imagen con overlay */}
+    <div className="min-h-screen flex flex-col font-sans bg-zinc-950 text-white overflow-x-hidden">
+      {/* === HERO: IMMERSIVE VIDEO === */}
+      <section className="relative w-full h-[90vh] bg-black overflow-hidden flex flex-col items-center justify-center pt-20">
+        <div className="absolute inset-0 z-0">
           <video
             autoPlay
             muted
             loop
             playsInline
-            className="absolute inset-0 w-full h-full object-cover z-[-1]"
-            poster="https://images.unsplash.com/photo-1600817179420-1a1b6a1b5b5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
+            className="w-full h-full object-cover opacity-60 scale-105"
+            poster="/bg_hero_landing.jpg"
           >
-            <source
-              src="https://assets.mixkit.co/videos/preview/mixkit-skater-riding-on-a-ramp-41514-large.mp4"
-              type="video/mp4"
-            />
+            <source src="/vd_landing1.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-black/60 z-0"></div>
+          <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950/10"></div>
+        </div>
 
-          <div className="container mx-auto px-6 text-center text-white relative z-10 max-w-5xl">
-            {/* Badge de temporada */}
-            <div className="inline-block bg-red-600 px-6 py-2 rounded-full text-sm font-bold tracking-wide mb-8">
-              ¡NUEVA TEMPORADA 2025!
+        <div className="container mx-auto px-6 relative z-10 text-center max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+          >
+            <div className="flex justify-center items-center gap-4 mb-8">
+              <span className="h-[2px] w-12 bg-[var(--color-blue)]"></span>
+              <span className="uppercase tracking-[0.6em] text-[10px] md:text-sm text-[var(--color-blue)] font-black">Academia de Formación</span>
+              <span className="h-[2px] w-12 bg-[var(--color-blue)]"></span>
             </div>
 
-            {/* Título FORMACIÓN con efecto split */}
-            <h1 className="text-5xl md:text-8xl font-black leading-none tracking-tighter mb-6">
-              <span className="block">FORMA</span>
-              <span className="block text-red-500 -mt-4 md:-mt-6">CIÓN</span>
+            <h1 className="text-7xl md:text-9xl lg:text-[12rem] font-black leading-none tracking-tighter mb-10 uppercase italic">
+              ÉLITE<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-500 not-italic">SB</span>
             </h1>
 
-            {/* Subtítulo inspirador — más largo, más creativo */}
-            <p className="max-w-3xl mx-auto text-base md:text-lg opacity-90 mb-10 font-light leading-relaxed">
-              Donde cada caída es un paso hacia el primer kickflip. Donde los
-              errores no son fracasos, sino lecciones grabadas en asfalto.
-              Clases reales, con profesores que fueron patinadores antes de ser
-              instructores. Comunidad que crece, se apoya y celebra cada truco
-              logrado —por pequeño que sea. Porque aquí no enseñamos a patinar.
-              Enseñamos a volar.
+            <p className="text-zinc-400 text-base md:text-2xl max-w-3xl mx-auto leading-relaxed mb-16 font-medium">
+              No somos una escuela común. Somos un centro de alto rendimiento donde la técnica se encuentra con la cultura urbana. Tu camino profesional inicia aquí.
             </p>
 
-            {/* Botones como en tu imagen */}
-            <div className="flex flex-wrap justify-center gap-4">
-              <a
-                href="/preinscripcion"
-                className="group relative px-8 py-4 bg-red-600 text-white font-bold rounded-full overflow-hidden transition-all duration-300"
-              >
-                <span className="relative z-10">Empieza hoy</span>
-                <span className="absolute inset-0 bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              </a>
-              <a
-                href="#por-why"
-                className="group px-8 py-4 border-2 border-white text-white font-bold rounded-full transition-all duration-300 hover:bg-white hover:text-blue-900"
-              >
-                Conoce el método
-              </a>
-            </div>
-          </div>
-
-          {/* Curva blanca en la base (como en tu imagen) */}
-          <svg
-            className="absolute bottom-0 left-0 w-full h-24 md:h-32 text-white"
-            viewBox="0 0 1440 100"
-            preserveAspectRatio="none"
-          >
-            <path
-              fill="white"
-              d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,53.3C1120,53,1280,75,1360,85.3L1440,96L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"
-            ></path>
-          </svg>
-        </section>
-
-        {/* === GALLERY: IMÁGENES GRANDES CON ESPACIO === */}
-        <section id="gallery" className="py-20 bg-white">
-          <div className="container mx-auto px-6">
-            <h2 className="text-4xl md:text-5xl font-bold text-center text-blue-900 mb-16">
-              Mira cómo sucede
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-black/10 rounded-3xl overflow-hidden h-96 flex items-center justify-center">
-                <img
-                  src="https://images.unsplash.com/photo-1543090848-bd32b4a4e006?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                  alt="Clase de skate 1"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="space-y-6">
-                <div className="bg-black/10 rounded-2xl h-48 flex items-center justify-center">
-                  <img
-                    src="https://images.unsplash.com/photo-1600817179420-1a1b6a1b5b5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                    alt="Clase de skate 2"
-                    className="w-full h-full object-cover"
-                  />
+            <div className="flex flex-col md:flex-row justify-center items-center gap-6">
+              <Link to={joinPath} className="group relative px-12 py-6 bg-white text-black rounded-full font-black overflow-hidden text-sm transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/10">
+                <span className="relative z-10 flex items-center gap-2 uppercase tracking-widest">
+                  Comienza tu Viaje <ArrowUpRight size={20} />
+                </span>
+                <div className="absolute inset-0 bg-[var(--color-blue)] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+                <span className="absolute inset-0 z-10 flex items-center justify-center gap-2 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 uppercase tracking-widest">
+                  Comienza tu Viaje <ArrowUpRight size={20} />
+                </span>
+              </Link>
+              <div className="flex items-center gap-6 text-zinc-500 font-black uppercase text-[10px] tracking-[0.3em]">
+                <div className="flex -space-x-3">
+                  {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-zinc-950 bg-zinc-800" />)}
                 </div>
-                <div className="bg-black/10 rounded-2xl h-48 flex items-center justify-center">
-                  <img
-                    src="https://images.unsplash.com/photo-1600814863151-8f7b9b8a6a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                    alt="Clase de skate 3"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                +500 Alumnos Activos
               </div>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </div>
+      </section>
 
-        {/* === POR QUÉ FORMACIÓN — NARRATIVA PROFUNDA + IMÁGENES === */}
-        <section id="por-why" className="py-20 bg-gray-50">
-          <div className="container mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-6xl font-bold text-blue-900 mb-4">
-                No es solo una clase.
+      {/* === NARRATIVE: THE JOURNEY === */}
+      <section className="py-32 bg-zinc-950">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+            <div className="lg:col-span-5 space-y-8 sticky top-32">
+              <div className="inline-block px-4 py-1 bg-white/5 border border-white/10 rounded-full">
+                <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">El Proceso Performance SB</span>
+              </div>
+              <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-tight">
+                TU EVOLUCIÓN <br />
+                <span className="text-zinc-800 italic">SIN LÍMITES</span>
               </h2>
-              <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-                Es tu primera comunidad real sobre ruedas. Donde los errores se
-                celebran, los trucos se comparten, y el progreso se mide en
-                sonrisas, no en metros.
+              <p className="text-zinc-400 text-lg leading-relaxed font-medium border-l-2 border-[var(--color-blue)] pl-6">
+                Entendemos que cada skater tiene un ritmo único. Nuestra formación no es lineal; es circular, centrada en fortalecer los cimientos para que el estilo surja de manera natural y segura.
               </p>
+              <div className="grid grid-cols-2 gap-8 pt-8 border-t border-zinc-900">
+                <div>
+                  <h4 className="text-white font-black text-3xl mb-1">98%</h4>
+                  <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Tasa de Progreso</p>
+                </div>
+                <div>
+                  <h4 className="text-[var(--color-blue)] font-black text-3xl mb-1">1:5</h4>
+                  <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Coach por Alumnos</p>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="lg:col-span-7 space-y-12 pl-0 lg:pl-12">
               {[
                 {
-                  title: "Profesores que skatan",
-                  desc: "No son ‘instructores’. Son skaters que han vivido la calle, las caídas, los triunfos y las frustraciones. Te enseñan desde la experiencia, no desde un manual. Porque saben que lo más importante no es el truco, sino cómo te sientes al intentarlo.",
-                  img: "https://images.unsplash.com/photo-1543090848-bd32b4a4e006?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+                  step: "01",
+                  title: "Fundamentos Sólidos",
+                  desc: "Antes de saltar, hay que saber rodar. Nos enfocamos en la postura, el equilibrio dinámico y la cinemática del cuerpo sobre la tabla. Sin bases, no hay trucos.",
+                  icon: <BarChart size={24} className="text-[var(--color-blue)]" />
                 },
                 {
-                  title: "Espacio 100% seguro",
-                  desc: "Pista diseñada para aprender sin miedo. Suelo de goma, rampas suaves, equipo de primeros auxilios siempre listo. Aquí no importa si eres principiante o avanzado: todos tienen su lugar, su ritmo y su espacio para crecer. Porque el skate no es competencia. Es libertad.",
-                  img: "https://images.unsplash.com/photo-1600817179420-1a1b6a1b5b5d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+                  step: "02",
+                  title: "Técnica Creativa",
+                  desc: "Una vez dominas la tabla, aprendes a manipularla. Entramos en ollies, grinds y transiciones, analizando cada milímetro de movimiento para optimizar el pop.",
+                  icon: <Zap size={24} className="text-[var(--color-blue)]" />
                 },
                 {
-                  title: "Progreso real, no promesas vacías",
-                  desc: "Seguimiento semanal, videos de tu evolución, metas personalizadas y retroalimentación honesta. No te diremos que eres ‘el mejor’ si aún no lo eres. Pero sí te diremos qué hacer para llegar allí. Porque tu progreso es nuestro orgullo.",
-                  img: "https://images.unsplash.com/photo-1600814863151-8f7b9b8a6a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-                },
+                  step: "03",
+                  title: "Estilo Propio (Mastery)",
+                  desc: "El nivel final es cuando la técnica se vuelve invisible. Te ayudamos a encontrar tu 'flow', combinando fluidez con dificultad técnica en cualquier terreno.",
+                  icon: <Trophy size={24} className="text-[var(--color-blue)]" />
+                }
               ].map((item, i) => (
-                <div
+                <motion.div
                   key={i}
-                  className="group p-8 bg-white border border-gray-200 rounded-3xl transition-all duration-500 hover:shadow-xl hover:-translate-y-2"
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="group relative bg-zinc-900/40 p-10 rounded-[2.5rem] border border-zinc-900 hover:border-zinc-800 transition-all"
                 >
-                  <img
-                    src={item.img}
-                    alt={item.title}
-                    className="w-full h-48 object-cover rounded-lg mb-6"
-                  />
-                  <h3 className="text-2xl font-bold text-blue-900 mb-3">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-700">{item.desc}</p>
-                </div>
+                  <div className="absolute top-8 right-10 text-6xl font-black text-white/5 italic">{item.step}</div>
+                  <div className="flex gap-6 items-start">
+                    <div className="w-14 h-14 bg-zinc-950 rounded-2xl flex items-center justify-center border border-zinc-800 group-hover:bg-[var(--color-blue)] group-hover:text-white transition-all">
+                      {item.icon}
+                    </div>
+                    <div className="max-w-md">
+                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">{item.title}</h3>
+                      <p className="text-zinc-500 text-sm leading-relaxed font-medium">{item.desc}</p>
+                    </div>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* === PLANES — CON HISTORIA Y PERSONALIDAD === */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-6 max-w-5xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-blue-900">
-                Elige tu ruta
-              </h2>
-              <p className="text-gray-700 mt-4">
-                No hay “uno para todos”. Aquí tu plan crece contigo —como tu
-                habilidad, como tu pasión.
-              </p>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="flex-1 p-8 border-2 border-gray-200 rounded-3xl hover:border-red-500 transition-colors">
-                <h3 className="text-2xl font-bold text-blue-900 mb-4">
-                  RUTA INICIAL
-                </h3>
-                <p className="text-4xl font-extrabold text-red-600 mb-6">
-                  $45.000/mes
-                </p>
-                <ul className="space-y-3 mb-8">
-                  {[
-                    "2 clases semanales",
-                    "Acceso a pista",
-                    "Seguro incluido",
-                    "Reporte mensual",
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-red-500 mt-1">•</span> {item}
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-gray-600 mb-6">
-                  Ideal para quienes empiezan, pero no quieren quedarse atrás.
-                </p>
-                <a
-                  href="/login"
-                  className="inline-block text-red-600 font-bold border-b-2 border-red-600 pb-1 hover:border-red-800"
-                >
-                  Empieza tu camino →
-                </a>
-              </div>
-
-              <div className="flex-1 p-8 bg-blue-950 text-white rounded-3xl relative overflow-hidden">
-                <div className="absolute top-4 right-4 w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-xs font-bold">
-                  TOP
-                </div>
-                <h3 className="text-2xl font-bold mb-4">RUTA PRO</h3>
-                <p className="text-4xl font-extrabold mb-6">$75.000/mes</p>
-                <ul className="space-y-3 mb-8">
-                  {[
-                    "4 clases semanales",
-                    "Equipo incluido",
-                    "Videos de análisis",
-                    "Acceso a eventos",
-                    "Mentoría 1:1",
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-red-300 mt-1">•</span> {item}
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-white/80 mb-6">
-                  Para quienes ya no quieren solo aprender. Quieren dominar.
-                </p>
-                <a
-                  href="/login"
-                  className="inline-block bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 transition"
-                >
-                  Únete a la élite
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* === CTA FINAL — EMOCIONAL Y DIRECTO === */}
-        <section className="py-24 bg-gradient-to-r from-blue-900 to-red-700 text-white text-center">
-          <div className="container mx-auto px-6">
-            <h2 className="text-4xl md:text-6xl font-black mb-6">
-              ¿Y si hoy fuera el día?
+      {/* === SESSIONS: CALENDAR GRID === */}
+      <section className="py-32 bg-zinc-950 border-t border-zinc-900 relative">
+        <div className="max-w-[1200px] mx-auto px-6">
+          <div className="flex flex-col items-center text-center mb-24 max-w-3xl mx-auto space-y-6">
+            <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-[0.4em]">Optimiza tu Tiempo</span>
+            <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none">
+              SESIONES DE <br />
+              <span className="text-zinc-800 italic">ENTRENAMIENTO</span>
             </h2>
-            <p className="text-xl max-w-2xl mx-auto mb-10 opacity-90">
-              No necesitas ser bueno. Solo necesitas empezar. Porque el mejor
-              truco no es el que más altura tiene, sino el que te hace sentir
-              libre. ¿Listo para subirte a tu tabla?
+            <p className="text-zinc-500 text-sm md:text-lg font-medium leading-relaxed">
+              Consulta nuestra disponibilidad en tiempo real. Grupos reducidos para garantizar una atención personalizada por cada instructor élite.
             </p>
-            <a
-              href="/preinscripcion"
-              className="inline-block bg-white text-blue-900 px-10 py-5 rounded-full text-xl font-bold hover:bg-gray-100 transition transform hover:scale-105 shadow-lg"
-            >
-              Reserva tu clase GRATIS
-            </a>
           </div>
-        </section>
-      </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {loading ? (
+              [1, 2, 3].map((n) => (
+                <div key={n} className="h-72 bg-zinc-900/50 rounded-[2.5rem] animate-pulse" />
+              ))
+            ) : clases.length > 0 ? (
+              clases.map((clase, i) => (
+                <motion.div
+                  key={clase.id_clase}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="group flex flex-col bg-zinc-900/30 hover:bg-zinc-900 border border-zinc-800/50 hover:border-[var(--color-blue)]/30 rounded-[2.5rem] p-10 transition-all duration-500 relative"
+                >
+                  <div className="flex justify-between items-start mb-12">
+                    <span className="text-[9px] font-black px-4 py-2 bg-zinc-950 rounded-full text-zinc-400 uppercase tracking-widest border border-zinc-800 group-hover:bg-[var(--color-blue)] group-hover:text-white transition-colors">
+                      {clase.nombre_nivel || "Cualquier Nivel"}
+                    </span>
+                    <Clock size={20} className="text-zinc-800 group-hover:text-[var(--color-blue)] transition-colors" />
+                  </div>
+
+                  <div className="space-y-4 mb-10">
+                    <h3 className="text-2xl font-black text-white uppercase tracking-tight group-hover:text-[var(--color-blue)] transition-colors leading-tight">
+                      {clase.descripcion || `Clase en ${clase.nombre_sede}`}
+                    </h3>
+                    <div className="flex items-center gap-3 text-zinc-500 text-[10px] font-black uppercase tracking-widest">
+                      <MapPin size={16} className="text-[var(--color-blue)]" />
+                      {clase.nombre_sede}
+                    </div>
+                  </div>
+
+                  <div className="mt-auto pt-8 border-t border-zinc-800/50 flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-zinc-700 text-[9px] font-black uppercase tracking-widest mb-1">Horario</span>
+                      <span className="text-white text-xs font-black uppercase tracking-tighter flex items-center gap-2">
+                        <Calendar size={14} className="text-zinc-600" /> {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-zinc-700 text-[9px] font-black uppercase tracking-widest mb-1">Coach</span>
+                      <span className="text-zinc-400 text-xs font-black uppercase tracking-widest block italic underline decoration-[var(--color-blue)] decoration-2 underline-offset-4">
+                        {clase.instructores?.[0]?.nombre_instructor?.split(' ')[0] || "Staff SB"}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full py-24 text-center text-zinc-800 font-black uppercase tracking-[0.5em] border-2 border-dashed border-zinc-900 rounded-[3rem]">
+                Cargando itinerarios...
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* === VISUALS: CREATIVE GALLERY === */}
+      <section className="bg-zinc-950 py-32 border-y border-zinc-900 overflow-hidden">
+        <div className="max-w-[1200px] mx-auto px-6 mb-20 text-center">
+          <span className="text-red-600 text-xs font-black uppercase tracking-[0.6em] mb-4 block">Action Proof</span>
+          <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none mb-8">
+            ESTILO EN <br />
+            <span className="text-[var(--color-blue)]">MOVIMIENTO</span>
+          </h2>
+          <p className="text-zinc-500 font-medium max-w-2xl mx-auto text-sm md:text-lg">
+            No dejes que te lo cuenten. Estas son las vibraciones reales que se viven en cada una de nuestras sedes. Técnica, comunidad y mucha tabla.
+          </p>
+        </div>
+
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="grid grid-cols-12 gap-6 h-[700px]">
+            {/* Main Video Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="col-span-12 lg:col-span-6 relative rounded-[3rem] overflow-hidden bg-zinc-900 group border border-zinc-800/50"
+            >
+              <video src="/vd_landing1.mp4" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" muted loop playsInline onMouseEnter={e => e.target.play()} onMouseLeave={e => e.target.pause()} />
+              <div className="absolute inset-0 bg-linear-to-t from-zinc-950/80 via-transparent to-transparent pointer-events-none"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
+                  <Play size={30} fill="white" className="ml-2" />
+                </div>
+              </div>
+              <div className="absolute bottom-12 left-12 right-12 z-10">
+                <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">Dominio del Park</h4>
+                <p className="text-zinc-400 text-xs font-black uppercase tracking-widest italic">Sesión de Formación Élite / Sede Central</p>
+              </div>
+            </motion.div>
+
+            {/* Right Staggered Column */}
+            <div className="col-span-12 lg:col-span-6 grid grid-cols-2 gap-6 h-full">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="relative rounded-[2.5rem] overflow-hidden bg-zinc-900 group border border-zinc-800/50 shadow-inner"
+              >
+                <video src="/vd_landing2.mp4" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700" muted loop playsInline onMouseEnter={e => e.target.play()} onMouseLeave={e => e.target.pause()} />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors pointer-events-none" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <span className="text-[10px] font-black text-white/50 bg-black/40 px-3 py-1 rounded-full uppercase tracking-widest">Street Focus</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="relative rounded-[2.5rem] overflow-hidden bg-zinc-900 group border border-zinc-800/50 shadow-inner"
+              >
+                <video src="/vd_landing3.mp4" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700" muted loop playsInline onMouseEnter={e => e.target.play()} onMouseLeave={e => e.target.pause()} />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <span className="text-[10px] font-black text-white/50 bg-black/40 px-3 py-1 rounded-full uppercase tracking-widest">Bowl Session</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="col-span-2 relative h-[320px] rounded-[3rem] overflow-hidden group border border-zinc-800/50"
+              >
+                <img src="/bg_eventosL3.jpg" className="w-full h-full object-cover grayscale-100 brightness-50 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000" alt="Training" />
+                <div className="absolute inset-x-0 bottom-0 p-12 bg-linear-to-t from-zinc-950 to-transparent">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Galería de Progreso</h4>
+                      <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-2">Visita nuestro Instagram para más contenido</p>
+                    </div>
+                    <ArrowUpRight className="text-[var(--color-blue)]" size={32} />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* === PLANES: REFINED PROPORTIONS (DYNAMIC DATA) === */}
+      <section className="py-32 bg-zinc-950 text-white relative border-t border-zinc-900">
+        <div className="max-w-[1100px] mx-auto px-6">
+          <div className="flex flex-col items-center text-center mb-24 space-y-8 max-w-4xl mx-auto">
+            <div className="h-1.5 w-16 bg-[var(--color-blue)] rounded-full"></div>
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter leading-none">
+              INVIERTE EN <br />
+              <span className="text-zinc-800 italic">TU TALENTO</span>
+            </h2>
+            <p className="text-zinc-500 text-sm md:text-lg font-bold uppercase tracking-tight leading-relaxed">
+              Nuestros planes están diseñados para maximizar tu aprendizaje. Desde iniciación hasta entrenamiento intensivo de competencia.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {loading ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="h-[550px] bg-zinc-900 rounded-[3rem] animate-pulse" />
+              ))
+            ) : planes.map((plan) => (
+              <div key={plan.id_plan} className={`flex flex-col group p-12 rounded-[3.5rem] border transition-all duration-700 relative overflow-hidden ${parseFloat(plan.precio) > 100000 ? 'bg-zinc-900 text-white border-[var(--color-blue)]/50 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)] scale-105 z-10' : 'bg-zinc-900/30 text-white border-zinc-900 hover:border-zinc-800'}`}>
+                {parseFloat(plan.precio) > 100000 && <div className="absolute top-0 right-0 py-2 px-12 bg-red-600 text-white text-[9px] font-black uppercase tracking-[0.3em] rotate-45 translate-x-10 translate-y-6">Best Choice</div>}
+
+                <div className="mb-12">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users size={16} className={parseFloat(plan.precio) > 100000 ? 'text-red-600' : 'text-[var(--color-blue)]'} />
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Acceso Académico</span>
+                  </div>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">{plan.nombre_plan}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-6xl font-black ${parseFloat(plan.precio) > 100000 ? 'text-red-500' : 'text-white'}`}>${parseInt(plan.precio).toLocaleString()}</span>
+                    <span className="text-xs font-black opacity-30 uppercase tracking-widest ml-2">/ mensual</span>
+                  </div>
+                </div>
+
+                <p className={`text-sm mb-12 leading-relaxed font-bold uppercase tracking-tight min-h-[48px] text-zinc-500`}>
+                  {plan.descripcion || "Formación de alto rendimiento impulsada por el sistema SB."}
+                </p>
+
+                <ul className="space-y-6 mb-16 border-t border-zinc-100/10 pt-8">
+                  {[
+                    `${plan.numero_clases || 4} Sesiones Mensuales`,
+                    "Seguro Deportivo Mensual",
+                    plan.descuento_porcentaje > 0 ? `${plan.descuento_porcentaje}% Descuento Store` : "Certificación de Nivel",
+                    "Pack Welcome Performance SB"
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-4 text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                      <div className={`mt-0.5 shrink-0 ${parseFloat(plan.precio) > 100000 ? 'text-red-600' : 'text-[var(--color-blue)]'}`}><Check size={18} strokeWidth={4} /></div>
+                      <span className="leading-tight">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  to="/login"
+                  className={`mt-auto w-full py-5 rounded-[2rem] text-center font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 shadow-xl ${parseFloat(plan.precio) > 100000 ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.03] shadow-red-600/20' : 'bg-white text-black hover:bg-[var(--color-blue)] hover:text-white shadow-white/5'}`}
+                >
+                  Adquirir Ahora
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* === CTA: FINAL PUSH === */}
+      <section className="py-40 bg-zinc-950 border-t border-zinc-900 flex flex-col items-center text-center px-6 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[25rem] md:text-[45rem] font-black text-white/[0.01] pointer-events-none select-none italic z-0 leading-none">
+          EVOLVE
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative z-10 max-w-4xl"
+        >
+          <div className="flex justify-center mb-10">
+            <div className="px-6 py-2 bg-[var(--color-blue)]/10 border border-[var(--color-blue)]/30 rounded-full animate-pulse">
+              <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-widest">Inscripciones Abiertas</span>
+            </div>
+          </div>
+          <h2 className="text-6xl md:text-[10rem] font-black text-white mb-12 uppercase tracking-tighter leading-[0.8]">
+            TU MOMENTO <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-500 italic">ES AHORA</span>
+          </h2>
+          <p className="text-zinc-500 max-w-2xl mx-auto mb-20 font-black uppercase tracking-[0.4em] text-[10px] md:text-sm leading-relaxed">
+            La diferencia entre un amateur y un profesional es la formación. Únete a la comunidad de skate más grande del país.
+          </p>
+          <Link to={joinPath} className="inline-flex items-center gap-4 text-white font-black text-sm md:text-2xl hover:text-[var(--color-blue)] transition-all uppercase tracking-[0.5em] border-b-8 border-[var(--color-blue)] pb-6 hover:gap-8 active:scale-95 text-glow">
+            RESERVAR MI LUGAR <ArrowUpRight size={32} />
+          </Link>
+        </motion.div>
+      </section>
+    </div>
+  );
+};
+
+const Class = () => {
+  return (
+    <Layout>
+      <ClassContent />
     </Layout>
   );
 };

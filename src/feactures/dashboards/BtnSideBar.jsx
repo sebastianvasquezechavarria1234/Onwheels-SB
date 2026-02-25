@@ -1,7 +1,8 @@
+import React from "react"
 import { Link } from "react-router-dom"
 import { ArrowDown } from "lucide-react"
 
-export const BtnSideBar = ({ title, children, style, styleIcon, link }) => {
+export const BtnSideBar = ({ title, children, style, styleIcon, link, isCollapsed }) => {
   const letters = title.split("")
 
   return (
@@ -9,49 +10,27 @@ export const BtnSideBar = ({ title, children, style, styleIcon, link }) => {
       to={link}
       className={`
         ${style}
-        BtnLinkIcon group bg-white text-black/90 inline-flex items-center rounded-full gap-[8px] p-[3px_13px_3px_3px]
+        group transition-all duration-300 flex items-center rounded-2xl
+        ${isCollapsed ? "p-0 justify-center w-12 h-12 mx-auto" : "gap-3 px-3 py-2 hover:bg-slate-50"}
         `}
+      title={isCollapsed ? title : ""}
     >
       <span className={
-        `${styleIcon} BtnLinkIcon--icon w-[60px] h-[60px] flex justify-center items-center bg-gray-100 rounded-full border-1 border-gray-200 max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]`
+        `${styleIcon} transition-all duration-200 flex justify-center items-center rounded-xl shrink-0
+         ${isCollapsed ? "w-11 h-11 bg-white shadow-md border border-slate-50" : "w-10 h-10 bg-slate-50"}
+         text-slate-400 group-hover:text-blue-800 group-hover:bg-blue-50/50 group-hover:shadow-sm
+        `
       }>
-        <span className="BtnLinkIcon--icon__svg">{children}</span>
-        
+        <span className="flex items-center justify-center">
+          {React.cloneElement(children, { size: isCollapsed ? 20 : 18, strokeWidth: 2.2 })}
+        </span>
       </span>
 
-      <p className="relative overflow-hidden h-6 leading-6 font-medium!" style={{ perspective: "1000px" }}>
-        <span className=" left-0 top-0 w-full block will-change-transform">
-          {letters.map((letter, index) => (
-            <span
-              key={`exit-${index}`}
-              className="inline-block transform transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] group-hover:-translate-y-full group-hover:opacity-0 group-hover:rotateX-90 group-hover:scale-110"
-              style={{
-                transitionDelay: `${index * 15}ms`,
-                transformStyle: "preserve-3d",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              }}
-            >
-              {letter === " " ? "\u00A0" : letter}
-            </span>
-          ))}
-        </span>
-
-        <span className=" absolute left-0 top-0 w-full block will-change-transform">
-          {letters.map((letter, index) => (
-            <span
-              key={`enter-${index}`}
-              className=" inline-block transform translate-y-full opacity-0 rotateX-90 scale-90 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] group-hover:translate-y-0 group-hover:opacity-100 group-hover:rotateX-0 group-hover:scale-100"
-              style={{
-                transitionDelay: `${index * 15 + 25}ms`,
-                transformStyle: "preserve-3d",
-                textShadow: "0 2px 8px rgba(0,0,0,0.2)",
-              }}
-            >
-              {letter === " " ? "\u00A0" : letter}
-            </span>
-          ))}
-        </span>
-      </p>
+      {!isCollapsed && (
+        <p className="text-[15px] font-bold tracking-tight text-slate-500 group-hover:text-slate-900 transition-colors" style={{ fontFamily: '"Outfit", sans-serif' }}>
+          {title}
+        </p>
+      )}
     </Link>
   )
 }

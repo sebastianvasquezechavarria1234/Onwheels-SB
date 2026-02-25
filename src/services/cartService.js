@@ -1,7 +1,7 @@
 // Cart Service - Manejo del carrito de compras con localStorage
 // Basado en la lógica de Ventas para mantener consistencia
 
-const CART_STORAGE_KEY = 'onwheels_cart';
+const CART_STORAGE_KEY = 'Performance SB_cart';
 
 // Estructura del carrito:
 // {

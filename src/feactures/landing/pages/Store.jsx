@@ -7,13 +7,19 @@ import { Animation } from "../components/Animation";
 import { Layout } from "../layout/Layout";
 
 
+export const StoreContent = () => {
+    return (
+        <>
+            <Hero />
+            <Grid />
+        </>
+    )
+}
+
 export const Store = () => {
     return (
         <Layout>
-            {/* <Animation /> */}
-            <Hero />
-            <Grid />
-
+            <StoreContent />
         </Layout>
     )
 }

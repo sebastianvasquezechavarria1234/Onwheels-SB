@@ -4,10 +4,20 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '../../../dashboards/dinamico/context/AuthContext';
+import { getStoreHomePath, getPreinscriptionPath } from '../../../../utils/roleHelpers';
+
 export const Hero = () => {
     const { scrollY } = useScroll();
     const y1 = useTransform(scrollY, [0, 500], [0, 100]);
     const y2 = useTransform(scrollY, [0, 500], [0, -50]);
+    const { user } = useAuth();
+
+    const storePath = getStoreHomePath(user);
+    const joinPath = getPreinscriptionPath(user);
+
+    // DEBUG: Check paths for guests
+    console.log("Hero Paths:", { user, storePath, joinPath });
 
     return (
         <section className="relative w-full h-[85vh] md:h-[90vh] bg-black text-white overflow-hidden flex flex-col md:flex-row pt-20">
@@ -42,7 +52,7 @@ export const Hero = () => {
                     </p>
 
                     <div className="flex gap-3">
-                        <Link to="/store" className="group relative px-6 py-3 bg-white text-black rounded-full font-bold overflow-hidden text-sm">
+                        <Link to={storePath} className="group relative px-6 py-3 bg-white text-black rounded-full font-bold overflow-hidden text-sm">
                             <span className="relative z-10 flex items-center gap-2 group-hover:gap-2 transition-all uppercase">
                                 Ver Tienda <ArrowUpRight size={16} />
                             </span>
@@ -51,7 +61,7 @@ export const Hero = () => {
                                 Ver Tienda <ArrowUpRight size={16} />
                             </span>
                         </Link>
-                        <Link to="/preinscriptions" className="px-6 py-3 border border-white/20 rounded-full font-bold hover:bg-white/5 transition-all uppercase text-sm">
+                        <Link to={joinPath} className="px-6 py-3 border border-white/20 rounded-full font-bold hover:bg-white/5 transition-all uppercase text-sm">
                             Unirse
                         </Link>
                     </div>

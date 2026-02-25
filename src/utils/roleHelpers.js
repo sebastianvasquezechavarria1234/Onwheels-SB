@@ -78,3 +78,34 @@ export const getCheckoutPath = (user) => {
 
     return `/${roleSlug}/checkout`;
 };
+
+/**
+ * Get the shopping cart path for the current user.
+ * @param {Object} user 
+ * @returns {string}
+ */
+export const getCartPath = (user) => {
+    const roleSlug = getUserRoleSlug(user);
+    if (roleSlug === 'store') {
+        return '/shoppingCart';
+    }
+    // Custom role has a different path structure for cart
+    if (roleSlug === 'custom') {
+        return '/custom/cart';
+    }
+    return `/${roleSlug}/shoppingCart`;
+};
+
+/**
+ * Get the preinscription path for the current user.
+ * @param {Object} user 
+ * @returns {string}
+ */
+export const getPreinscriptionPath = (user) => {
+    const roleSlug = getUserRoleSlug(user);
+    if (roleSlug === 'store') return '/register'; // Guests must register before pre-inscribing
+    if (roleSlug === 'users') return '/users/preinscriptions';
+    if (roleSlug === 'admin') return '/admin/preRegistrations';
+    if (roleSlug === 'custom') return '/custom/preinscripciones';
+    return `/${roleSlug}/home`; // Fallback for roles that might not need this (student/instructor)
+};

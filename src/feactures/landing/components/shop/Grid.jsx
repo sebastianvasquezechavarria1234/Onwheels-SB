@@ -58,24 +58,24 @@ export const Grid = () => {
     });
 
     return (
-        <section className="w-full bg-white pt-24 pb-24">
+        <section id="products" className="w-full bg-white pt-24 pb-24">
             <div className="max-w-[1500px] mx-auto px-6 md:px-10">
 
-            
-                <div className="mb-16 text-center flex flex-col items-center">
-                
-                
-                    <h2 className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.9] mb-6">
-    EXPLORA
-    <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-400">
-        NUESTROS PRODUCTOS
-    </span>
-</h2>
 
-                 <p className="text-gray-800 text-xl md:text-2xl max-w-3xl leading-relaxed font-semibold">
-    Equipamiento y estilo diseñados para la vida urbana.
-    Calidad, resistencia y actitud en cada detalle.
-</p>
+                <div className="mb-16 text-center flex flex-col items-center">
+
+
+                    <h2 className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.9] mb-6">
+                        EXPLORA
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-400">
+                            NUESTROS PRODUCTOS
+                        </span>
+                    </h2>
+
+                    <p className="text-gray-800 text-xl md:text-2xl max-w-3xl leading-relaxed font-semibold">
+                        Equipamiento y estilo diseñados para la vida urbana.
+                        Calidad, resistencia y actitud en cada detalle.
+                    </p>
 
                 </div>
 

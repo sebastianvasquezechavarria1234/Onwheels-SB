@@ -10,15 +10,23 @@ import { LearningSection } from "../components/landing/LearningSection";
 import { CommunityReels } from "../components/landing/CommunityReels";
 import { Coment } from "../components/landing/Coment";
 
-export const Home = () => {
+export const HomeContent = () => {
     return (
-        <Layout>
+        <>
             <Hero />
             <FeaturedProducts />
             <UpcomingEvents />
             <LearningSection />
             <CommunityReels />
             <Coment />
+        </>
+    )
+}
+
+export const Home = () => {
+    return (
+        <Layout>
+            <HomeContent />
         </Layout>
     )
 }
