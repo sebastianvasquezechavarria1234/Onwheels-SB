@@ -26,7 +26,7 @@ export default function Productos({ renderLayout = true }) {
   const [colores, setColores] = useState([]);
   const [tallas, setTallas] = useState([]);
   const [variantesGlobales, setVariantesGlobales] = useState([]);
-  const [isProductModalOpen, setIsfbbbProductModalOpen] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
   const [isCreateColorOpen, setIsCreateColorOpen] = useState(false);
   const [isCreateTallaOpen, setIsCreateTallaOpen] = useState(false);
@@ -438,661 +438,671 @@ export default function Productos({ renderLayout = true }) {
     return c ? c.nombre_color : "—";
   };
   const content = (
-    <>
-      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Productos / Gestión de Productos</h2>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="relative w-full md:w-96">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                <Search size={18} />
-              </div>
+    <div className="flex flex-col h-full bg-white overflow-hidden">
+      {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
+      <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
+
+        {/* Row 1: Minimal Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Productos / Gestión de Productos
+          </h2>
+        </div>
+
+        {/* Row 2: Active Toolbar (Big Buttons) */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
+          {/* Search & Create Group */}
+          <div className="flex flex-1 w-full sm:w-auto gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="input !pl-[50px] w-full p-2"
+                className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
               />
             </div>
             {canManage("productos") && (
               <button
                 onClick={() => openProductModal(null)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
+                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
               >
                 <Plus size={18} />
                 Registrar nuevo producto
               </button>
             )}
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-3 w-[5%]">ID</th>
-                    <th className="px-6 py-3 w-[8%]">Img</th>
-                    <th className="px-6 py-3 w-[18%]">Nombre</th>
-                    <th className="px-6 py-3 w-[20%]">Descripción</th>
-                    <th className="px-6 py-3 w-[12%]">Categoría</th>
-                    <th className="px-6 py-3 w-[8%]">P. Compra</th>
-                    <th className="px-6 py-3 w-[8%]">P. Venta</th>
-                    <th className="px-6 py-3 w-[6%]">%Ganancia</th>
-                    <th className="px-6 py-3 w-[6%]">Desc</th>
-                    <th className="px-6 py-3 w-[7%]">Estado</th>
-                    <th className="px-6 py-3 w-[10%]">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productosActuales.length === 0 ? (
-                    <tr>
-                      <td colSpan="11" className="px-6 py-8 text-center text-gray-500 italic">
-                        No hay productos registrados
-                      </td>
-                    </tr>
-                  ) : (
-                    productosActuales.map((p) => (
-                      <tr key={p.id_producto} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4">{p.id_producto}</td>
-                        <td className="px-6 py-4">
-                          {p.imagen_producto ? (
-                            <img
-                              src={p.imagen_producto}
-                              alt="Producto"
-                              className="w-10 h-10 object-cover rounded border"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded border">
-                              <ImageIcon size={16} className="text-gray-400" />
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 font-medium">{p.nombre_producto}</td>
-                        <td className="px-6 py-4">{p.descripcion || "—"}</td>
-                        <td className="px-6 py-4">{getCategoriaNombre(p.id_categoria)}</td>
-                        <td className="px-6 py-4">${Number(p.precio_compra || 0).toFixed(2)}</td>
-                        <td className="px-6 py-4">${Number(p.precio || 0).toFixed(2)}</td>
-                        <td className="px-6 py-4">{p.porcentaje_ganancia}%</td>
-                        <td className="px-6 py-4">{p.descuento_producto}%</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${p.estado ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                              }`}
-                          >
-                            {p.estado ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2 justify-center">
+        </div>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-gray-700">
+            <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+              <tr>
+                <th className="px-6 py-3 w-[5%]">ID</th>
+                <th className="px-6 py-3 w-[8%]">Img</th>
+                <th className="px-6 py-3 w-[18%]">Nombre</th>
+                <th className="px-6 py-3 w-[20%]">Descripción</th>
+                <th className="px-6 py-3 w-[12%]">Categoría</th>
+                <th className="px-6 py-3 w-[8%]">P. Compra</th>
+                <th className="px-6 py-3 w-[8%]">P. Venta</th>
+                <th className="px-6 py-3 w-[6%]">%Ganancia</th>
+                <th className="px-6 py-3 w-[6%]">Desc</th>
+                <th className="px-6 py-3 w-[7%]">Estado</th>
+                <th className="px-6 py-3 w-[10%]">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productosActuales.length === 0 ? (
+                <tr>
+                  <td colSpan="11" className="px-6 py-8 text-center text-gray-500 italic">
+                    No hay productos registrados
+                  </td>
+                </tr>
+              ) : (
+                productosActuales.map((p) => (
+                  <tr key={p.id_producto} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                    <td className="px-6 py-4">{p.id_producto}</td>
+                    <td className="px-6 py-4">
+                      {p.imagen_producto ? (
+                        <img
+                          src={p.imagen_producto}
+                          alt="Producto"
+                          className="w-10 h-10 object-cover rounded border"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded border">
+                          <ImageIcon size={16} className="text-gray-400" />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-medium">{p.nombre_producto}</td>
+                    <td className="px-6 py-4">{p.descripcion || "—"}</td>
+                    <td className="px-6 py-4">{getCategoriaNombre(p.id_categoria)}</td>
+                    <td className="px-6 py-4">${Number(p.precio_compra || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4">${Number(p.precio || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4">{p.porcentaje_ganancia}%</td>
+                    <td className="px-6 py-4">{p.descuento_producto}%</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${p.estado ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                          }`}
+                      >
+                        {p.estado ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2 justify-center">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => openViewModal(p)}
+                          className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                          title="Ver detalles"
+                        >
+                          <Eye size={16} />
+                        </motion.button>
+                        {canManage("productos") && (
+                          <>
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => openViewModal(p)}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                              title="Ver detalles"
+                              onClick={() => openProductModal(p)}
+                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              title="Editar"
                             >
-                              <Eye size={16} />
+                              <Pen size={16} />
                             </motion.button>
-                            {canManage("productos") && (
-                              <>
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => openProductModal(p)}
-                                  className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                                  title="Editar"
-                                >
-                                  <Pen size={16} />
-                                </motion.button>
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => openDeleteConfirm(p)}
-                                  className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                                  title="Eliminar"
-                                >
-                                  <Trash2 size={16} />
-                                </motion.button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => openDeleteConfirm(p)}
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </motion.button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {productosFiltrados.length > 0 && (
+        <div className="flex justify-center items-center gap-2 mt-6 py-4">
+          <button
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+            className={`px-4 py-2 rounded-lg ${paginaActual === 1
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+          >
+            Anterior
+          </button>
+          <span className="text-sm text-gray-600">
+            Página <span className="font-semibold text-blue-700">{paginaActual}</span> de {totalPaginas}
+          </span>
+          <button
+            disabled={paginaActual === totalPaginas}
+            onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+            className={`px-4 py-2 rounded-lg ${paginaActual === totalPaginas
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              }`}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+    </div>
+
+        {/* ✅ NOTIFICACIONES */ }
+  <AnimatePresence>
+    {notification.show && (
+      <motion.div
+        initial={{ opacity: 0, x: 300 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 300 }}
+        transition={{ duration: 0.3 }}
+        className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
+          }`}
+      >
+        {notification.message}
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* === Modal de Vista === */ }
+  <AnimatePresence>
+    {isViewModalOpen && selectedProductForView && (
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setIsViewModalOpen(false)}
+      >
+        <motion.div
+          className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: "spring", damping: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => setIsViewModalOpen(false)}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          >
+            <X size={20} />
+          </button>
+          <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">Detalles del Producto</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+            <div>
+              {selectedProductForView.imagen_producto ? (
+                <img
+                  src={selectedProductForView.imagen_producto}
+                  alt="Producto"
+                  className="w-full h-48 object-contain border rounded-md"
+                />
+              ) : (
+                <div className="w-full h-48 flex items-center justify-center bg-gray-100 rounded-md border">
+                  <ImageIcon size={32} className="text-gray-400" />
+                </div>
+              )}
+            </div>
+            <div className="space-y-4 text-gray-700">
+              <div>
+                <div className="font-medium text-gray-600">ID</div>
+                <div>{selectedProductForView.id_producto}</div>
+              </div>
+              <div>
+                <div className="font-medium text-gray-600">Nombre</div>
+                <div>{selectedProductForView.nombre_producto}</div>
+              </div>
+              <div>
+                <div className="font-medium text-gray-600">Categoría</div>
+                <div>{getCategoriaNombre(selectedProductForView.id_categoria)}</div>
+              </div>
+              <div>
+                <div className="font-medium text-gray-600">Precio Compra</div>
+                <div>${Number(selectedProductForView.precio_compra || 0).toFixed(2)}</div>
+              </div>
+              <div>
+                <div className="font-medium text-gray-600">Precio Venta</div>
+                <div>${Number(selectedProductForView.precio || 0).toFixed(2)}</div>
+              </div>
+              <div>
+                <div className="font-medium text-gray-600">% Ganancia</div>
+                <div>{selectedProductForView.porcentaje_ganancia}%</div>
+              </div>
+              <div>
+                <div className="font-medium text-gray-600">Descuento</div>
+                <div>{selectedProductForView.descuento_producto}%</div>
+              </div>
+              <div>
+                <div className="font-medium text-gray-600">Estado</div>
+                <div>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${selectedProductForView.estado ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}
+                  >
+                    {selectedProductForView.estado ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-          {productosFiltrados.length > 0 && (
-            <div className="flex justify-center items-center gap-2 mt-6 py-4">
-              <button
-                disabled={paginaActual === 1}
-                onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${paginaActual === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-600">
-                Página <span className="font-semibold text-blue-700">{paginaActual}</span> de {totalPaginas}
-              </span>
-              <button
-                disabled={paginaActual === totalPaginas}
-                onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
-                className={`px-4 py-2 rounded-lg ${paginaActual === totalPaginas
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
-        </div>
 
-        {/* ✅ NOTIFICACIONES */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div
-              initial={{ opacity: 0, x: 300 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 300 }}
-              transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-green-600" : "bg-red-600"
-                }`}
-            >
-              {notification.message}
-            </motion.div>
-          )}
-        </AnimatePresence>
+          {/* Variantes en vista */}
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-gray-800 mb-3">Variantes</h4>
+            {variantesGlobales
+              .filter(v => v.id_producto === selectedProductForView.id_producto)
+              .length === 0 ? (
+              <p className="text-gray-500 italic">No hay variantes registradas para este producto.</p>
+            ) : (
+              <div className="border border-gray-200 rounded-md overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Color</th>
+                      <th className="px-4 py-2 text-left">Talla</th>
+                      <th className="px-4 py-2 text-left">Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variantesGlobales
+                      .filter(v => v.id_producto === selectedProductForView.id_producto)
+                      .map((v, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="px-4 py-2">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-5 h-5 rounded border"
+                                style={{ backgroundColor: colores.find(c => c.id_color === v.id_color)?.codigo_hex || "#ccc" }}
+                              />
+                              <span>{getColorNombre(v.id_color)}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2">{getTallaNombre(v.id_talla)}</td>
+                          <td className="px-4 py-2">{v.stock}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-        {/* === Modal de Vista === */}
-        <AnimatePresence>
-          {isViewModalOpen && selectedProductForView && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+          <div className="flex justify-center pt-2">
+            <button
               onClick={() => setIsViewModalOpen(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
             >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => setIsViewModalOpen(false)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
-                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">Detalles del Producto</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                  <div>
-                    {selectedProductForView.imagen_producto ? (
-                      <img
-                        src={selectedProductForView.imagen_producto}
-                        alt="Producto"
-                        className="w-full h-48 object-contain border rounded-md"
-                      />
-                    ) : (
-                      <div className="w-full h-48 flex items-center justify-center bg-gray-100 rounded-md border">
-                        <ImageIcon size={32} className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-4 text-gray-700">
-                    <div>
-                      <div className="font-medium text-gray-600">ID</div>
-                      <div>{selectedProductForView.id_producto}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Nombre</div>
-                      <div>{selectedProductForView.nombre_producto}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Categoría</div>
-                      <div>{getCategoriaNombre(selectedProductForView.id_categoria)}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Precio Compra</div>
-                      <div>${Number(selectedProductForView.precio_compra || 0).toFixed(2)}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Precio Venta</div>
-                      <div>${Number(selectedProductForView.precio || 0).toFixed(2)}</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">% Ganancia</div>
-                      <div>{selectedProductForView.porcentaje_ganancia}%</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Descuento</div>
-                      <div>{selectedProductForView.descuento_producto}%</div>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-600">Estado</div>
-                      <div>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${selectedProductForView.estado ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }`}
-                        >
-                          {selectedProductForView.estado ? "Activo" : "Inactivo"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              Cerrar
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
 
-                {/* Variantes en vista */}
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Variantes</h4>
-                  {variantesGlobales
-                    .filter(v => v.id_producto === selectedProductForView.id_producto)
-                    .length === 0 ? (
-                    <p className="text-gray-500 italic">No hay variantes registradas para este producto.</p>
-                  ) : (
-                    <div className="border border-gray-200 rounded-md overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-2 text-left">Color</th>
-                            <th className="px-4 py-2 text-left">Talla</th>
-                            <th className="px-4 py-2 text-left">Stock</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {variantesGlobales
-                            .filter(v => v.id_producto === selectedProductForView.id_producto)
-                            .map((v, idx) => (
-                              <tr key={idx} className="border-t">
-                                <td className="px-4 py-2">
-                                  <div className="flex items-center gap-2">
-                                    <div
-                                      className="w-5 h-5 rounded border"
-                                      style={{ backgroundColor: colores.find(c => c.id_color === v.id_color)?.codigo_hex || "#ccc" }}
-                                    />
-                                    <span>{getColorNombre(v.id_color)}</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-2">{getTallaNombre(v.id_talla)}</td>
-                                <td className="px-4 py-2">{v.stock}</td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-center pt-2">
-                  <button
-                    onClick={() => setIsViewModalOpen(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* === Modal de Confirmación de Eliminación === */}
-        <AnimatePresence>
-          {isDeleteConfirmOpen && productoToDelete && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+  {/* === Modal de Confirmación de Eliminación === */ }
+  <AnimatePresence>
+    {isDeleteConfirmOpen && productoToDelete && (
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setIsDeleteConfirmOpen(false)}
+      >
+        <motion.div
+          className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: "spring", damping: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-xl font-bold text-red-600 mb-4 text-center">Eliminar Producto</h3>
+          <p className="text-gray-700 text-center">
+            ¿Está seguro de eliminar el producto{" "}
+            <span className="font-bold">{productoToDelete.nombre_producto}</span>?
+            <br />
+            <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+          </p>
+          <div className="flex justify-center gap-3 pt-6">
+            <button
               onClick={() => setIsDeleteConfirmOpen(false)}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
             >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="text-xl font-bold text-red-600 mb-4 text-center">Eliminar Producto</h3>
-                <p className="text-gray-700 text-center">
-                  ¿Está seguro de eliminar el producto{" "}
-                  <span className="font-bold">{productoToDelete.nombre_producto}</span>?
-                  <br />
-                  <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
-                </p>
-                <div className="flex justify-center gap-3 pt-6">
-                  <button
-                    onClick={() => setIsDeleteConfirmOpen(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            >
+              Eliminar
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
 
-        {/* === Modal de Producto (Crear/Editar) === */}
-        <AnimatePresence>
-          {isProductModalOpen && (
-            <motion.div
-              className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              role="dialog"
-              aria-modal="true"
+  {/* === Modal de Producto (Crear/Editar) === */ }
+  <AnimatePresence>
+    {isProductModalOpen && (
+      <motion.div
+        className="modal py-[60px] fixed w-full min-h-screen top-0 left-0 z-50 flex items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="absolute inset-0" onClick={() => setIsProductModalOpen(false)} />
+        <motion.div
+          className="relative z-10 bg-white p-5 rounded-lg w-[90%] max-w-2xl max-h-[90vh] overflow-y-auto"
+          initial={{ scale: 0.98, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.98, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-bold text-gray-900">
+              {productForm.id_producto ? "Editar Producto" : "Crear Nuevo Producto"}
+            </h2>
+            <button
+              onClick={() => setIsProductModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600"
             >
-              <div className="absolute inset-0" onClick={() => setIsProductModalOpen(false)} />
-              <motion.div
-                className="relative z-10 bg-white p-5 rounded-lg w-[90%] max-w-2xl max-h-[90vh] overflow-y-auto"
-                initial={{ scale: 0.98, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.98, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 24 }}
+              <X size={20} />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+              <input
+                name="nombre_producto"
+                value={productForm.nombre_producto}
+                onChange={handleProductChange}
+                onBlur={handleProductBlur}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="Nombre del producto"
+              />
+              {formErrors.nombre_producto && <p className="text-red-500 text-xs mt-1">{formErrors.nombre_producto}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+              <select
+                name="id_categoria"
+                value={productForm.id_categoria ?? ""}
+                onChange={handleProductChange}
+                onBlur={handleProductBlur}
+                className="w-full p-2 border border-gray-300 rounded-md"
               >
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {productForm.id_producto ? "Editar Producto" : "Crear Nuevo Producto"}
-                  </h2>
-                  <button
-                    onClick={() => setIsProductModalOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                    <input
-                      name="nombre_producto"
-                      value={productForm.nombre_producto}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="Nombre del producto"
-                    />
-                    {formErrors.nombre_producto && <p className="text-red-500 text-xs mt-1">{formErrors.nombre_producto}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                <option value="">Seleccionar categoría</option>
+                {categorias.map((c) => (
+                  <option key={c.id_categoria} value={c.id_categoria}>
+                    {c.nombre_categoria}
+                  </option>
+                ))}
+              </select>
+              {formErrors.id_categoria && <p className="text-red-500 text-xs mt-1">{formErrors.id_categoria}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio compra *</label>
+              <input
+                name="precio_compra"
+                type="number"
+                step="0.01"
+                value={productForm.precio_compra}
+                onChange={handleProductChange}
+                onBlur={handleProductBlur}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="0.00"
+              />
+              {formErrors.precio_compra && <p className="text-red-500 text-xs mt-1">{formErrors.precio_compra}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio venta *</label>
+              <input
+                name="precio"
+                type="number"
+                step="0.01"
+                value={productForm.precio}
+                onChange={handleProductChange}
+                onBlur={handleProductBlur}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="0.00"
+              />
+              {formErrors.precio && <p className="text-red-500 text-xs mt-1">{formErrors.precio}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">% Ganancia</label>
+              <input
+                name="porcentaje_ganancia"
+                type="number"
+                step="0.01"
+                value={productForm.porcentaje_ganancia}
+                onChange={handleProductChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">% Descuento</label>
+              <input
+                name="descuento_producto"
+                type="number"
+                step="0.01"
+                value={productForm.descuento_producto}
+                onChange={handleProductChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="0"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <textarea
+                name="descripcion"
+                value={productForm.descripcion}
+                onChange={handleProductChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                rows={2}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (URL)</label>
+              <input
+                name="imagen_producto"
+                value={productForm.imagen_producto}
+                onChange={handleProductChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="https://ejemplo.com/imagen.jpg"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <select
+                name="estado"
+                value={productForm.estado}
+                onChange={handleProductChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              >
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          {/* === Gestión de Variantes en Modal === */}
+          <div className="mb-6 border-t pt-4">
+            <h3 className="text-md font-bold text-gray-800 mb-3">Variantes (Color/Talla/Stock)</h3>
+
+            {/* Selector y Inputs para agregar variante */}
+            <div className="bg-gray-50 p-3 rounded-md mb-3 space-y-3">
+              <div className="flex flex-wrap gap-2 items-end">
+
+                {/* Color */}
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-xs font-semibold text-gray-600">Color</label>
+                  <div className="flex gap-1">
                     <select
-                      name="id_categoria"
-                      value={productForm.id_categoria ?? ""}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
+                      value={currentVariant.color}
+                      onChange={(e) => handleVariantChange('color', e.target.value)}
+                      className="w-full p-1.5 border rounded text-sm"
                     >
-                      <option value="">Seleccionar categoría</option>
-                      {categorias.map((c) => (
-                        <option key={c.id_categoria} value={c.id_categoria}>
-                          {c.nombre_categoria}
-                        </option>
+                      <option value="">Seleccionar...</option>
+                      {colores.map(c => (
+                        <option key={c.id_color} value={c.nombre_color}>{c.nombre_color}</option>
                       ))}
                     </select>
-                    {formErrors.id_categoria && <p className="text-red-500 text-xs mt-1">{formErrors.id_categoria}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio compra *</label>
-                    <input
-                      name="precio_compra"
-                      type="number"
-                      step="0.01"
-                      value={productForm.precio_compra}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0.00"
-                    />
-                    {formErrors.precio_compra && <p className="text-red-500 text-xs mt-1">{formErrors.precio_compra}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio venta *</label>
-                    <input
-                      name="precio"
-                      type="number"
-                      step="0.01"
-                      value={productForm.precio}
-                      onChange={handleProductChange}
-                      onBlur={handleProductBlur}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0.00"
-                    />
-                    {formErrors.precio && <p className="text-red-500 text-xs mt-1">{formErrors.precio}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">% Ganancia</label>
-                    <input
-                      name="porcentaje_ganancia"
-                      type="number"
-                      step="0.01"
-                      value={productForm.porcentaje_ganancia}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">% Descuento</label>
-                    <input
-                      name="descuento_producto"
-                      type="number"
-                      step="0.01"
-                      value={productForm.descuento_producto}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                    <textarea
-                      name="descripcion"
-                      value={productForm.descripcion}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      rows={2}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (URL)</label>
-                    <input
-                      name="imagen_producto"
-                      value={productForm.imagen_producto}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      placeholder="https://ejemplo.com/imagen.jpg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                    <select
-                      name="estado"
-                      value={productForm.estado}
-                      onChange={handleProductChange}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
+                    <button onClick={() => setIsCreateColorOpen(true)} className="p-1.5 bg-gray-200 rounded hover:bg-gray-300" title="Nuevo color">+</button>
                   </div>
                 </div>
 
-                {/* === Gestión de Variantes en Modal === */}
-                <div className="mb-6 border-t pt-4">
-                  <h3 className="text-md font-bold text-gray-800 mb-3">Variantes (Color/Talla/Stock)</h3>
-
-                  {/* Selector y Inputs para agregar variante */}
-                  <div className="bg-gray-50 p-3 rounded-md mb-3 space-y-3">
-                    <div className="flex flex-wrap gap-2 items-end">
-
-                      {/* Color */}
-                      <div className="flex-1 min-w-[120px]">
-                        <label className="block text-xs font-semibold text-gray-600">Color</label>
-                        <div className="flex gap-1">
-                          <select
-                            value={currentVariant.color}
-                            onChange={(e) => handleVariantChange('color', e.target.value)}
-                            className="w-full p-1.5 border rounded text-sm"
-                          >
-                            <option value="">Seleccionar...</option>
-                            {colores.map(c => (
-                              <option key={c.id_color} value={c.nombre_color}>{c.nombre_color}</option>
-                            ))}
-                          </select>
-                          <button onClick={() => setIsCreateColorOpen(true)} className="p-1.5 bg-gray-200 rounded hover:bg-gray-300" title="Nuevo color">+</button>
-                        </div>
+                {/* Tallas (simple por ahora) */}
+                <div className="flex-1 min-w-[200px] flex flex-col gap-1">
+                  {currentVariant.tallas.map((t, idx) => (
+                    <div key={idx} className="flex gap-1 items-center">
+                      <div className="flex flex-1 gap-1">
+                        <select
+                          value={t.talla}
+                          onChange={(e) => handleTallaChange(idx, 'talla', e.target.value)}
+                          className="p-1.5 border rounded text-sm flex-1"
+                        >
+                          <option value="">Talla</option>
+                          {tallas.map(tl => <option key={tl.id_talla} value={tl.nombre_talla}>{tl.nombre_talla}</option>)}
+                        </select>
+                        <button
+                          onClick={() => setIsCreateTallaOpen(true)}
+                          className="p-1.5 bg-gray-200 rounded hover:bg-gray-300 text-gray-600"
+                          title="Crear nueva talla"
+                        >
+                          <Plus size={14} />
+                        </button>
                       </div>
-
-                      {/* Tallas (simple por ahora) */}
-                      <div className="flex-1 min-w-[200px] flex flex-col gap-1">
-                        {currentVariant.tallas.map((t, idx) => (
-                          <div key={idx} className="flex gap-1 items-center">
-                            <div className="flex flex-1 gap-1">
-                              <select
-                                value={t.talla}
-                                onChange={(e) => handleTallaChange(idx, 'talla', e.target.value)}
-                                className="p-1.5 border rounded text-sm flex-1"
-                              >
-                                <option value="">Talla</option>
-                                {tallas.map(tl => <option key={tl.id_talla} value={tl.nombre_talla}>{tl.nombre_talla}</option>)}
-                              </select>
-                              <button
-                                onClick={() => setIsCreateTallaOpen(true)}
-                                className="p-1.5 bg-gray-200 rounded hover:bg-gray-300 text-gray-600"
-                                title="Crear nueva talla"
-                              >
-                                <Plus size={14} />
-                              </button>
-                            </div>
-                            <input
-                              type="number"
-                              placeholder="Cant."
-                              value={t.cantidad}
-                              onChange={(e) => handleTallaChange(idx, 'cantidad', e.target.value)}
-                              className="w-16 p-1.5 border rounded text-sm"
-                            />
-                            {idx === currentVariant.tallas.length - 1 && (
-                              <button onClick={addTalla} className="p-1.5 bg-blue-100 text-blue-600 rounded" title="Agregar otra fila de talla">
-                                <Plus size={14} />
-                              </button>
-                            )}
-                            {currentVariant.tallas.length > 1 && (
-                              <button onClick={() => removeTalla(idx)} className="p-1.5 bg-red-100 text-red-600 rounded" title="Quitar talla">
-                                <X size={14} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={saveVariant}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 h-9"
-                      >
-                        Agregar al listado
-                      </button>
+                      <input
+                        type="number"
+                        placeholder="Cant."
+                        value={t.cantidad}
+                        onChange={(e) => handleTallaChange(idx, 'cantidad', e.target.value)}
+                        className="w-16 p-1.5 border rounded text-sm"
+                      />
+                      {idx === currentVariant.tallas.length - 1 && (
+                        <button onClick={addTalla} className="p-1.5 bg-blue-100 text-blue-600 rounded" title="Agregar otra fila de talla">
+                          <Plus size={14} />
+                        </button>
+                      )}
+                      {currentVariant.tallas.length > 1 && (
+                        <button onClick={() => removeTalla(idx)} className="p-1.5 bg-red-100 text-red-600 rounded" title="Quitar talla">
+                          <X size={14} />
+                        </button>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Lista de variantes agregadas (TEMPORALES) */}
-                  {variants.length > 0 ? (
-                    <div className="border rounded-md overflow-hidden max-h-40 overflow-y-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-100 text-xs">
-                          <tr>
-                            <th className="px-3 py-1 text-left">Color</th>
-                            <th className="px-3 py-1 text-left">Talla</th>
-                            <th className="px-3 py-1 text-left">Stock</th>
-                            <th className="px-3 py-1 w-10"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {variants.map((v, i) => (
-                            <tr key={i} className="border-t text-gray-700">
-                              <td className="px-3 py-1">{v.nombre_color}</td>
-                              <td className="px-3 py-1">{v.nombre_talla}</td>
-                              <td className="px-3 py-1">{v.stock}</td>
-                              <td className="px-3 py-1 text-right">
-                                <button onClick={() => removeVariant(v)} className="text-red-500 hover:text-red-700">
-                                  <Trash2 size={14} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400 italic text-center py-2">Agrega variantes arriba (se crean al guardar el producto)</p>
-                  )}
+                  ))}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                  <button
-                    onClick={() => setIsProductModalOpen(false)}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={saveProduct}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    Guardar Producto
-                  </button>
-                </div>
+                <button
+                  onClick={saveVariant}
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 h-9"
+                >
+                  Agregar al listado
+                </button>
+              </div>
+            </div>
 
-                {/* Modales anidados para Color/Talla rápida */}
-                {isCreateColorOpen && (
-                  <div className="absolute inset-x-4 top-20 bg-white shadow-xl border p-4 rounded z-20">
-                    <h5 className="font-bold text-sm mb-2">Nuevo Color</h5>
-                    <input
-                      className="border p-1 w-full mb-2 text-sm"
-                      placeholder="Nombre Color"
-                      value={newColorName}
-                      onChange={e => setNewColorName(e.target.value)}
-                    />
-                    <input
-                      type="color"
-                      className="w-full h-8 mb-2"
-                      value={newColorHex}
-                      onChange={e => setNewColorHex(e.target.value)}
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => setIsCreateColorOpen(false)} className="text-xs p-1 bg-gray-200 rounded">Cancelar</button>
-                      <button onClick={handleCreateColor} className="text-xs p-1 bg-green-500 text-white rounded">Crear</button>
-                    </div>
-                  </div>
-                )}
-                {/* Similar para talla si se implementa modal rápido... */}
+            {/* Lista de variantes agregadas (TEMPORALES) */}
+            {variants.length > 0 ? (
+              <div className="border rounded-md overflow-hidden max-h-40 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100 text-xs">
+                    <tr>
+                      <th className="px-3 py-1 text-left">Color</th>
+                      <th className="px-3 py-1 text-left">Talla</th>
+                      <th className="px-3 py-1 text-left">Stock</th>
+                      <th className="px-3 py-1 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variants.map((v, i) => (
+                      <tr key={i} className="border-t text-gray-700">
+                        <td className="px-3 py-1">{v.nombre_color}</td>
+                        <td className="px-3 py-1">{v.nombre_talla}</td>
+                        <td className="px-3 py-1">{v.stock}</td>
+                        <td className="px-3 py-1 text-right">
+                          <button onClick={() => removeVariant(v)} className="text-red-500 hover:text-red-700">
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic text-center py-2">Agrega variantes arriba (se crean al guardar el producto)</p>
+            )}
+          </div>
 
-              </motion.div>
-            </motion.div>
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <button
+              onClick={() => setIsProductModalOpen(false)}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={saveProduct}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              Guardar Producto
+            </button>
+          </div>
+
+          {/* Modales anidados para Color/Talla rápida */}
+          {isCreateColorOpen && (
+            <div className="absolute inset-x-4 top-20 bg-white shadow-xl border p-4 rounded z-20">
+              <h5 className="font-bold text-sm mb-2">Nuevo Color</h5>
+              <input
+                className="border p-1 w-full mb-2 text-sm"
+                placeholder="Nombre Color"
+                value={newColorName}
+                onChange={e => setNewColorName(e.target.value)}
+              />
+              <input
+                type="color"
+                className="w-full h-8 mb-2"
+                value={newColorHex}
+                onChange={e => setNewColorHex(e.target.value)}
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setIsCreateColorOpen(false)} className="text-xs p-1 bg-gray-200 rounded">Cancelar</button>
+                <button onClick={handleCreateColor} className="text-xs p-1 bg-green-500 text-white rounded">Crear</button>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
+          {/* Similar para talla si se implementa modal rápido... */}
 
-        {/* === Modales de variantes, color, talla === */}
-        {/* (mantenidos sin cambios, como solicitaste) */}
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* === Modales de variantes, color, talla === */ }
+  {/* (mantenidos sin cambios, como solicitaste) */ }
 
         <AnimatePresence>
           {isVariantModalOpen && (
@@ -1339,8 +1349,7 @@ export default function Productos({ renderLayout = true }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </section>
-    </>
+    </div >
   );
 
 

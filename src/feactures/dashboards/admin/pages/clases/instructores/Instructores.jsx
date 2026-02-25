@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Eye, Plus, Search, Pencil, Trash2, X, User,
+  ChevronLeft, ChevronRight, Hash, TrendingUp,
+  SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
+  Briefcase
+} from "lucide-react";
+import {
   getInstructores,
   createInstructor,
   updateInstructor,
@@ -31,7 +37,7 @@ export const Instructores = () => {
   // Sorting state
   const [sortField, setSortField] = useState("nombre_completo");
   const [sortDirection, setSortDirection] = useState("asc");
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -81,36 +87,36 @@ export const Instructores = () => {
   // Sorted and filtered data
   const filteredAndSorted = useMemo(() => {
     let result = [...instructores];
-    
+
     // Filter
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(i => 
+      result = result.filter(i =>
         (i.nombre_completo || "").toLowerCase().includes(q) ||
         (i.email || "").toLowerCase().includes(q) ||
         (i.especialidad || "").toLowerCase().includes(q) ||
         (i.estado ? "activo" : "inactivo").includes(q)
       );
     }
-    
+
     // Sort
     result.sort((a, b) => {
       const aVal = a[sortField] || "";
       const bVal = b[sortField] || "";
-      
+
       if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDirection === "asc" 
-          ? aVal.localeCompare(bVal) 
+        return sortDirection === "asc"
+          ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       }
-      
+
       if (typeof aVal === "number" && typeof bVal === "number") {
         return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
       }
-      
+
       return 0;
     });
-    
+
     return result;
   }, [instructores, search, sortField, sortDirection]);
 
@@ -139,7 +145,7 @@ export const Instructores = () => {
   const exportCSV = () => {
     try {
       const headers = ["ID", "Nombre", "Email", "Especialidad", "Experiencia", "Estado"];
-      const rows = filteredAndSorted.map(i => 
+      const rows = filteredAndSorted.map(i =>
         [i.id_instructor, i.nombre_completo, i.email, i.especialidad || "", i.anios_experiencia || "", i.estado ? "Activo" : "Inactivo"].join(",")
       );
       const csv = [headers.join(","), ...rows].join("\n");
@@ -160,19 +166,21 @@ export const Instructores = () => {
   // Validar formulario
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.id_usuario) {
       errors.id_usuario = "El usuario es obligatorio";
     }
-    
-    if (formData.anios_experiencia && (isNaN(parseInt(formData.anios_experiencia)) || parseInt(formData.anios_experiencia) < 0)) {
+
+    if (formData.anios_experiencia === "" || formData.anios_experiencia === null || formData.anios_experiencia === undefined) {
+      errors.anios_experiencia = "Los años de experiencia son obligatorios";
+    } else if (isNaN(parseInt(formData.anios_experiencia)) || parseInt(formData.anios_experiencia) < 0) {
       errors.anios_experiencia = "Los años de experiencia deben ser un número positivo";
     }
-    
+
     if (!formData.especialidad.trim()) {
       errors.especialidad = "La especialidad es obligatoria";
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -181,7 +189,7 @@ export const Instructores = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Limpiar error específico al cambiar
     if (formErrors[name]) {
       setFormErrors(prev => {
@@ -195,10 +203,9 @@ export const Instructores = () => {
   // Crear instructor
   const handleCreate = async () => {
     if (!validateForm()) {
-      showNotification("Por favor corrige los errores del formulario", "error");
       return;
     }
-    
+
     try {
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
@@ -220,10 +227,9 @@ export const Instructores = () => {
   // Editar instructor
   const handleEdit = async () => {
     if (!validateForm()) {
-      showNotification("Por favor corrige los errores del formulario", "error");
       return;
     }
-    
+
     try {
       if (!selectedInstructor) return;
 
@@ -264,7 +270,7 @@ export const Instructores = () => {
     setModal(type);
     setSelectedInstructor(instructor);
     setFormErrors({});
-    
+
     if (type === "crear") {
       setFormData({
         id_usuario: "",
@@ -293,82 +299,58 @@ export const Instructores = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <div className="flex flex-col h-full bg-white overflow-hidden">
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
+        <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
+
           {/* Row 1: Minimal Header */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
-                Gestión de Instructores
-              </h2>
+            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Gestión de Instructores
+            </h2>
 
-              {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l pl-4">
-                <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                    <path d="M18 20a6 6 0 0 0-12 0"></path>
-                    <circle cx="12" cy="10" r="4"></circle>
-                    <circle cx="12" cy="12" r="10"></circle>
-                  </svg>
-                  <span className="text-xs font-bold!">{filteredAndSorted.length}</span>
+            {/* Compact Stats */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
+                  <Hash size={14} className="text-blue-600" />
+                  <span className="text-xs font-bold">{filteredAndSorted.length}</span>
                 </div>
               </div>
+              <button
+                onClick={exportCSV}
+                className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm"
+                title="Exportar CSV"
+              >
+                <Download size={16} />
+              </button>
             </div>
           </div>
 
           {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
             {/* Search & Create Group */}
             <div className="flex flex-1 w-full sm:w-auto gap-3">
               <div className="relative flex-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   placeholder="Buscar instructor..."
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
                 />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                )}
               </div>
               <button
                 onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <Plus size={18} />
                 Registrar Instructor
               </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={exportCSV}
-                  className="p-1.5 rounded-lg transition hover:bg-gray-100"
-                  title="Exportar CSV"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                </button>
-              </div>
             </div>
 
             {/* Filters (Larger) */}
-            <div className="flex flex-1 w-full justify-start sm:justify-end items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: "nombre_completo", label: "Nombre" },
                 { id: "email", label: "Email" },
@@ -379,18 +361,14 @@ export const Instructores = () => {
                   key={field.id}
                   onClick={() => toggleSort(field.id)}
                   className={cn(
-                    "px-4 py-2 text-xs uppercase font-bold tracking-wide rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
+                    "px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-xl border transition flex items-center gap-1.5 shrink-0 select-none",
                     sortField === field.id
-                      ? "bg-[#040529] text-white border-[#040529] shadow-sm transform scale-105"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                      ? "bg-blue-800 text-white border-blue-800 shadow-md"
+                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
                   )}
                 >
                   {field.label}
-                  {sortField === field.id && (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  )}
+                  {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
                 </button>
               ))}
             </div>
@@ -422,11 +400,7 @@ export const Instructores = () => {
                     <tr>
                       <td colSpan="6" className="p-12 text-center">
                         <div className="flex flex-col items-center justify-center gap-2 text-red-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 opacity-80">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                          </svg>
+                          <AlertCircle className="h-8 w-8 opacity-80" />
                           <p className="font-medium">{error}</p>
                         </div>
                       </td>
@@ -472,8 +446,8 @@ export const Instructores = () => {
                         <td className="px-5 py-4 text-center">
                           <span className={cn(
                             "text-xs font-bold px-3 py-1 rounded-full border shadow-sm",
-                            i.estado 
-                              ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                            i.estado
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                               : "bg-red-50 text-red-600 border-red-100"
                           )}>
                             {i.estado ? "Activo" : "Inactivo"}
@@ -481,35 +455,26 @@ export const Instructores = () => {
                         </td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => openModal("ver", i)} 
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" 
+                            <button
+                              onClick={() => openModal("ver", i)}
+                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
                               title="Ver"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
+                              <Eye className="h-4 w-4" />
                             </button>
-                            <button 
-                              onClick={() => openModal("editar", i)} 
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" 
+                            <button
+                              onClick={() => openModal("editar", i)}
+                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
                               title="Editar"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                                <line x1="18" y1="2" x2="22" y2="6"></line>
-                                <path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"></path>
-                              </svg>
+                              <Pencil className="h-4 w-4" />
                             </button>
-                            <button 
-                              onClick={() => openModal("eliminar", i)} 
-                              className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" 
+                            <button
+                              onClick={() => openModal("eliminar", i)}
+                              className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
                               title="Desactivar"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              </svg>
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -527,26 +492,22 @@ export const Instructores = () => {
                   Mostrando <span className="font-bold text-[#040529]">{currentItems.length}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
                 </p>
                 <div className="flex items-center gap-2">
-                  <button 
-                    disabled={currentPage === 1} 
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-gray-600">
-                      <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
+                    <ChevronLeft className="h-4 w-4 text-gray-600" />
                   </button>
                   <span className="text-sm font-bold text-[#040529] px-2">
-                    {currentPage} de {totalPages}
+                    {currentPage}
                   </span>
-                  <button 
-                    disabled={currentPage === totalPages} 
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-gray-600">
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                    <ChevronRight className="h-4 w-4 text-gray-600" />
                   </button>
                 </div>
               </div>
@@ -557,10 +518,10 @@ export const Instructores = () => {
         {/* --- NOTIFICATIONS & MODALS --- */}
         <AnimatePresence>
           {notification.show && (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              exit={{ opacity: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
               className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
             >
               {notification.message}
@@ -572,15 +533,15 @@ export const Instructores = () => {
           {modal && (
             <motion.div
               className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
                 className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "eliminar" ? "max-w-sm w-full" : "max-w-5xl w-full"}`}
-                initial={{ scale: 0.95, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }} 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -588,10 +549,7 @@ export const Instructores = () => {
                 {modal === "eliminar" ? (
                   <div className="p-6 text-center">
                     <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
+                      <Trash2 size={24} />
                     </div>
                     <h3 className="text-lg font-bold text-[#040529] mb-2">Desactivar Instructor</h3>
                     <p className="text-sm text-gray-500 mb-6">
@@ -601,14 +559,14 @@ export const Instructores = () => {
                       <span className="text-xs">El instructor no podrá iniciar sesión.</span>
                     </p>
                     <div className="flex justify-center gap-3">
-                      <button 
-                        onClick={closeModal} 
+                      <button
+                        onClick={closeModal}
                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                       >
                         Cancelar
                       </button>
-                      <button 
-                        onClick={handleDelete} 
+                      <button
+                        onClick={handleDelete}
                         className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
                       >
                         Desactivar
@@ -620,11 +578,7 @@ export const Instructores = () => {
                     {/* Left Side (Visual) */}
                     <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
                       <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 20a6 6 0 0 0-12 0"></path>
-                          <circle cx="12" cy="10" r="4"></circle>
-                          <circle cx="12" cy="12" r="10"></circle>
-                        </svg>
+                        <Briefcase size={48} strokeWidth={1.5} />
                       </div>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                         {modal === "crear" ? "Registro de Instructor" : modal === "editar" ? "Edición de Instructor" : "Detalles del Instructor"}
@@ -635,20 +589,17 @@ export const Instructores = () => {
                     <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold text-[#040529]">
-                          {modal === "crear" 
-                            ? "Registrar Nuevo Instructor" 
-                            : modal === "editar" 
-                              ? "Editar Instructor" 
+                          {modal === "crear"
+                            ? "Registrar Nuevo Instructor"
+                            : modal === "editar"
+                              ? "Editar Instructor"
                               : "Detalles del Instructor"}
                         </h3>
-                        <button 
-                          onClick={closeModal} 
+                        <button
+                          onClick={closeModal}
                           className="text-gray-400 hover:text-[#040529]"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
+                          <X size={20} />
                         </button>
                       </div>
 
@@ -685,8 +636,8 @@ export const Instructores = () => {
                               <label className="text-xs font-bold text-gray-500 uppercase ml-1">Estado</label>
                               <p className={cn(
                                 "mt-1 px-3 py-2 rounded-lg text-sm font-bold border",
-                                selectedInstructor.estado 
-                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                                selectedInstructor.estado
+                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                                   : "bg-red-50 text-red-600 border-red-100"
                               )}>
                                 {selectedInstructor.estado ? "Activo" : "Inactivo"}
@@ -695,8 +646,8 @@ export const Instructores = () => {
                           </div>
 
                           <div className="flex justify-end pt-6">
-                            <button 
-                              onClick={closeModal} 
+                            <button
+                              onClick={closeModal}
                               className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
                             >
                               Cerrar
@@ -716,7 +667,7 @@ export const Instructores = () => {
                                 onChange={handleChange}
                                 className={cn(
                                   "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                  formErrors.id_usuario && "border-red-500 bg-red-50"
+                                  formErrors.id_usuario ? "border-red-400 bg-red-50" : "border-gray-200"
                                 )}
                               >
                                 <option value="">Seleccionar usuario</option>
@@ -727,7 +678,7 @@ export const Instructores = () => {
                                 ))}
                               </select>
                               {formErrors.id_usuario && (
-                                <p className="mt-1 text-xs text-red-500">{formErrors.id_usuario}</p>
+                                <p className="mt-1 text-red-400 text-[11px]">{formErrors.id_usuario}</p>
                               )}
                             </div>
                           </div>
@@ -742,12 +693,12 @@ export const Instructores = () => {
                                 onChange={handleChange}
                                 className={cn(
                                   "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                  formErrors.especialidad && "border-red-500 bg-red-50"
+                                  formErrors.especialidad ? "border-red-400 bg-red-50" : "border-gray-200"
                                 )}
                                 placeholder="Ej: Skate vertical, Freestyle"
                               />
                               {formErrors.especialidad && (
-                                <p className="mt-1 text-xs text-red-500">{formErrors.especialidad}</p>
+                                <p className="mt-1 text-red-400 text-[11px]">{formErrors.especialidad}</p>
                               )}
                             </div>
                           </div>
@@ -762,28 +713,28 @@ export const Instructores = () => {
                                 onChange={handleChange}
                                 className={cn(
                                   "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                  formErrors.anios_experiencia && "border-red-500 bg-red-50"
+                                  formErrors.anios_experiencia ? "border-red-400 bg-red-50" : "border-gray-200"
                                 )}
                                 placeholder="Ej: 5"
                                 min="0"
                               />
                               {formErrors.anios_experiencia && (
-                                <p className="mt-1 text-xs text-red-500">{formErrors.anios_experiencia}</p>
+                                <p className="mt-1 text-red-400 text-[11px]">{formErrors.anios_experiencia}</p>
                               )}
                             </div>
                           </div>
 
                           <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                            <button 
-                              type="button" 
-                              onClick={closeModal} 
+                            <button
+                              type="button"
+                              onClick={closeModal}
                               className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
                             >
                               Cancelar
                             </button>
-                            <button 
-                              type="button" 
-                              onClick={modal === "crear" ? handleCreate : handleEdit} 
+                            <button
+                              type="button"
+                              onClick={modal === "crear" ? handleCreate : handleEdit}
                               className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10"
                             >
                               {modal === "crear" ? "Registrar Instructor" : "Guardar Cambios"}

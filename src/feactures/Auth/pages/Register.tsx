@@ -1,11 +1,24 @@
 
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, ChangeEvent, FormEvent } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../../../services/api";
 
+interface FormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface Errors {
+  passwordMatch: string;
+  passwordStrength: string;
+}
+
 const Register = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
     phone: "",
@@ -13,20 +26,20 @@ const Register = () => {
     confirmPassword: "",
   });
 
-  const [errors, setErrors] = useState({ passwordMatch: "", passwordStrength: "" });
-  const [serverMsg, setServerMsg] = useState(null);
+  const [errors, setErrors] = useState<Errors>({ passwordMatch: "", passwordStrength: "" });
+  const [serverMsg, setServerMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const validatePasswordStrength = (password) => {
+  const validatePasswordStrength = (password: string): boolean => {
     const hasNumber = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     return hasNumber || hasSpecialChar;
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
     setFormData(prev => ({ ...prev, [name]: value }));
 
     if (name === "password") {
@@ -50,7 +63,7 @@ const Register = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setServerMsg(null);
 
@@ -94,8 +107,6 @@ const Register = () => {
         });
         setErrors({ passwordMatch: "", passwordStrength: "" });
 
-        setErrors({ passwordMatch: "", passwordStrength: "" });
-
         setTimeout(() => {
           // Check for checkout intent
           if (location.state?.intent === 'checkout') {
@@ -130,7 +141,7 @@ const Register = () => {
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
-              OnWheels
+              Performance SB
             </span>
           </Link>
         </header>

@@ -9,7 +9,7 @@ import { AdminLayoutWrapper } from "./AdminLayoutWrapper"
 import { Home } from "../feactures/landing/pages/Home";
 import { Store } from "../feactures/landing/pages/Store";
 import Class from "../feactures/landing/pages/Class";
-// import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
+import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
@@ -171,7 +171,7 @@ const AppRouter = () => {
         <Route path="store" element={withAnimation(Store)} />
         <Route path="events" element={withAnimation(Events)} />
         <Route path="training" element={withAnimation(Class)} />
-        {/* <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} /> */}
+        <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
         <Route path="about" element={withAnimation(About)} />
         <Route path="store/product/:id" element={withAnimation(ProductDetails)} />
         <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />

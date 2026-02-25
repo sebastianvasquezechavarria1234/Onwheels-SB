@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { ShoppingCart, X, Check, Eye, ShoppingBag } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../../../context/CartContext";
 import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { useToast } from "../../../../context/ToastContext";
-import { getProductDetailPath } from "../../../../utils/roleHelpers";
+import { getProductDetailPath, getCartPath } from "../../../../utils/roleHelpers";
 import { LoginRequiredModal } from "../LoginRequiredModal";
 
 export const Card = ({ product }) => {
@@ -18,6 +18,8 @@ export const Card = ({ product }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const toast = useToast();
+  // Card might not be inside a Router context if used in a portal? usually it is.
+  // useNavigate is safe if Card is child of Router.
 
   if (!product) return null;
 
@@ -45,6 +47,7 @@ export const Card = ({ product }) => {
 
   const imgSrc = isValidImage(imagen) ? imagen : "/bg_hero_shop.jpg";
   const productDetailLink = getProductDetailPath(user, product.id_producto);
+  const cartPath = getCartPath(user);
 
   // Lógica de variantes
   const uniqueColors = variantes && variantes.length > 0
@@ -105,8 +108,6 @@ export const Card = ({ product }) => {
     try {
       addToCart(product, selectedVariant, 1);
 
-
-
       // RICH SUCCESS TOAST - Enhanced Visibility
       toast.custom(
         <div className="p-6 font-primary bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl">
@@ -126,25 +127,19 @@ export const Card = ({ product }) => {
             </div>
           </div>
           <div className="space-y-3">
-            <Link to="/shoppingCart" className="block w-full text-center py-2.5 rounded-xl border border-zinc-600 text-zinc-300 font-bold text-xs hover:bg-zinc-800 hover:text-white transition-all uppercase tracking-wide">
+            <Link to={cartPath} className="block w-full text-center py-2.5 rounded-xl border border-zinc-600 text-zinc-300 font-bold text-xs hover:bg-zinc-800 hover:text-white transition-all uppercase tracking-wide">
               Ver carrito
             </Link>
 
-            {/* Logic for Pay Now Button inside Toast */}
-            {user && Object.keys(user).length > 0 ? (
+            {user && (user.id || user.id_usuario) ? (
               <button
                 onClick={() => {
                   toast.dismiss();
                   if (!localStorage.getItem("token")) {
                     setShowLoginModal(true);
                   } else {
-                    // Use window.location or navigate if available, but here we are in a Toast component context.
-                    // Since Card is used inside Grid/Store which are routed, we might not have 'navigate' available easily inside the toast render function closure?
-                    // Actually, Card uses `Link` so it has router context. We can use `useNavigate` in Card.
-                    // But we are inside `handleAddToCart`.
-                    // Let's use window.location.href for safety or better yet, pass navigate if possible.
-                    // Card has no `useNavigate`. We need to add it.
-                    window.location.href = "/users/checkout";
+                    // Redirect to shopping cart for checkout flow
+                    window.location.href = cartPath;
                   }
                 }}
                 className="block w-full text-center py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-white/10"
@@ -157,12 +152,12 @@ export const Card = ({ product }) => {
                 onClick={(e) => {
                   e.preventDefault();
                   toast.dismiss();
-                  setShowLoginModal(true);
+                  window.location.href = cartPath;
                 }}
                 className="block w-full text-center py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-white/10"
               >
                 <ShoppingBag size={14} />
-                Ir a Pagar
+                Ver Carrito
               </button>
             )}
           </div>

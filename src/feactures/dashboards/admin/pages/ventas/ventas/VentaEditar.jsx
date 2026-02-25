@@ -49,6 +49,7 @@ export default function VentaEditar() {
     const [selectedProducts, setSelectedProducts] = useState({});
     const [searchTerm, setSearchTerm] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formErrors, setFormErrors] = useState({});
 
     // Helpers Notificación
     const showNotification = useCallback((message, type = "success") => {
@@ -239,7 +240,41 @@ export default function VentaEditar() {
         });
     };
 
+    const validateForm = () => {
+        const errors = {};
+        if (!form.id_usuario) errors.id_usuario = "El usuario es obligatorio";
+        if (!form.fecha_venta) errors.fecha_venta = "La fecha es obligatoria";
+        if (!form.direccion) errors.direccion = "La dirección es obligatoria";
+        if (!form.telefono) errors.telefono = "El teléfono es obligatorio";
+        if (form.items.length === 0) errors.items = "Debe agregar al menos un producto";
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const validateProductSelection = () => {
+        const errors = {};
+        let hasError = false;
+
+        Object.entries(selectedProducts).forEach(([prodId, data]) => {
+            data.variantes.forEach((v, idx) => {
+                if (!v.id_variante) {
+                    errors[`prod_${prodId}_var_${idx}_id_variante`] = "Seleccione una variante";
+                    hasError = true;
+                }
+                if (!v.qty || v.qty <= 0) {
+                    errors[`prod_${prodId}_var_${idx}_qty`] = "Cantidad no válida";
+                    hasError = true;
+                }
+            });
+        });
+
+        setFormErrors(prev => ({ ...prev, ...errors }));
+        return !hasError;
+    };
+
     const saveSelectedProducts = () => {
+        if (!validateProductSelection()) return;
         const newItems = [];
         for (const [prodId, data] of Object.entries(selectedProducts)) {
             const product = productos.find(p => p.id_producto === Number(prodId));
@@ -274,9 +309,7 @@ export default function VentaEditar() {
         if (isSubmitting) return;
 
         // Validaciones Finales Frontend
-        if (!form.id_usuario) return showNotification("Seleccione un Usuario / Cliente", "error");
-        if (form.items.length === 0) return showNotification("Agregue al menos un producto", "error");
-        if (!form.direccion || !form.telefono) return showNotification("Complete dirección y teléfono", "error");
+        if (!validateForm()) return;
 
         setIsSubmitting(true);
         try {
@@ -376,8 +409,11 @@ export default function VentaEditar() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Usuario / Cliente *</label>
                                 <select
                                     value={form.id_usuario}
-                                    onChange={e => handleUserChange(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    onChange={e => {
+                                        handleUserChange(e.target.value);
+                                        if (formErrors.id_usuario) setFormErrors(p => { const n = { ...p }; delete n.id_usuario; return n; });
+                                    }}
+                                    className={`w-full px-4 py-2 border rounded-lg outline-none transition ${formErrors.id_usuario ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}`}
                                 >
                                     <option value="">Seleccione un usuario...</option>
                                     {usuarios.map(u => (
@@ -386,19 +422,28 @@ export default function VentaEditar() {
                                         </option>
                                     ))}
                                 </select>
+                                {formErrors.id_usuario && (
+                                    <p className="text-red-400 text-[11px] mt-1">{formErrors.id_usuario}</p>
+                                )}
                                 <p className="text-xs text-gray-500 mt-1">
                                     Si el usuario no es cliente, se le asignará el rol automáticamente.
                                 </p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
                                     <input
                                         type="date"
                                         value={form.fecha_venta}
-                                        onChange={e => setForm({ ...form, fecha_venta: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        onChange={e => {
+                                            setForm({ ...form, fecha_venta: e.target.value });
+                                            if (formErrors.fecha_venta) setFormErrors(p => { const n = { ...p }; delete n.fecha_venta; return n; });
+                                        }}
+                                        className={`w-full px-4 py-2 border rounded-lg outline-none transition ${formErrors.fecha_venta ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}`}
                                     />
+                                    {formErrors.fecha_venta && (
+                                        <p className="text-red-400 text-[11px] mt-1">{formErrors.fecha_venta}</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Método Pago</label>
@@ -420,20 +465,33 @@ export default function VentaEditar() {
                                     <input
                                         type="text"
                                         value={form.direccion}
-                                        onChange={e => setForm({ ...form, direccion: e.target.value })}
+                                        onChange={e => {
+                                            setForm({ ...form, direccion: e.target.value });
+                                            if (formErrors.direccion) setFormErrors(p => { const n = { ...p }; delete n.direccion; return n; });
+                                        }}
                                         placeholder="Dirección completa"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className={`w-full px-4 py-2 border rounded-lg outline-none transition ${formErrors.direccion ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}`}
                                     />
+                                    {formErrors.direccion && (
+                                        <p className="text-red-400 text-[11px] mt-1">{formErrors.direccion}</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono Contacto *</label>
                                     <input
                                         type="text"
                                         value={form.telefono}
-                                        onChange={e => setForm({ ...form, telefono: e.target.value })}
+                                        onChange={e => {
+                                            const val = e.target.value.replace(/[^0-9+\s-]/g, '');
+                                            setForm({ ...form, telefono: val });
+                                            if (formErrors.telefono) setFormErrors(p => { const n = { ...p }; delete n.telefono; return n; });
+                                        }}
                                         placeholder="Ej: +57 300..."
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className={`w-full px-4 py-2 border rounded-lg outline-none transition ${formErrors.telefono ? 'border-red-400 bg-red-50' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}`}
                                     />
+                                    {formErrors.telefono && (
+                                        <p className="text-red-400 text-[11px] mt-1">{formErrors.telefono}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -449,12 +507,15 @@ export default function VentaEditar() {
                             <button
                                 onClick={openProductModal}
                                 type="button"
-                                className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition text-sm"
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm ${formErrors.items ? 'bg-red-50 border border-red-400 text-red-600 shadow-sm' : 'bg-gray-800 text-white hover:bg-gray-900'}`}
                             >
                                 <Plus size={16} />
                                 Agregar Productos
                             </button>
                         </div>
+                        {formErrors.items && (
+                            <p className="text-red-400 text-[11px] mb-4 -mt-2 ml-1">{formErrors.items}</p>
+                        )}
 
                         {/* Listado Items */}
                         <div className="overflow-x-auto border rounded-lg">
@@ -595,28 +656,46 @@ export default function VentaEditar() {
                                                     <div className="p-3 space-y-2 bg-blue-50/30">
                                                         {selectedProducts[product.id_producto].variantes.map((v, idx) => (
                                                             <div key={idx} className="flex flex-wrap items-center gap-2 p-2 bg-white rounded-lg border border-gray-200">
-                                                                <select
-                                                                    value={v.id_variante || ""}
-                                                                    onChange={(e) => updateVariantRow(product.id_producto, idx, "id_variante", e.target.value)}
-                                                                    className="flex-1 min-w-[200px] text-sm p-1.5 border rounded"
-                                                                >
-                                                                    <option value="">-- Seleccione Variante -- (Stock)</option>
-                                                                    {product.variantes.map(pv => (
-                                                                        <option key={pv.id_variante} value={pv.id_variante}>
-                                                                            {pv.nombre_color} / {pv.nombre_talla} (Stock: {pv.stock})
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
+                                                                <div className="flex-1 min-w-[200px]">
+                                                                    <select
+                                                                        value={v.id_variante || ""}
+                                                                        onChange={(e) => {
+                                                                            updateVariantRow(product.id_producto, idx, "id_variante", e.target.value);
+                                                                            const key = `prod_${product.id_producto}_var_${idx}_id_variante`;
+                                                                            if (formErrors[key]) setFormErrors(p => { const n = { ...p }; delete n[key]; return n; });
+                                                                        }}
+                                                                        className={`w-full text-sm p-1.5 border rounded outline-none ${formErrors[`prod_${product.id_producto}_var_${idx}_id_variante`] ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+                                                                    >
+                                                                        <option value="">-- Seleccione Variante -- (Stock)</option>
+                                                                        {product.variantes.map(pv => (
+                                                                            <option key={pv.id_variante} value={pv.id_variante}>
+                                                                                {pv.nombre_color} / {pv.nombre_talla} (Stock: {pv.stock})
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                    {formErrors[`prod_${product.id_producto}_var_${idx}_id_variante`] && (
+                                                                        <p className="text-red-400 text-[9px] mt-0.5">{formErrors[`prod_${product.id_producto}_var_${idx}_id_variante`]}</p>
+                                                                    )}
+                                                                </div>
 
-                                                                <div className="flex items-center gap-1">
-                                                                    <span className="text-xs text-gray-500">Cant:</span>
-                                                                    <input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        value={v.qty}
-                                                                        onChange={(e) => updateVariantRow(product.id_producto, idx, "qty", Number(e.target.value))}
-                                                                        className="w-16 p-1.5 text-sm border rounded text-center"
-                                                                    />
+                                                                <div className="flex flex-col gap-0.5">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="text-xs text-gray-500">Cant:</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            value={v.qty}
+                                                                            onChange={(e) => {
+                                                                                updateVariantRow(product.id_producto, idx, "qty", Number(e.target.value));
+                                                                                const key = `prod_${product.id_producto}_var_${idx}_qty`;
+                                                                                if (formErrors[key]) setFormErrors(p => { const n = { ...p }; delete n[key]; return n; });
+                                                                            }}
+                                                                            className={`w-16 p-1.5 text-sm border rounded text-center outline-none ${formErrors[`prod_${product.id_producto}_var_${idx}_qty`] ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+                                                                        />
+                                                                    </div>
+                                                                    {formErrors[`prod_${product.id_producto}_var_${idx}_qty`] && (
+                                                                        <p className="text-red-400 text-[9px] text-right">{formErrors[`prod_${product.id_producto}_var_${idx}_qty`]}</p>
+                                                                    )}
                                                                 </div>
 
                                                                 <button

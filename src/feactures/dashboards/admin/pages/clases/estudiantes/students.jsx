@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Eye, Plus, Search, Pencil, Trash2, X, User,
+  ChevronLeft, ChevronRight, Hash, TrendingUp,
+  SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
+  LogIn
+} from "lucide-react";
+import {
   getEstudiantes,
   createEstudiante,
   updateEstudiante,
@@ -45,7 +51,7 @@ const Estudiantes = () => {
   // Sorting state
   const [sortField, setSortField] = useState("nombre_completo");
   const [sortDirection, setSortDirection] = useState("asc");
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -97,36 +103,36 @@ const Estudiantes = () => {
   // Sorted and filtered data
   const filteredAndSorted = useMemo(() => {
     let result = [...estudiantes];
-    
+
     // Filter
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(e => 
+      result = result.filter(e =>
         (e.nombre_completo || "").toLowerCase().includes(q) ||
         (e.email || "").toLowerCase().includes(q) ||
         (e.documento || "").includes(q) ||
         (e.estado || "").toLowerCase().includes(q)
       );
     }
-    
+
     // Sort
     result.sort((a, b) => {
       const aVal = a[sortField] || "";
       const bVal = b[sortField] || "";
-      
+
       if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDirection === "asc" 
-          ? aVal.localeCompare(bVal) 
+        return sortDirection === "asc"
+          ? aVal.localeCompare(bVal)
           : bVal.localeCompare(aVal);
       }
-      
+
       if (typeof aVal === "number" && typeof bVal === "number") {
         return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
       }
-      
+
       return 0;
     });
-    
+
     return result;
   }, [estudiantes, search, sortField, sortDirection]);
 
@@ -155,7 +161,7 @@ const Estudiantes = () => {
   const exportCSV = () => {
     try {
       const headers = ["ID", "Nombre", "Email", "Documento", "Edad", "Nivel Experiencia", "Estado"];
-      const rows = filteredAndSorted.map(e => 
+      const rows = filteredAndSorted.map(e =>
         [e.id_estudiante, e.nombre_completo, e.email, e.documento, e.edad, e.nivel_experiencia, e.estado].join(",")
       );
       const csv = [headers.join(","), ...rows].join("\n");
@@ -176,11 +182,11 @@ const Estudiantes = () => {
   // Validar formulario
   const validateForm = () => {
     const errors = {};
-    
+
     if (modal === "crear" && !formData.id_usuario) {
       errors.id_usuario = "El usuario es obligatorio";
     }
-    
+
     if (!formData.edad.trim()) {
       errors.edad = "La edad es obligatoria";
     } else {
@@ -189,19 +195,25 @@ const Estudiantes = () => {
         errors.edad = "La edad debe estar entre 1 y 100";
       }
     }
-    
+
     if (!formData.nivel_experiencia) {
       errors.nivel_experiencia = "El nivel de experiencia es obligatorio";
     }
-    
+
     if (tieneEnfermedad && !formData.enfermedad.trim()) {
       errors.enfermedad = "La enfermedad es obligatoria";
     }
-    
+
     if (formData.edad && parseInt(formData.edad) < 18) {
       if (crearAcudiente) {
         if (!nuevoAcudiente.nombre_acudiente.trim()) {
           errors.nombre_acudiente = "El nombre del acudiente es obligatorio";
+        }
+        if (!nuevoAcudiente.telefono.trim()) {
+          errors.telefono = "El teléfono es obligatorio";
+        }
+        if (!nuevoAcudiente.relacion) {
+          errors.relacion = "La relación es obligatoria";
         }
         if (nuevoAcudiente.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevoAcudiente.email)) {
           errors.email = "Email inválido";
@@ -210,7 +222,7 @@ const Estudiantes = () => {
         errors.id_acudiente = "Selecciona un acudiente o crea uno nuevo";
       }
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -219,7 +231,7 @@ const Estudiantes = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Limpiar error específico al cambiar
     if (formErrors[name]) {
       setFormErrors(prev => {
@@ -234,7 +246,7 @@ const Estudiantes = () => {
   const handleNuevoAcudienteChange = (e) => {
     const { name, value } = e.target;
     setNuevoAcudiente((prev) => ({ ...prev, [name]: value }));
-    
+
     // Limpiar error específico al cambiar
     if (formErrors[name]) {
       setFormErrors(prev => {
@@ -248,14 +260,13 @@ const Estudiantes = () => {
   // Crear estudiante
   const handleCreate = async () => {
     if (!validateForm()) {
-      showNotification("Por favor corrige los errores del formulario", "error");
       return;
     }
-    
+
     try {
       const edad = parseInt(formData.edad);
       let id_acudiente_final = null;
-      
+
       if (edad < 18) {
         if (crearAcudiente) {
           const nuevoAcudienteCreado = await createAcudiente(nuevoAcudiente);
@@ -264,7 +275,7 @@ const Estudiantes = () => {
           id_acudiente_final = parseInt(formData.id_acudiente);
         }
       }
-      
+
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
         enfermedad: tieneEnfermedad ? formData.enfermedad : "No aplica",
@@ -272,7 +283,7 @@ const Estudiantes = () => {
         edad: edad,
         id_acudiente: id_acudiente_final
       };
-      
+
       await createEstudiante(payload);
       await fetchEstudiantes();
       closeModal();
@@ -287,16 +298,15 @@ const Estudiantes = () => {
   // Editar estudiante
   const handleEdit = async () => {
     if (!validateForm()) {
-      showNotification("Por favor corrige los errores del formulario", "error");
       return;
     }
-    
+
     try {
       if (!selectedEstudiante) return;
-      
+
       const edad = parseInt(formData.edad);
       let id_acudiente_final = null;
-      
+
       if (edad < 18) {
         if (crearAcudiente) {
           const nuevoAcudienteCreado = await createAcudiente(nuevoAcudiente);
@@ -309,14 +319,14 @@ const Estudiantes = () => {
       } else {
         id_acudiente_final = formData.id_acudiente ? parseInt(formData.id_acudiente) : selectedEstudiante.id_acudiente;
       }
-      
+
       const payload = {
         enfermedad: tieneEnfermedad ? formData.enfermedad : "No aplica",
         nivel_experiencia: formData.nivel_experiencia,
         edad: edad,
         id_acudiente: id_acudiente_final
       };
-      
+
       await updateEstudiante(selectedEstudiante.id_estudiante, payload);
       await fetchEstudiantes();
       closeModal();
@@ -369,7 +379,7 @@ const Estudiantes = () => {
       email: "",
       relacion: ""
     });
-    
+
     if (estudiante && type === "editar") {
       setFormData({
         id_usuario: estudiante.id_usuario.toString(),
@@ -378,13 +388,13 @@ const Estudiantes = () => {
         edad: estudiante.edad ? estudiante.edad.toString() : "",
         id_acudiente: estudiante.id_acudiente ? estudiante.id_acudiente.toString() : "",
       });
-      
+
       if (estudiante.enfermedad && estudiante.enfermedad !== "No aplica") {
         setTieneEnfermedad(true);
       } else {
         setTieneEnfermedad(false);
       }
-      
+
       if (estudiante.id_acudiente) {
         setCrearAcudiente(false);
       }
@@ -429,83 +439,58 @@ const Estudiantes = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <div className="flex flex-col h-full bg-white overflow-hidden">
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
+        <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
+
           {/* Row 1: Minimal Header */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
-                Gestión de Estudiantes
-              </h2>
+            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Gestión de Estudiantes
+            </h2>
 
-              {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l pl-4">
-                <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                  <span className="text-xs font-bold!">{filteredAndSorted.length}</span>
+            {/* Compact Stats */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
+                  <Hash size={14} className="text-blue-600" />
+                  <span className="text-xs font-bold">{filteredAndSorted.length}</span>
                 </div>
               </div>
+              <button
+                onClick={exportCSV}
+                className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm"
+                title="Exportar CSV"
+              >
+                <Download size={16} />
+              </button>
             </div>
           </div>
 
           {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
             {/* Search & Create Group */}
             <div className="flex flex-1 w-full sm:w-auto gap-3">
               <div className="relative flex-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   placeholder="Buscar estudiante..."
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
                 />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                )}
               </div>
               <button
                 onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <Plus size={18} />
                 Registrar Estudiante
               </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={exportCSV}
-                  className="p-1.5 rounded-lg transition hover:bg-gray-100"
-                  title="Exportar CSV"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                </button>
-              </div>
             </div>
 
             {/* Filters (Larger) */}
-            <div className="flex flex-1 w-full justify-start sm:justify-end items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: "nombre_completo", label: "Nombre" },
                 { id: "email", label: "Email" },
@@ -516,18 +501,14 @@ const Estudiantes = () => {
                   key={field.id}
                   onClick={() => toggleSort(field.id)}
                   className={cn(
-                    "px-4 py-2 text-xs uppercase font-bold tracking-wide rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
+                    "px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-xl border transition flex items-center gap-1.5 shrink-0 select-none",
                     sortField === field.id
-                      ? "bg-[#040529] text-white border-[#040529] shadow-sm transform scale-105"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                      ? "bg-blue-800 text-white border-blue-800 shadow-md"
+                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
                   )}
                 >
                   {field.label}
-                  {sortField === field.id && (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  )}
+                  {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
                 </button>
               ))}
             </div>
@@ -560,11 +541,7 @@ const Estudiantes = () => {
                     <tr>
                       <td colSpan="7" className="p-12 text-center">
                         <div className="flex flex-col items-center justify-center gap-2 text-red-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 opacity-80">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                          </svg>
+                          <AlertCircle className="h-8 w-8 opacity-80" />
                           <p className="font-medium">{error}</p>
                         </div>
                       </td>
@@ -640,35 +617,26 @@ const Estudiantes = () => {
                         </td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button 
-                              onClick={() => openModal("ver", e)} 
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" 
+                            <button
+                              onClick={() => openModal("ver", e)}
+                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
                               title="Ver"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                              </svg>
+                              <Eye className="h-4 w-4" />
                             </button>
-                            <button 
-                              onClick={() => openModal("editar", e)} 
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" 
+                            <button
+                              onClick={() => openModal("editar", e)}
+                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
                               title="Editar"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                                <line x1="18" y1="2" x2="22" y2="6"></line>
-                                <path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"></path>
-                              </svg>
+                              <Pencil className="h-4 w-4" />
                             </button>
-                            <button 
-                              onClick={() => openModal("eliminar", e)} 
-                              className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" 
+                            <button
+                              onClick={() => openModal("eliminar", e)}
+                              className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
                               title="Eliminar"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              </svg>
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -686,26 +654,22 @@ const Estudiantes = () => {
                   Mostrando <span className="font-bold text-[#040529]">{currentItems.length}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
                 </p>
                 <div className="flex items-center gap-2">
-                  <button 
-                    disabled={currentPage === 1} 
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-gray-600">
-                      <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
+                    <ChevronLeft className="h-4 w-4 text-gray-600" />
                   </button>
                   <span className="text-sm font-bold text-[#040529] px-2">
                     {currentPage} de {totalPages}
                   </span>
-                  <button 
-                    disabled={currentPage === totalPages} 
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-gray-600">
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                    <ChevronRight className="h-4 w-4 text-gray-600" />
                   </button>
                 </div>
               </div>
@@ -716,10 +680,10 @@ const Estudiantes = () => {
         {/* --- NOTIFICATIONS & MODALS --- */}
         <AnimatePresence>
           {notification.show && (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              exit={{ opacity: 0 }} 
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
               className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
             >
               {notification.message}
@@ -731,15 +695,15 @@ const Estudiantes = () => {
           {modal && (
             <motion.div
               className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
                 className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "eliminar" ? "max-w-sm w-full" : "max-w-5xl w-full"}`}
-                initial={{ scale: 0.95, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }} 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -747,10 +711,7 @@ const Estudiantes = () => {
                 {modal === "eliminar" ? (
                   <div className="p-6 text-center">
                     <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
+                      <Trash2 size={24} />
                     </div>
                     <h3 className="text-lg font-bold text-[#040529] mb-2">Eliminar Estudiante</h3>
                     <p className="text-sm text-gray-500 mb-6">
@@ -760,14 +721,14 @@ const Estudiantes = () => {
                       <span className="text-xs">Esta acción no se puede deshacer.</span>
                     </p>
                     <div className="flex justify-center gap-3">
-                      <button 
-                        onClick={closeModal} 
+                      <button
+                        onClick={closeModal}
                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                       >
                         Cancelar
                       </button>
-                      <button 
-                        onClick={handleDelete} 
+                      <button
+                        onClick={handleDelete}
                         className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
                       >
                         Eliminar
@@ -779,10 +740,7 @@ const Estudiantes = () => {
                     {/* Left Side (Visual) */}
                     <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
                       <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                        <User size={48} strokeWidth={1.5} />
                       </div>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                         {modal === "crear" ? "Registro de Estudiante" : modal === "editar" ? "Edición de Estudiante" : "Detalles del Estudiante"}
@@ -793,20 +751,17 @@ const Estudiantes = () => {
                     <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
                       <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold text-[#040529]">
-                          {modal === "crear" 
-                            ? "Registrar Nuevo Estudiante" 
-                            : modal === "editar" 
-                              ? "Editar Estudiante" 
+                          {modal === "crear"
+                            ? "Registrar Nuevo Estudiante"
+                            : modal === "editar"
+                              ? "Editar Estudiante"
                               : "Detalles del Estudiante"}
                         </h3>
-                        <button 
-                          onClick={closeModal} 
+                        <button
+                          onClick={closeModal}
                           className="text-gray-400 hover:text-[#040529]"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
+                          <X size={20} />
                         </button>
                       </div>
 
@@ -859,7 +814,7 @@ const Estudiantes = () => {
                               </p>
                             </div>
                           </div>
-                          
+
                           <div className="mt-4 pt-4 border-t border-gray-100">
                             <h4 className="text-sm font-bold text-[#040529] mb-3">Información del Acudiente</h4>
                             {selectedEstudiante.nombre_acudiente ? (
@@ -895,8 +850,8 @@ const Estudiantes = () => {
                           </div>
 
                           <div className="flex justify-end pt-6">
-                            <button 
-                              onClick={closeModal} 
+                            <button
+                              onClick={closeModal}
                               className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
                             >
                               Cerrar
@@ -917,7 +872,7 @@ const Estudiantes = () => {
                                   onChange={handleChange}
                                   className={cn(
                                     "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                    formErrors.id_usuario && "border-red-500 bg-red-50"
+                                    formErrors.id_usuario && "border-red-400 bg-red-50"
                                   )}
                                 >
                                   <option value="">Seleccionar usuario</option>
@@ -933,7 +888,7 @@ const Estudiantes = () => {
                               </div>
                             </div>
                           )}
-                          
+
                           {modal === "editar" && selectedEstudiante && (
                             <div>
                               <label className="text-xs font-bold text-gray-500 uppercase ml-1">Usuario</label>
@@ -954,7 +909,7 @@ const Estudiantes = () => {
                                   onChange={handleChange}
                                   className={cn(
                                     "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                    formErrors.edad && "border-red-500 bg-red-50"
+                                    formErrors.edad && "border-red-400 bg-red-50"
                                   )}
                                   placeholder="Ej: 16"
                                   min="1"
@@ -974,7 +929,7 @@ const Estudiantes = () => {
                                   onChange={handleChange}
                                   className={cn(
                                     "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                    formErrors.nivel_experiencia && "border-red-500 bg-red-50"
+                                    formErrors.nivel_experiencia && "border-red-400 bg-red-50"
                                   )}
                                 >
                                   <option value="">Seleccionar nivel</option>
@@ -1000,7 +955,7 @@ const Estudiantes = () => {
                               <option value="si">Sí</option>
                             </select>
                           </div>
-                          
+
                           {tieneEnfermedad && (
                             <div>
                               <label className="text-xs font-bold text-gray-500 uppercase ml-1">Enfermedad o Condición Médica *</label>
@@ -1012,7 +967,7 @@ const Estudiantes = () => {
                                   rows="2"
                                   className={cn(
                                     "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] resize-none",
-                                    formErrors.enfermedad && "border-red-500 bg-red-50"
+                                    formErrors.enfermedad && "border-red-400 bg-red-50"
                                   )}
                                   placeholder="Ej: Alergia a frutos secos, asma, etc."
                                 />
@@ -1054,7 +1009,7 @@ const Estudiantes = () => {
                                   </button>
                                 </nav>
                               </div>
-                              
+
                               {!crearAcudiente ? (
                                 <div>
                                   <div className="relative mt-1">
@@ -1064,7 +1019,7 @@ const Estudiantes = () => {
                                       onChange={handleChange}
                                       className={cn(
                                         "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                        formErrors.id_acudiente && "border-red-500 bg-red-50"
+                                        formErrors.id_acudiente && "border-red-400 bg-red-50"
                                       )}
                                     >
                                       <option value="">Seleccionar acudiente existente</option>
@@ -1079,7 +1034,7 @@ const Estudiantes = () => {
                                       )}
                                     </select>
                                     {formErrors.id_acudiente && (
-                                      <p className="mt-1 text-xs text-red-500">{formErrors.id_acudiente}</p>
+                                      <p className="mt-1 text-red-400 text-[11px]">{formErrors.id_acudiente}</p>
                                     )}
                                   </div>
                                   <p className="mt-2 text-xs text-gray-500">
@@ -1098,12 +1053,12 @@ const Estudiantes = () => {
                                         onChange={handleNuevoAcudienteChange}
                                         className={cn(
                                           "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                          formErrors.nombre_acudiente && "border-red-500 bg-red-50"
+                                          formErrors.nombre_acudiente && "border-red-400 bg-red-50"
                                         )}
                                         placeholder="Nombre completo del acudiente"
                                       />
                                       {formErrors.nombre_acudiente && (
-                                        <p className="mt-1 text-xs text-red-500">{formErrors.nombre_acudiente}</p>
+                                        <p className="mt-1 text-red-400 text-[11px]">{formErrors.nombre_acudiente}</p>
                                       )}
                                     </div>
                                   </div>
@@ -1113,7 +1068,10 @@ const Estudiantes = () => {
                                       name="relacion"
                                       value={nuevoAcudiente.relacion}
                                       onChange={handleNuevoAcudienteChange}
-                                      className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]"
+                                      className={cn(
+                                        "w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
+                                        formErrors.relacion && "border-red-400 bg-red-50"
+                                      )}
                                     >
                                       <option value="">Seleccionar relación</option>
                                       <option value="Padre">Padre</option>
@@ -1121,17 +1079,29 @@ const Estudiantes = () => {
                                       <option value="Tutor">Tutor</option>
                                       <option value="Otro">Otro</option>
                                     </select>
+                                    {formErrors.relacion && (
+                                      <p className="mt-1 text-red-400 text-[11px]">{formErrors.relacion}</p>
+                                    )}
                                   </div>
                                   <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono (opcional)</label>
+                                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono Contacto *</label>
                                     <input
                                       type="text"
                                       name="telefono"
                                       value={nuevoAcudiente.telefono}
-                                      onChange={handleNuevoAcudienteChange}
-                                      className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]"
+                                      onChange={e => {
+                                        const val = e.target.value.replace(/[^0-9+\s-]/g, '');
+                                        handleNuevoAcudienteChange({ target: { name: 'telefono', value: val } });
+                                      }}
+                                      className={cn(
+                                        "w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
+                                        formErrors.telefono && "border-red-400 bg-red-50"
+                                      )}
                                       placeholder="Número de teléfono"
                                     />
+                                    {formErrors.telefono && (
+                                      <p className="mt-1 text-red-400 text-[11px]">{formErrors.telefono}</p>
+                                    )}
                                   </div>
                                   <div>
                                     <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email (opcional)</label>
@@ -1143,12 +1113,12 @@ const Estudiantes = () => {
                                         onChange={handleNuevoAcudienteChange}
                                         className={cn(
                                           "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                          formErrors.email && "border-red-500 bg-red-50"
+                                          formErrors.email && "border-red-400 bg-red-50"
                                         )}
                                         placeholder="correo@ejemplo.com"
                                       />
                                       {formErrors.email && (
-                                        <p className="mt-1 text-xs text-red-500">{formErrors.email}</p>
+                                        <p className="mt-1 text-red-400 text-[11px]">{formErrors.email}</p>
                                       )}
                                     </div>
                                   </div>
@@ -1177,16 +1147,16 @@ const Estudiantes = () => {
                           )}
 
                           <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                            <button 
-                              type="button" 
-                              onClick={closeModal} 
+                            <button
+                              type="button"
+                              onClick={closeModal}
                               className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
                             >
                               Cancelar
                             </button>
-                            <button 
-                              type="button" 
-                              onClick={modal === "crear" ? handleCreate : handleEdit} 
+                            <button
+                              type="button"
+                              onClick={modal === "crear" ? handleCreate : handleEdit}
                               className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10"
                             >
                               {modal === "crear" ? "Registrar Estudiante" : "Guardar Cambios"}

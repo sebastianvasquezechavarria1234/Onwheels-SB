@@ -65,7 +65,7 @@ const Login = () => {
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
-              OnWheels
+              Performance SB
             </span>
           </Link>
         </header>
