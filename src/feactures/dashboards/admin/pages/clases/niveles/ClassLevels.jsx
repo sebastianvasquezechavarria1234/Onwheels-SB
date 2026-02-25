@@ -22,6 +22,8 @@ export const ClassLevels = () => {
     nombre_nivel: "",
     descripcion: ""
   });
+  const [formErrors, setFormErrors] = useState({ nombre_nivel: "", descripcion: "" });
+
   const [search, setSearch] = useState("");
 
   // Sorting state
@@ -133,19 +135,55 @@ export const ClassLevels = () => {
     }
   };
 
+  // Validaciones inline
+  const validateField = (field, value) => {
+    const v = (value || "").toString().trim();
+    if (field === "nombre_nivel") {
+      if (!v) return "El nombre del nivel es obligatorio.";
+      if (v.length < 3) return "El nombre debe tener al menos 3 caracteres.";
+      if (v.length > 50) return "El nombre no puede exceder 50 caracteres.";
+      const nameValid = /^[\p{L}\p{N}\s\-_]+$/u.test(v);
+      if (!nameValid) return "El nombre contiene caracteres inválidos.";
+      // Duplicados (excluir el nivel seleccionado cuando se edita)
+      const currentId = selectedNivel?.id_nivel || null;
+      const duplicate = niveles.find(n => {
+        if (!n.nombre_nivel) return false;
+        if (currentId && n.id_nivel === currentId) return false;
+        return n.nombre_nivel.trim().toLowerCase() === v.toLowerCase();
+      });
+      if (duplicate) return "Ya existe un nivel con ese nombre.";
+      return "";
+    }
+    if (field === "descripcion") {
+      if ((v || "").length > 500) return "La descripción no puede exceder 500 caracteres.";
+      return "";
+    }
+    return "";
+  };
+  
+  const validateForm = (data = formData) => {
+    const nombreErr = validateField("nombre_nivel", data.nombre_nivel);
+    const descErr = validateField("descripcion", data.descripcion);
+    setFormErrors({ nombre_nivel: nombreErr, descripcion: descErr });
+    return !nombreErr && !descErr;
+  };
+
   // Manejar cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      // validar el campo al vuelo
+      setFormErrors(prevErrs => ({ ...prevErrs, [name]: validateField(name, value) }));
+      return next;
+    });
   };
 
   // Crear nivel
   const handleCreate = async () => {
     try {
-      if (!formData.nombre_nivel.trim()) {
-        showNotification("El nombre del nivel es obligatorio", "error");
-        return;
-      }
+      // validación final antes de enviar
+      if (!validateForm(formData)) return;
       await createNivel(formData);
       await fetchNiveles();
       closeModal();
@@ -161,10 +199,8 @@ export const ClassLevels = () => {
   const handleEdit = async () => {
     try {
       if (!selectedNivel) return;
-      if (!formData.nombre_nivel.trim()) {
-        showNotification("El nombre del nivel es obligatorio", "error");
-        return;
-      }
+      // validación final antes de enviar (excluir el actual del check de duplicados)
+      if (!validateForm(formData)) return;
       await updateNivel(selectedNivel.id_nivel, formData);
       await fetchNiveles();
       closeModal();
@@ -196,15 +232,22 @@ export const ClassLevels = () => {
     setModal(type);
     setSelectedNivel(nivel);
     if (nivel && type === "editar") {
-      setFormData({
+      const init = {
         nombre_nivel: nivel.nombre_nivel || "",
         descripcion: nivel.descripcion || ""
+      };
+      setFormData(init);
+      // validar inicialmente para mostrar errores si ya hay duplicado
+      setFormErrors({
+        nombre_nivel: validateField("nombre_nivel", init.nombre_nivel),
+        descripcion: validateField("descripcion", init.descripcion)
       });
     } else {
       setFormData({
         nombre_nivel: "",
         descripcion: ""
       });
+      setFormErrors({ nombre_nivel: "", descripcion: "" });
     }
   };
 
@@ -215,6 +258,7 @@ export const ClassLevels = () => {
       nombre_nivel: "",
       descripcion: ""
     });
+    setFormErrors({ nombre_nivel: "", descripcion: "" });
   };
 
   return (
@@ -564,6 +608,9 @@ export const ClassLevels = () => {
                             placeholder="Ej: Principiante, Intermedio, Avanzado" 
                             required
                           />
+                          {formErrors.nombre_nivel && modal !== "ver" && (
+                            <p className="mt-2 text-sm text-red-600">{formErrors.nombre_nivel}</p>
+                          )}
                         </div>
 
                         <div>
@@ -578,35 +625,61 @@ export const ClassLevels = () => {
                             className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] resize-none" 
                             placeholder="Describe las características de este nivel educativo..."
                           />
+                          {formErrors.descripcion && modal !== "ver" && (
+                            <p className="mt-2 text-sm text-red-600">{formErrors.descripcion}</p>
+                          )}
                         </div>
 
                         {modal === "ver" && selectedNivel && (
                           <div className="bg-blue-50 rounded-xl p-4">
                             <div className="flex justify-between items-start mb-2">
                               <span className="font-medium text-blue-800 text-xs">ID del Nivel:</span>
-                              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">{selectedNivel.id_nivel}</span>
+                              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                                {selectedNivel.id_nivel}
+                              </span>
                             </div>
                           </div>
                         )}
 
-                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                          <button 
-                            type="button" 
-                            onClick={closeModal} 
-                            className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
-                          >
-                            {modal === "ver" ? "Cerrar" : "Cancelar"}
-                          </button>
-                          {modal !== "ver" && (
+                        {/* Actions for "ver" and "editar" modes */}
+                        {(modal === "ver" || modal === "editar") && (
+                          <div className="flex justify-end gap-3 mt-4">
+                            {modal === "ver" && (
+                              <button 
+                                onClick={closeModal} 
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                              >
+                                Cerrar
+                              </button>
+                            )}
+                            {modal === "editar" && (
+                              <button 
+                                onClick={handleEdit} 
+                                className="px-4 py-2 text-sm font-medium text-white bg-[#040529] rounded-lg hover:bg-[#040529]/90"
+                              >
+                                Guardar Cambios
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Actions for "crear" mode */}
+                        {modal === "crear" && (
+                          <div className="flex justify-end gap-3 mt-4">
                             <button 
-                              type="button" 
-                              onClick={modal === "crear" ? handleCreate : handleEdit} 
-                              className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10"
+                              onClick={closeModal} 
+                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                             >
-                              {modal === "crear" ? "Crear Nivel" : "Guardar Cambios"}
+                              Cancelar
                             </button>
-                          )}
-                        </div>
+                            <button 
+                              onClick={handleCreate} 
+                              className="px-4 py-2 text-sm font-medium text-white bg-[#040529] rounded-lg hover:bg-[#040529]/90"
+                            >
+                              Crear Nivel
+                            </button>
+                          </div>
+                        )}
                       </form>
                     </div>
                   </div>

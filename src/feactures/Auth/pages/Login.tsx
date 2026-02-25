@@ -20,7 +20,7 @@ const Login = () => {
     }
   }, [error, formSubmitted]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
 
     setFormSubmitted(true);

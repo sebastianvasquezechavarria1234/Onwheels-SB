@@ -5,7 +5,7 @@ import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle, ShoppingBag 
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
-import { getStoreHomePath } from "../../../utils/roleHelpers";
+import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers";
 import { LoginRequiredModal } from "../components/LoginRequiredModal";
 
 export const ProductDetails = () => {
@@ -185,14 +185,7 @@ export const ProductDetails = () => {
     }
 
     try {
-      // Logic for immediate checkout (add to cart then redirect)
-      const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
-      addToCart(productToAdd, currentVariant, qty);
-      import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers";
-
-      // ... inside handleBuyNow ...
-
-      // Logic for immediate checkout (add to cart then redirect)
+      // Añadir al carrito y redirigir a checkout (normalizar nombres)
       const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
       addToCart(productToAdd, currentVariant, qty);
 
