@@ -38,7 +38,6 @@ export default function Productos({ renderLayout = true }) {
   const [tallas, setTallas] = useState([]);
   const [variantesGlobales, setVariantesGlobales] = useState([]);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
   const [isCreateColorOpen, setIsCreateColorOpen] = useState(false);
   const [isCreateTallaOpen, setIsCreateTallaOpen] = useState(false);

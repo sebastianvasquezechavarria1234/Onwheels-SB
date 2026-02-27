@@ -28,7 +28,7 @@ export const LoginRequiredModal = ({ isOpen, onClose }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header / Banner */}
-                        <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-center text-white relative">
+                        <div className="bg-gradient-to-r from-blue-900 to-blue-950 p-6 text-center text-white relative">
                             <button
                                 onClick={onClose}
                                 className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
@@ -54,7 +54,7 @@ export const LoginRequiredModal = ({ isOpen, onClose }) => {
                                 <Link
                                     to="/login"
                                     state={{ from: location, intent: 'checkout' }}
-                                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 transition-all transform active:scale-[0.98]"
+                                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-blue-900 text-white rounded-xl font-bold hover:bg-blue-950 hover:shadow-lg hover:shadow-blue-600/20 transition-all transform active:scale-[0.98]"
                                 >
                                     <LogIn size={18} />
                                     Iniciar Sesión

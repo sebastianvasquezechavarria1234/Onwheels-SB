@@ -261,8 +261,7 @@ export const ClassLevels = () => {
     setFormErrors({ nombre_nivel: "", descripcion: "" });
   };
 
-  return (
-    <>
+  
       return (
       <>
         <div className="flex flex-col h-full bg-white overflow-hidden">

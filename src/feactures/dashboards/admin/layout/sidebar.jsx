@@ -191,6 +191,10 @@ const Sidebar = () => {
             <div className="ml-8 mt-2 space-y-3">
               <div className="flex items-center gap-2 hover:text-blue-600">
                 <ShoppingCart size={18} />
+                <span><BtnLink link="pedidos" title="Pedidos" /></span>
+              </div>
+              <div className="flex items-center gap-2 hover:text-blue-600">
+                <ShoppingCart size={18} />
                 <span><BtnLink link="ventas" title="Ventas" /></span>
               </div>
             </div>

@@ -23,11 +23,13 @@ export const Card = ({ product }) => {
 
   if (!product) return null;
 
+  const API_URL = "http://localhost:3000";
+
   const {
-    imagen,
     nombre_producto,
     precio_venta,
-    variantes
+    variantes,
+    imagenes
   } = product;
 
   // Formateador de precios
@@ -39,13 +41,17 @@ export const Card = ({ product }) => {
   };
 
   // Validation helper
-  const isValidImage = (url) => {
-    if (!url) return false;
-    if (url.startsWith('data:image')) return url.length > 30; // Check for actual content
-    return true;
+  const getImageUrl = (imgObj) => {
+    if (!imgObj || !imgObj.url_imagen) return null;
+    const url = imgObj.url_imagen;
+    if (url.startsWith('http') || url.startsWith('data:image')) return url;
+    return `${API_URL}${url}`;
   };
 
-  const imgSrc = isValidImage(imagen) ? imagen : "/bg_hero_shop.jpg";
+  // Multiple images logic
+  const validImages = (imagenes || []).filter(img => img && img.url_imagen);
+  const imgSrcMain = validImages.length > 0 ? getImageUrl(validImages[0]) : "/bg_hero_shop.jpg";
+  const imgSrcHover = validImages.length > 1 ? getImageUrl(validImages[1]) : null;
   const productDetailLink = getProductDetailPath(user, product.id_producto);
   const cartPath = getCartPath(user);
 
@@ -119,7 +125,7 @@ export const Card = ({ product }) => {
           </div>
           <div className="flex gap-5 mb-6">
             <div className="relative w-16 h-16 shrink-0">
-              <img src={imgSrc} alt={nombre_producto} className="w-full h-full rounded-xl object-cover bg-white shadow-sm" />
+              <img src={imgSrcMain} alt={nombre_producto} className="w-full h-full rounded-xl object-cover bg-[#0B0F14] shadow-sm" />
             </div>
             <div className="flex flex-col justify-center">
               <p className="text-white font-bold text-sm leading-snug line-clamp-2">{nombre_producto}</p>
@@ -174,15 +180,22 @@ export const Card = ({ product }) => {
 
   return (
     <>
-      <div className="group block bg-[#0F172A] rounded-2xl overflow-hidden border border-slate-700/50 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 relative">
+      <div className="group flex flex-col h-full bg-[#121821] rounded-2xl overflow-hidden border border-gray-800/50 hover:border-[#1E3A8A]/50 hover:shadow-xl hover:shadow-[#1E3A8A]/10 hover:-translate-y-1 transition-all duration-300 relative">
         {/* ... existing Card content ... */}
-        <div className="relative aspect-[4/5] overflow-hidden bg-slate-800">
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#0B0F14]">
           <Link to={productDetailLink}>
             <img
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              src={imgSrc}
+              className="w-full h-full object-cover transition-opacity duration-500"
+              src={imgSrcMain}
               alt={nombre_producto}
             />
+            {imgSrcHover && (
+              <img
+                className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                src={imgSrcHover}
+                alt={`${nombre_producto} hover`}
+              />
+            )}
           </Link>
 
           {/* Selector Overlay - Inline Slide Up */}
@@ -249,7 +262,7 @@ export const Card = ({ product }) => {
                   <button
                     onClick={handleAddToCart}
                     disabled={!selectedVariant || maxStock === 0}
-                    className="w-full h-10 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:bg-slate-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                    className="w-full h-10 bg-[#DC2626] text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-colors disabled:opacity-50 disabled:bg-slate-700 flex items-center justify-center gap-2 shadow-lg shadow-red-600/20"
                   >
                     {maxStock === 0 && selectedVariant ? 'Agotado' : 'Agregar al carrito'}
                   </button>
@@ -268,9 +281,9 @@ export const Card = ({ product }) => {
         </div>
 
         {/* Info Compacta */}
-        <div className="p-4 bg-[#0F172A]">
+        <div className="p-4 bg-[#121821] flex flex-col flex-1">
           <Link to={productDetailLink} className="block mb-2">
-            <h4 className="font-primary font-bold text-white text-lg leading-tight line-clamp-2 hover:text-blue-400 transition-colors cursor-pointer">
+            <h4 className="font-primary font-bold text-white text-lg leading-tight line-clamp-2 hover:text-[#1E3A8A] transition-colors cursor-pointer">
               {nombre_producto}
             </h4>
           </Link>
@@ -278,16 +291,16 @@ export const Card = ({ product }) => {
           {/* Category/Tag placeholder if needed, otherwise just space */}
           {/* <p className="text-xs text-slate-400 font-medium mb-3">Categoria</p> */}
 
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-800">
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Precio</span>
-              <span className="font-bold text-slate-100 text-lg">{formatPrice(precio_venta)}</span>
+              <span className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-wider">Precio</span>
+              <span className="font-bold text-white text-lg">{formatPrice(precio_venta)}</span>
             </div>
 
             <button
               onClick={toggleSelector}
               className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 shadow-lg
-                ${showSelector ? 'bg-slate-700 text-white rotate-180' : 'bg-blue-600 text-white hover:bg-blue-500 hover:scale-105 shadow-blue-600/20'}`}
+                ${showSelector ? 'bg-gray-800 text-white rotate-180' : 'bg-[#1E3A8A] text-white hover:bg-blue-800 hover:scale-105 shadow-[#1E3A8A]/20'}`}
               title="Seleccionar opciones"
             >
               {showSelector ? <X size={18} /> : <ShoppingCart size={18} strokeWidth={2.5} />}

@@ -277,6 +277,9 @@ export const Layout = ({ children }) => {
 
                         {key === "ventas" && (
                           <>
+                            <BtnSideBar title="Pedidos" link="../admin/pedidos">
+                              <ShoppingCart size={16} />
+                            </BtnSideBar>
                             <BtnSideBar title="Ventas" link="../admin/ventas">
                               <ShoppingBag size={16} />
                             </BtnSideBar>

@@ -543,8 +543,7 @@ export const Administradores = () => {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
-    </div >
+        </AnimatePresence>
     </>
   );
 };

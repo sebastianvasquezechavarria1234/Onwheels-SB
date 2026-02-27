@@ -58,21 +58,19 @@ export const Grid = () => {
     });
 
     return (
-        <section id="products" className="w-full bg-white pt-24 pb-24">
+        <section id="products" className="w-full bg-[#0B0F14] pt-24 pb-24 transition-colors duration-500 text-white">
             <div className="max-w-[1500px] mx-auto px-6 md:px-10">
-
 
                 <div className="mb-16 text-center flex flex-col items-center">
 
-
-                    <h2 className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.9] mb-6">
+                    <h2 className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.9] mb-6 text-white">
                         EXPLORA
-                        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-400">
+                        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#1E3A8A] to-[#DC2626]">
                             NUESTROS PRODUCTOS
                         </span>
                     </h2>
 
-                    <p className="text-gray-800 text-xl md:text-2xl max-w-3xl leading-relaxed font-semibold">
+                    <p className="text-[#9CA3AF] text-xl md:text-2xl max-w-3xl leading-relaxed font-semibold">
                         Equipamiento y estilo diseñados para la vida urbana.
                         Calidad, resistencia y actitud en cada detalle.
                     </p>
@@ -80,7 +78,7 @@ export const Grid = () => {
                 </div>
 
                 {/* FILTER BAR con más presencia */}
-                <div className="mb-14 bg-gray-100 border border-gray-200 rounded-2xl shadow-sm p-6 md:p-8">
+                <div className="mb-14 bg-[#121821] border border-gray-800/50 rounded-2xl shadow-lg p-6 md:p-8">
                     <FilterBar
                         search={search}
                         setSearch={setSearch}
@@ -94,11 +92,11 @@ export const Grid = () => {
 
                 {/* GRID */}
                 {loading ? (
-                    <div className="py-24 text-center text-gray-400">
+                    <div className="py-24 text-center text-[#9CA3AF]">
                         Cargando productos...
                     </div>
                 ) : filteredProducts.length === 0 ? (
-                    <div className="py-24 text-center text-gray-500 bg-gray-50 rounded-2xl">
+                    <div className="py-24 text-center text-[#9CA3AF] bg-[#121821] rounded-2xl border border-gray-800/50">
                         No se encontraron productos con estos filtros.
                     </div>
                 ) : (

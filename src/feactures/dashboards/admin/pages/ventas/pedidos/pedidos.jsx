@@ -33,14 +33,14 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
-  getVentas,
-  getVentaById,
-  createVenta,
-  updateVenta,
-  deleteVenta,
-  updateVentaStatus,
-  cancelVenta,
-} from "../../services/ventasService";
+  getPedidos,
+  getPedidoById,
+  createPedido,
+  updatePedido,
+  deletePedido,
+  updatePedidoStatus,
+  cancelPedido,
+} from "../../services/pedidosService";
 
 import {
   getProductos,
@@ -55,7 +55,7 @@ import { getClientes, createCliente } from "../../services/clientesServices";
 // Helper para clases condicionales
 function cn(...classes) { return classes.filter(Boolean).join(" "); }
 
-function Ventas() {
+function Pedidos() {
   const navigate = useNavigate();
   const [ventas, setVentas] = useState([]);
   const [usuarios, setUsuarios] = useState([]); // todos los usuarios (posibles clientes)
@@ -124,7 +124,7 @@ function Ventas() {
     try {
       setLoading(true);
       const [ventasData, usuariosData, clientesData, productosData, variantesData, cols, tls] = await Promise.all([
-        getVentas(),
+        getPedidos(),
         getUsuarios(),
         getClientes(),
         getProductos(),
@@ -174,7 +174,7 @@ function Ventas() {
       return;
     } else if (type === "ver" && venta) {
       // Navegar a la vista de detalle en lugar de abrir modal
-      navigate(`/admin/ventas/detalle/${venta.id_venta}`);
+      navigate(`/admin/pedidos/detalle/${venta.id_venta}`);
       return;
     }
 
@@ -192,7 +192,7 @@ function Ventas() {
       setHistorialCliente([]);
     } else if (type === "editar" && venta) {
       try {
-        const ventaCompleta = await getVentaById(venta.id_venta);
+        const ventaCompleta = await getPedidoById(venta.id_venta);
         setForm({
           id_cliente: ventaCompleta.id_cliente,
           fecha_venta: ventaCompleta.fecha_venta?.split?.("T")[0] || "",
@@ -219,7 +219,7 @@ function Ventas() {
     if (!id_cliente) return;
     setLoadingHistorial(true);
     try {
-      const historial = await getVentas().then((vs) => vs.filter(v => v.id_cliente === id_cliente));
+      const historial = await getPedidos().then((vs) => vs.filter(v => v.id_cliente === id_cliente));
       historial.sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta));
       setHistorialCliente(historial);
     } catch (err) {
@@ -305,10 +305,10 @@ function Ventas() {
       };
 
       if (modal === "crear") {
-        await createVenta(payload);
+        await createPedido(payload);
         showNotification("Venta registrada", "success");
       } else if (modal === "editar" && selectedVenta) {
-        await updateVenta(selectedVenta.id_venta, payload);
+        await updatePedido(selectedVenta.id_venta, payload);
         showNotification("Venta actualizada", "success");
       }
       await fetchData();
@@ -325,7 +325,7 @@ function Ventas() {
   const handleDelete = async () => {
     if (!selectedVenta) return;
     try {
-      await deleteVenta(selectedVenta.id_venta);
+      await deletePedido(selectedVenta.id_venta);
       await fetchData();
       showNotification("Venta eliminada", "success");
       closeModal();
@@ -337,7 +337,7 @@ function Ventas() {
   const handleStatusUpdate = async (estado) => {
     if (!selectedVenta) return;
     try {
-      await updateVentaStatus(selectedVenta.id_venta, { estado });
+      await updatePedidoStatus(selectedVenta.id_venta, { estado });
       await fetchData();
       showNotification("Estado actualizado", "success");
       closeModal();
@@ -479,7 +479,7 @@ function Ventas() {
 
     if (!expandedRows.has(idVenta)) {
       try {
-        const ventaCompleta = await getVentaById(idVenta);
+        const ventaCompleta = await getPedidoById(idVenta);
         setVentas((prev) =>
           prev.map((v) => (v.id_venta === idVenta ? { ...v, items: ventaCompleta.items } : v))
         );
@@ -537,7 +537,7 @@ function Ventas() {
           {/* Row 1: Minimal Header */}
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-              Gestión de Ventas
+              Gestión de pedidos
             </h2>
 
             {/* Compact Stats */}
@@ -569,7 +569,7 @@ function Ventas() {
                 <input
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar ventas..."
+                  placeholder="Buscar pedidos..."
                   className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
                 />
               </div>
@@ -591,7 +591,13 @@ function Ventas() {
                 </div>
               </div>
 
-              {/* Nueva venta se quitó porque solo se pueden crear desde Pedidos */}
+              <button
+                onClick={() => navigate("/admin/pedidos/crear")}
+                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+              >
+                <Plus size={18} />
+                Nuevo Pedido
+              </button>
             </div>
           </div>
         </div>
@@ -616,7 +622,7 @@ function Ventas() {
                 <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     <tr>
-                      <td colSpan="7" className="px-6 py-8 text-center text-gray-400 text-sm">Cargando ventas...</td>
+                      <td colSpan="7" className="px-6 py-8 text-center text-gray-400 text-sm">Cargando pedidos...</td>
                     </tr>
                   ) : visibleItems.length === 0 ? (
                     <tr>
@@ -679,8 +685,12 @@ function Ventas() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => navigate(`/admin/ventas/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
+                            <button onClick={() => navigate(`/admin/pedidos/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
+                            {v.estado === "Pendiente" && (
+                              <button onClick={() => navigate(`/admin/pedidos/editar/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={16} /></button>
+                            )}
                             <button onClick={() => openModal("status", v)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Actualizar estado"><Package size={16} /></button>
+                            <button onClick={() => openModal("eliminar", v)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 size={16} /></button>
                           </div>
                         </td>
                       </tr>
@@ -757,7 +767,7 @@ function Ventas() {
             >
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {modal === "crear" ? "Crear nueva venta" : "Editar venta"}
+                  {modal === "crear" ? "Crear Nuevo Pedido" : "Editar venta"}
                 </h2>
                 <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
                   <X size={20} />
@@ -1250,4 +1260,4 @@ function Ventas() {
   );
 }
 
-export default Ventas;
+export default Pedidos;
