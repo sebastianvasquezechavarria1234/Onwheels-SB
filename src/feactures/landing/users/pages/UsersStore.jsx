@@ -1,12 +1,10 @@
-import { Grid } from "../../components/shop/Grid"
-import { Hero } from "../../components/shop/Hero"
+import { StoreContent } from "../../pages/Store"
 import { UsersLayout } from "../layout/UsersLayout";
 
 export const UsersStore = () => {
-  return(
+  return (
     <UsersLayout>
-       <Hero />
-        <Grid />
+      <StoreContent />
     </UsersLayout>
   )
 }

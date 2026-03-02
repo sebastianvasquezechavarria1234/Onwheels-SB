@@ -54,7 +54,7 @@ export const Header = () => {
               <img src="/logo.png" alt="OW" className="w-full h-full object-cover" />
             </div>
             <span className={`font-bold uppercase tracking-tighter transition-all duration-500 ${scrolled ? 'text-sm text-white' : 'text-lg text-white'}`}>
-              OnWheels
+              Performance SB
             </span>
           </Link>
 

@@ -5,10 +5,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Search, Plus, Trash2, ArrowLeft, X, Save, CheckCircle, Package, User, DollarSign, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    getVentaById,
-    createVenta,
-    updateVenta,
-} from "../../services/ventasService";
+    getPedidos,
+    getPedidoById,
+    createPedido,
+    updatePedido,
+} from "../../services/pedidosService";
 import {
     getProductos,
     getColores,
@@ -18,7 +19,7 @@ import {
 import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
 
-export default function VentaEditar() {
+export default function PedidoEditar() {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditing = Boolean(id);
@@ -100,19 +101,19 @@ export default function VentaEditar() {
 
                 // Si es edición, cargar la venta
                 if (isEditing) {
-                    const venta = await getVentaById(id);
+                    const pedido = await getPedidoById(id);
                     // Buscar datos extra del cliente si falta
-                    const foundClient = (clis || []).find(c => c.id_cliente === venta.id_cliente);
+                    const foundClient = (clis || []).find(c => c.id_cliente === pedido.id_cliente);
 
                     setForm({
-                        id_cliente: venta.id_cliente || "",
-                        id_usuario: venta.id_usuario || foundClient?.id_usuario || "",
-                        direccion: venta.direccion_envio || foundClient?.direccion_envio || "",
-                        telefono: venta.telefono || foundClient?.telefono_contacto || "",
-                        fecha_venta: venta.fecha_venta?.split("T")[0],
-                        metodo_pago: venta.metodo_pago || "Efectivo",
-                        estado: venta.estado || "Pendiente",
-                        items: venta.items ? venta.items.map(it => ({
+                        id_cliente: pedido.id_cliente || "",
+                        id_usuario: pedido.id_usuario || foundClient?.id_usuario || "",
+                        direccion: pedido.direccion_envio || foundClient?.direccion_envio || "",
+                        telefono: pedido.telefono || foundClient?.telefono_contacto || "",
+                        fecha_venta: pedido.fecha_venta?.split("T")[0],
+                        metodo_pago: pedido.metodo_pago || "Efectivo",
+                        estado: pedido.estado || "Pendiente",
+                        items: pedido.items ? pedido.items.map(it => ({
                             ...it,
                             qty: it.cantidad,
                             price: it.precio_unitario, // Precio histórico
@@ -338,17 +339,17 @@ export default function VentaEditar() {
             };
 
             if (isEditing) {
-                await updateVenta(id, payload);
-                showNotification("Venta actualizada correctamente", "success");
+                await updatePedido(id, payload);
+                showNotification("Pedido actualizado", "success");
+                setTimeout(() => navigate("/admin/pedidos"), 1500);
             } else {
-                await createVenta(payload);
-                showNotification("Venta creada exitosamente", "success");
+                await createPedido(payload);
+                showNotification("Pedido registrado", "success");
+                setTimeout(() => navigate("/admin/pedidos"), 1500);
             }
-            // Navegar atrás tras éxito
-            setTimeout(() => navigate("/admin/ventas"), 1000);
         } catch (err) {
             console.error(err);
-            showNotification(err?.response?.data?.mensaje || "Error al guardar venta", "error");
+            showNotification(err?.response?.data?.mensaje || "Error al guardar pedido", "error");
             setIsSubmitting(false);
         }
     };
@@ -366,20 +367,20 @@ export default function VentaEditar() {
                 {/* Header Page */}
                 <div className="bg-white shadow-sm border-b px-6 py-4 flex items-center justify-between sticky top-0 z-10">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate("/admin/ventas")} className="p-2 hover:bg-gray-100 rounded-full transition">
+                        <button type="button" onClick={() => navigate("/admin/pedidos")} className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 hover:text-gray-900 transition flex items-center gap-2">
                             <ArrowLeft size={20} className="text-gray-600" />
                         </button>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-800">{isEditing ? `Editar Venta #${id}` : "Nueva Venta"}</h1>
+                            <h1 className="text-xl font-bold text-gray-800">{isEditing ? `Editar Pedido #${id}` : "Nuevo Pedido"}</h1>
                             <p className="text-sm text-gray-500">
-                                {isEditing ? "Modifique los items o datos de la venta." : "Registre una venta, el usuario será promovido a cliente automáticamente."}
+                                {isEditing ? "Modifique los items o datos del pedido." : "Registre un pedido, el usuario será promovido a cliente automáticamente."}
                             </p>
                         </div>
                     </div>
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={() => navigate("/admin/ventas")}
+                            onClick={() => navigate("/admin/pedidos")}
                             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                         >
                             Cancelar
@@ -390,7 +391,7 @@ export default function VentaEditar() {
                             className={`flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             <Save size={18} />
-                            {isSubmitting ? "Guardando..." : "Guardar Venta"}
+                            {isSubmitting ? "Guardando..." : id ? "Actualizar Pedido" : "Crear Pedido"}
                         </button>
                     </div>
                 </div>

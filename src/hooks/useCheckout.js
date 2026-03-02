@@ -85,7 +85,13 @@ export const useCheckout = () => {
     };
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        let { name, value } = e.target;
+
+        // Restringir teléfono a números y símbolos básicos
+        if (name === "telefono") {
+            value = value.replace(/[^0-9+\s-]/g, '');
+        }
+
         setForm(prev => ({ ...prev, [name]: value }));
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
     };

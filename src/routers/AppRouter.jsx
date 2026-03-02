@@ -9,7 +9,7 @@ import { AdminLayoutWrapper } from "./AdminLayoutWrapper"
 import { Home } from "../feactures/landing/pages/Home";
 import { Store } from "../feactures/landing/pages/Store";
 import Class from "../feactures/landing/pages/Class";
-// import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
+import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
@@ -127,6 +127,9 @@ import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/cate
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas"
 import VentaDetalle from "../feactures/dashboards/admin/pages/ventas/ventas/VentaDetalle"
 import VentaEditar from "../feactures/dashboards/admin/pages/ventas/ventas/VentaEditar"
+import Pedidos from "../feactures/dashboards/admin/pages/ventas/pedidos/pedidos"
+import PedidoDetalle from "../feactures/dashboards/admin/pages/ventas/pedidos/PedidoDetalle"
+import PedidoEditar from "../feactures/dashboards/admin/pages/ventas/pedidos/PedidoEditar"
 import Clientes from "../feactures/dashboards/admin/pages/ventas/clientes/clientes"
 import AdminShoppingCart from "../feactures/dashboards/admin/pages/AdminShoppingCart"
 import { AdminCheckout } from "../feactures/dashboards/admin/pages/AdminCheckout";
@@ -171,7 +174,7 @@ const AppRouter = () => {
         <Route path="store" element={withAnimation(Store)} />
         <Route path="events" element={withAnimation(Events)} />
         <Route path="training" element={withAnimation(Class)} />
-        {/* <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} /> */}
+        <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
         <Route path="about" element={withAnimation(About)} />
         <Route path="store/product/:id" element={withAnimation(ProductDetails)} />
         <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
@@ -219,6 +222,10 @@ const AppRouter = () => {
             <Route path="/admin/ventas/crear" element={<VentaEditar />} />
             <Route path="/admin/ventas/editar/:id" element={<VentaEditar />} />
             <Route path="/admin/ventas/detalle/:id" element={<VentaDetalle />} />
+            <Route path="/admin/pedidos" element={<Pedidos />} />
+            <Route path="/admin/pedidos/crear" element={<PedidoEditar />} />
+            <Route path="/admin/pedidos/editar/:id" element={<PedidoEditar />} />
+            <Route path="/admin/pedidos/detalle/:id" element={<PedidoDetalle />} />
             <Route path="admin/clientes" element={<Clientes />} />
             <Route path="admin/compras/detalle/:id" element={<CompraDetalle />} />
             <Route path="admin/compras/editar/:id" element={<CompraEditar />} />

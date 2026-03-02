@@ -302,70 +302,58 @@ export const Clases = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
-
+      <div className="flex flex-col h-full bg-white overflow-hidden">
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
+        <div className="shrink-0 flex flex-col gap-2 p-1 pb-2">
 
           {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between ">
-            <div className="flex items-center gap-4">
-              <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
-                Gestión de Clases
-              </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Gestión de Clases
+            </h2>
 
-              {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l pl-4">
-                <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md ">
-                  <Hash className="h-3 w-3 " />
-                  <span className="text-xs font-bold!">{filteredAndSorted.length}</span>
+            {/* Compact Stats */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
+                  <Hash size={14} className="text-blue-600" />
+                  <span className="text-xs font-bold">{filteredAndSorted.length}</span>
                 </div>
               </div>
+              <button
+                onClick={exportCSV}
+                className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm"
+                title="Exportar CSV"
+              >
+                <Download size={16} />
+              </button>
             </div>
-
-
           </div>
 
           {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
-
+          <div className="flex flex-col sm:flex-row items-center gap-2 bg-slate-50/50 rounded-2xl border border-slate-100 px-3 py-2">
             {/* Search & Create Group */}
             <div className="flex flex-1 w-full sm:w-auto gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar clase..."
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                  placeholder="Buscar clases..."
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
                 />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
               </div>
               <button
                 onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-1.5 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
               >
-                <Plus className="h-4 w-4" />
+                <Plus size={18} />
                 Crear Clase
               </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={exportCSV}
-                  className="p-1.5 rounded-lg transition hover:bg-gray-100"
-                  title="Exportar CSV"
-                >
-                  <Download className="h-4 w-4" />
-                </button>
-              </div>
             </div>
 
             {/* Filters (Larger) */}
-            <div className="flex flex-1 w-full justify-start sm:justify-end items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: "descripcion", label: "Nombre" },
                 { id: "nombre_nivel", label: "Nivel" },
@@ -376,10 +364,10 @@ export const Clases = () => {
                   key={field.id}
                   onClick={() => toggleSort(field.id)}
                   className={cn(
-                    "px-4 py-2 text-xs uppercase font-bold tracking-wide rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
+                    "px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider rounded-xl border transition flex items-center gap-1 shrink-0 select-none",
                     sortField === field.id
-                      ? "bg-[#040529] text-white border-[#040529] shadow-sm transform scale-105"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                      ? "bg-blue-800 text-white border-blue-800 shadow-md"
+                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
                   )}
                 >
                   {field.label}
@@ -399,13 +387,13 @@ export const Clases = () => {
               <table className="w-full text-left relative">
                 <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
                   <tr>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Clase</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Nivel/Sede</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Instructores</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Cupo</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Horario</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider">Clase</th>
+                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-center">Nivel/Sede</th>
+                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider">Instructores</th>
+                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-center">Cupo</th>
+                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider">Horario</th>
+                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-center">Estado</th>
+                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -437,48 +425,48 @@ export const Clases = () => {
                   ) : (
                     currentItems.map((c) => (
                       <tr key={c.id_clase} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
                               {c.descripcion?.substring(0, 2).toUpperCase() || "CL"}
                             </div>
                             <div className="min-w-0">
                               <p className="font-bold text-[#040529] text-sm leading-tight mb-0.5">{c.descripcion}</p>
-                              <p className="text-xs text-gray-500 font-medium">{c.dia_semana}</p>
+                              <p className="text-[10px] text-gray-500 font-medium">{c.dia_semana}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-center">
-                          <div className="flex flex-col items-center gap-0.5">
+                        <td className="px-3 py-3 text-center">
+                          <div className="flex flex-col items-center gap-0">
                             <span className="text-sm font-semibold text-gray-700">{c.nombre_nivel}</span>
-                            <span className="text-xs text-gray-500">{c.nombre_sede}</span>
+                            <span className="text-[10px] text-gray-500">{c.nombre_sede}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-3 py-3">
                           <div className="flex -space-x-2 overflow-hidden py-1">
                             {c.instructores?.slice(0, 3).map((inst, i) => (
-                              <div key={i} className="h-7 w-7 rounded-full ring-2 ring-white bg-blue-100 flex items-center justify-center text-[10px] text-blue-900 font-bold shadow-sm" title={inst.nombre_instructor}>
+                              <div key={i} className="h-6 w-6 rounded-full ring-2 ring-white bg-blue-100 flex items-center justify-center text-[9px] text-blue-900 font-bold shadow-sm" title={inst.nombre_instructor}>
                                 {inst.nombre_instructor.charAt(0)}
                               </div>
                             ))}
                             {(c.instructores?.length || 0) > 3 && (
-                              <div className="h-7 w-7 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-[10px] text-gray-600 font-bold shadow-sm">
+                              <div className="h-6 w-6 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-[9px] text-gray-600 font-bold shadow-sm">
                                 +{(c.instructores?.length || 0) - 3}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-center">
-                          <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-xs font-bold border border-gray-200">
+                        <td className="px-3 py-3 text-center">
+                          <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-xs font-bold border border-gray-200">
                             {c.cupo_maximo}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-sm text-gray-600 font-medium">
+                        <td className="px-3 py-3 text-xs text-gray-600 font-medium">
                           {c.hora_inicio && c.hora_fin ? `${c.hora_inicio.substring(0, 5)} - ${c.hora_fin.substring(0, 5)}` : "—"}
                         </td>
-                        <td className="px-5 py-4 text-center">
+                        <td className="px-3 py-3 text-center">
                           <span className={cn(
-                            "px-3 py-1 rounded-full text-xs font-bold border shadow-sm",
+                            "px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm",
                             c.estado === "Disponible" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
                               c.estado === "Ocupado" ? "bg-amber-50 text-amber-600 border-amber-100" :
                                 "bg-red-50 text-red-600 border-red-100"
@@ -486,11 +474,11 @@ export const Clases = () => {
                             {c.estado}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => openModal("ver", c)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("editar", c)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("eliminar", c)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                        <td className="px-3 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button onClick={() => openModal("ver", c)} className="p-1.5 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye size={14} /></button>
+                            <button onClick={() => openModal("editar", c)} className="p-1.5 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={14} /></button>
+                            <button onClick={() => openModal("eliminar", c)} className="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 size={14} /></button>
                           </div>
                         </td>
                       </tr>

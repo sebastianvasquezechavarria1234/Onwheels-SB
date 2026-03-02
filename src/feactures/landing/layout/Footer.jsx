@@ -18,7 +18,7 @@ export const Footer = () => {
                         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-[var(--color-blue)] group-hover:scale-110 transition-transform">
                             <img src="/logo.png" alt="OW" className="w-full h-full object-cover" />
                         </div>
-                        <span className="text-xl font-bold uppercase text-white tracking-tight">OnWheels</span>
+                        <span className="text-xl font-bold uppercase text-white tracking-tight">Performance SB</span>
                     </Link>
                     <p className="text-gray-500 text-xs leading-relaxed mb-6 max-w-[200px]">
                         Tu comunidad de skate en Colombia. Eventos, tienda y academia.
@@ -62,7 +62,7 @@ export const Footer = () => {
                         </li>
                         <li className="flex gap-2">
                             <Mail size={14} className="text-[var(--color-blue)]" />
-                            <span>hola@onwheels.com</span>
+                            <span>hola@Performance SB.com</span>
                         </li>
                     </ul>
                 </div>
@@ -70,7 +70,7 @@ export const Footer = () => {
 
             {/* Bottom Bar */}
             <div className="relative z-20 max-w-[1200px] mx-auto px-6 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-2 text-[10px] text-gray-600 uppercase tracking-widest">
-                <p>© 2025 OnWheels SB.</p>
+                <p>© 2025 Performance SB SB.</p>
                 <p className="hover:text-[var(--color-blue)] transition-colors cursor-pointer">Created by Performance Team</p>
             </div>
         </footer>

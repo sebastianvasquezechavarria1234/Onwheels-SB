@@ -1,13 +1,11 @@
-import { Grid } from "../../components/shop/Grid"
-import { Hero } from "../../components/shop/Hero"
+import { StoreContent } from "../../pages/Store"
 import { InstructorLayout } from "../layout/InstructorLayout";
 
 
 export const InstructorStore = () => {
-  return(
+  return (
     <InstructorLayout>
-       <Hero />
-        <Grid />
+      <StoreContent />
     </InstructorLayout>
   )
 }

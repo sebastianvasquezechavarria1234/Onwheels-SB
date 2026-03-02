@@ -196,7 +196,7 @@ export const CustomSidebar = () => {
             <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/30">
               OW
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">OnWheels<span className="text-emerald-500">.</span></span>
+            <span className="text-xl font-bold text-white tracking-tight">Performance SB<span className="text-emerald-500">.</span></span>
           </div>
         </Link>
       </div>
