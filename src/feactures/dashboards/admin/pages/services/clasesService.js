@@ -16,5 +16,8 @@ export const getNiveles = () => api.get("/niveles").then(r => r.data);
 export const getSedes = () => api.get("/sedes").then(r => r.data);
 export const getInstructores = () => api.get("/instructores").then(r => r.data);
 
-export const getClasesPorInstructor = (idInstructor) => 
+export const getClasesPorInstructor = (idInstructor) =>
   api.get(`${API_URL}/instructor/${idInstructor}`).then(r => r.data);
+
+// ✅ NUEVA: Clases del estudiante autenticado
+export const getMisClases = () => api.get(`${API_URL}/mis-clases`).then(r => r.data);

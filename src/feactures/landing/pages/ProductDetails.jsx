@@ -5,7 +5,7 @@ import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle, ShoppingBag 
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
-import { getStoreHomePath } from "../../../utils/roleHelpers";
+import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers"; // ✅ getCheckoutPath agregado aquí
 import { LoginRequiredModal } from "../components/LoginRequiredModal";
 
 export const ProductDetails = () => {
@@ -17,8 +17,8 @@ export const ProductDetails = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedColor, setSelectedColor] = useState(null); // id_color (obj)
-  const [selectedSize, setSelectedSize] = useState(null);   // id_talla (obj)
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [qty, setQty] = useState(1);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -66,18 +66,16 @@ export const ProductDetails = () => {
   const {
     nombre_producto,
     descripcion,
-    precio, // precio_venta comes as "precio" from controller
+    precio,
     imagen_producto,
     variantes = []
   } = product;
 
-  // Helpers
   const formatPrice = (val) => {
     const num = Number(val);
     return isNaN(num) ? val : `$${new Intl.NumberFormat("es-CO").format(num)}`;
   };
 
-  // Logic: Unique Colors
   const uniqueColors = [];
   const colorMap = new Map();
   variantes.forEach(v => {
@@ -87,31 +85,20 @@ export const ProductDetails = () => {
     }
   });
 
-  // Logic: Available Sizes based on Color
   let availableSizes = [];
   if (selectedColor) {
     availableSizes = variantes
       .filter(v => v.id_color === selectedColor.id && v.stock > 0)
       .map(v => ({ id: v.id_talla, name: v.nombre_talla, stock: v.stock, id_variante: v.id_variante }));
-  } else {
-    // Show all unique sizes as enabled if no color selected (optional UX choice, strictly speaking usually disabled until color picked)
-    // But better UX: Show all unique sizes but visually distinct. 
-    // Simplify: User must pick Color first.
   }
 
-  // Get current variant (for stock check)
   const currentVariant = selectedColor && selectedSize
     ? variantes.find(v => v.id_color === selectedColor.id && v.id_talla === selectedSize.id)
     : null;
 
   const maxStock = currentVariant ? currentVariant.stock : 0;
 
-
-
-  // Actions
   const handleAddToCart = () => {
-    // ... (existing logic)
-    // 2. Validations
     if (variantes.length > 0) {
       if (!selectedColor) {
         toast.error("Por favor selecciona un color");
@@ -128,16 +115,10 @@ export const ProductDetails = () => {
       return;
     }
 
-    // 3. Action
     try {
-      // Construct product object compatible with addToCart expectations
-      // ProductDetails API returns `precio`, stored items expect `precio_venta`
-      // We normalize here
       const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
-
       addToCart(productToAdd, currentVariant, qty);
 
-      // RICH SUCCESS TOAST
       toast.custom(
         <div className="p-5 font-primary bg-white rounded-xl shadow-2xl border border-gray-100 max-w-sm">
           <div className="flex items-center gap-2 mb-3 text-green-600 text-sm font-bold uppercase tracking-wide">
@@ -155,10 +136,7 @@ export const ProductDetails = () => {
               Ver carrito
             </Link>
             <button
-              onClick={() => {
-                toast.dismiss();
-                handleBuyNow();
-              }}
+              onClick={() => { toast.dismiss(); handleBuyNow(); }}
               className="block w-full text-center py-2.5 rounded-xl bg-gray-900 text-white font-bold text-xs hover:bg-black transition-colors flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-gray-900/20"
             >
               <ShoppingBag size={14} />
@@ -173,7 +151,6 @@ export const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
-    // Strict check for user AND token
     if (!user || Object.keys(user).length === 0 || !localStorage.getItem("token")) {
       setShowLoginModal(true);
       return;
@@ -185,18 +162,10 @@ export const ProductDetails = () => {
     }
 
     try {
-      // Logic for immediate checkout (add to cart then redirect)
+      // ✅ Sin duplicados, sin import adentro
       const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
       addToCart(productToAdd, currentVariant, qty);
-      import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers";
-
-      // ... inside handleBuyNow ...
-
-      // Logic for immediate checkout (add to cart then redirect)
-      const productToAdd = { ...product, precio_venta: precio, imagen: imagen_producto };
-      addToCart(productToAdd, currentVariant, qty);
-
-      const checkoutPath = getCheckoutPath(user);
+      const checkoutPath = getCheckoutPath(user); // ✅ usa el import del top
       navigate(checkoutPath);
     } catch (err) {
       toast.error(err.message);
@@ -206,7 +175,6 @@ export const ProductDetails = () => {
   return (
     <Layout>
       <section className="pt-[140px] max-w-[1200px] mx-auto p-4 md:p-8 min-h-[90vh]">
-        {/* ... existing content ... */}
         <Link to={backLink} className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-8 transition-colors group">
           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
             <ArrowLeft size={16} />
@@ -214,7 +182,6 @@ export const ProductDetails = () => {
           <span className="font-medium">Volver a la tienda</span>
         </Link>
 
-        {/* ... existing product detail structure ... */}
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
           {/* Left: Image */}
           <div className="w-full lg:w-[55%]">
@@ -247,7 +214,7 @@ export const ProductDetails = () => {
               {descripcion}
             </p>
 
-            {/* Selectors */}
+            {/* Color Selector */}
             {uniqueColors.length > 0 && (
               <div className="mb-8">
                 <span className="block text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Color</span>
@@ -257,8 +224,7 @@ export const ProductDetails = () => {
                       key={c.id}
                       onClick={() => { setSelectedColor(c); setSelectedSize(null); }}
                       className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ring-offset-2
-                                        ${selectedColor?.id === c.id ? 'ring-2 ring-gray-900 scale-110' : 'hover:scale-110'}
-                                    `}
+                        ${selectedColor?.id === c.id ? 'ring-2 ring-gray-900 scale-110' : 'hover:scale-110'}`}
                       style={{ backgroundColor: c.hex || '#000' }}
                       title={c.name}
                     >
@@ -269,8 +235,9 @@ export const ProductDetails = () => {
               </div>
             )}
 
+            {/* Size Selector */}
             {uniqueColors.length > 0 && (
-              <div className="mb-8 opacity-100 transition-opacity">
+              <div className="mb-8">
                 <div className="flex justify-between items-center mb-3">
                   <span className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Talla</span>
                   {!selectedColor && (
@@ -278,7 +245,6 @@ export const ProductDetails = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {/* If no color selected, we can show placeholder sizes or nothing. Requirement says "Chips well defined" */}
                   {selectedColor ? (
                     availableSizes.map(s => (
                       <button
@@ -286,11 +252,10 @@ export const ProductDetails = () => {
                         onClick={() => setSelectedSize(s)}
                         disabled={s.stock === 0}
                         className={`min-w-[3.5rem] h-12 px-4 rounded-xl border flex items-center justify-center text-sm font-medium transition-all
-                                            ${selectedSize?.id === s.id
+                          ${selectedSize?.id === s.id
                             ? 'bg-gray-900 text-white border-gray-900 shadow-lg'
                             : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'}
-                                            ${s.stock === 0 ? 'opacity-40 cursor-not-allowed bg-gray-50 decoration-slice' : ''}
-                                        `}
+                          ${s.stock === 0 ? 'opacity-40 cursor-not-allowed bg-gray-50' : ''}`}
                       >
                         {s.name}
                       </button>
@@ -313,7 +278,7 @@ export const ProductDetails = () => {
                   >-</button>
                   <span className="w-12 text-center font-bold text-gray-900">{qty}</span>
                   <button
-                    onClick={() => setQty(q => q + 1)}
+                    onClick={() => setQty(q => Math.min(maxStock || q + 1, q + 1))}
                     className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white transition-colors text-lg font-medium"
                   >+</button>
                 </div>
@@ -345,3 +310,5 @@ export const ProductDetails = () => {
     </Layout>
   );
 };
+
+export default ProductDetails;
