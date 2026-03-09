@@ -41,8 +41,8 @@ export const InstructorCheckout = () => {
   if (loading) {
     return (
       <InstructorLayout>
-        <div className="pt-[120px] max-w-[1500px] mx-auto p-[20px] text-center">
-          <p>Cargando información...</p>
+        <div className="pt-24 min-h-screen flex items-center justify-center bg-[#0B0F14]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A8A]"></div>
         </div>
       </InstructorLayout>
     );
@@ -51,182 +51,187 @@ export const InstructorCheckout = () => {
   if (cart.items.length === 0) {
     return (
       <InstructorLayout>
-        <div className="pt-[120px] max-w-[1500px] mx-auto p-[20px] text-center">
-          <h3 className="mb-4">El carrito está vacío</h3>
-          <button onClick={() => navigate("/instructor/shoppingCart")} className="text-blue-600 underline">
+        <div className="pt-24 min-h-screen flex flex-col items-center justify-center bg-[#0B0F14] text-white">
+          <ShoppingBag size={48} className="text-gray-500 mb-6" />
+          <h3 className="text-2xl font-black mb-4">El carrito está vacío</h3>
+          <button onClick={() => navigate("/instructor/shoppingCart")} className="text-[#1E3A8A] hover:underline font-bold">
             Volver al carrito
           </button>
         </div>
       </InstructorLayout>
-    )
+    );
   }
 
   return (
     <InstructorLayout>
-      <section className="pt-[120px] max-w-[1500px] mx-auto p-[20px] flex gap-[30px] max-lg:flex-col max-md:p-[10px] max-md:pt-[80px]">
-        <div className="w-[65%] max-lg:w-full">
-          <div className="mb-6">
-            <button
-              onClick={() => navigate("/instructor/shoppingCart")}
-              className="flex items-center gap-2 text-gray-600 hover:text-black mb-4"
-            >
-              <ArrowLeft size={20} />
-              Volver al carrito
-            </button>
-            <h2 className="mb-[20px] max-md:mb-[20px]">Información de envío y pago</h2>
-          </div>
-
-          <form onSubmit={onConfirm} className="p-[30px] border-1 border-black/20 rounded-[30px] max-md:p-[10px] max-md:rounded-[20px]">
-            {/* Información de Envío */}
-            <div className="mb-[30px] max-md:mb-[20px]">
-              <h3 className="text-lg font-bold mb-[20px] flex items-center gap-2">
-                📍 Información de Envío
-              </h3>
-              <div className="grid grid-cols-1 gap-4">
-                <label className="block">
-                  <p className="mb-2 font-medium">Dirección completa *</p>
-                  <input
-                    type="text"
-                    name="direccion"
-                    value={form.direccion}
-                    onChange={handleInputChange}
-                    className={`input w-full ${errors.direccion ? 'border-red-500' : ''}`}
-                    placeholder="Calle 123 #45-67, Medellín, Antioquia"
-                  />
-                  {errors.direccion && (
-                    <p className="text-red-500 text-sm mt-1">{errors.direccion}</p>
-                  )}
-                </label>
-
-                <label className="block">
-                  <p className="mb-2 font-medium">Teléfono de contacto *</p>
-                  <input
-                    type="tel"
-                    name="telefono"
-                    value={form.telefono}
-                    onChange={handleInputChange}
-                    className={`input w-full ${errors.telefono ? 'border-red-500' : ''}`}
-                    placeholder="+57 300 123 4567"
-                  />
-                  {errors.telefono && (
-                    <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>
-                  )}
-                </label>
-
-                <label className="block">
-                  <p className="mb-2 font-medium">Instrucciones de entrega (opcional)</p>
-                  <textarea
-                    name="instrucciones_entrega"
-                    value={form.instrucciones_entrega}
-                    onChange={handleInputChange}
-                    className="input w-full"
-                    rows={3}
-                    placeholder="Ej: Tocar el timbre, dejar con el portero, etc."
-                  />
-                </label>
-              </div>
+      <div className="bg-[#0B0F14] min-h-screen text-white font-primary pb-24">
+        <section className="pt-[120px] max-w-7xl mx-auto px-4 sm:px-6 flex gap-10 max-lg:flex-col">
+          <div className="w-[65%] max-lg:w-full">
+            <div className="mb-6">
+              <button
+                onClick={() => navigate("/instructor/shoppingCart")}
+                className="flex items-center gap-2 text-[#9CA3AF] hover:text-white mb-6 tracking-wider text-xs font-bold transition-colors"
+              >
+                <ArrowLeft size={16} />
+                Volver al carrito
+              </button>
+              <h2 className="text-3xl font-black text-white tracking-tight">Información de envío y pago</h2>
             </div>
 
-            {/* Método de Pago */}
-            <div className="mb-[30px] max-md:mb-[20px]">
-              <h3 className="text-lg font-bold mb-[20px] flex items-center gap-2">
-                💳 Método de Pago
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {["Efectivo", "Transferencia", "Tarjeta"].map((metodo) => (
-                  <label
-                    key={metodo}
-                    className={`flex items-center justify-center gap-2 p-4 border-2 rounded-xl cursor-pointer transition ${form.metodo_pago === metodo
-                      ? "border-[var(--color-blue)] bg-blue-50"
-                      : "border-black/20 hover:border-black/40"
-                      }`}
-                  >
+            <form onSubmit={onConfirm} className="p-8 bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl">
+              {/* Información de Envío */}
+              <div className="mb-10">
+                <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
+                  📍 Información de Envío
+                </h3>
+                <div className="grid grid-cols-1 gap-6">
+                  <label className="block">
+                    <p className="mb-2 text-sm font-bold text-[#9CA3AF] tracking-wider">Dirección completa *</p>
                     <input
-                      type="radio"
-                      name="metodo_pago"
-                      value={metodo}
-                      checked={form.metodo_pago === metodo}
+                      type="text"
+                      name="direccion"
+                      value={form.direccion}
                       onChange={handleInputChange}
-                      className="w-4 h-4"
+                      className={`w-full bg-[#0B0F14] border px-4 py-3 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#1E3A8A] transition-all ${errors.direccion ? 'border-red-500' : 'border-gray-800 focus:border-transparent'}`}
+                      placeholder="Calle 123 #45-67, Medellín, Antioquia"
                     />
-                    <span className="font-medium">{metodo}</span>
+                    {errors.direccion && (
+                      <p className="text-red-500 text-xs font-bold mt-2">{errors.direccion}</p>
+                    )}
                   </label>
+
+                  <label className="block">
+                    <p className="mb-2 text-sm font-bold text-[#9CA3AF] tracking-wider">Teléfono de contacto *</p>
+                    <input
+                      type="tel"
+                      name="telefono"
+                      value={form.telefono}
+                      onChange={handleInputChange}
+                      className={`w-full bg-[#0B0F14] border px-4 py-3 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#1E3A8A] transition-all ${errors.telefono ? 'border-red-500' : 'border-gray-800 focus:border-transparent'}`}
+                      placeholder="+57 300 123 4567"
+                    />
+                    {errors.telefono && (
+                      <p className="text-red-500 text-xs font-bold mt-2">{errors.telefono}</p>
+                    )}
+                  </label>
+
+                  <label className="block">
+                    <p className="mb-2 text-sm font-bold text-[#9CA3AF] tracking-wider">Instrucciones de entrega (opcional)</p>
+                    <textarea
+                      name="instrucciones_entrega"
+                      value={form.instrucciones_entrega}
+                      onChange={handleInputChange}
+                      className="w-full bg-[#0B0F14] border border-gray-800 focus:border-transparent px-4 py-3 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#1E3A8A] transition-all"
+                      rows={3}
+                      placeholder="Ej: Tocar el timbre, dejar con el portero, etc."
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Método de Pago */}
+              <div className="mb-10">
+                <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
+                  💳 Método de Pago
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {["Efectivo", "Transferencia", "Tarjeta"].map((metodo) => (
+                    <label
+                      key={metodo}
+                      className={`flex items-center justify-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${form.metodo_pago === metodo
+                        ? "border-[#1E3A8A] bg-[#1E3A8A]/10 text-white shadow-inner shadow-[#1E3A8A]/20"
+                        : "border-gray-800 bg-[#0B0F14] text-[#9CA3AF] hover:border-gray-600 hover:text-white"
+                        }`}
+                    >
+                      <input
+                        type="radio"
+                        name="metodo_pago"
+                        value={metodo}
+                        checked={form.metodo_pago === metodo}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 accent-[#1E3A8A]"
+                      />
+                      <span className="font-bold text-sm tracking-wide">{metodo}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="mt-6 p-5 bg-[#0B0F14] border border-[#1E3A8A]/30 rounded-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#1E3A8A] rounded-full -mr-12 -mt-12 opacity-20 blur-xl"></div>
+                  <h4 className="font-bold text-emerald-400 mb-2 flex items-center gap-2 tracking-wide text-xs">
+                    <AlertTriangle size={16} />
+                    Importante
+                  </h4>
+                  <p className="text-sm text-[#9CA3AF] font-medium leading-relaxed relative z-10">
+                    El pago se realizará contra entrega. Asegúrate de tener el monto exacto si eliges efectivo.
+                  </p>
+                </div>
+              </div>
+
+              {/* Botón de Confirmar */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-3 px-6 py-5 bg-[#DC2626] text-white rounded-2xl hover:bg-red-700 transition-all font-black tracking-widest text-sm shadow-xl shadow-[#DC2626]/20 disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                <Check size={20} className="group-hover:scale-110 transition-transform" />
+                {submitting ? "Procesando..." : `Pagar $${cart.total.toLocaleString()}`}
+              </button>
+            </form>
+          </div>
+
+          {/* Resumen del Pedido */}
+          <div className="w-[35%] lg:mt-16 max-lg:w-full">
+            <div className="sticky top-24 bg-[#121821] border border-gray-800 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#1E3A8A] rounded-full -mr-16 -mt-16 opacity-10 blur-2xl"></div>
+
+              <h3 className="text-xl font-black text-white mb-6 tracking-tight relative z-10">Resumen del pedido</h3>
+
+              <div className="mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2 relative z-10">
+                {cart.items.map((item) => (
+                  <div key={item.id_variante} className="flex gap-4 mb-4 pb-4 border-b border-gray-800 last:border-0">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-[#0B0F14] border border-gray-800 flex-shrink-0 flex items-center justify-center">
+                      {item.imagen ? (
+                        <img src={item.imagen} alt={item.nombre_producto} className="w-full h-full object-cover" />
+                      ) : (
+                        <ShoppingBag size={24} className="text-gray-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <h4 className="font-bold text-sm text-white truncate">{item.nombre_producto}</h4>
+                      <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mt-0.5">
+                        {item.nombre_color} / {item.nombre_talla}
+                      </p>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md">x{item.qty}</span>
+                        <span className="font-black text-sm text-white">${(item.qty * item.price).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
 
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
-                  <AlertTriangle size={18} />
-                  Importante
-                </h4>
-                <p className="text-sm text-blue-800">
-                  El pago se realizará contra entrega. Asegúrate de tener el monto exacto si eliges efectivo.
-                </p>
-              </div>
-            </div>
-
-            {/* Botón de Confirmar */}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[var(--color-blue)] text-white rounded-full hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg font-semibold"
-            >
-              <Check size={20} />
-              {submitting ? "Procesando..." : `Pagar $${cart.total.toLocaleString()}`}
-            </button>
-          </form>
-        </div>
-
-        {/* Resumen del Pedido */}
-        <div className="w-[35%] mt-[85px] border-1 rounded-[30px] border-black/20 p-[30px] max-lg:w-full max-md:p-[10px] max-lg:mt-[0px] max-md:rounded-[20px]">
-          <div className="sticky top-[200px] max-lg:top-[0px]">
-            <h3 className="text-lg font-bold mb-4">Resumen del pedido</h3>
-
-            <div className="mb-6 max-h-[400px] overflow-y-auto">
-              {cart.items.map((item) => (
-                <div key={item.id_variante} className="flex gap-3 mb-4 pb-4 border-b border-black/10 last:border-0">
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                    {item.imagen ? (
-                      <img src={item.imagen} alt={item.nombre_producto} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag size={24} className="text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm truncate">{item.nombre_producto}</h4>
-                    <p className="text-xs text-gray-600">
-                      {item.nombre_color} / {item.nombre_talla}
-                    </p>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="text-xs text-gray-500">x{item.qty}</span>
-                      <span className="font-semibold text-sm">${(item.qty * item.price).toLocaleString()}</span>
-                    </div>
+              <div className="space-y-4 pt-6 border-t border-gray-800 relative z-10">
+                <div className="flex justify-between text-sm font-bold text-[#9CA3AF] tracking-wide">
+                  <p>Subtotal ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})</p>
+                  <p className="text-white">${cart.total.toLocaleString()}</p>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-[#9CA3AF] tracking-wide">
+                  <p>Envío</p>
+                  <p className="text-emerald-400">GRATIS</p>
+                </div>
+                <div className="flex justify-between items-baseline pt-6 border-t border-gray-800">
+                  <p className="font-black text-lg text-white tracking-tighter">Total</p>
+                  <div className="text-right">
+                    <p className="font-black text-3xl text-emerald-400 leading-none">${cart.total.toLocaleString()}</p>
+                    <span className="text-[10px] text-[#9CA3AF] uppercase font-black tracking-widest mt-1 block">COP</span>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="space-y-3 pt-4 border-t border-black/20">
-              <div className="flex justify-between text-sm">
-                <p>Subtotal ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})</p>
-                <p>${cart.total.toLocaleString()}</p>
-              </div>
-              <div className="flex justify-between text-sm">
-                <p>Envío</p>
-                <p className="text-green-600 font-semibold">GRATIS</p>
-              </div>
-              <div className="flex justify-between pt-3 border-t border-black/20">
-                <p className="font-bold text-lg">Total</p>
-                <p className="font-bold text-lg text-[var(--color-blue)]">
-                  ${cart.total.toLocaleString()}
-                </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* Notificación */}
       <AnimatePresence>

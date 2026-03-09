@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Layout } from "../../instructor/layout/layout";
+import { InstructorLayout } from "../../../landing/instructor/layout/InstructorLayout";
+import { Users, Search } from "lucide-react";
 import { Table } from "../components/myStudent/Table";
 
 const initialUsuarios = [
@@ -13,18 +14,49 @@ const initialUsuarios = [
 
 export const MyStudent = () => {
   const [usuarios, setUsuarios] = useState(initialUsuarios);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredUsers = usuarios.filter(user =>
+    `${user.name} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <Layout>
-      <section className="pr-[10px] w-full overflow-hidden h-creen">
-        <h2 className="sticky top-0 z-50 p-[30px] pb-[80px] shadow-[0px_20px_20px_var(--gray-bg-body)] font-primary">
-          Mis estudiantes
-        </h2>
+    <InstructorLayout>
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 pb-6 border-b border-gray-800">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
+                <Users className="text-[#3b82f6]" size={36} />
+                Mis Estudiantes
+              </h2>
+              <p className="text-[#9CA3AF] mt-2 font-medium">Gestiona y revisa el progreso de tus estudiantes inscritos</p>
+            </div>
+          </div>
 
-        {/* Table contiene la lista y los 3 modales (details / edit / delete) */}
-        <Table usuarios={usuarios} setUsuarios={setUsuarios} />
+          <div className="bg-[#121821] border border-gray-800 rounded-[2rem] overflow-hidden shadow-xl">
+            <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-[#0B0F14]">
+              <div className="relative w-full max-w-md">
+                <input
+                  type="text"
+                  placeholder="Buscar estudiante..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-[#121821] border border-gray-800 text-white rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors text-sm"
+                />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+              </div>
+              <div className="px-6 py-2 bg-[#1E3A8A]/20 border border-[#1E3A8A]/30 text-[#3b82f6] rounded-xl font-black text-xs uppercase tracking-widest hidden sm:block">
+                {filteredUsers.length} Estudiantes
+              </div>
+            </div>
+
+            <Table usuarios={filteredUsers} setUsuarios={setUsuarios} />
+          </div>
+        </div>
       </section>
-    </Layout>
+    </InstructorLayout>
   );
 };
 

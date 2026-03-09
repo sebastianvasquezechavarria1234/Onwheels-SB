@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "./Card";
 import { FilterBar } from "./FilterBar";
+import api from "../../../../services/api";
 
 export const Grid = () => {
     const [products, setProducts] = useState([]);
@@ -13,13 +14,8 @@ export const Grid = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch("http://localhost:3000/api/productos");
-                if (res.ok) {
-                    const data = await res.json();
-                    setProducts(data);
-                } else {
-                    console.error("Error fetching products");
-                }
+                const response = await api.get("/productos");
+                setProducts(response.data);
             } catch (error) {
                 console.error("Connection error:", error);
             } finally {

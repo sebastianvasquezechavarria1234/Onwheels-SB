@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, Navigate } from "react-router-dom";
 import { Layout } from "../layout/Layout";
+import { AdminLayout } from "../admin/layout/AdminLayout";
+import { StudentLayout } from "../student/layout/StudentLayout";
+import { InstructorLayout } from "../instructor/layout/InstructorLayout";
+import { UsersLayout } from "../users/layout/UsersLayout";
+import { CustomLayout } from "../custom/layout/CustomLayout";
 import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle, ShoppingBag, Plus, Minus } from "lucide-react";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
-import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers";
+import { getStoreHomePath, getCheckoutPath, getProductDetailPath, getCartPath, getUserRoleSlug } from "../../../utils/roleHelpers";
 import { LoginRequiredModal } from "../components/LoginRequiredModal";
+import api from "../../../services/api";
 
 export const ProductDetailsContent = () => {
   const { id } = useParams();
@@ -28,11 +34,8 @@ export const ProductDetailsContent = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/productos/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProduct(data);
-        }
+        const response = await api.get(`/productos/${id}`);
+        setProduct(response.data);
       } catch (error) {
         console.error("Error fetching product details:", error);
       } finally {
@@ -60,7 +63,7 @@ export const ProductDetailsContent = () => {
     );
   }
 
-  const API_URL = "http://localhost:3000";
+  const API_URL = import.meta.env.VITE_REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
   const {
     nombre_producto,
@@ -145,7 +148,7 @@ export const ProductDetailsContent = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <Link to="/shoppingCart" className="block w-full text-center py-2.5 rounded-xl border border-gray-700 text-[#9CA3AF] font-bold text-xs hover:border-gray-500 hover:text-white transition-all uppercase tracking-wide">
+            <Link to={getCartPath(user)} className="block w-full text-center py-2.5 rounded-xl border border-gray-700 text-[#9CA3AF] font-bold text-xs hover:border-gray-500 hover:text-white transition-all uppercase tracking-wide">
               Ver carrito
             </Link>
             <button
@@ -204,11 +207,11 @@ export const ProductDetailsContent = () => {
           {/* Left: Image Gallery (Actually Right physically due to design, but logic is left) */}
           <div className="w-full lg:w-[55%] flex flex-col lg:flex-row-reverse gap-4">
             {/* Main Image */}
-            <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[700px] overflow-hidden shadow-sm relative border border-gray-800/50">
+            <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[400px] lg:max-w-[400px] mx-auto overflow-hidden shadow-sm relative border border-gray-800/50 flex justify-center items-center">
               <img
                 src={allImages[selectedImageIndex]}
                 alt={nombre_producto}
-                className="w-full h-full object-cover transition-opacity duration-500"
+                className="w-full h-full object-contain p-4 transition-opacity duration-500"
               />
             </div>
 
@@ -370,10 +373,47 @@ export const ProductDetailsContent = () => {
   );
 };
 
-export const ProductDetails = () => {
+export const PublicProductDetail = () => {
+  const { user } = useAuth();
+  const { id } = useParams();
+
+  if (user && Object.keys(user).length > 0) {
+    return <Navigate to={getProductDetailPath(user, id)} replace />;
+  }
+
   return (
     <Layout>
       <ProductDetailsContent />
     </Layout>
   );
 };
+
+export const AdminProductDetail = () => (
+  <AdminLayout>
+    <ProductDetailsContent />
+  </AdminLayout>
+);
+
+export const StudentProductDetail = () => (
+  <StudentLayout>
+    <ProductDetailsContent />
+  </StudentLayout>
+);
+
+export const InstructorProductDetail = () => (
+  <InstructorLayout>
+    <ProductDetailsContent />
+  </InstructorLayout>
+);
+
+export const UserProductDetail = () => (
+  <UsersLayout>
+    <ProductDetailsContent />
+  </UsersLayout>
+);
+
+export const CustomProductDetail = () => (
+  <CustomLayout>
+    <ProductDetailsContent />
+  </CustomLayout>
+);

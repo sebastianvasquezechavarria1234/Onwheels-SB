@@ -10,19 +10,19 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Obtener el rol del usuario
-  const userRole = user.roles?.[0] || user.rol || 'cliente';
+  const userRoles = user.roles || (user.rol ? [user.rol] : []);
 
-  // Si no se especifican roles permitidos, permitir acceso
+  // Si no se especifican roles permitidos o el array está vacío, denegar acceso por seguridad
   if (!allowedRoles || allowedRoles.length === 0) {
-    return <Outlet />;
+    return <Navigate to="/" replace />;
   }
 
-  // Verificar si el usuario tiene el rol permitido
-  const hasValidRole = allowedRoles.includes(userRole.toLowerCase());
+  // Verificar si el usuario tiene alguno de los roles permitidos
+  const hasValidRole = userRoles.some(role => 
+    allowedRoles.includes(role.toLowerCase())
+  );
 
   if (!hasValidRole) {
-    // Generic redirect for unauthorized access (prevents Admin force-redirect loops)
     return <Navigate to="/" replace />;
   }
 

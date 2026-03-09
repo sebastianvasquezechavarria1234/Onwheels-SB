@@ -316,30 +316,9 @@ export const Layout = ({ children }) => {
         {/* Global Header Container */}
         <div className="px-3 md:px-5 pt-4 pb-1">
           <header className="bg-white rounded-[1.25rem] px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_12px_30px_-10px_rgba(0,0,0,0.1)] border border-white/50">
-            <div className="relative group max-w-sm w-full">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search size={16} className="text-slate-400 group-focus-within:text-blue-800 transition-colors" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search task"
-                className="w-full pl-11 pr-11 py-1.5 bg-slate-50 border-none rounded-full text-xs focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-medium"
-              />
-              <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                <span className="text-[9px] font-black text-slate-400 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 italic">⌘ F</span>
-              </div>
-            </div>
+            <div></div>
 
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <button className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-800 hover:bg-blue-50 transition-all relative">
-                  <Mail size={16} strokeWidth={2} />
-                  <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-blue-600 rounded-full border border-white shadow-sm"></span>
-                </button>
-                <button className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-800 hover:bg-blue-50 transition-all">
-                  <Bell size={16} strokeWidth={2} />
-                </button>
-              </div>
 
               <div className="h-6 w-[1px] bg-slate-100 mx-1 hidden md:block"></div>
 

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { getVentaById } from "../../services/ventasService";
-import { ArrowLeft, User, Calendar, DollarSign, Package, Printer, FileText } from "lucide-react";
+import { ArrowLeft, User, Calendar, DollarSign, Package, Printer, FileText, AlertTriangle } from "lucide-react";
 
 export default function VentaDetalle() {
     const { id } = useParams();
@@ -87,11 +87,12 @@ export default function VentaDetalle() {
                             {new Date(venta.fecha_venta).toLocaleDateString()} &bull; {new Date(venta.fecha_venta).toLocaleTimeString()}
                         </p>
                     </div>
-                    <div className={`px - 4 py - 2 rounded - full text - sm font - bold shadow - sm ${venta.estado === 'Entregada' ? 'bg-green-100 text-green-700' :
+                    <div className={`px-4 py-2 rounded-full text-sm font-bold shadow-sm ${venta.estado === 'Entregada' ? 'bg-green-100 text-green-700' :
                         venta.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' :
                             venta.estado === 'Procesada' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-700'
-                        } `}>
+                                venta.estado === 'Cancelada' ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-700'
+                        }`}>
                         {venta.estado}
                     </div>
                 </div>
@@ -205,6 +206,19 @@ export default function VentaDetalle() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Motivo de Cancelación (solo si está cancelada) */}
+                        {venta.estado === "Cancelada" && (
+                            <div className="bg-red-50 rounded-xl shadow-sm border border-red-200 p-6">
+                                <h2 className="font-semibold text-red-700 mb-4 flex items-center gap-2 border-b border-red-200 pb-2">
+                                    <AlertTriangle size={20} className="text-red-600" />
+                                    Motivo de Cancelación
+                                </h2>
+                                <p className="text-sm text-red-600 font-medium leading-relaxed">
+                                    {venta.justificacion_cancelacion || "Sin justificación proporcionada"}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

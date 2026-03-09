@@ -24,15 +24,15 @@ export default function CardProduct({ item }) {
     n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 
   return (
-    <div className="bg-[#121821] shadow-lg shadow-[#121821]/50 border border-gray-800/50 rounded-xl p-4 md:p-5 flex flex-col sm:flex-row gap-4 md:gap-6 items-center transition-all hover:shadow-xl hover:border-gray-700">
+    <div className="bg-[#121821] shadow-xl shadow-[#0B0F14]/80 border border-gray-800 rounded-[1.5rem] p-4 md:p-6 flex flex-col sm:flex-row gap-5 md:gap-8 items-center transition-all hover:border-gray-700 hover:bg-[#151c26]">
       {/* Imagen */}
-      <div className="flex-shrink-0">
-        <picture className="rounded-lg w-24 h-24 block overflow-hidden bg-[#0B0F14] border border-gray-800">
+      <div className="flex-shrink-0 relative">
+        <picture className="rounded-2xl w-28 h-28 block overflow-hidden bg-[#0B0F14] border border-gray-800 shadow-inner">
           {imagen ? (
-            <img className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" src={imagen} alt={nombre_producto} />
+            <img className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" src={imagen} alt={nombre_producto} />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-[#0B0F14] text-gray-700">
-              <ShoppingBag size={32} />
+              <ShoppingBag size={36} />
             </div>
           )}
         </picture>
@@ -40,47 +40,47 @@ export default function CardProduct({ item }) {
 
       {/* Información */}
       <div className="flex-grow text-center sm:text-left min-w-0 w-full sm:w-auto">
-        <h4 className="text-lg font-bold text-white truncate mb-1">{nombre_producto}</h4>
-        <div className="flex flex-wrap justify-center sm:justify-start gap-x-3 text-sm text-[#9CA3AF] mb-2">
-          <span className="bg-[#0B0F14] px-2 py-0.5 rounded text-xs border border-gray-800/50">Color: {nombre_color}</span>
-          <span className="bg-[#0B0F14] px-2 py-0.5 rounded text-xs border border-gray-800/50">Talla: {nombre_talla}</span>
+        <h4 className="text-xl font-black text-white truncate mb-2 leading-tight">{nombre_producto}</h4>
+        <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-3">
+          <span className="bg-[#1E3A8A]/10 text-[#3b82f6] px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-[#1E3A8A]/20">Color: {nombre_color}</span>
+          <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">Talla: {nombre_talla}</span>
         </div>
-        <p className="text-lg font-semibold text-emerald-400">{format(price)}</p>
+        <p className="text-lg font-black text-white">{format(price)}</p>
       </div>
 
       {/* Controles y Subtotal */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-8 w-full sm:w-auto justify-between sm:justify-end">
+      <div className="flex flex-col sm:flex-row items-center gap-5 md:gap-10 w-full sm:w-auto justify-between sm:justify-end">
         {/* Cantidad */}
-        <div className="flex items-center border border-gray-700/50 rounded-lg overflow-hidden bg-[#0B0F14]">
+        <div className="flex items-center border border-gray-700 rounded-xl overflow-hidden bg-[#0B0F14] shadow-inner">
           <button
             onClick={() => updateQuantity(id_variante, qty - 1)}
             disabled={qty <= 1}
-            className="px-3 py-1.5 text-gray-500 hover:text-white hover:bg-[#1E3A8A]/20 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+            className="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
           >
-            <Minus size={16} />
+            <Minus size={16} strokeWidth={3} />
           </button>
-          <div className="w-10 text-center text-sm font-bold text-white border-x border-gray-700/50 py-1 bg-[#121821]">
+          <div className="w-12 text-center text-sm font-black text-white border-x border-gray-700 py-2 bg-[#151c26]">
             {qty}
           </div>
           <button
             onClick={() => updateQuantity(id_variante, qty + 1)}
             disabled={qty >= maxStock}
-            className="px-3 py-1.5 text-gray-500 hover:text-white hover:bg-[#1E3A8A]/20 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+            className="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
           >
-            <Plus size={16} />
+            <Plus size={16} strokeWidth={3} />
           </button>
         </div>
 
         {/* Subtotal */}
-        <div className="text-right hidden md:block min-w-[100px]">
-          <p className="text-xs text-[#9CA3AF] uppercase font-bold mb-1">Subtotal</p>
-          <h3 className="font-bold text-lg text-white">{format(total)}</h3>
+        <div className="text-right hidden sm:block min-w-[120px]">
+          <p className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-widest mb-1">Subtotal</p>
+          <h3 className="font-black text-xl text-emerald-400">{format(total)}</h3>
         </div>
 
         {/* Eliminar */}
         <button
           onClick={() => removeFromCart(id_variante)}
-          className="p-2 text-red-500/80 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all group"
+          className="p-3 text-red-500 hover:text-white hover:bg-red-600 rounded-xl transition-all shadow-sm border border-transparent hover:border-red-500 group focus:outline-none focus:ring-2 focus:ring-red-500/50"
           title="Eliminar producto"
         >
           <Trash2 size={20} className="group-hover:scale-110 transition-transform" />

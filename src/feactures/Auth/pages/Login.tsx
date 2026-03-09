@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../services/api";
-import { getRoleHomePath } from "../../../utils/roleUtils";
+import { getStoreHomePath as getRoleHomePath } from "../../../utils/roleHelpers";
+import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { ArrowLeft } from "lucide-react";
 
 const Login = () => {
@@ -11,6 +12,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,10 +35,10 @@ const Login = () => {
         contrasena: password,
       });
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      // Use context login instead of manual localStorage
+      login(response.data.token, response.data.user);
 
-      const homePath = getRoleHomePath();
+      const homePath = getRoleHomePath(response.data.user);
       navigate(homePath, { replace: true });
     } catch (err: any) {
       console.error("Login error:", err);

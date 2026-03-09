@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom"
 import { AnimatePresence, motion } from "framer-motion"
 import ProtectedRoute from "./ProtectedRoute"
 import { AdminLayoutWrapper } from "./AdminLayoutWrapper"
+import RootRedirect from "./RootRedirect"
 
 // pages landing
 
@@ -12,7 +13,7 @@ import Class from "../feactures/landing/pages/Class";
 import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
-import { ProductDetails } from "../feactures/landing/pages/ProductDetails";
+import { PublicProductDetail, AdminProductDetail, StudentProductDetail, InstructorProductDetail, UserProductDetail, CustomProductDetail } from "../feactures/landing/pages/ProductDetails";
 // import { Event } from "../feactures/landing/pages/Eventos";
 
 
@@ -39,7 +40,8 @@ import CategoriaEventos from "../feactures/dashboards/admin/pages/eventos/catego
 import Patrocinadores from "../feactures/dashboards/admin/pages/eventos/patrocinadores/patrocinadores"
 import Sedes from "../feactures/dashboards/admin/pages/eventos/sedes/sedes"
 import { Clases } from "../feactures/dashboards/admin/pages/clases/clases/Classes";
-import { ClassLevels } from "../feactures/dashboards/admin/pages/clases/niveles/ClassLevels";
+import ClassLevels from "../feactures/dashboards/admin/pages/clases/niveles/ClassLevels";
+
 import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
 import Administradores from "../feactures/dashboards/admin/pages/configuracion/admin/Administradores";
 import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard"
@@ -51,11 +53,10 @@ import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases"
 import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses"
 
 // Dashboard instructor
+import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor"
 import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent"
 import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/MyClassesInstructor"
-import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor"
-import { MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor"
-
+import { MyPurchasesInstrutor as MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor"
 // Landing Student
 import { StudentEvents } from "../feactures/landing/student/pages/StudentEvents"
 import { StudentStore } from "../feactures/landing/student/pages/StudentStore"
@@ -88,6 +89,7 @@ import { UsersCheckout } from "../feactures/landing/users/pages/UsersCheckout";
 import UsersOrderConfirm from "../feactures/landing/users/pages/UsersOrderConfirm";
 import { UsersSetting } from "../feactures/dashboards/users/pages/UsersSetting";
 import { UsersMyPurchases } from "../feactures/dashboards/users/pages/UsersMyPurchases";
+import UsersPurchaseDetail from "../feactures/dashboards/users/pages/UsersPurchaseDetail";
 import UsersPreinscriptions from "../feactures/landing/users/pages/UsersPreinscriptions";
 import EnviarCorreosMasivos from "../feactures/dashboards/admin/pages/eventos/correos/CorreosMasivos";
 
@@ -170,13 +172,13 @@ const AppRouter = () => {
         <Route path="activar-cuenta" element={<ActivationPage />} />
 
 
-        <Route index element={withAnimation(Home)} />
+        <Route index element={<RootRedirect>{withAnimation(Home)}</RootRedirect>} />
         <Route path="store" element={withAnimation(Store)} />
         <Route path="events" element={withAnimation(Events)} />
         <Route path="training" element={withAnimation(Class)} />
         <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
         <Route path="about" element={withAnimation(About)} />
-        <Route path="store/product/:id" element={withAnimation(ProductDetails)} />
+        <Route path="store/product/:id" element={withAnimation(PublicProductDetail)} />
         <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
 
         {/* Auth */}
@@ -194,7 +196,7 @@ const AppRouter = () => {
           <Route path="admin/purchases" element={<AdminPurchases />} />
           <Route path="admin/shoppingCart" element={<AdminShoppingCart />} />
           <Route path="admin/checkout" element={<AdminCheckout />} />
-          <Route path="admin/store/product/:id" element={withAnimation(ProductDetails)} />
+          <Route path="admin/store/product/:id" element={withAnimation(AdminProductDetail)} />
 
           {/* Admin Dashboard Pages (Management tools, WITH Sidebar) */}
           <Route element={<AdminLayoutWrapper />}>
@@ -248,7 +250,7 @@ const AppRouter = () => {
           <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
           <Route path="student/checkout" element={<StudentCheckout />} />
           <Route path="student/orderConfirm" element={<StudentOrderConfirm />} />
-          <Route path="student/store/product/:id" element={withAnimation(ProductDetails)} />
+          <Route path="student/store/product/:id" element={withAnimation(StudentProductDetail)} />
         </Route>
 
         {/* Dashboard Instructor - PROTEGIDAS */}
@@ -261,12 +263,12 @@ const AppRouter = () => {
           <Route path="instructor/store" element={<InstructorStore />} />
           <Route path="instructor/checkout" element={<UsersCheckout />} />
           <Route path="instructor/orderConfirm" element={<UsersOrderConfirm />} />
-          <Route path="instructor/store/product/:id" element={withAnimation(ProductDetails)} />
+          <Route path="instructor/store/product/:id" element={withAnimation(InstructorProductDetail)} />
 
         </Route>
 
         {/* Users - PROTEGIDAS */}
-        <Route element={<ProtectedRoute allowedRoles={["cliente", "usuario"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["cliente"]} />}>
           <Route path="users/home" element={<UsersHome />} />
           <Route path="users/preinscriptions" element={<UsersPreinscriptions />} />
           <Route path="users/store" element={<UsersStore />} />
@@ -278,14 +280,16 @@ const AppRouter = () => {
           <Route path="users/orderConfirm" element={<UsersOrderConfirm />} />
           <Route path="users/setting" element={<UsersSetting />} />
           <Route path="users/myPurchases" element={<UsersMyPurchases />} />
-          <Route path="users/store/product/:id" element={withAnimation(ProductDetails)} />
+          <Route path="users/myPurchases/:id" element={<UsersPurchaseDetail />} />
+          <Route path="users/store/product/:id" element={withAnimation(UserProductDetail)} />
         </Route>
 
-        {/* Cualquier usuario con token puede acceder (verificación en ProtectedRoute) */}
-        <Route element={<ProtectedRoute allowedRoles={[]} />}>
+        {/* Custom Roles - PROTEGIDAS */}
+        <Route element={<ProtectedRoute allowedRoles={["custom"]} />}>
           {/* Landing personalizada */}
           <Route path="custom/home" element={<CustomHome />} />
           <Route path="custom/store" element={<CustomStore />} />
+          <Route path="custom/store/product/:id" element={withAnimation(CustomProductDetail)} />
           <Route path="custom/purchases" element={<CustomPurchases />} />
 
           <Route path="custom/profile" element={<CustomProfile />} />
