@@ -1,3 +1,4 @@
+// src/features/dashboards/student/pages/MyClasses.jsx
 import React, { useEffect, useState } from "react";
 import { StudentLayout } from "../../../landing/student/layout/StudentLayout";
 import { Eye, Phone, Calendar, MapPin, Clock, Users } from "lucide-react";
@@ -32,9 +33,11 @@ const initialClases = [
 ];
 
 export const MyClasses = () => {
-    const [clases, setClases] = useState(initialClases);
-    const [selected, setSelected] = useState(null);
-    const [modalOpen, setModalOpen] = useState(false);
+  const [clases, setClases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
     useEffect(() => {
         const onKey = (e) => {
@@ -44,14 +47,29 @@ export const MyClasses = () => {
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
-    const openView = (c) => {
-        setSelected({ ...c });
-        setModalOpen(true);
+  const openView = (c) => { setSelected({ ...c }); setModalOpen(true); };
+  const closeModal = () => { setSelected(null); setModalOpen(false); };
+
+  // Convierte el array de instructores en string legible
+  const getNombreInstructor = (instructores) => {
+    if (!instructores || instructores.length === 0) return "Sin instructor";
+    return instructores.map((i) => i.nombre_instructor).join(", ");
+  };
+
+  // Badge de estado de matrícula
+  const estadoBadge = (estado) => {
+    const estilos = {
+      Activa: "bg-green-100 text-green-700",
+      Vencida: "bg-yellow-100 text-yellow-700",
+      Cancelada: "bg-gray-100 text-gray-600",
     };
-    const closeModal = () => {
-        setSelected(null);
-        setModalOpen(false);
-    };
+    return (
+      <span className={`inline-flex items-center gap-[5px] px-[12px] py-[5px] rounded-full text-xs font-medium ${estilos[estado] ?? "bg-gray-100 text-gray-600"}`}>
+        <span className="w-[8px] h-[8px] block bg-[currentColor] rounded-full" />
+        {estado}
+      </span>
+    );
+  };
 
     return (
         <StudentLayout>
