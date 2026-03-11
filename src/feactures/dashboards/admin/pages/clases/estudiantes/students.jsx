@@ -1,20 +1,16 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  Eye, Plus, Search, Pencil, Trash2, X, User,
-  ChevronLeft, ChevronRight, Hash, TrendingUp,
-  SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
-  LogIn
+  Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
+  Camera, User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle2, AlertCircle
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   getEstudiantes,
-  createEstudiante,
-  updateEstudiante,
-  deleteEstudiante,
-  updateEstadoEstudiante,
-  getUsuariosActivos,
-  getAcudientes,
-  createAcudiente
+  crearEstudiante,
+  actualizarEstadoEstudiante,
+  eliminarEstudiante,
+  getDetalleEstudiante,
+  getSugerenciasEstudiantes
 } from "../../services/estudiantesServices";
 
 // Helper para clases condicionales
@@ -22,39 +18,28 @@ function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-const Estudiantes = () => {
+const Students = () => {
   const [estudiantes, setEstudiantes] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
-  const [acudientes, setAcudientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modal, setModal] = useState(null);
-  const [selectedEstudiante, setSelectedEstudiante] = useState(null);
-  const [formData, setFormData] = useState({
-    id_usuario: "",
-    enfermedad: "",
-    nivel_experiencia: "",
-    edad: "",
-    id_acudiente: "",
-  });
-  const [tieneEnfermedad, setTieneEnfermedad] = useState(false);
-  const [crearAcudiente, setCrearAcudiente] = useState(false);
-  const [nuevoAcudiente, setNuevoAcudiente] = useState({
-    nombre_acudiente: "",
-    telefono: "",
-    email: "",
-    relacion: ""
-  });
   const [search, setSearch] = useState("");
-  const [formErrors, setFormErrors] = useState({});
-
-  // Sorting state
-  const [sortField, setSortField] = useState("nombre_completo");
-  const [sortDirection, setSortDirection] = useState("asc");
-
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
+
+  // Modales
+  const [modal, setModal] = useState(null); // "add" | "edit" | "details" | "delete"
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [details, setDetails] = useState(null);
+
+  // Formulario Multistep
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    nombre_completo: "", email: "", telefono: "", password: "",
+    documento: "", tipo_documento: "CC", genero: "Masculino",
+    enfermedad: "Ninguna", nivel_experiencia: "Principiante", edad: "",
+    acudiente_nombre: "", acudiente_telefono: "", acudiente_parentesco: "Padre/Madre"
+  });
+  const [formErrors, setFormErrors] = useState({});
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -64,1116 +49,548 @@ const Estudiantes = () => {
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  // Cerrar modal con Escape
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") closeModal();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Cargar estudiantes y datos relacionados
-  const fetchEstudiantes = async () => {
+  const fetchEstudiantes = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
-      const [estudiantesData, usuariosData, acudientesData] = await Promise.all([
-        getEstudiantes(),
-        getUsuariosActivos(),
-        getAcudientes()
-      ]);
-      setEstudiantes(Array.isArray(estudiantesData) ? estudiantesData : []);
-      setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
-      setAcudientes(Array.isArray(acudientesData) ? acudientesData : []);
+      const data = await getEstudiantes();
+      setEstudiantes(data);
     } catch (err) {
-      console.error("Error cargando datos:", err);
-      setError("Error al cargar los datos.");
-      showNotification("Error al cargar datos", "error");
+      showNotification("Error al cargar estudiantes", "error");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEstudiantes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchEstudiantes]);
 
-  // Sorted and filtered data
-  const filteredAndSorted = useMemo(() => {
-    let result = [...estudiantes];
-
-    // Filter
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(e =>
-        (e.nombre_completo || "").toLowerCase().includes(q) ||
-        (e.email || "").toLowerCase().includes(q) ||
-        (e.documento || "").includes(q) ||
-        (e.estado || "").toLowerCase().includes(q)
-      );
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      const aVal = a[sortField] || "";
-      const bVal = b[sortField] || "";
-
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortDirection === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      return 0;
-    });
-
-    return result;
-  }, [estudiantes, search, sortField, sortDirection]);
-
-  // Paginación
-  const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / itemsPerPage));
-  const currentItems = filteredAndSorted.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
-
-  // Toggle sort
-  const toggleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  // Export CSV
-  const exportCSV = () => {
-    try {
-      const headers = ["ID", "Nombre", "Email", "Documento", "Edad", "Nivel Experiencia", "Estado"];
-      const rows = filteredAndSorted.map(e =>
-        [e.id_estudiante, e.nombre_completo, e.email, e.documento, e.edad, e.nivel_experiencia, e.estado].join(",")
-      );
-      const csv = [headers.join(","), ...rows].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `estudiantes_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showNotification("Exportación exitosa");
-    } catch (err) {
-      console.error("Error exportando CSV:", err);
-      showNotification("Error al exportar datos", "error");
-    }
-  };
-
-  // Validar formulario
-  const validateForm = () => {
-    const errors = {};
-
-    if (modal === "crear" && !formData.id_usuario) {
-      errors.id_usuario = "El usuario es obligatorio";
-    }
-
-    if (!formData.edad.trim()) {
-      errors.edad = "La edad es obligatoria";
-    } else {
-      const edadNum = parseInt(formData.edad);
-      if (isNaN(edadNum) || edadNum < 1 || edadNum > 100) {
-        errors.edad = "La edad debe estar entre 1 y 100";
-      }
-    }
-
-    if (!formData.nivel_experiencia) {
-      errors.nivel_experiencia = "El nivel de experiencia es obligatorio";
-    }
-
-    if (tieneEnfermedad && !formData.enfermedad.trim()) {
-      errors.enfermedad = "La enfermedad es obligatoria";
-    }
-
-    if (formData.edad && parseInt(formData.edad) < 18) {
-      if (crearAcudiente) {
-        if (!nuevoAcudiente.nombre_acudiente.trim()) {
-          errors.nombre_acudiente = "El nombre del acudiente es obligatorio";
-        }
-        if (!nuevoAcudiente.telefono.trim()) {
-          errors.telefono = "El teléfono es obligatorio";
-        }
-        if (!nuevoAcudiente.relacion) {
-          errors.relacion = "La relación es obligatoria";
-        }
-        if (nuevoAcudiente.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevoAcudiente.email)) {
-          errors.email = "Email inválido";
-        }
-      } else if (!formData.id_acudiente) {
-        errors.id_acudiente = "Selecciona un acudiente o crea uno nuevo";
-      }
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Manejar cambios en el formulario
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Limpiar error específico al cambiar
-    if (formErrors[name]) {
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  // Manejar cambios en nuevo acudiente
-  const handleNuevoAcudienteChange = (e) => {
-    const { name, value } = e.target;
-    setNuevoAcudiente((prev) => ({ ...prev, [name]: value }));
-
-    // Limpiar error específico al cambiar
-    if (formErrors[name]) {
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
-
-  // Crear estudiante
-  const handleCreate = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      const edad = parseInt(formData.edad);
-      let id_acudiente_final = null;
-
-      if (edad < 18) {
-        if (crearAcudiente) {
-          const nuevoAcudienteCreado = await createAcudiente(nuevoAcudiente);
-          id_acudiente_final = nuevoAcudienteCreado.id_acudiente;
-        } else if (formData.id_acudiente) {
-          id_acudiente_final = parseInt(formData.id_acudiente);
-        }
-      }
-
-      const payload = {
-        id_usuario: parseInt(formData.id_usuario),
-        enfermedad: tieneEnfermedad ? formData.enfermedad : "No aplica",
-        nivel_experiencia: formData.nivel_experiencia,
-        edad: edad,
-        id_acudiente: id_acudiente_final
-      };
-
-      await createEstudiante(payload);
-      await fetchEstudiantes();
-      closeModal();
-      showNotification("Estudiante creado con éxito");
-    } catch (err) {
-      console.error("Error creando estudiante:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error creando estudiante";
-      showNotification(errorMessage, "error");
-    }
-  };
-
-  // Editar estudiante
-  const handleEdit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      if (!selectedEstudiante) return;
-
-      const edad = parseInt(formData.edad);
-      let id_acudiente_final = null;
-
-      if (edad < 18) {
-        if (crearAcudiente) {
-          const nuevoAcudienteCreado = await createAcudiente(nuevoAcudiente);
-          id_acudiente_final = nuevoAcudienteCreado.id_acudiente;
-        } else if (formData.id_acudiente) {
-          id_acudiente_final = parseInt(formData.id_acudiente);
-        }
-      } else if (edad >= 18) {
-        id_acudiente_final = null;
-      } else {
-        id_acudiente_final = formData.id_acudiente ? parseInt(formData.id_acudiente) : selectedEstudiante.id_acudiente;
-      }
-
-      const payload = {
-        enfermedad: tieneEnfermedad ? formData.enfermedad : "No aplica",
-        nivel_experiencia: formData.nivel_experiencia,
-        edad: edad,
-        id_acudiente: id_acudiente_final
-      };
-
-      await updateEstudiante(selectedEstudiante.id_estudiante, payload);
-      await fetchEstudiantes();
-      closeModal();
-      showNotification("Estudiante actualizado con éxito");
-    } catch (err) {
-      console.error("Error editando estudiante:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error editando estudiante";
-      showNotification(errorMessage, "error");
-    }
-  };
-
-  // Eliminar estudiante
-  const handleDelete = async () => {
-    try {
-      if (!selectedEstudiante) return;
-      await deleteEstudiante(selectedEstudiante.id_estudiante);
-      await fetchEstudiantes();
-      closeModal();
-      showNotification("Estudiante eliminado con éxito");
-    } catch (err) {
-      console.error("Error eliminando estudiante:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error eliminando estudiante";
-      showNotification(errorMessage, "error");
-    }
-  };
-
-  // Actualizar estado del estudiante
-  const handleActualizarEstado = async (estudiante, nuevoEstado) => {
-    try {
-      await updateEstadoEstudiante(estudiante.id_estudiante, nuevoEstado);
-      await fetchEstudiantes();
-      showNotification(`Estado actualizado a ${nuevoEstado}`);
-    } catch (err) {
-      console.error("Error actualizando estado:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error actualizando estado";
-      showNotification(errorMessage, "error");
-    }
-  };
-
-  // Abrir modal
-  const openModal = (type, estudiante = null) => {
+  const openModal = async (type, student = null) => {
     setModal(type);
-    setSelectedEstudiante(estudiante);
-    setTieneEnfermedad(false);
-    setCrearAcudiente(false);
-    setFormErrors({});
-    setNuevoAcudiente({
-      nombre_acudiente: "",
-      telefono: "",
-      email: "",
-      relacion: ""
-    });
-
-    if (estudiante && type === "editar") {
-      setFormData({
-        id_usuario: estudiante.id_usuario.toString(),
-        enfermedad: estudiante.enfermedad && estudiante.enfermedad !== "No aplica" ? estudiante.enfermedad : "",
-        nivel_experiencia: estudiante.nivel_experiencia || "",
-        edad: estudiante.edad ? estudiante.edad.toString() : "",
-        id_acudiente: estudiante.id_acudiente ? estudiante.id_acudiente.toString() : "",
-      });
-
-      if (estudiante.enfermedad && estudiante.enfermedad !== "No aplica") {
-        setTieneEnfermedad(true);
-      } else {
-        setTieneEnfermedad(false);
+    setSelectedStudent(student);
+    if (type === 'details' && student) {
+      try {
+        const data = await getDetalleEstudiante(student.id_estudiante);
+        setDetails(data);
+      } catch (err) {
+        showNotification("Error al cargar detalles", "error");
       }
-
-      if (estudiante.id_acudiente) {
-        setCrearAcudiente(false);
-      }
-    } else if (!estudiante) {
+    } else if (type === 'add') {
+      setCurrentStep(1);
       setFormData({
-        id_usuario: "",
-        enfermedad: "",
-        nivel_experiencia: "",
-        edad: "",
-        id_acudiente: "",
+        nombre_completo: "", email: "", telefono: "", password: "",
+        documento: "", tipo_documento: "CC", genero: "Masculino",
+        enfermedad: "Ninguna", nivel_experiencia: "Principiante", edad: "",
+        acudiente_nombre: "", acudiente_telefono: "", acudiente_parentesco: "Padre/Madre"
       });
     }
   };
 
   const closeModal = () => {
     setModal(null);
-    setSelectedEstudiante(null);
-    setFormData({
-      id_usuario: "",
-      enfermedad: "",
-      nivel_experiencia: "",
-      edad: "",
-      id_acudiente: "",
-    });
-    setTieneEnfermedad(false);
-    setCrearAcudiente(false);
+    setSelectedStudent(null);
+    setDetails(null);
     setFormErrors({});
-    setNuevoAcudiente({
-      nombre_acudiente: "",
-      telefono: "",
-      email: "",
-      relacion: ""
-    });
   };
 
-  // Formatear fecha
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES');
+  const handleSave = async () => {
+    try {
+      if (modal === 'add') {
+        await crearEstudiante(formData);
+        showNotification("Estudiante registrado con éxito");
+      }
+      fetchEstudiantes();
+      closeModal();
+    } catch (err) {
+      showNotification(err.response?.data?.mensaje || "Error al guardar", "error");
+    }
   };
+
+  const handleDelete = async () => {
+    try {
+      await eliminarEstudiante(selectedStudent.id_estudiante);
+      showNotification("Estudiante eliminado");
+      fetchEstudiantes();
+      closeModal();
+    } catch (err) {
+      showNotification("No se puede eliminar: el estudiante tiene matrículas activas", "error");
+    }
+  };
+
+  const handleStatusToggle = async (student) => {
+    try {
+      const nuevoEstado = student.estado === 'Activo' ? 'Inactivo' : 'Activo';
+      await actualizarEstadoEstudiante(student.id_estudiante, nuevoEstado);
+      showNotification(`Estudiante ${nuevoEstado.toLowerCase()}`);
+      fetchEstudiantes();
+    } catch (err) {
+      showNotification("Error al cambiar estado", "error");
+    }
+  };
+
+  const filtered = estudiantes.filter(s =>
+    s.nombre_completo.toLowerCase().includes(search.toLowerCase()) ||
+    s.documento.includes(search)
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <>
-      <div className="flex flex-col h-full bg-white overflow-hidden">
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
-
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-              Gestión de Estudiantes
-            </h2>
-
-            {/* Compact Stats */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
-                  <Hash size={14} className="text-blue-600" />
-                  <span className="text-xs font-bold">{filteredAndSorted.length}</span>
-                </div>
+    <div className="flex flex-col h-full bg-white overflow-hidden">
+      {/* Header & Search Area */}
+      <div className="shrink-0 flex flex-col gap-4 p-4 pb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Clases / Estudiantes
+          </h2>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
+                <span className="text-xs font-bold">{filtered.length} registrados</span>
               </div>
-              <button
-                onClick={exportCSV}
-                className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm"
-                title="Exportar CSV"
-              >
-                <Download size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
-            {/* Search & Create Group */}
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar estudiante..."
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
-                />
-              </div>
-              <button
-                onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-              >
-                <Plus size={18} />
-                Registrar Estudiante
-              </button>
-            </div>
-
-            {/* Filters (Larger) */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-              {[
-                { id: "nombre_completo", label: "Nombre" },
-                { id: "email", label: "Email" },
-                { id: "documento", label: "Documento" },
-                { id: "edad", label: "Edad" },
-              ].map((field) => (
-                <button
-                  key={field.id}
-                  onClick={() => toggleSort(field.id)}
-                  className={cn(
-                    "px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-xl border transition flex items-center gap-1.5 shrink-0 select-none",
-                    sortField === field.id
-                      ? "bg-blue-800 text-white border-blue-800 shadow-md"
-                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
-                  )}
-                >
-                  {field.label}
-                  {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
-                </button>
-              ))}
             </div>
           </div>
         </div>
 
-        {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-            {/* Table Content */}
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
-                  <tr>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Estudiante</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Email</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Edad</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Nivel Experiencia</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Acudiente</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="7" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td>
-                    </tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan="7" className="p-12 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2 text-red-500">
-                          <AlertCircle className="h-8 w-8 opacity-80" />
-                          <p className="font-medium">{error}</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="p-12 text-center text-gray-400">
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                          </svg>
-                          <p className="text-sm">No se encontraron estudiantes registrados</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    currentItems.map((e) => (
-                      <tr key={e.id_estudiante} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
-                              {e.nombre_completo?.substring(0, 2).toUpperCase() || "ES"}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-[#040529] text-sm leading-tight">{e.nombre_completo}</p>
-                              <p className="text-xs text-gray-500 font-medium">{e.documento}</p>
-                            </div>
+        <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              placeholder="Buscar por nombre o documento..."
+              className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
+            />
+          </div>
+          <button
+            onClick={() => openModal("add")}
+            className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+          >
+            <Plus size={18} />
+            Registrar Estudiante
+          </button>
+        </div>
+      </div>
+
+      {/* Table Area */}
+      <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
+        <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-left relative">
+              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+                <tr>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Estudiante</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Documento</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Contacto</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {loading ? (
+                  <tr><td colSpan="5" className="p-8 text-center text-gray-400 text-sm italic">Cargando comunidad...</td></tr>
+                ) : currentItems.length === 0 ? (
+                  <tr><td colSpan="5" className="p-12 text-center text-gray-400 italic">No se encontraron estudiantes</td></tr>
+                ) : (
+                  currentItems.map((s) => (
+                    <tr key={s.id_estudiante} className="group hover:bg-[#F0E6E6]/30 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={s.foto_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + s.id_usuario}
+                            alt={s.nombre_completo}
+                            className="h-10 w-10 rounded-xl object-cover ring-2 ring-slate-100 group-hover:ring-white transition"
+                          />
+                          <div>
+                            <p className="font-bold text-[#040529] text-sm leading-tight">{s.nombre_completo}</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">{s.nivel_experiencia}</p>
                           </div>
-                        </td>
-                        <td className="px-5 py-4">
-                          <p className="text-sm text-gray-600">{e.email}</p>
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <span className="text-sm text-gray-600">{e.edad || "—"}</span>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className="text-sm text-gray-600">{e.nivel_experiencia || "—"}</span>
-                        </td>
-                        <td className="px-5 py-4">
-                          {e.nombre_acudiente ? (
-                            <div className="text-sm">
-                              <div className="font-medium text-gray-800">{e.nombre_acudiente}</div>
-                              <div className="text-gray-500 text-xs">
-                                {e.relacion || "No especificada"}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400 italic text-sm">
-                              {e.edad && e.edad < 18 ? "Sin acudiente" : "No aplica"}
-                            </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-xs font-bold text-slate-500">{s.documento}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col text-[10px] text-slate-500">
+                          <span className="flex items-center gap-1"><Phone size={10} /> {s.telefono}</span>
+                          <span className="flex items-center gap-1 truncate max-w-[140px]"><Mail size={10} /> {s.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <button
+                          onClick={() => handleStatusToggle(s)}
+                          className={cn(
+                            "px-3 py-1 rounded-full text-[10px] font-bold border transition-colors shadow-sm",
+                            s.estado === 'Activo' ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
                           )}
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <select
-                            value={e.estado}
-                            onChange={(event) => handleActualizarEstado(e, event.target.value)}
-                            className={cn(
-                              "text-xs font-bold rounded-full px-3 py-1 border flex justify-center",
-                              e.estado === 'Activo'
-                                ? 'bg-green-100 text-green-600 border-green-600'
-                                : e.estado === 'Pendiente'
-                                  ? 'bg-amber-50 text-amber-600 border-amber-100'
-                                  : 'bg-red-50 text-red-600 border-red-100'
-                            )}
+                        >
+                          {s.estado}
+                        </button>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openModal("details", s)}
+                            className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
+                            title="Ver Perfil"
                           >
-                            <option value="Activo">Activo</option>
-                            <option value="Pendiente">Pendiente</option>
-                            <option value="Inactivo">Inactivo</option>
-                          </select>
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => openModal("ver", e)}
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
-                              title="Ver"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => openModal("editar", e)}
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => openModal("eliminar", e)}
-                              className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => openModal("edit", s)}
+                            className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
+                            title="Editar"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => openModal("delete", s)}
+                            className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Footer Pagination */}
-            {filteredAndSorted.length > 0 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">
-                  Mostrando <span className="font-bold text-[#040529]">{currentItems.length}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-                  >
-                    <ChevronLeft className="h-4 w-4 text-gray-600" />
-                  </button>
-                  <span className="text-sm font-bold text-[#040529] px-2">
-                    {currentPage} de {totalPages}
-                  </span>
-                  <button
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-                  >
-                    <ChevronRight className="h-4 w-4 text-gray-600" />
-                  </button>
-                </div>
-              </div>
-            )}
+          <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
+            <p className="text-xs text-gray-500 font-medium">
+              Página <span className="font-bold text-[#040529]">{currentPage}</span> de <span className="font-bold text-[#040529]">{totalPages}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
+              >
+                <ChevronLeft className="h-4 w-4 text-gray-600" />
+              </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
+              >
+                <ChevronRight className="h-4 w-4 text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* --- NOTIFICATIONS & MODALS --- */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
-            >
-              {notification.message}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Notifications */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
+          >
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <AnimatePresence>
-          {modal && (
+      {/* Modals */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div
+            className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+          >
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
+              className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === 'delete' ? 'max-w-sm w-full' :
+                  modal === 'details' ? 'max-w-4xl w-full' : 'max-w-2xl w-full'
+                }`}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "eliminar" ? "max-w-sm w-full" : "max-w-5xl w-full"}`}
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* --- MODAL CONTENT --- */}
-                {modal === "eliminar" ? (
-                  <div className="p-6 text-center">
-                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Trash2 size={24} />
-                    </div>
-                    <h3 className="text-lg font-bold text-[#040529] mb-2">Eliminar Estudiante</h3>
-                    <p className="text-sm text-gray-500 mb-6">
-                      ¿Estás seguro de eliminar a{" "}
-                      <span className="font-bold text-red-600">{selectedEstudiante?.nombre_completo}</span>?
-                      <br />
-                      <span className="text-xs">Esta acción no se puede deshacer.</span>
-                    </p>
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-[#040529] flex items-center gap-2">
+                    {modal === 'add' ? <><Plus size={20} /> Nuevo Estudiante</> :
+                      modal === 'edit' ? <><Pencil size={20} /> Editar Perfil</> :
+                        modal === 'delete' ? <><AlertCircle size={20} /> Confirmar</> :
+                          <><User size={20} /> Perfil de Estudiante</>}
+                  </h3>
+                  <button onClick={closeModal} className="text-gray-400 hover:text-[#040529] p-1 rounded-full hover:bg-gray-100 transition">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {modal === 'delete' ? (
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-6 italic underline decoration-red-100">¿Estás seguro de eliminar a <span className="font-bold text-red-600">{selectedStudent?.nombre_completo}</span>? Esta acción es irreversible.</p>
                     <div className="flex justify-center gap-3">
-                      <button
-                        onClick={closeModal}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleDelete}
-                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-                      >
-                        Eliminar
-                      </button>
+                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">Cancelar</button>
+                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg">Eliminar</button>
+                    </div>
+                  </div>
+                ) : modal === 'details' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh] overflow-y-auto pr-2">
+                    <div className="md:col-span-1 flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <img
+                        src={details?.foto_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + details?.id_usuario}
+                        className="h-28 w-28 rounded-2xl object-cover mb-4 ring-4 ring-white shadow-md"
+                        alt="Profile"
+                      />
+                      <h4 className="font-bold text-[#040529]">{details?.nombre_completo}</h4>
+                      <p className="text-xs text-slate-400">{details?.email}</p>
+                      <div className="mt-4 pt-4 border-t border-slate-200 w-full text-left space-y-2">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Contacto</p>
+                        <p className="text-sm text-slate-600 flex items-center gap-2"><Phone size={12} /> {details?.telefono}</p>
+                        <p className="text-sm text-slate-600 flex items-center gap-2 font-bold"><Hash size={12} /> {details?.documento} ({details?.tipo_documento})</p>
+                      </div>
+                    </div>
+                    <div className="md:col-span-2 space-y-6">
+                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-2"><Info size={14} className="text-slate-200" /></div>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                          <CheckCircle2 size={14} className="text-blue-500" /> Información Deportiva
+                        </h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div><label className="text-[9px] font-bold text-slate-300 block">NIVEL</label><p className="text-sm font-bold text-blue-600">{details?.nivel_experiencia}</p></div>
+                          <div><label className="text-[9px] font-bold text-slate-300 block">EDAD</label><p className="text-sm font-bold text-[#040529]">{details?.edad} años</p></div>
+                          <div className="col-span-2"><label className="text-[9px] font-bold text-slate-300 block">CONDICIONES MÉDICAS</label><p className="text-sm text-slate-600">{details?.enfermedad || "Ninguna registrada"}</p></div>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-900 p-4 rounded-2xl text-white shadow-lg relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 opacity-10"><Shield size={40} /></div>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Acudiente de Emergencia</h4>
+                        {details?.acudiente_nombre ? (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div><label className="text-[9px] font-bold text-slate-500 block">NOMBRE</label><p className="text-sm font-bold">{details.acudiente_nombre}</p></div>
+                            <div><label className="text-[9px] font-bold text-slate-500 block">PARENTESCO</label><p className="text-sm font-bold text-blue-400">{details.acudiente_parentesco}</p></div>
+                            <div className="col-span-2"><label className="text-[9px] font-bold text-slate-500 block">TELÉFONO</label><p className="text-sm font-bold flex items-center gap-2"><Phone size={12} /> {details.acudiente_telefono}</p></div>
+                          </div>
+                        ) : <p className="text-sm italic text-slate-500">No se registró información de acudiente</p>}
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col lg:flex-row h-[650px]">
-                    {/* Left Side (Visual) */}
-                    <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                      <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                        <User size={48} strokeWidth={1.5} />
-                      </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        {modal === "crear" ? "Registro de Estudiante" : modal === "editar" ? "Edición de Estudiante" : "Detalles del Estudiante"}
-                      </p>
+                  // Formulario de Registro / Edición
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      {[1, 2, 3].map((s) => (
+                        <div key={s} className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: currentStep >= s ? "100%" : "0%" }}
+                            className="h-full bg-[#040529]"
+                          />
+                        </div>
+                      ))}
                     </div>
 
-                    {/* Right Side (Form) */}
-                    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-[#040529]">
-                          {modal === "crear"
-                            ? "Registrar Nuevo Estudiante"
-                            : modal === "editar"
-                              ? "Editar Estudiante"
-                              : "Detalles del Estudiante"}
-                        </h3>
-                        <button
-                          onClick={closeModal}
-                          className="text-gray-400 hover:text-[#040529]"
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
-
-                      {modal === "ver" && selectedEstudiante && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="max-h-[60vh] overflow-y-auto pr-2">
+                      {currentStep === 1 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                          <h4 className="text-sm font-bold text-[#040529] border-b pb-2">1. Datos de Contacto</h4>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nombre Completo *</label>
+                            <input
+                              type="text"
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
+                              value={formData.nombre_completo}
+                              onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
+                              placeholder="Ej: Juan Pérez"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Completo</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedEstudiante.nombre_completo}</p>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Correo Electrónico *</label>
+                              <input
+                                type="email"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                placeholder="juan@email.com"
+                              />
                             </div>
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedEstudiante.email}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Documento</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedEstudiante.documento || "—"}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedEstudiante.telefono || "—"}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Edad</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedEstudiante.edad || "—"}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nivel Experiencia</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedEstudiante.nivel_experiencia || "—"}</p>
-                            </div>
-                            <div className="md:col-span-2">
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Enfermedad</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedEstudiante.enfermedad || "—"}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Fecha Preinscripción</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{formatDate(selectedEstudiante.fecha_preinscripcion)}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Estado</label>
-                              <p className={cn(
-                                "mt-1 px-3 py-2 rounded-lg text-sm font-bold border",
-                                selectedEstudiante.estado === 'Activo'
-                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                  : selectedEstudiante.estado === 'Pendiente'
-                                    ? 'bg-amber-50 text-amber-600 border-amber-100'
-                                    : 'bg-red-50 text-red-600 border-red-100'
-                              )}>
-                                {selectedEstudiante.estado}
-                              </p>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Teléfono *</label>
+                              <input
+                                type="text"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
+                                value={formData.telefono}
+                                onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                                placeholder="300 123 4567"
+                              />
                             </div>
                           </div>
+                          {modal === 'add' && (
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Contraseña *</label>
+                              <input
+                                type="password"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                placeholder="Min. 8 caracteres"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                          <div className="mt-4 pt-4 border-t border-gray-100">
-                            <h4 className="text-sm font-bold text-[#040529] mb-3">Información del Acudiente</h4>
-                            {selectedEstudiante.nombre_acudiente ? (
-                              <div className="space-y-2">
-                                <div className="flex justify-between">
-                                  <span className="text-xs font-bold text-gray-500">Nombre:</span>
-                                  <span className="text-sm text-[#040529] font-medium">{selectedEstudiante.nombre_acudiente}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs font-bold text-gray-500">Relación:</span>
-                                  <span className="text-sm text-[#040529]">{selectedEstudiante.relacion || "No especificada"}</span>
-                                </div>
-                                {selectedEstudiante.telefono_acudiente && (
-                                  <div className="flex justify-between">
-                                    <span className="text-xs font-bold text-gray-500">Teléfono:</span>
-                                    <span className="text-sm text-[#040529]">{selectedEstudiante.telefono_acudiente}</span>
-                                  </div>
-                                )}
-                                {selectedEstudiante.email_acudiente && (
-                                  <div className="flex justify-between">
-                                    <span className="text-xs font-bold text-gray-500">Email:</span>
-                                    <span className="text-sm text-[#040529]">{selectedEstudiante.email_acudiente}</span>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-gray-500 italic">
-                                {selectedEstudiante.edad && selectedEstudiante.edad < 18
-                                  ? "Sin acudiente asignado"
-                                  : "No aplica (mayor de edad)"}
-                              </p>
-                            )}
+                      {currentStep === 2 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                          <h4 className="text-sm font-bold text-[#040529] border-b pb-2">2. Identificación y Perfil</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Tipo</label>
+                              <select
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
+                                value={formData.tipo_documento}
+                                onChange={(e) => setFormData({ ...formData, tipo_documento: e.target.value })}
+                              >
+                                <option value="CC">Cédula de Cdad.</option>
+                                <option value="TI">Tarj. Identidad</option>
+                                <option value="CE">Cédula Extranjería</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Documento *</label>
+                              <input
+                                type="text"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
+                                value={formData.documento}
+                                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+                              />
+                            </div>
                           </div>
-
-                          <div className="flex justify-end pt-6">
-                            <button
-                              onClick={closeModal}
-                              className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Género</label>
+                              <select
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
+                                value={formData.genero}
+                                onChange={(e) => setFormData({ ...formData, genero: e.target.value })}
+                              >
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                                <option value="Otro">Otro</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Edad</label>
+                              <input
+                                type="number"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
+                                value={formData.edad}
+                                onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Experiencia</label>
+                            <select
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
+                              value={formData.nivel_experiencia}
+                              onChange={(e) => setFormData({ ...formData, nivel_experiencia: e.target.value })}
                             >
-                              Cerrar
-                            </button>
+                              <option value="Principiante">Principiante</option>
+                              <option value="Intermedio">Intermedio</option>
+                              <option value="Avanzado">Avanzado</option>
+                            </select>
                           </div>
                         </div>
                       )}
 
-                      {(modal === "crear" || modal === "editar") && (
-                        <form className="space-y-5">
-                          {modal === "crear" && (
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Usuario *</label>
-                              <div className="relative mt-1">
-                                <select
-                                  name="id_usuario"
-                                  value={formData.id_usuario}
-                                  onChange={handleChange}
-                                  className={cn(
-                                    "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                    formErrors.id_usuario && "border-red-400 bg-red-50"
-                                  )}
-                                >
-                                  <option value="">Seleccionar usuario</option>
-                                  {usuarios.map(usuario => (
-                                    <option key={usuario.id_usuario} value={usuario.id_usuario}>
-                                      {usuario.nombre_completo} ({usuario.email})
-                                    </option>
-                                  ))}
-                                </select>
-                                {formErrors.id_usuario && (
-                                  <p className="mt-1 text-xs text-red-500">{formErrors.id_usuario}</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {modal === "editar" && selectedEstudiante && (
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Usuario</label>
-                              <div className="w-full mt-1 px-3 py-2 bg-gray-100 border-1! border-gray-200!  rounded-lg text-sm text-gray-600">
-                                {selectedEstudiante.nombre_completo} ({selectedEstudiante.email})
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Edad *</label>
-                              <div className="relative mt-1">
-                                <input
-                                  type="number"
-                                  name="edad"
-                                  value={formData.edad}
-                                  onChange={handleChange}
-                                  className={cn(
-                                    "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                    formErrors.edad && "border-red-400 bg-red-50"
-                                  )}
-                                  placeholder="Ej: 16"
-                                  min="1"
-                                  max="100"
-                                />
-                                {formErrors.edad && (
-                                  <p className="mt-1 text-xs text-red-500">{formErrors.edad}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nivel Experiencia *</label>
-                              <div className="relative mt-1">
-                                <select
-                                  name="nivel_experiencia"
-                                  value={formData.nivel_experiencia}
-                                  onChange={handleChange}
-                                  className={cn(
-                                    "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                    formErrors.nivel_experiencia && "border-red-400 bg-red-50"
-                                  )}
-                                >
-                                  <option value="">Seleccionar nivel</option>
-                                  <option value="Principiante">Principiante</option>
-                                  <option value="Intermedio">Intermedio</option>
-                                  <option value="Avanzado">Avanzado</option>
-                                </select>
-                                {formErrors.nivel_experiencia && (
-                                  <p className="mt-1 text-xs text-red-500">{formErrors.nivel_experiencia}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
+                      {currentStep === 3 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                          <h4 className="text-sm font-bold text-[#040529] border-b pb-2">3. Acudiente e Información Médica</h4>
                           <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">¿Tiene enfermedad o condición médica?</label>
-                            <select
-                              value={tieneEnfermedad ? "si" : "no"}
-                              onChange={(e) => setTieneEnfermedad(e.target.value === "si")}
-                              className="w-full mt-1 px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]"
-                            >
-                              <option value="no">No</option>
-                              <option value="si">Sí</option>
-                            </select>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nombre Acudiente</label>
+                            <input
+                              type="text"
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
+                              value={formData.acudiente_nombre}
+                              onChange={(e) => setFormData({ ...formData, acudiente_nombre: e.target.value })}
+                            />
                           </div>
-
-                          {tieneEnfermedad && (
+                          <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Enfermedad o Condición Médica *</label>
-                              <div className="relative mt-1">
-                                <textarea
-                                  name="enfermedad"
-                                  value={formData.enfermedad}
-                                  onChange={handleChange}
-                                  rows="2"
-                                  className={cn(
-                                    "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] resize-none",
-                                    formErrors.enfermedad && "border-red-400 bg-red-50"
-                                  )}
-                                  placeholder="Ej: Alergia a frutos secos, asma, etc."
-                                />
-                                {formErrors.enfermedad && (
-                                  <p className="mt-1 text-xs text-red-500">{formErrors.enfermedad}</p>
-                                )}
-                              </div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Teléfono Acudiente</label>
+                              <input
+                                type="text"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
+                                value={formData.acudiente_telefono}
+                                onChange={(e) => setFormData({ ...formData, acudiente_telefono: e.target.value })}
+                              />
                             </div>
-                          )}
-
-                          {formData.edad && parseInt(formData.edad) < 18 && (
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-3 block">Acudiente</label>
-                              <div className="border-b border-gray-200 mb-4">
-                                <nav className="-mb-px flex space-x-8">
-                                  <button
-                                    type="button"
-                                    onClick={() => setCrearAcudiente(false)}
-                                    className={cn(
-                                      "py-2 px-1 text-sm font-medium",
-                                      !crearAcudiente
-                                        ? 'border-b-2 border-[#040529] text-[#040529]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    )}
-                                  >
-                                    Acudiente existente
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setCrearAcudiente(true)}
-                                    className={cn(
-                                      "py-2 px-1 text-sm font-medium",
-                                      crearAcudiente
-                                        ? 'border-b-2 border-[#040529] text-[#040529]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    )}
-                                  >
-                                    Nuevo acudiente
-                                  </button>
-                                </nav>
-                              </div>
-
-                              {!crearAcudiente ? (
-                                <div>
-                                  <div className="relative mt-1">
-                                    <select
-                                      name="id_acudiente"
-                                      value={formData.id_acudiente}
-                                      onChange={handleChange}
-                                      className={cn(
-                                        "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                        formErrors.id_acudiente && "border-red-400 bg-red-50"
-                                      )}
-                                    >
-                                      <option value="">Seleccionar acudiente existente</option>
-                                      {acudientes.length > 0 ? (
-                                        acudientes.map(acudiente => (
-                                          <option key={acudiente.id_acudiente} value={acudiente.id_acudiente}>
-                                            {acudiente.nombre_acudiente} - {acudiente.relacion} {acudiente.telefono && `(${acudiente.telefono})`}
-                                          </option>
-                                        ))
-                                      ) : (
-                                        <option value="" disabled>No hay acudientes registrados</option>
-                                      )}
-                                    </select>
-                                    {formErrors.id_acudiente && (
-                                      <p className="mt-1 text-red-400 text-[11px]">{formErrors.id_acudiente}</p>
-                                    )}
-                                  </div>
-                                  <p className="mt-2 text-xs text-gray-500">
-                                    Selecciona un acudiente de la lista existente
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="space-y-3">
-                                  <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre del acudiente *</label>
-                                    <div className="relative mt-1">
-                                      <input
-                                        type="text"
-                                        name="nombre_acudiente"
-                                        value={nuevoAcudiente.nombre_acudiente}
-                                        onChange={handleNuevoAcudienteChange}
-                                        className={cn(
-                                          "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                          formErrors.nombre_acudiente && "border-red-400 bg-red-50"
-                                        )}
-                                        placeholder="Nombre completo del acudiente"
-                                      />
-                                      {formErrors.nombre_acudiente && (
-                                        <p className="mt-1 text-red-400 text-[11px]">{formErrors.nombre_acudiente}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Relación con el estudiante</label>
-                                    <select
-                                      name="relacion"
-                                      value={nuevoAcudiente.relacion}
-                                      onChange={handleNuevoAcudienteChange}
-                                      className={cn(
-                                        "w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                        formErrors.relacion && "border-red-400 bg-red-50"
-                                      )}
-                                    >
-                                      <option value="">Seleccionar relación</option>
-                                      <option value="Padre">Padre</option>
-                                      <option value="Madre">Madre</option>
-                                      <option value="Tutor">Tutor</option>
-                                      <option value="Otro">Otro</option>
-                                    </select>
-                                    {formErrors.relacion && (
-                                      <p className="mt-1 text-red-400 text-[11px]">{formErrors.relacion}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono Contacto *</label>
-                                    <input
-                                      type="text"
-                                      name="telefono"
-                                      value={nuevoAcudiente.telefono}
-                                      onChange={e => {
-                                        const val = e.target.value.replace(/[^0-9+\s-]/g, '');
-                                        handleNuevoAcudienteChange({ target: { name: 'telefono', value: val } });
-                                      }}
-                                      className={cn(
-                                        "w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                        formErrors.telefono && "border-red-400 bg-red-50"
-                                      )}
-                                      placeholder="Número de teléfono"
-                                    />
-                                    {formErrors.telefono && (
-                                      <p className="mt-1 text-red-400 text-[11px]">{formErrors.telefono}</p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email (opcional)</label>
-                                    <div className="relative mt-1">
-                                      <input
-                                        type="email"
-                                        name="email"
-                                        value={nuevoAcudiente.email}
-                                        onChange={handleNuevoAcudienteChange}
-                                        className={cn(
-                                          "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                          formErrors.email && "border-red-400 bg-red-50"
-                                        )}
-                                        placeholder="correo@ejemplo.com"
-                                      />
-                                      {formErrors.email && (
-                                        <p className="mt-1 text-red-400 text-[11px]">{formErrors.email}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <p className="text-xs text-gray-500">
-                                    Completa los datos para registrar un nuevo acudiente
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {modal === "editar" && formData.edad && parseInt(formData.edad) >= 18 && selectedEstudiante.id_acudiente && (
-                            <div className="bg-yellow-50 p-3 rounded-lg">
-                              <p className="text-sm text-yellow-800">
-                                <strong>Atención:</strong> El estudiante ahora es mayor de edad.
-                                ¿Desea eliminar el acudiente asociado?
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => setFormData({ ...formData, id_acudiente: "" })}
-                                className="mt-2 px-3 py-1 bg-yellow-200 text-yellow-800 rounded text-sm hover:bg-yellow-300"
+                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Parentesco</label>
+                              <select
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
+                                value={formData.acudiente_parentesco}
+                                onChange={(e) => setFormData({ ...formData, acudiente_parentesco: e.target.value })}
                               >
-                                Eliminar acudiente
-                              </button>
+                                <option value="Padre/Madre">Padre/Madre</option>
+                                <option value="Herman@">Herman@</option>
+                                <option value="Tí@">Tí@</option>
+                                <option value="Amig@">Amig@</option>
+                              </select>
                             </div>
-                          )}
-
-                          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                            <button
-                              type="button"
-                              onClick={closeModal}
-                              className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
-                            >
-                              Cancelar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={modal === "crear" ? handleCreate : handleEdit}
-                              className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10"
-                            >
-                              {modal === "crear" ? "Registrar Estudiante" : "Guardar Cambios"}
-                            </button>
                           </div>
-                        </form>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Condiciones Médicas</label>
+                            <textarea
+                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm min-h-[80px] resize-none"
+                              value={formData.enfermedad}
+                              onChange={(e) => setFormData({ ...formData, enfermedad: e.target.value })}
+                              placeholder="Ej: Alergia al polen, Asma..."
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t">
+                      {currentStep > 1 && (
+                        <button
+                          onClick={() => setCurrentStep(prev => prev - 1)}
+                          className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold transition hover:bg-slate-200"
+                        >
+                          Anterior
+                        </button>
+                      )}
+                      {currentStep < 3 ? (
+                        <button
+                          onClick={() => setCurrentStep(prev => prev + 1)}
+                          className="flex-[2] py-3 bg-[#040529] text-white rounded-xl text-sm font-bold shadow-lg hover:bg-[#040529]/90 transition"
+                        >
+                          Siguiente
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleSave}
+                          className="flex-[2] py-3 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition"
+                        >
+                          {modal === 'add' ? 'Finalizar Registro' : 'Guardar Cambios'}
+                        </button>
                       )}
                     </div>
                   </div>
                 )}
-              </motion.div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
-export default Estudiantes;
+export default Students;

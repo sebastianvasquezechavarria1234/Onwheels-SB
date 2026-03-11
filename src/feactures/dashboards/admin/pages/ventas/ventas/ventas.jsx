@@ -321,16 +321,23 @@ function Ventas() {
     }
   };
 
-  // ==== Eliminar / actualizar estado ====
-  const handleDelete = async () => {
+  // ==== Cancelar / actualizar estado ====
+  const [justificacion, setJustificacion] = useState("");
+
+  const handleCancel = async () => {
     if (!selectedVenta) return;
+    if (!justificacion.trim()) {
+      showNotification("Por favor, ingrese una justificación", "error");
+      return;
+    }
     try {
-      await deleteVenta(selectedVenta.id_venta);
+      await cancelVenta(selectedVenta.id_venta, justificacion);
       await fetchData();
-      showNotification("Venta eliminada", "success");
+      showNotification("Venta cancelada", "success");
+      setJustificacion("");
       closeModal();
     } catch (err) {
-      showNotification(err?.response?.data?.mensaje || "Error al eliminar", "error");
+      showNotification(err?.response?.data?.mensaje || "Error al cancelar", "error");
     }
   };
 
@@ -604,13 +611,13 @@ function Ventas() {
               <table className="w-full text-left relative">
                 <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
                   <tr>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">Detalles Venta</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">Cliente</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-center">Productos</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-center">Total</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                    <th className="px-6 py-4 font-bold text-xs tracking-wider">ID</th>
+                    <th className="px-6 py-4 font-bold text-xs tracking-wider">Detalles Venta</th>
+                    <th className="px-6 py-4 font-bold text-xs tracking-wider">Cliente</th>
+                    <th className="px-6 py-4 font-bold text-xs tracking-wider text-center">Productos</th>
+                    <th className="px-6 py-4 font-bold text-xs tracking-wider text-center">Total</th>
+                    <th className="px-6 py-4 font-bold text-xs tracking-wider text-center">Estado</th>
+                    <th className="px-6 py-4 font-bold text-xs tracking-wider text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -661,7 +668,7 @@ function Ventas() {
                         <td className="px-6 py-4 text-center">
                           <span
                             className={cn(
-                              "inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                              "inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider border",
                               v.estado === "Entregada" && "bg-green-50 text-green-700 border-green-100",
                               v.estado === "Pendiente" && "bg-yellow-50 text-yellow-700 border-yellow-100",
                               v.estado === "Procesada" && "bg-blue-50 text-blue-700 border-blue-100",
@@ -681,6 +688,9 @@ function Ventas() {
                           <div className="flex items-center justify-end gap-2">
                             <button onClick={() => navigate(`/admin/ventas/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
                             <button onClick={() => openModal("status", v)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Actualizar estado"><Package size={16} /></button>
+                            {v.estado !== "Cancelada" && (
+                              <button onClick={() => openModal("cancelar", v)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Cancelar venta"><Ban size={16} /></button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1148,7 +1158,7 @@ function Ventas() {
 
       {/* Modales: eliminar, status */}
       <AnimatePresence>
-        {modal === "eliminar" && selectedVenta && (
+        {modal === "cancelar" && selectedVenta && (
           <motion.div
             className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -1163,25 +1173,37 @@ function Ventas() {
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex h-[320px]">
-                <div className="w-1/3 bg-red-50 flex flex-col items-center justify-center border-r border-red-100 p-6">
+              <div className="flex flex-col md:flex-row min-h-[350px]">
+                <div className="w-full md:w-1/3 bg-red-50 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-red-100 p-6">
                   <div className="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-red-500">
-                    <Trash2 size={40} strokeWidth={1.5} />
+                    <Ban size={40} strokeWidth={1.5} />
                   </div>
-                  <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest text-center">Seguridad</p>
+                  <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest text-center">Acción Irreversible</p>
                 </div>
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-[#040529]">Confirmar Eliminación</h3>
+                    <h3 className="text-lg font-bold text-[#040529]">Cancelar Venta</h3>
                     <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
                   </div>
-                  <div className="flex-1 p-6 flex flex-col justify-center text-center">
-                    <p className="text-sm text-gray-500 mb-2">¿Estás seguro de eliminar la venta <span className="font-bold text-red-600">#{selectedVenta.id_venta}</span>?</p>
-                    <p className="text-xs text-gray-400">Esta acción no se puede deshacer y afectará el inventario.</p>
+                  <div className="flex-1 p-6 flex flex-col gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">¿Estás seguro de cancelar la venta <span className="font-bold text-red-600">#{selectedVenta.id_venta}</span>?</p>
+                      <p className="text-[11px] text-gray-400">El stock de los productos será restaurado automáticamente.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Justificación del motivo</label>
+                      <textarea
+                        value={justificacion}
+                        onChange={(e) => setJustificacion(e.target.value)}
+                        placeholder="Ej: El cliente solicitó la cancelación..."
+                        className="w-full h-24 p-3 text-sm rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none transition resize-none bg-gray-50/50"
+                      />
+                    </div>
                   </div>
                   <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3">
-                    <button onClick={closeModal} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition font-bold text-xs uppercase tracking-wider">Cancelar</button>
-                    <button onClick={handleDelete} className="flex-1 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition font-bold text-xs uppercase tracking-wider shadow-md">Eliminar</button>
+                    <button onClick={closeModal} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition font-bold text-[10px] uppercase tracking-wider">Descartar</button>
+                    <button onClick={handleCancel} className="flex-1 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition font-bold text-[10px] uppercase tracking-wider shadow-md">Confirmar Cancelación</button>
                   </div>
                 </div>
               </div>

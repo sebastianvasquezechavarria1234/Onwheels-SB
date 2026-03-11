@@ -14,25 +14,43 @@ export const getEstudianteById = async (id) => {
   return response.data;
 };
 
-export const createEstudiante = async (estudianteData) => {
+// Aliases for compatibility
+export const getDetalleEstudiante = getEstudianteById;
+
+export const crearEstudiante = async (estudianteData) => {
   const response = await api.post(ENDPOINT, estudianteData);
   return response.data;
 };
 
-export const updateEstudiante = async (id, estudianteData) => {
+export const actualizarEstudiante = async (id, estudianteData) => {
   const response = await api.put(`${ENDPOINT}/${id}`, estudianteData);
   return response.data;
 };
 
-export const deleteEstudiante = async (id) => {
+export const eliminarEstudiante = async (id) => {
   const response = await api.delete(`${ENDPOINT}/${id}`);
+  return response.data;
+};
+
+// Alias for compatibility
+export const deleteEstudiante = eliminarEstudiante;
+
+export const actualizarEstadoEstudiante = async (id, estado) => {
+  const response = await api.put(`${ENDPOINT}/${id}/estado`, { estado });
+  return response.data;
+};
+
+// Alias for compatibility
+export const updateEstadoEstudiante = actualizarEstadoEstudiante;
+
+export const getSugerenciasEstudiantes = async (query) => {
+  const response = await api.get(`${ENDPOINT}/sugerencias?q=${query}`);
   return response.data;
 };
 
 // Servicios para datos relacionados
 export const getUsuariosActivos = async () => {
   const response = await api.get(ENDPOINT_USUARIOS);
-  // Filtrar solo usuarios activos si es necesario
   return response.data ? response.data.filter(usuario => usuario.estado !== false) : [];
 };
 
@@ -49,10 +67,5 @@ export const createAcudiente = async (acudienteData) => {
 // Servicios adicionales para preinscripciones
 export const getPreinscripcionesPendientes = async () => {
   const response = await api.get(`${ENDPOINT}/preinscripciones/pendientes`);
-  return response.data;
-};
-
-export const updateEstadoEstudiante = async (id, estado) => {
-  const response = await api.put(`${ENDPOINT}/${id}/estado`, { estado });
   return response.data;
 };

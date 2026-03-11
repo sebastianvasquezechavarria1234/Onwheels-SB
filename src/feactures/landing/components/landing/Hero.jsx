@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { useAuth } from '../../../dashboards/dinamico/context/AuthContext';
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { getStoreHomePath, getPreinscriptionPath } from '../../../../utils/roleHelpers';
 
 export const Hero = () => {

@@ -1,23 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Layout } from "../../student/layout/layout";
-import { Mail, Phone, Edit2, Lock, CheckCircle, AlertCircle } from "lucide-react";
+import { StudentLayout } from "../../../landing/student/layout/StudentLayout";
+import { Mail, Phone, Lock, CheckCircle, User, Shield, Camera, Star, Zap } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || '';
 
 export const Setting = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [editData, setEditData] = useState({
-    nombre_completo: "",
-    telefono: ""
-  });
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
+  const [editData, setEditData] = useState({ nombre_completo: "", telefono: "" });
+  const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [passwordValidation, setPasswordValidation] = useState({
     currentPassword: { valid: null, message: "" },
     newPassword: { valid: null, message: "" },
@@ -27,69 +20,45 @@ export const Setting = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // refs para debounce + abort
   const verifyTimeout = useRef(null);
   const lastAbortController = useRef(null);
-
-  // anim timers refs para mensaje
   const enterTimerRef = useRef(null);
   const visibleTimerRef = useRef(null);
   const exitTimerRef = useRef(null);
-
-  // fase del mensaje: null | 'entering' | 'visible' | 'exiting'
   const [messagePhase, setMessagePhase] = useState(null);
 
   const getCurrentUserId = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     return user?.id_usuario;
   };
-
-  const getCurrentUserToken = () => {
-    return localStorage.getItem('token');
-  };
+  const getCurrentUserToken = () => localStorage.getItem('token');
 
   const api = {
     getUsuario: async (id) => {
       const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${getCurrentUserToken()}`
-        }
+        headers: { Authorization: `Bearer ${getCurrentUserToken()}` }
       });
       if (!response.ok) throw new Error('Error al obtener usuario');
       return response.json();
     },
-    
-    updateUsuario: async (id, userData) => {
+    updateUsuario: async (id, updateData) => {
       const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getCurrentUserToken()}`
-        },
-        body: JSON.stringify(userData)
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getCurrentUserToken()}` },
+        body: JSON.stringify(updateData)
       });
-      // devolver siempre el json (para leer mensajes del backend)
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        // incluir status para el frontend si quiere diferenciar
-        data._status = response.status;
-        throw data;
-      }
+      if (!response.ok) { data._status = response.status; throw data; }
       return data;
     },
-
     verifyCurrentPassword: async (id, currentPassword, signal) => {
       const response = await fetch(`${API_BASE_URL}/usuarios/${id}/verify-password`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getCurrentUserToken()}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getCurrentUserToken()}` },
         body: JSON.stringify({ currentPassword }),
         signal
       });
       if (!response.ok) {
-        // tratar como no válido si el servidor responde error
         const errData = await response.json().catch(() => ({}));
         return { valid: false, ...errData };
       }
@@ -101,199 +70,88 @@ export const Setting = () => {
     const fetchUserData = async () => {
       try {
         const userId = getCurrentUserId();
-        if (!userId) {
-          window.location.href = '/login';
-          return;
-        }
-        
+        if (!userId) { window.location.href = '/login'; return; }
         const data = await api.getUsuario(userId);
         setUserData(data);
-        setEditData({
-          nombre_completo: data.nombre_completo || "",
-          telefono: data.telefono || ""
-        });
-      } catch (error) {
-        console.error("Error fetching user ", error);
-      } finally {
-        setLoading(false);
-      }
+        setEditData({ nombre_completo: data.nombre_completo || "", telefono: data.telefono || "" });
+      } catch (err) { console.error('Error fetching user', err); }
+      finally { setLoading(false); }
     };
-
     fetchUserData();
   }, []);
 
-  // ---- NEW: control de animación del mensaje de éxito ----
-  // tiempos (ms)
-  const ENTER_DUR = 400;
-  const VISIBLE_DUR = 3500; // <-- cambiado a 3500 ms (3.5s)
-  const EXIT_DUR = 400;
+  const ENTER_DUR = 400, VISIBLE_DUR = 3500, EXIT_DUR = 400;
 
   useEffect(() => {
-    // limpiar timers previos
-    if (enterTimerRef.current) {
-      clearTimeout(enterTimerRef.current);
-      enterTimerRef.current = null;
-    }
-    if (visibleTimerRef.current) {
-      clearTimeout(visibleTimerRef.current);
-      visibleTimerRef.current = null;
-    }
-    if (exitTimerRef.current) {
-      clearTimeout(exitTimerRef.current);
-      exitTimerRef.current = null;
-    }
+    if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
+    if (visibleTimerRef.current) clearTimeout(visibleTimerRef.current);
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
 
-    if (!successMessage) {
-      setMessagePhase(null);
-      return;
-    }
+    if (!successMessage) { setMessagePhase(null); return; }
 
-    // iniciar secuencia: entering -> visible -> exiting -> cleanup
     setMessagePhase('entering');
-
-    enterTimerRef.current = setTimeout(() => {
-      setMessagePhase('visible');
-    }, ENTER_DUR);
-
-    visibleTimerRef.current = setTimeout(() => {
-      setMessagePhase('exiting');
-    }, ENTER_DUR + VISIBLE_DUR);
-
+    enterTimerRef.current = setTimeout(() => setMessagePhase('visible'), ENTER_DUR);
+    visibleTimerRef.current = setTimeout(() => setMessagePhase('exiting'), ENTER_DUR + VISIBLE_DUR);
     exitTimerRef.current = setTimeout(() => {
       setSuccessMessage("");
       setMessagePhase(null);
     }, ENTER_DUR + VISIBLE_DUR + EXIT_DUR);
-
-    return () => {
-      if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
-      if (visibleTimerRef.current) clearTimeout(visibleTimerRef.current);
-      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
-      enterTimerRef.current = visibleTimerRef.current = exitTimerRef.current = null;
-    };
   }, [successMessage]);
 
-  useEffect(() => {
-    // cleanup on unmount
-    return () => {
-      if (verifyTimeout.current) clearTimeout(verifyTimeout.current);
-      if (lastAbortController.current) {
-        try { lastAbortController.current.abort(); } catch {}
-      }
-      if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
-      if (visibleTimerRef.current) clearTimeout(visibleTimerRef.current);
-      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
-    };
+  useEffect(() => () => {
+    if (verifyTimeout.current) clearTimeout(verifyTimeout.current);
+    if (lastAbortController.current) { try { lastAbortController.current.abort(); } catch { } }
   }, []);
 
-  if (loading) {
-    return (
-      <Layout>
-        <section className="p-[30px]">
-          <div className="text-center text-gray-600">Cargando perfil...</div>
-        </section>
-      </Layout>
-    );
-  }
-
-  // Validación para nueva contraseña: mínimo 6 caracteres + (al menos 1 número OR 1 caracter especial)
   const validateNewPassword = (password) => {
     if (!password) {
-      setPasswordValidation(prev => ({
-        ...prev,
-        newPassword: { valid: null, message: "" }
-      }));
+      setPasswordValidation(prev => ({ ...prev, newPassword: { valid: null, message: "" } }));
       return;
     }
-
     const hasMinLength = password.length >= 6;
     const hasNumber = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-    
-    if (!hasMinLength) {
-      setPasswordValidation(prev => ({
-        ...prev,
-        newPassword: { valid: false, message: "Mínimo 6 caracteres" }
-      }));
-    } else if (!(hasNumber || hasSpecialChar)) {
-      setPasswordValidation(prev => ({
-        ...prev,
-        newPassword: { valid: false, message: "Debe contener al menos 1 número o 1 caracter especial" }
-      }));
-    } else {
-      setPasswordValidation(prev => ({
-        ...prev,
-        newPassword: { valid: true, message: "Contraseña válida" }
-      }));
-    }
+    if (!hasMinLength)
+      setPasswordValidation(prev => ({ ...prev, newPassword: { valid: false, message: "Mínimo 6 caracteres" } }));
+    else if (!(hasNumber || hasSpecialChar))
+      setPasswordValidation(prev => ({ ...prev, newPassword: { valid: false, message: "Debe contener al menos 1 número o 1 caracter especial" } }));
+    else
+      setPasswordValidation(prev => ({ ...prev, newPassword: { valid: true, message: "Contraseña válida" } }));
   };
 
-  // Chequear si newPassword y confirmPassword coinciden
   const validateConfirmPassword = (confirm) => {
     if (!confirm) {
-      setPasswordValidation(prev => ({
-        ...prev,
-        confirmPassword: { valid: null, message: "" }
-      }));
+      setPasswordValidation(prev => ({ ...prev, confirmPassword: { valid: null, message: "" } }));
       return;
     }
-    if (passwordData.newPassword === confirm) {
-      setPasswordValidation(prev => ({
-        ...prev,
-        confirmPassword: { valid: true, message: "Las contraseñas coinciden" }
-      }));
-    } else {
-      setPasswordValidation(prev => ({
-        ...prev,
-        confirmPassword: { valid: false, message: "Las contraseñas no coinciden" }
-      }));
-    }
+    if (passwordData.newPassword === confirm)
+      setPasswordValidation(prev => ({ ...prev, confirmPassword: { valid: true, message: "Las contraseñas coinciden" } }));
+    else
+      setPasswordValidation(prev => ({ ...prev, confirmPassword: { valid: false, message: "Las contraseñas no coinciden" } }));
   };
 
-  // Verificación en tiempo real con debounce y abort (para el campo contraseña actual)
   const scheduleVerifyCurrentPassword = (value) => {
-    // limpiar timeout anterior
-    if (verifyTimeout.current) {
-      clearTimeout(verifyTimeout.current);
-      verifyTimeout.current = null;
-    }
-    // abortar petición anterior si existiera
-    if (lastAbortController.current) {
-      try { lastAbortController.current.abort(); } catch (e) {}
-      lastAbortController.current = null;
-    }
-
+    if (verifyTimeout.current) clearTimeout(verifyTimeout.current);
+    if (lastAbortController.current) { try { lastAbortController.current.abort(); } catch { } }
     if (!value) {
       setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: null, message: "" } }));
       return;
     }
-
-    // debounce 600ms
     verifyTimeout.current = setTimeout(async () => {
       try {
         const controller = new AbortController();
         lastAbortController.current = controller;
-
         const userId = getCurrentUserId();
         const resp = await api.verifyCurrentPassword(userId, value, controller.signal);
-
-        if (resp && typeof resp.valid !== "undefined") {
-          if (resp.valid) {
-            setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: true, message: "Contraseña actual correcta" } }));
-          } else {
-            setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: false, message: "Contraseña actual incorrecta" } }));
-          }
-        } else {
-          setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: false, message: "No se pudo verificar" } }));
-        }
+        if (resp?.valid)
+          setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: true, message: "Contraseña actual correcta" } }));
+        else
+          setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: false, message: "Contraseña actual incorrecta" } }));
       } catch (err) {
-        if (err.name === 'AbortError') {
-          // petición abortada: no hacer nada
-          return;
+        if (err.name !== 'AbortError') {
+          console.error('Error verify current password:', err);
+          setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: false, message: "Error al verificar" } }));
         }
-        console.error("Error verify current password:", err);
-        setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: false, message: "Error al verificar" } }));
-      } finally {
-        lastAbortController.current = null;
       }
     }, 600);
   };
@@ -304,66 +162,38 @@ export const Setting = () => {
     setSuccessMessage("");
     try {
       const userId = getCurrentUserId();
-      const updateData = {
-        nombre_completo: editData.nombre_completo,
-        telefono: editData.telefono
-      };
-      
+      const updateData = { nombre_completo: editData.nombre_completo, telefono: editData.telefono };
       const response = await api.updateUsuario(userId, updateData);
       setUserData(response.usuario);
-      // mostrar mensaje (abajo)
       setSuccessMessage("Perfil actualizado correctamente");
       setIsEditingProfile(false);
-    } catch (error) {
-      console.error(error);
-      if (error && error.mensaje) setPasswordError(error.mensaje);
-      else setPasswordError("Error al actualizar el perfil. Por favor intente nuevamente.");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) {
+      console.error(err);
+      setPasswordError(err?.mensaje || "Error al actualizar el perfil. Por favor intente nuevamente.");
+    } finally { setIsLoading(false); }
   };
 
   const handleSavePassword = async () => {
     setIsLoading(true);
     setPasswordError("");
     setSuccessMessage("");
-
     try {
       const userId = getCurrentUserId();
-      
-      if (!passwordData.currentPassword) {
-        setPasswordError("Debe ingresar su contraseña actual");
-        setIsLoading(false);
-        return;
-      }
-      
-      if (passwordValidation.newPassword.valid !== true) {
-        setPasswordError("La nueva contraseña no cumple con los requisitos");
-        setIsLoading(false);
-        return;
-      }
-
-      if (passwordData.newPassword !== passwordData.confirmPassword) {
-        setPasswordError("La nueva contraseña y la confirmación no coinciden");
-        setIsLoading(false);
-        return;
-      }
-
-      if (passwordValidation.currentPassword.valid !== true) {
-        setPasswordError("La contraseña actual no coincide");
-        setIsLoading(false);
-        return;
-      }
-      
+      if (!passwordData.currentPassword)
+        return setPasswordError("Debe ingresar su contraseña actual"), setIsLoading(false);
+      if (passwordValidation.newPassword.valid !== true)
+        return setPasswordError("La nueva contraseña no cumple con los requisitos"), setIsLoading(false);
+      if (passwordData.newPassword !== passwordData.confirmPassword)
+        return setPasswordError("La nueva contraseña y la confirmación no coinciden"), setIsLoading(false);
+      if (passwordValidation.currentPassword.valid !== true)
+        return setPasswordError("La contraseña actual no coincide"), setIsLoading(false);
       const updateData = {
         contrasena: passwordData.newPassword,
         currentPassword: passwordData.currentPassword,
         confirmPassword: passwordData.confirmPassword
       };
-      
       const response = await api.updateUsuario(userId, updateData);
       setUserData(response.usuario);
-      // mostrar mensaje (abajo)
       setSuccessMessage(response.mensaje || "Contraseña actualizada correctamente");
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setPasswordValidation({
@@ -372,22 +202,15 @@ export const Setting = () => {
         confirmPassword: { valid: null, message: "" }
       });
       setIsChangingPassword(false);
-      
-    } catch (error) {
-      console.error("Error al guardar contraseña:", error);
-      if (error && error.mensaje) setPasswordError(error.mensaje);
-      else setPasswordError("Error al actualizar la contraseña. Verifique sus datos e intente nuevamente.");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) {
+      console.error("Error al guardar contraseña:", err);
+      setPasswordError(err?.mensaje || "Error al actualizar la contraseña. Verifique sus datos e intente nuevamente.");
+    } finally { setIsLoading(false); }
   };
 
   const handleCancelProfile = () => {
     setIsEditingProfile(false);
-    setEditData({
-      nombre_completo: userData.nombre_completo || "",
-      telefono: userData.telefono || ""
-    });
+    setEditData({ nombre_completo: userData.nombre_completo || "", telefono: userData.telefono || "" });
     setPasswordError("");
     setSuccessMessage("");
   };
@@ -402,262 +225,269 @@ export const Setting = () => {
     });
     setPasswordError("");
     setSuccessMessage("");
-    // abort any pending verify request
-    if (lastAbortController.current) {
-      try { lastAbortController.current.abort(); } catch (e) {}
-      lastAbortController.current = null;
-    }
-    if (verifyTimeout.current) {
-      clearTimeout(verifyTimeout.current);
-      verifyTimeout.current = null;
-    }
   };
 
+  if (loading) {
+    return (
+      <StudentLayout>
+        <div className="min-h-screen bg-[#0B0F14] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A8A]"></div>
+        </div>
+      </StudentLayout>
+    );
+  }
+
   return (
-    <Layout>
-     
-      <style>{`
-        .msg-wrap {
-          display: inline-flex;
-          align-items: center;
-          gap: .5rem;
-          padding: 17px;
-          border-radius: 22px;
-          background: #ECFDF5; /* green-100 */
-          color: #40c17eff; /* green-700 */
-          font-weight: 600;
-          will-change: transform, opacity;
-        }
-        /* entering: from left -> center */
-        .msg-entering {
-          transform: translateX(-120%);
-          opacity: 0;
-          animation: slideInFromLeft ${ENTER_DUR}ms cubic-bezier(.2,.9,.2,1) forwards;
-        }
-        /* visible: hold in place (no animation) */
-        .msg-visible {
-          transform: translateX(0);
-          opacity: 1;
-        }
-        /* exiting: center -> left out */
-        .msg-exiting {
-          transform: translateX(0);
-          opacity: 1;
-          animation: slideOutToLeft ${EXIT_DUR}ms cubic-bezier(.3,.1,.25,1) forwards;
-        }
-        @keyframes slideInFromLeft {
-          0% { transform: translateX(-120%); opacity: 0; }
-          60% { transform: translateX(12%); opacity: 1; } /* tiny overshoot for polish */
-          100% { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOutToLeft {
-          0% { transform: translateX(0); opacity: 1; }
-          100% { transform: translateX(-120%); opacity: 0; }
-        }
-      `}</style>
+    <StudentLayout>
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px] md:pt-10">
+        <div className="max-w-[800px] mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
+                <User className="text-[#3b82f6]" size={36} />
+                Mi Perfil
+              </h2>
+              <p className="text-[#9CA3AF] mt-2 font-medium">Gestiona tu información personal y configuración</p>
+            </div>
+          </div>
 
-      <section className="p-[30px] relative w-full">
-        <h2 className="font-primary text-2xl mb-6">Mi perfil</h2>
+          <div className="bg-[#121821] border border-gray-800 rounded-[2rem] p-8 md:p-12 shadow-xl hover:shadow-[#1E3A8A]/5 hover:border-gray-700 transition-all relative overflow-hidden">
+            <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#1E3A8A]/10 rounded-full blur-[80px] pointer-events-none"></div>
 
-        <div className="flex items-start gap-[30px] mt-[80px]">
-          <picture className="relative w-[200px] h-[200px] rounded-full flex justify-center items-center bg-gray-100">
-            <img className="w-full h-full object-cover opacity-50" src="https://tse4.mm.bing.net/th/id/OIP.XmX3OORybgBCLw-Xd6rYrQHaHa?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="avatar" />
-          </picture>
-
-          <div className="flex flex-col gap-[10px]">
-            <span className="inline-flex justify-center w-[100px] items-center gap-[5px] px-[15px] py-[7px] rounded-full bg-green-100 text-green-700">
-              <span className="w-[10px] h-[10px] block bg-[currentColor] rounded-full"></span>
-              Activo
-            </span>
-            
-            {isEditingProfile ? (
-              <div className="w-[400px] block space-y-4">
-                <h3 className="italic mt-[30px]">Editar perfil</h3>
-                <label className="mb-[10px] block">
-                  <p className="translate-x-[20px] font-bold! italic">Nombre completo:</p>
-                  <input
-                    type="text"
-                    value={editData.nombre_completo}
-                    onChange={(e) => setEditData({...editData, nombre_completo: e.target.value})}
-                    className="input w-[200px]"
-                    placeholder="Nombre completo"
-                  />
-                </label>
-                <label className="mb-[10px] block">
-                  <p className="translate-x-[20px] font-bold! italic">Telefono:</p>
-                <input
-                  type="tel"
-                  value={editData.telefono}
-                  onChange={(e) => setEditData({...editData, telefono: e.target.value})}
-                  className="input"
-                  placeholder="Teléfono"
-                />
-                </label>
-                
-                <div className="flex gap-[10px] pt-2">
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={isLoading}
-                    className={`btn ${isLoading ? 'bg-blue-100 cursor-not-allowed' : 'bg-blue-100 text-blue-600'} text-blue-500 transition-colors`}
-                  >
-                    <h4>
-                      {isLoading ? 'Guardando...' : 'Guardar cambios'}
-                    </h4>
-                  </button>
-                  <button
-                    onClick={handleCancelProfile}
-                    className="btn bg-red-100 text-red-500"
-                  >
-                    <h4>
-                    Cancelar
-                    </h4>
-                  </button>
+            <div className="flex flex-col md:flex-row gap-10 items-center md:items-start relative z-10">
+              <div className="flex flex-col items-center">
+                <div className="relative group/avatar cursor-pointer">
+                  <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[#1E3A8A] bg-[#0B0F14] flex items-center justify-center shadow-lg shadow-[#1E3A8A]/20">
+                    <img
+                      src="/placeholder.svg?height=144&width=144"
+                      alt="Avatar"
+                      className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all opacity-50"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                      <Camera className="text-white" size={32} />
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-full border-4 border-[#121821] flex items-center justify-center shadow-md">
+                    <Star size={16} fill="currentColor" />
+                  </div>
                 </div>
-                { /* Mensajes de error locales (se mantienen) */ }
-                {passwordError && <div className="mt-2 p-[12px] rounded-[16px] bg-red-100 text-red-700">{passwordError}</div>}
+                <button className="mt-4 text-xs font-bold text-[#3b82f6] uppercase tracking-wider hover:text-white transition-colors">
+                  Editar Foto
+                </button>
               </div>
-            ) : isChangingPassword ? (
-              <div className="space-y-4 max-w-md">
-                {/* --- Usamos los mismos estilos de título/input/btn que en "Editar perfil" --- */}
-                <h3 className="italic mt-[30px]">Cambiar contraseña</h3>
 
-                <label className="mb-[10px] block">
-                  <p className="translate-x-[20px] font-bold! italic">Contraseña actual:</p>
-                  <input
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setPasswordData(prev => ({ ...prev, currentPassword: val }));
-                      scheduleVerifyCurrentPassword(val);
-                    }}
-                    className="input"
-                    placeholder="Ingrese su contraseña actual"
-                  />
-                </label>
-                {passwordValidation.currentPassword.message && (
-                  <p className={`text-sm mt-1 ${passwordValidation.currentPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
-                    {passwordValidation.currentPassword.message}
-                  </p>
-                )}
-
-                <label className="mb-[10px] block">
-                  <p className="translate-x-[20px] font-bold! italic">Nueva contraseña:</p>
-                  <input
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setPasswordData(prev => ({ ...prev, newPassword: val }));
-                      validateNewPassword(val);
-                      // revalidate confirm
-                      validateConfirmPassword(passwordData.confirmPassword);
-                    }}
-                    className="input"
-                    placeholder="Mínimo 6 caracteres + 1 número o 1 caracter especial"
-                  />
-                </label>
-                {passwordValidation.newPassword.message && (
-                  <p className={`text-sm mt-1 ${passwordValidation.newPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
-                    {passwordValidation.newPassword.message}
-                  </p>
-                )}
-
-                <label className="mb-[10px] block">
-                  <p className="translate-x-[20px] font-bold! italic">Confirmar nueva contraseña:</p>
-                  <input
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setPasswordData(prev => ({ ...prev, confirmPassword: val }));
-                      validateConfirmPassword(val);
-                    }}
-                    className="input"
-                    placeholder="Repita la nueva contraseña"
-                  />
-                </label>
-                {passwordValidation.confirmPassword.message && (
-                  <p className={`text-sm mt-1 ${passwordValidation.confirmPassword.valid ? 'text-green-600' : 'text-red-600'}`}>
-                    {passwordValidation.confirmPassword.message}
-                  </p>
-                )}
-                
-                <div className="flex gap-[10px] pt-2">
-                  <button
-                    onClick={handleSavePassword}
-                    disabled={isLoading || passwordValidation.newPassword.valid !== true || passwordValidation.confirmPassword.valid !== true || passwordValidation.currentPassword.valid !== true}
-                    // <-- FIX: min width para que el texto "Actualizando..." no cambie el layout
-                    className={`btn min-w-[220px] flex items-center justify-center ${isLoading || passwordValidation.newPassword.valid !== true || passwordValidation.confirmPassword.valid !== true || passwordValidation.currentPassword.valid !== true ? 'bg-blue-100 cursor-not-allowed text-blue-300' : 'bg-blue-100 text-blue-600'} transition-colors`}
-                  >
-                    <h4>{isLoading ? 'Actualizando...' : 'Actualizar contraseña'}</h4>
-                  </button>
-                  <button
-                    onClick={handleCancelPassword}
-                    className="btn bg-red-100 text-red-500"
-                  >
-                    <h4>Cancelar</h4>
-                  </button>
+              <div className="flex-1 text-center md:text-left w-full">
+                <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                    <Zap size={10} fill="currentColor" />
+                    Cuenta Activa
+                  </span>
                 </div>
 
-                { /* Los mensajes de éxito ahora aparecen abajo; dejamos el error local */ }
-                {passwordError && (
-                  <div className="mt-2 p-2 bg-red-100 text-red-700 rounded-lg">
-                    {passwordError}
+                {isEditingProfile ? (
+                  <div className="flex flex-col gap-4 text-left">
+                    <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2">
+                      Editar Perfil
+                    </h4>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Nombre completo</label>
+                      <input
+                        type="text"
+                        value={editData.nombre_completo}
+                        onChange={(e) => setEditData({ ...editData, nombre_completo: e.target.value })}
+                        className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Teléfono</label>
+                      <input
+                        type="tel"
+                        value={editData.telefono}
+                        onChange={(e) => setEditData({ ...editData, telefono: e.target.value })}
+                        className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors"
+                      />
+                    </div>
+
+                    {passwordError && (
+                      <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium">
+                        {passwordError}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 justify-end mt-4">
+                      <button
+                        onClick={handleCancelProfile}
+                        className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white flex-1 md:flex-none rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleSaveProfile}
+                        disabled={isLoading}
+                        className="px-6 py-3 bg-[#1E3A8A] text-white flex-1 md:flex-none rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#1E3A8A]/20"
+                      >
+                        {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+                      </button>
+                    </div>
                   </div>
+                ) : isChangingPassword ? (
+                  <div className="flex flex-col gap-4 text-left">
+                    <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2 flex items-center gap-2">
+                      <Lock size={20} className="text-[#3b82f6]" /> Cambiar Contraseña
+                    </h4>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Contraseña Actual</label>
+                      <input
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPasswordData(prev => ({ ...prev, currentPassword: val }));
+                          scheduleVerifyCurrentPassword(val);
+                        }}
+                        className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors"
+                      />
+                      {passwordValidation.currentPassword.message && (
+                        <p className={`text-xs mt-1 ml-2 font-medium ${passwordValidation.currentPassword.valid ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {passwordValidation.currentPassword.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Nueva Contraseña</label>
+                      <input
+                        type="password"
+                        value={passwordData.newPassword}
+                        placeholder="Mínimo 6 caracteres + 1 número o carácter especial"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPasswordData(prev => ({ ...prev, newPassword: val }));
+                          validateNewPassword(val);
+                          validateConfirmPassword(passwordData.confirmPassword);
+                        }}
+                        className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors"
+                      />
+                      {passwordValidation.newPassword.message && (
+                        <p className={`text-xs mt-1 ml-2 font-medium ${passwordValidation.newPassword.valid ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {passwordValidation.newPassword.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Confirmar Nueva Contraseña</label>
+                      <input
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPasswordData(prev => ({ ...prev, confirmPassword: val }));
+                          validateConfirmPassword(val);
+                        }}
+                        className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors"
+                      />
+                      {passwordValidation.confirmPassword.message && (
+                        <p className={`text-xs mt-1 ml-2 font-medium ${passwordValidation.confirmPassword.valid ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {passwordValidation.confirmPassword.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {passwordError && (
+                      <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm font-medium">
+                        {passwordError}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3 justify-end mt-4">
+                      <button
+                        onClick={handleCancelPassword}
+                        className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white flex-1 md:flex-none rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleSavePassword}
+                        disabled={isLoading || passwordValidation.newPassword.valid !== true || passwordValidation.confirmPassword.valid !== true || passwordValidation.currentPassword.valid !== true}
+                        className="px-6 py-3 bg-[#1E3A8A] text-white flex-1 md:flex-none rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#1E3A8A]/20 flex items-center justify-center"
+                      >
+                        {isLoading ? 'Actualizando...' : 'Actualizar'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">
+                      {userData.nombre_completo || "Estudiante"}
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <Phone size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
+                        </div>
+                        <span className="font-medium text-white pl-5">{userData.telefono || "No especificado"}</span>
+                      </div>
+
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <Mail size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Email</span>
+                        </div>
+                        <span className="font-medium text-white pl-5 break-all">{userData.email || "No especificado"}</span>
+                      </div>
+
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <Shield size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Rol de Cuenta</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 pl-5 mt-2">
+                          <span className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-[#1E3A8A]/30">
+                            {userData.rol_nombre || "Estudiante"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
-            ) : (
-              <>
-                <h3 className="font-primary italic font-bold! mt-[30px]">{userData?.nombre_completo}</h3>
-                <div className="flex gap-[20px]">
-                  <div className="flex gap-[10px] items-center">
-                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full">
-                      <Phone color="white" size={20} strokeWidth={1.3} />
-                    </span>
-                    <p className="font-semibold!">{userData?.telefono}</p>
-                  </div>
-                  <div className="flex gap-[10px] items-center">
-                    <span className="w-[60px] h-[60px] flex justify-center items-center bg-[var(--color-blue)] rounded-full">
-                      <Mail color="white" size={20} strokeWidth={1.3} />
-                    </span>
-                    <p className="font-semibold! underline">{userData?.email}</p>
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-4">
-                  <button
-                    onClick={() => setIsEditingProfile(true)}
-                    className="btn bg-blue-100 flex items-center gap-[10px] text-blue-600"
-                  >
-                     <h4>Editar perfil</h4>
-                  </button>
-                  <button
-                    onClick={() => setIsChangingPassword(true)}
-                    className="btn bg-gray-200 flex items-center gap-[10px] text-gray-700"
-                  >
-                     <h4>Cambiar contraseña</h4>
-                  </button>
-                </div>
-              </>
-            )}
+            </div>
 
-            {/* --- Mensaje de éxito ABAJO con anim profesional (entra por la izquierda, queda 3.5s, sale por la izquierda) --- */}
-            {successMessage && (
-              <div
-                className={`msg-wrap ${
-                  messagePhase === 'entering' ? 'msg-entering' : 
-                  messagePhase === 'visible' ? 'msg-visible' : 
-                  messagePhase === 'exiting' ? 'msg-exiting' : ''
-                }`}
-              >
-                <CheckCircle className="w-5 h-5" />
-                <span>{successMessage}</span>
+            {!isEditingProfile && !isChangingPassword && (
+              <div className="mt-10 pt-8 border-t border-gray-800 flex flex-col sm:flex-row gap-4 justify-end">
+                <button
+                  onClick={() => setIsChangingPassword(true)}
+                  className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+                >
+                  <Lock size={16} /> Cambiar Contraseña
+                </button>
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  className="px-6 py-3 bg-[#1E3A8A] text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 flex items-center justify-center gap-2"
+                >
+                  <User size={16} /> Editar Perfil
+                </button>
               </div>
             )}
-
           </div>
         </div>
       </section>
-    </Layout>
+
+      {successMessage && messagePhase && (
+        <div
+          className={`fixed bottom-10 right-10 z-[200] flex items-center gap-3 px-6 py-4 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-2xl shadow-2xl transition-all duration-300 pointer-events-none 
+          ${messagePhase === 'entering' ? 'translate-x-[120%] opacity-0' : messagePhase === 'visible' ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0'}`}
+        >
+          <CheckCircle className="w-6 h-6" />
+          <span className="font-bold">{successMessage}</span>
+        </div>
+      )}
+    </StudentLayout>
   );
 };

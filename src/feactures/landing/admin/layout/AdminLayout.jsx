@@ -1,24 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Footer from "../../layout/Footer"
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext"
 import { AdminHeader } from "./AdminHeader"
+import { Footer } from "../../layout/Footer"
 
 export const AdminLayout = ({ children }) => {
-  const [userName, setUserName] = useState("")
-
-  useEffect(() => {
-    // Obtener el usuario del localStorage
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      try {
-        const user = JSON.parse(userData)
-        setUserName(user.nombre || "Administrador")
-      } catch (error) {
-        console.error("Error parsing user ", error)
-      }
-    }
-  }, [])
+  const { user } = useAuth()
+  const userName = user?.nombre || ""
 
   return (
     <main className="min-h-screen flex flex-col">

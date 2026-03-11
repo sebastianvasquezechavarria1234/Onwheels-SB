@@ -6,7 +6,7 @@ import { useCart } from "../../../context/CartContext";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { LoginRequiredModal } from "../components/LoginRequiredModal";
 import { Link, useNavigate } from "react-router-dom";
-import { getCheckoutPath as getRoleBasedCheckoutPath } from "../../../utils/roleHelpers";
+import { getCheckoutPath as getRoleBasedCheckoutPath, getStoreHomePath } from "../../../utils/roleHelpers";
 
 export const ShoppingCartContent = () => {
     const { cart, clearCart, isLoaded } = useCart();
@@ -23,7 +23,7 @@ export const ShoppingCartContent = () => {
             return getRoleBasedCheckoutPath(user);
         } catch (error) {
             console.error("Error getting role-based checkout path:", error);
-            return "/users/payments";
+            return `/${user?.rol === 'Instructor' ? 'instructor' : 'users'}/checkout`;
         }
     };
 
@@ -52,7 +52,7 @@ export const ShoppingCartContent = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-14">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="space-y-3">
-                            <div className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-[0.2em] flex items-center gap-2">
+                            <div className="text-[10px] font-black text-[#9CA3AF] tracking-[0.2em] flex items-center gap-2">
                                 <Link to="/" className="hover:text-white transition-colors">Inicio</Link>
                                 <span>/</span>
                                 <span className="text-white underline underline-offset-4 decoration-[#1E3A8A]/50">Carrito</span>
@@ -60,14 +60,14 @@ export const ShoppingCartContent = () => {
                             <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight leading-none">
                                 Carrito de Compras
                             </h1>
-                            <p className="text-[#9CA3AF] font-bold text-[10px] lg:text-xs max-w-md uppercase tracking-wider opacity-70">
+                            <p className="text-[#9CA3AF] font-bold text-[10px] lg:text-xs max-w-md tracking-wider opacity-70">
                                 Revisa tus productos cuidadosamente antes de finalizar tu compra.
                             </p>
                         </div>
                         {cart.items.length > 0 && (
                             <button
                                 onClick={clearCart}
-                                className="text-red-600 hover:text-red-700 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all group border-b border-transparent hover:border-red-600/20 pb-1"
+                                className="text-red-600 hover:text-red-700 text-[10px] font-black tracking-widest flex items-center gap-2 transition-all group border-b border-transparent hover:border-red-600/20 pb-1"
                             >
                                 <Trash2 size={14} className="group-hover:rotate-12 transition-transform" />
                                 Vaciar carrito
@@ -86,7 +86,7 @@ export const ShoppingCartContent = () => {
                         </div>
                         <h2 className="text-2xl font-black text-white mb-3 font-primary">Tu carrito está vacío</h2>
                         <p className="text-[#9CA3AF] mb-8 max-w-sm mx-auto leading-relaxed font-medium">Parece que aún no has agregado nada a tu carrito. ¡Explora nuestra tienda y encuentra algo increíble!</p>
-                        <Link to="/store" className="bg-[#1E3A8A] text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-800 transition-all shadow-xl shadow-[#1E3A8A]/20 active:scale-95 tracking-widest uppercase text-xs">
+                        <Link to={getStoreHomePath(user)} className="bg-[#1E3A8A] text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-800 transition-all shadow-xl shadow-[#1E3A8A]/20 active:scale-95 tracking-widest text-xs">
                             Volver a la tienda
                         </Link>
                     </div>
@@ -118,18 +118,18 @@ export const ShoppingCartContent = () => {
                                 <h3 className="text-xl font-black text-white mb-8 pb-4 border-b border-gray-800 relative font-primary">Resumen de Orden</h3>
 
                                 <div className="space-y-4 mb-8 relative">
-                                    <div className="flex justify-between text-[#9CA3AF] font-bold text-sm uppercase tracking-wide">
+                                    <div className="flex justify-between text-[#9CA3AF] font-bold text-sm tracking-wide">
                                         <span>Items ({cart.itemCount})</span>
                                         <span className="text-white">{format(cart.total)}</span>
                                     </div>
-                                    <div className="flex justify-between text-[#9CA3AF] font-bold text-sm uppercase tracking-wide pb-4">
+                                    <div className="flex justify-between text-[#9CA3AF] font-bold text-sm tracking-wide pb-4">
                                         <span>Envío Estimado</span>
                                         <span className="text-emerald-400">Gratis</span>
                                     </div>
 
                                     <div className="pt-8 border-t border-gray-800 space-y-4">
                                         <div className="flex justify-between items-baseline">
-                                            <span className="font-black text-white text-lg font-primary uppercase tracking-tighter">Total a pagar</span>
+                                            <span className="font-black text-white text-lg font-primary tracking-tighter">Total a pagar</span>
                                             <div className="text-right">
                                                 <span className="block text-3xl font-black text-emerald-400 font-primary leading-none tracking-tight">{format(cart.total)}</span>
                                                 <span className="text-[10px] text-[#9CA3AF] uppercase font-black tracking-widest mt-2 block">COP</span>
@@ -146,7 +146,7 @@ export const ShoppingCartContent = () => {
                                                 <LogIn size={20} className="animate-pulse" />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="font-black text-white text-xs mb-1 tracking-tight uppercase">Inicia sesión</h4>
+                                                <h4 className="font-black text-white text-xs mb-1 tracking-tight">Inicia sesión</h4>
                                                 <p className="text-[10px] text-[#9CA3AF] leading-relaxed font-bold">
                                                     Identifícate para procesar tu pedido de forma rápida y segura.
                                                 </p>
@@ -158,16 +158,13 @@ export const ShoppingCartContent = () => {
                                 <div className="space-y-4 relative">
                                     <button
                                         onClick={handleCheckoutAction}
-                                        className={`w-full py-5 px-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-[0.98] group ${(!user || (!user.id && !user.id_usuario && !user.email))
-                                            ? "bg-gray-800 text-gray-400 cursor-not-allowed"
-                                            : "bg-[#DC2626] text-white hover:bg-red-700 shadow-xl shadow-[#DC2626]/20"
-                                            }`}
+                                        className="w-full py-5 px-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-[0.98] group bg-[#DC2626] text-white hover:bg-red-700 shadow-xl shadow-[#DC2626]/20"
                                     >
-                                        <span className="text-base tracking-widest uppercase">Finalizar Compra</span>
+                                        <span className="text-base tracking-widest">Finalizar Compra</span>
                                         <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                     </button>
 
-                                    <Link to="/store" className="flex items-center justify-center gap-2 w-full py-4 text-[10px] font-black text-[#9CA3AF] hover:text-white transition-all group tracking-[0.2em] uppercase">
+                                    <Link to={getStoreHomePath(user)} className="flex items-center justify-center gap-2 w-full py-4 text-[10px] font-black text-[#9CA3AF] hover:text-white transition-all group tracking-[0.2em]">
                                         <span className="group-hover:-translate-x-1 transition-transform">← Seguir Comprando</span>
                                     </Link>
                                 </div>

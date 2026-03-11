@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { BtnLinkIcon } from "../../components/BtnLinkIcon"
 import { BtnLink } from "../../components/BtnLink"
+import { UserDropdown } from "../../components/UserDropdown"
 
 export const CustomHeader = () => {
   const [open, setOpen] = useState(false)
@@ -15,7 +16,6 @@ export const CustomHeader = () => {
   const modalRef = useRef(null)
   const navigate = useNavigate()
 
-  // Scroll detection
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener("scroll", handleScroll)
@@ -23,10 +23,8 @@ export const CustomHeader = () => {
   }, [])
 
   useEffect(() => {
-    // Bloqueo de scroll cuando modal abierto
     document.body.style.overflow = open ? "hidden" : ""
 
-    // foco automático al abrir
     if (open) {
       const t = setTimeout(() => {
         firstLinkRef.current?.focus()
@@ -43,7 +41,6 @@ export const CustomHeader = () => {
         return
       }
 
-      // Simple focus trap: si el modal está abierto, cicla entre primer link y el botón cerrar
       if (e.key === "Tab") {
         const focusable = modalRef.current?.querySelectorAll(
           'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -67,11 +64,8 @@ export const CustomHeader = () => {
   }, [open])
 
   const handleLogout = () => {
-    // Eliminar token y usuario del localStorage
     localStorage.removeItem("token")
     localStorage.removeItem("user")
-
-    // Redirigir a login
     navigate("/login")
   }
 
@@ -157,32 +151,9 @@ export const CustomHeader = () => {
           </li>
 
           <li>
-            <BtnLinkIcon
-              title="Mi cuenta"
-              link="/custom/profile"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
-            >
-              <User className="text-black transition-all" strokeWidth={1.8} size={scrolled ? 18 : 20} />
-            </BtnLinkIcon>
+            <UserDropdown isScrolled={scrolled} />
           </li>
 
-          <li>
-            <button
-              type="button"
-              onClick={handleLogout}
-              title="Cerrar sesión"
-              className={`cursor-pointer bg-red-200 text-red-700 inline-flex items-center rounded-full gap-[8px] transition-all max-xl:hidden ${scrolled ? 'p-[2px_10px_2px_2px]' : 'p-[3px_13px_3px_3px]'}`}
-              aria-label="Cerrar sesión"
-            >
-              <div className={`flex justify-center items-center bg-red-600 rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
-                <LogOut color="white" strokeWidth={1.8} size={scrolled ? 16 : 20} />
-              </div>
-              <p className={`transition-all ${scrolled ? 'text-xs' : 'text-sm'}`}>Cerrar sesión</p>
-            </button>
-          </li>
-
-          {/* Botón de menú (usando button nativo para asegurar onClick) */}
           <li>
             <button
               type="button"
@@ -204,7 +175,6 @@ export const CustomHeader = () => {
       <AnimatePresence initial={false}>
         {open && (
           <>
-            {/* overlay (z-40) */}
             <motion.div
               className="fixed inset-0 z-40"
               initial="hidden"
@@ -218,7 +188,6 @@ export const CustomHeader = () => {
               <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
             </motion.div>
 
-            {/* sheet/modal container (z-50) */}
             <motion.div
               className="fixed left-0 right-0 top-[20px] z-50 mx-auto max-w-[900px] px-4"
               initial="hidden"

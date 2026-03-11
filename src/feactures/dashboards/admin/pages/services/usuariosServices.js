@@ -2,8 +2,8 @@ import api from "../../../../../services/api";
 
 const API_URL = "/usuarios";
 
-export const getUsuarios = async () => {
-  const res = await api.get(API_URL);
+export const getUsuarios = async (params = {}) => {
+  const res = await api.get(API_URL, { params });
   return res.data;
 };
 

@@ -14,21 +14,49 @@ const ROLE_PATH_MAP = {
 
 /**
  * Get the standardized role slug for a user.
+ * Prioritizes 'administrador' if the user has multiple roles.
  * @param {Object} user 
- * @returns {string} - 'student', 'admin', 'client', or 'store' (guest)
+ * @returns {string} - 'student', 'admin', 'users', 'instructor', 'custom', or 'store' (guest)
  */
 export const getUserRoleSlug = (user) => {
-    if (!user || (!user.rol && !user.roles)) return 'store';
+    if (!user) return 'store';
 
-    // Handle both 'rol' string and 'roles' array
-    let roleName = '';
-    if (user.rol) {
-        roleName = user.rol.toLowerCase();
-    } else if (user.roles && user.roles.length > 0) {
-        roleName = user.roles[0].toLowerCase(); // Assuming primary role is first
-    }
+    // Extraction of roles from different possible structures
+    const rolesArray = Array.isArray(user.roles)
+        ? user.roles.map(r => (typeof r === 'string' ? r : r.nombre_rol).toLowerCase())
+        : (user.rol ? [user.rol.toLowerCase()] : []);
 
-    return ROLE_PATH_MAP[roleName] || 'store';
+    if (rolesArray.length === 0) return 'store';
+
+    // Prioritize 'administrador'
+    if (rolesArray.includes('administrador')) return 'admin';
+    if (rolesArray.includes('custom')) return 'custom';
+    if (rolesArray.includes('instructor')) return 'instructor';
+    if (rolesArray.includes('estudiante')) return 'student';
+    if (rolesArray.includes('cliente')) return 'users';
+
+    return ROLE_PATH_MAP[rolesArray[0]] || 'store';
+};
+
+/**
+ * Get the user's profile path.
+ */
+export const getProfilePath = (user) => {
+    const roleSlug = getUserRoleSlug(user);
+    if (roleSlug === 'admin') return '/admin/profile';
+    if (roleSlug === 'store') return '/login';
+    return `/${roleSlug}/setting`;
+};
+
+/**
+ * Get the user's purchases history path.
+ */
+export const getPurchasesPath = (user) => {
+    const roleSlug = getUserRoleSlug(user);
+    if (roleSlug === 'admin') return '/admin/purchases';
+    if (roleSlug === 'custom') return '/custom/my-purchases';
+    if (roleSlug === 'store') return '/login';
+    return `/${roleSlug}/myPurchases`;
 };
 
 /**
@@ -46,9 +74,16 @@ export const getProductDetailPath = (user, productId) => {
 };
 
 /**
+ * Get the home path for the current user.
+ */
+export const getHomePath = (user) => {
+    const roleSlug = getUserRoleSlug(user);
+    if (roleSlug === 'store') return '/';
+    return `/${roleSlug}/home`;
+};
+
+/**
  * Get the store home path for the current user.
- * @param {Object} user 
- * @returns {string}
  */
 export const getStoreHomePath = (user) => {
     const roleSlug = getUserRoleSlug(user);

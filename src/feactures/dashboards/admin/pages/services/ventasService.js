@@ -34,7 +34,7 @@ export const updateVentaStatus = async (id, data) => {
   return res.data;
 };
 
-export const cancelVenta = async (id) => {
-  const res = await api.put(`${API_URL}/${id}/cancel`);
+export const cancelVenta = async (id, justificacion) => {
+  const res = await api.put(`${API_URL}/${id}/cancel`, { justificacion_cancelacion: justificacion });
   return res.data;
 };

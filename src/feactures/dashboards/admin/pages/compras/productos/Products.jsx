@@ -78,14 +78,6 @@ export default function Productos({ renderLayout = true }) {
         break;
       case "nombre_producto":
         if (!v) error = "El nombre del producto es obligatorio.";
-        else {
-          const nombreDuplicado = productos.some(
-            (p) =>
-              p.nombre_producto.trim().toLowerCase() === v.toLowerCase() &&
-              p.id_producto !== currentForm.id_producto
-          );
-          if (nombreDuplicado) error = "Ya existe un producto con este nombre.";
-        }
         break;
       case "descripcion":
         if (!v) error = "La descripción es obligatoria.";
@@ -334,8 +326,15 @@ export default function Productos({ renderLayout = true }) {
 
     const isVariantsValid = validateVariantsInline();
 
+    const hasImages = imagenesArchivos.length > 0 || imagenesUrls.length > 0 || imagenesConservadas.length > 0;
+
     if (!isFormValid || !isVariantsValid) {
       showNotification("Corrige los errores en el formulario", "error");
+      return;
+    }
+
+    if (!hasImages) {
+      showNotification("Debes incluir al menos una imagen para el producto.", "error");
       return;
     }
 
@@ -781,7 +780,6 @@ export default function Productos({ renderLayout = true }) {
             >
               <motion.div
                 className="bg-white rounded-2xl shadow-2xl relative overflow-hidden max-w-4xl w-full"
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
@@ -957,7 +955,9 @@ export default function Productos({ renderLayout = true }) {
                               <input
                                 name="descuento_producto"
                                 type="number"
-                                step="0.01"
+                                min="0"
+                                max="100"
+                                step="any"
                                 value={productForm.descuento_producto}
                                 onChange={handleProductChange}
                                 onBlur={handleProductBlur}
@@ -1045,6 +1045,7 @@ export default function Productos({ renderLayout = true }) {
                             </div>
                           </div>
                         </div>
+                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
 
                         {/* === Gestión de Variantes === */}
                         <div className="border border-gray-100 rounded-xl overflow-hidden mt-6">
