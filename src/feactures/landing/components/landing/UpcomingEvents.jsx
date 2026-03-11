@@ -15,14 +15,8 @@ export const UpcomingEvents = () => {
         setError(null);
 
         const data = await getEventosFuturos();
-
-        let allEvents = [];
-
-        if (Array.isArray(data)) {
-          allEvents = data;
-        } else if (data?.eventos && Array.isArray(data.eventos)) {
-          allEvents = data.eventos;
-        }
+        // getEventosFuturos ya normaliza la respuesta a un array
+        const allEvents = Array.isArray(data) ? data : [];
 
         const now = new Date();
 
@@ -30,7 +24,6 @@ export const UpcomingEvents = () => {
           .filter((e) => {
             const rawDate = e?.fecha_evento || e?.fecha;
             if (!rawDate) return false;
-
             const eventDate = new Date(rawDate);
             return !isNaN(eventDate) && eventDate >= now;
           })
@@ -43,14 +36,7 @@ export const UpcomingEvents = () => {
         setEvents(futureEvents.slice(0, 3));
       } catch (err) {
         console.error("Error fetching events:", err);
-
-        // Si es 401 simplemente dejamos la lista vacía
-        if (err.response?.status === 401) {
-          setError("No autorizado para ver eventos.");
-        } else {
-          setError("No se pudieron cargar los eventos.");
-        }
-
+        // No mostramos error para no afectar la landing si la API no responde
         setEvents([]);
       } finally {
         setLoading(false);
@@ -83,10 +69,6 @@ export const UpcomingEvents = () => {
                 className="h-24 bg-zinc-900 rounded-xl animate-pulse"
               />
             ))
-          ) : error ? (
-            <div className="text-red-500 text-sm bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-              {error}
-            </div>
           ) : events.length === 0 ? (
             <div className="text-gray-500 text-sm bg-zinc-900 p-4 rounded-xl border border-zinc-800">
               No hay eventos próximos.
@@ -118,8 +100,8 @@ export const UpcomingEvents = () => {
 
                   <div className="flex-1 min-w-0 pr-4">
                     <h3 className="text-lg font-bold text-white mb-1 truncate group-hover:text-(--color-blue) transition-colors">
-                      {event?.descripcion ||
-                        event?.nombre_evento ||
+                      {event?.nombre_evento ||
+                        event?.descripcion ||
                         "Evento General"}
                     </h3>
                     <div className="flex items-center gap-4 text-gray-500 text-xs text-nowrap">

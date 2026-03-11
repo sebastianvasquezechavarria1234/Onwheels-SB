@@ -1,9 +1,19 @@
 import api from './api';
 
+/**
+ * Normaliza la respuesta del backend para siempre devolver un array.
+ */
+const normalizeEventos = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.eventos && Array.isArray(data.eventos)) return data.eventos;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  return [];
+};
+
 // Obtener todos los eventos
 export const getEventos = async () => {
   const response = await api.get('/eventos');
-  return response.data;
+  return normalizeEventos(response.data);
 };
 
 // Obtener evento por ID
@@ -12,14 +22,14 @@ export const getEventoById = async (id) => {
   return response.data;
 };
 
-// Obtener eventos futuros (puedes ajustar el endpoint si existe o filtrar en frontend)
+// Obtener eventos futuros
 export const getEventosFuturos = async () => {
-  const response = await api.get('/eventos/futuros'); // Asumiendo que existe este endpoint basado en el controlador
-  return response.data;
+  const response = await api.get('/eventos/futuros');
+  return normalizeEventos(response.data);
 };
 
 // Obtener eventos por categoría
 export const getEventosPorCategoria = async (categoriaId) => {
   const response = await api.get(`/eventos/categoria/${categoriaId}`);
-  return response.data;
+  return normalizeEventos(response.data);
 };
