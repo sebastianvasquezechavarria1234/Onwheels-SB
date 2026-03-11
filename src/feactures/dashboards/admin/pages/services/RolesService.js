@@ -2,7 +2,7 @@
 import api from "../../../../../services/api";
 
 // === Roles ===
-export const getRoles = () => api.get("/roles").then(res => res.data);
+export const getRoles = (params = {}) => api.get("/roles", { params }).then(res => res.data);
 export const createRole = (rolData) => api.post("/roles", rolData).then(res => res.data);
 export const updateRole = (id, rolData) => api.put(`/roles/${id}`, rolData).then(res => res.data);
 export const deleteRole = (id) => api.delete(`/roles/${id}`).then(res => res.data);

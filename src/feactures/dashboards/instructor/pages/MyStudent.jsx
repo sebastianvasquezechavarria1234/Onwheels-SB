@@ -2,15 +2,9 @@ import React, { useState } from "react";
 import { InstructorLayout } from "../../../landing/instructor/layout/InstructorLayout";
 import { Users, Search } from "lucide-react";
 import { Table } from "../components/myStudent/Table";
+import { useAuth } from "../../dinamico/context/AuthContext";
 
-const initialUsuarios = [
-  { id: 1, name: "Andrés", lastName: "Gómez", email: "andres.gomez@example.com", phone: "+57 300 111 2222", nivel: "Profesional" },
-  { id: 2, name: "María", lastName: "López", email: "maria.lopez@example.com", phone: "+57 310 333 4444", nivel: "Principiante" },
-  { id: 3, name: "Sebastián", lastName: "Vásquez", email: "sebastian.vasquez@example.com", phone: "+57 320 555 6666", nivel: "Intermedio" },
-  { id: 4, name: "Camila", lastName: "Ramírez", email: "camila.ramirez@example.com", phone: "+57 321 777 8888", nivel: "Avanzado" },
-  { id: 5, name: "Daniel", lastName: "Torres", email: "daniel.torres@example.com", phone: "+57 322 999 0000", nivel: "Intermedio" },
-  { id: 6, name: "Laura", lastName: "Pérez", email: "laura.perez@example.com", phone: "+57 323 123 4567", nivel: "Profesional" },
-];
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export const MyStudent = () => {
   const [usuarios, setUsuarios] = useState(initialUsuarios);

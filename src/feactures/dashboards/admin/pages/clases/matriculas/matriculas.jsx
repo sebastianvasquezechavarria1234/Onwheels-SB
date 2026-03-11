@@ -5,7 +5,7 @@ import {
   getMatriculas,
   deleteMatricula,
   updateMatricula,
-  createMatricula
+  createMatricula,
 } from "../../services/matriculaService";
 import api from "../../../../../../services/api";
 
@@ -115,6 +115,7 @@ const MatriculasAdmin = () => {
     }
   };
 
+  // ─── Reset del modal ─────────────────────────────────────────────────────────
   const closeModal = () => {
     setModal(null);
     setSelectedMatricula(null);
@@ -186,6 +187,7 @@ const MatriculasAdmin = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* Header & Search Area */}

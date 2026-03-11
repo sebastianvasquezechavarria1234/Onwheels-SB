@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { InstructorLayout } from "../../../landing/instructor/layout/InstructorLayout";
 import { Eye, Calendar, MapPin, Clock, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "../../../../services/api";
 
 const initialClases = [
 	{
@@ -31,9 +32,11 @@ const initialClases = [
 ];
 
 export const MyClassesInstructor = () => {
-	const [clases, setClases] = useState(initialClases);
+	const [clases, setClases] = useState([]);
 	const [selected, setSelected] = useState(null);
 	const [modalOpen, setModalOpen] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
 
 	useEffect(() => {
 		const onKey = (e) => {
@@ -43,14 +46,34 @@ export const MyClassesInstructor = () => {
 		return () => window.removeEventListener("keydown", onKey);
 	}, []);
 
-	const openView = (c) => {
-		setSelected({ ...c });
-		setModalOpen(true);
+	useEffect(() => {
+		fetchMisClases();
+	}, []);
+
+	const fetchMisClases = async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const user = JSON.parse(localStorage.getItem("user") || "{}");
+			const userId = user.id_usuario;
+
+			if (!userId) {
+				setError("No se encontró sesión activa.");
+				return;
+			}
+
+			const { data } = await api.get(`/clases/instructor/${userId}`);
+			setClases(data);
+		} catch (err) {
+			console.error("Error cargando mis clases:", err);
+			setError("No se pudieron cargar las clases. Revisa la API / CORS.");
+		} finally {
+			setLoading(false);
+		}
 	};
-	const closeModal = () => {
-		setSelected(null);
-		setModalOpen(false);
-	};
+
+	const openView = (c) => { setSelected({ ...c }); setModalOpen(true); };
+	const closeModal = () => { setSelected(null); setModalOpen(false); };
 
 	return (
 		<InstructorLayout>
@@ -67,8 +90,8 @@ export const MyClassesInstructor = () => {
 					</div>
 
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-						{clases.map((c) => (
-							<div key={c.id} className="bg-[#121821] border border-gray-800 rounded-[2rem] p-6 shadow-xl hover:border-gray-700 transition-all group flex flex-col justify-between">
+						{clases.map((c, index) => (
+							<div key={c.id_clase || index} className="bg-[#121821] border border-gray-800 rounded-[2rem] p-6 shadow-xl hover:border-gray-700 transition-all group flex flex-col justify-between">
 								<div>
 									<div className="flex justify-between items-start mb-4 border-b border-gray-800 pb-4">
 										<div>

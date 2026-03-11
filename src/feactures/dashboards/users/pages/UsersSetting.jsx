@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { User, Camera, Star, Zap, Lock, Phone, Mail, Shield, CheckCircle } from "lucide-react";
 import { UsersLayout } from "../../../landing/users/layout/UsersLayout";
-
-
-const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || '';
+import api from "../../../../services/api";
 
 export const UsersSetting = () => {
   const { user: authUser } = useAuth();
@@ -31,38 +29,30 @@ export const UsersSetting = () => {
   const exitTimerRef = useRef(null);
   const [messagePhase, setMessagePhase] = useState(null);
 
-  const token = localStorage.getItem('token');
-
-  const api = {
+  const userApi = {
     getUsuario: async (id) => {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Error al obtener usuario');
-      return response.json();
-    },
-    updateUsuario: async (id, updateData) => {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(updateData)
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) { data._status = response.status; throw data; }
+      const { data } = await api.get(`/usuarios/${id}`);
       return data;
     },
+    updateUsuario: async (id, updateData) => {
+      try {
+        const { data } = await api.put(`/usuarios/${id}`, updateData);
+        return data;
+      } catch (err) {
+        const errData = err.response?.data || {};
+        errData._status = err.response?.status;
+        throw errData;
+      }
+    },
     verifyCurrentPassword: async (id, currentPassword, signal) => {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${id}/verify-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ currentPassword }),
-        signal
-      });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
+      try {
+        const { data } = await api.post(`/usuarios/${id}/verify-password`, { currentPassword }, { signal });
+        return data;
+      } catch (err) {
+        if (err.name === 'CanceledError' || err.name === 'AbortError') throw err;
+        const errData = err.response?.data || {};
         return { valid: false, ...errData };
       }
-      return response.json();
     }
   };
 
@@ -71,7 +61,7 @@ export const UsersSetting = () => {
       try {
         const userId = authUser?.id_usuario;
         if (!userId) return; // Wait for authUser to be ready
-        const data = await api.getUsuario(userId);
+        const data = await userApi.getUsuario(userId);
         setUserData(data);
         setEditData({ nombre_completo: data.nombre_completo || data.nombre || "", telefono: data.telefono || "" });
       } catch (err) { console.error('Error fetching user', err); }
@@ -142,7 +132,7 @@ export const UsersSetting = () => {
         const controller = new AbortController();
         lastAbortController.current = controller;
         const userId = authUser?.id_usuario;
-        const resp = await api.verifyCurrentPassword(userId, value, controller.signal);
+        const resp = await userApi.verifyCurrentPassword(userId, value, controller.signal);
         if (resp?.valid)
           setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: true, message: "Contraseña actual correcta" } }));
         else
@@ -163,7 +153,7 @@ export const UsersSetting = () => {
     try {
       const userId = authUser?.id_usuario;
       const updateData = { nombre_completo: editData.nombre_completo, telefono: editData.telefono };
-      const response = await api.updateUsuario(userId, updateData);
+      const response = await userApi.updateUsuario(userId, updateData);
       setUserData(response.usuario);
       setSuccessMessage("Perfil actualizado correctamente");
       setIsEditingProfile(false);
@@ -192,7 +182,7 @@ export const UsersSetting = () => {
         currentPassword: passwordData.currentPassword,
         confirmPassword: passwordData.confirmPassword
       };
-      const response = await api.updateUsuario(userId, updateData);
+      const response = await userApi.updateUsuario(userId, updateData);
       setUserData(response.usuario);
       setSuccessMessage(response.mensaje || "Contraseña actualizada correctamente");
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });

@@ -16,7 +16,7 @@ export const useCheckout = () => {
     const [form, setForm] = useState({
         direccion: "",
         telefono: "",
-        metodo_pago: "Efectivo",
+        metodo_pago: "Contraentrega",
         instrucciones_entrega: "",
     });
 

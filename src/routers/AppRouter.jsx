@@ -57,6 +57,7 @@ import { SettingInstructor } from "../feactures/dashboards/instructor/pages/Sett
 import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent"
 import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/MyClassesInstructor"
 import { MyPurchasesInstrutor as MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor"
+import { MyPurchasesDetailInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesDetailInstructor"
 // Landing Student
 import { StudentEvents } from "../feactures/landing/student/pages/StudentEvents"
 import { StudentStore } from "../feactures/landing/student/pages/StudentStore"
@@ -69,6 +70,9 @@ import { StudentCheckout } from "../feactures/landing/student/pages/StudentCheck
 // Landing Instructor
 import { InstructorHome } from "../feactures/landing/instructor/pages/InstructorHome"
 import { InstructorStore } from "../feactures/landing/instructor/pages/InstructorStore"
+import { UsersShoppingCart as InstructorShoppingCart } from "../feactures/landing/instructor/pages/InstructorShoppingCart"
+import { InstructorCheckout } from "../feactures/landing/instructor/pages/InstructorCheckout"
+import { InstructorClass } from "../feactures/landing/instructor/pages/InstructorClass"
 
 // Landing Users
 import { UsersHome } from "../feactures/landing/users/pages/UsersHome"
@@ -99,6 +103,7 @@ import { AdminHome } from "../feactures/landing/admin/pages/AdminHome"
 import { AdminStore } from "../feactures/landing/admin/pages/AdminStore"
 import { AdminProfile } from "../feactures/landing/admin/pages/AdminProfile"
 import { AdminPurchases } from "../feactures/landing/admin/pages/AdminPurchases"
+import AdminPurchaseDetail from "../feactures/landing/admin/pages/AdminPurchaseDetail"
 
 // Custom Roles
 import { CustomHome } from "../feactures/landing/custom/pages/CustomHome"
@@ -194,6 +199,7 @@ const AppRouter = () => {
           <Route path="admin/store" element={<AdminStore />} />
           <Route path="admin/profile" element={<AdminProfile />} />
           <Route path="admin/purchases" element={<AdminPurchases />} />
+          <Route path="admin/myPurchases/:id" element={<AdminPurchaseDetail />} />
           <Route path="admin/shoppingCart" element={<AdminShoppingCart />} />
           <Route path="admin/checkout" element={<AdminCheckout />} />
           <Route path="admin/store/product/:id" element={withAnimation(AdminProductDetail)} />
@@ -259,9 +265,12 @@ const AppRouter = () => {
           <Route path="instructor/myStudent" element={<MyStudent />} />
           <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
           <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
+          <Route path="instructor/myPurchases/:id" element={<MyPurchasesDetailInstructor />} />
           <Route path="instructor/home" element={<InstructorHome />} />
+          <Route path="instructor/training" element={<InstructorClass />} />
           <Route path="instructor/store" element={<InstructorStore />} />
-          <Route path="instructor/checkout" element={<UsersCheckout />} />
+          <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
+          <Route path="instructor/checkout" element={<InstructorCheckout />} />
           <Route path="instructor/orderConfirm" element={<UsersOrderConfirm />} />
           <Route path="instructor/store/product/:id" element={withAnimation(InstructorProductDetail)} />
 

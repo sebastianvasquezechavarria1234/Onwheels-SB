@@ -130,7 +130,7 @@ export const CustomCheckout = () => {
                                     💳 Método de Pago
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {["Efectivo", "Transferencia", "Tarjeta"].map((metodo) => (
+                                    {["Efectivo", "Contraentrega", "Tarjeta"].map((metodo) => (
                                         <label
                                             key={metodo}
                                             className={`flex items-center justify-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${form.metodo_pago === metodo
@@ -151,16 +151,7 @@ export const CustomCheckout = () => {
                                     ))}
                                 </div>
 
-                                <div className="mt-6 p-5 bg-[#0B0F14] border border-[#1E3A8A]/30 rounded-xl relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#1E3A8A] rounded-full -mr-12 -mt-12 opacity-20 blur-xl"></div>
-                                    <h4 className="font-bold text-emerald-400 mb-2 flex items-center gap-2 tracking-wide text-xs">
-                                        <AlertTriangle size={16} />
-                                        Importante
-                                    </h4>
-                                    <p className="text-sm text-[#9CA3AF] font-medium leading-relaxed relative z-10">
-                                        El pago se realizará contra entrega. Asegúrate de tener el monto exacto si eliges efectivo.
-                                    </p>
-                                </div>
+
                             </div>
 
                             {/* Botón de Confirmar */}

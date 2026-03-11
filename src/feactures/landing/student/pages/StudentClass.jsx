@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-import { useState, useEffect } from "react"
+﻿import { useState, useEffect } from "react"
 import { CheckCircle2, Users, Clock, Star, Zap, Trophy, Target, BookOpen, MapPin, Calendar } from "lucide-react"
 import { StudentLayout } from "../layout/StudentLayout";
 
@@ -8,22 +7,22 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const scheduleData = [
   { id: "lun", day: "Lunes", time: "9:00 AM - 11:00 AM", level: "Principiante", instructor: "Profesor: Daniel", limit: "15 cupos", color: "from-cyan-500 to-blue-500" },
   { id: "mar", day: "Martes", time: "2:00 PM - 4:00 PM", level: "Intermedio", instructor: "Profesor: Hernan", limit: "12 cupos", color: "from-purple-500 to-pink-500" },
-  { id: "mie", day: "Miércoles", time: "10:00 AM - 12:00 PM", level: "Principiante", instructor: "Profesor: Daniel", limit: "15 cupos", color: "from-cyan-500 to-blue-500" },
+  { id: "mie", day: "MiÃ©rcoles", time: "10:00 AM - 12:00 PM", level: "Principiante", instructor: "Profesor: Daniel", limit: "15 cupos", color: "from-cyan-500 to-blue-500" },
   { id: "jue", day: "Jueves", time: "3:00 PM - 5:00 PM", level: "Avanzado", instructor: "Profesor: Sebas", limit: "8 cupos", color: "from-orange-500 to-red-500" },
   { id: "vie", day: "Viernes", time: "4:00 PM - 6:00 PM", level: "Intermedio", instructor: "Profesor: Daniel", limit: "12 cupos", color: "from-purple-500 to-pink-500" },
-  { id: "sab", day: "Sábado", time: "9:00 AM - 12:00 PM", level: "Todos los niveles", instructor: "Profesor: Hernan", limit: "20 cupos", color: "from-green-500 to-teal-500" },
+  { id: "sab", day: "SÃ¡bado", time: "9:00 AM - 12:00 PM", level: "Todos los niveles", instructor: "Profesor: Hernan", limit: "20 cupos", color: "from-green-500 to-teal-500" },
 ]
 
 const pricingPlans = [
   { id: "popular", name: "Plan Popular", price: "$80.000", description: ["Acceso ilimitado a clases", "Sesiones grupales", "Ideal para principiantes"], highlight: true, icon: Users },
   { id: "pro", name: "Plan Pro", price: "$150.000", description: ["Acceso a clases + talleres", "Entrenamiento personalizado", "Soporte online"], icon: Zap },
-  { id: "premium", name: "Plan Premium", price: "$190.000", description: ["Todo lo del Pro", "Eventos exclusivos", "Asesoría 1 a 1"], icon: Trophy },
+  { id: "premium", name: "Plan Premium", price: "$190.000", description: ["Todo lo del Pro", "Eventos exclusivos", "AsesorÃ­a 1 a 1"], icon: Trophy },
 ]
 
 const benefits = [
   { id: "com", Icon: Users, title: "Comunidad", text: "Aprende junto a otros apasionados del skate.", color: "text-primary" },
   { id: "flex", Icon: Clock, title: "Flexibilidad", text: "Horarios adaptados a tu estilo de vida.", color: "text-secondary" },
-  { id: "exp", Icon: Star, title: "Expertos", text: "Profesores con años de experiencia.", color: "text-primary" },
+  { id: "exp", Icon: Star, title: "Expertos", text: "Profesores con aÃ±os de experiencia.", color: "text-primary" },
 ]
 
 const carouselImages = [
@@ -32,17 +31,17 @@ const carouselImages = [
   "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80",
 ]
 
-// Colores por estado de matrícula
+// Colores por estado de matrÃ­cula
 const estadoConfig = {
-  Activa:    { bg: "bg-green-100",  text: "text-green-700",  dot: "bg-green-500" },
-  Vencida:   { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-500" },
-  Cancelada: { bg: "bg-red-100",    text: "text-red-700",    dot: "bg-red-500" },
+  Activa: { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500" },
+  Vencida: { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-500" },
+  Cancelada: { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
 }
 
 export const StudentClass = () => {
   const [current, setCurrent] = useState(0)
 
-  // ✅ Estado para la matrícula real
+  // âœ… Estado para la matrÃ­cula real
   const [misMatriculas, setMisMatriculas] = useState([])
   const [loadingMatricula, setLoadingMatricula] = useState(true)
   const [errorMatricula, setErrorMatricula] = useState(null)
@@ -55,20 +54,20 @@ export const StudentClass = () => {
     return () => clearInterval(interval)
   }, [])
 
-  // ✅ Fetch matrícula del estudiante
+  // âœ… Fetch matrÃ­cula del estudiante
   useEffect(() => {
     const fetchMisMatriculas = async () => {
       setLoadingMatricula(true)
       setErrorMatricula(null)
       try {
         const token = localStorage.getItem("token")
-        if (!token) { setErrorMatricula("No hay sesión activa."); return; }
+        if (!token) { setErrorMatricula("No hay sesiÃ³n activa."); return; }
 
         const res = await fetch(`${API_BASE}/api/matriculas/mis-matriculas`, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
-        if (!res.ok) throw new Error("Error al obtener matrículas")
+        if (!res.ok) throw new Error("Error al obtener matrÃ­culas")
 
         const data = await res.json()
         setMisMatriculas(Array.isArray(data) ? data : [])
@@ -83,7 +82,7 @@ export const StudentClass = () => {
     fetchMisMatriculas()
   }, [])
 
-  // Matrícula activa (la más reciente activa)
+  // MatrÃ­cula activa (la mÃ¡s reciente activa)
   const matriculaActiva = misMatriculas.find(m => m.estado === "Activa") || misMatriculas[0] || null
 
   return (
@@ -91,7 +90,7 @@ export const StudentClass = () => {
       <StudentLayout>
         <div className="min-h-screen bg-background">
 
-          {/* ✅ SECCIÓN: TU CLASE ASIGNADA */}
+          {/* âœ… SECCIÃ“N: TU CLASE ASIGNADA */}
           <section className="py-10 px-6 max-w-5xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
               <BookOpen className="text-primary w-6 h-6" />
@@ -111,12 +110,12 @@ export const StudentClass = () => {
 
             ) : !matriculaActiva ? (
               <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-400 italic text-center">
-                No tienes ninguna clase asignada aún.
+                No tienes ninguna clase asignada aÃºn.
               </div>
 
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
-                {/* Card principal — matrícula activa */}
+                {/* Card principal â€” matrÃ­cula activa */}
                 <div className="bg-white rounded-2xl border-2 border-primary/20 shadow-lg p-6 relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary" />
 
@@ -138,37 +137,37 @@ export const StudentClass = () => {
                   <div className="space-y-3 text-sm text-gray-600">
                     <p className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-primary" />
-                      <span className="font-medium">Día:</span> {matriculaActiva.dia_semana || "—"}
+                      <span className="font-medium">DÃ­a:</span> {matriculaActiva.dia_semana || "â€”"}
                     </p>
                     <p className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-primary" />
                       <span className="font-medium">Horario:</span>
                       {matriculaActiva.hora_inicio && matriculaActiva.hora_fin
                         ? `${matriculaActiva.hora_inicio} - ${matriculaActiva.hora_fin}`
-                        : "—"}
+                        : "â€”"}
                     </p>
                     <p className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-primary" />
-                      <span className="font-medium">Sede:</span> {matriculaActiva.nombre_sede || "—"}
+                      <span className="font-medium">Sede:</span> {matriculaActiva.nombre_sede || "â€”"}
                     </p>
                     <p className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-primary" />
-                      <span className="font-medium">Plan:</span> {matriculaActiva.nombre_plan || "—"}
+                      <span className="font-medium">Plan:</span> {matriculaActiva.nombre_plan || "â€”"}
                     </p>
                     {matriculaActiva.clases_restantes !== undefined && (
                       <p className="flex items-center gap-2">
                         <Target className="w-4 h-4 text-primary" />
-                        <span className="font-medium">Clases restantes:</span> {matriculaActiva.clases_restantes ?? "—"}
+                        <span className="font-medium">Clases restantes:</span> {matriculaActiva.clases_restantes ?? "â€”"}
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* Historial — otras matrículas si hay más de 1 */}
+                {/* Historial â€” otras matrÃ­culas si hay mÃ¡s de 1 */}
                 {misMatriculas.length > 1 && (
                   <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
                     <h4 className="font-semibold text-gray-700 mb-4 text-sm uppercase tracking-wide">
-                      Historial de matrículas
+                      Historial de matrÃ­culas
                     </h4>
                     <div className="space-y-3">
                       {misMatriculas.slice(1).map((m, i) => {
@@ -177,7 +176,7 @@ export const StudentClass = () => {
                           <div key={i} className="flex items-center justify-between text-sm bg-white p-3 rounded-xl border border-gray-100">
                             <div>
                               <p className="font-medium text-gray-800">{m.nombre_nivel}</p>
-                              <p className="text-gray-400 text-xs">{m.dia_semana} · {m.nombre_plan}</p>
+                              <p className="text-gray-400 text-xs">{m.dia_semana} Â· {m.nombre_plan}</p>
                             </div>
                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
                               {m.estado}
@@ -192,7 +191,7 @@ export const StudentClass = () => {
             )}
           </section>
 
-          {/* ── Hero ── */}
+          {/* â”€â”€ Hero â”€â”€ */}
           <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10">
             <div className="absolute inset-0 opacity-5">
               <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23000000' fillOpacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
@@ -205,7 +204,7 @@ export const StudentClass = () => {
                 </div>
                 <h1 className="text-foreground text-lg font-medium mb-2">Domina la Tabla</h1>
                 <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-balance">
-                  <span className="gradient-text">Clases de Skate</span> que Rompen Límites
+                  <span className="gradient-text">Clases de Skate</span> que Rompen LÃ­mites
                 </h2>
                 <p className="text-base md:text-lg text-muted-foreground mb-8 leading-relaxed text-pretty">
                   Aprende desde cero o mejora tus trucos con entrenadores expertos. Horarios flexibles, niveles variados y una comunidad vibrante que te impulsa a crecer.
@@ -231,11 +230,11 @@ export const StudentClass = () => {
             </div>
           </div>
 
-          {/* ── Beneficios ── */}
+          {/* â”€â”€ Beneficios â”€â”€ */}
           <section id="beneficios" className="py-20 bg-muted/30">
             <div className="container mx-auto px-6 bg-gray-100">
               <div className="text-center mb-16">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 p-5">¿Por qué unirte?</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 p-5">Â¿Por quÃ© unirte?</h2>
                 <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Descubre las ventajas de formar parte de nuestra comunidad de skaters</p>
               </div>
               <div className="grid md:grid-cols-3 gap-8">
@@ -254,7 +253,7 @@ export const StudentClass = () => {
             </div>
           </section>
 
-          {/* ── Horarios ── */}
+          {/* â”€â”€ Horarios â”€â”€ */}
           <section id="clases" className="py-20">
             <div className="container mx-auto px-6">
               <div className="text-center mb-16">
@@ -281,11 +280,11 @@ export const StudentClass = () => {
             </div>
           </section>
 
-          {/* ── Planes ── */}
+          {/* â”€â”€ Planes â”€â”€ */}
           <section id="planes" className="py-20 bg-muted/30">
             <div className="container mx-auto px-6">
               <div className="text-center mb-16">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Planes de Membresía</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Planes de MembresÃ­a</h2>
                 <p className="text-muted-foreground text-lg">Elige el plan que mejor se adapte a tus objetivos</p>
               </div>
               <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -295,7 +294,7 @@ export const StudentClass = () => {
                     <div key={plan.id} className={`group rounded-3xl p-8 shadow-lg text-center border-2 transition-all duration-300 hover:scale-105 relative overflow-hidden ${plan.highlight ? "border-primary bg-gradient-to-br from-primary/5 to-secondary/5 shadow-2xl" : "border-border bg-card hover:border-primary/30"}`}>
                       {plan.highlight && (
                         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                          <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">Más Popular</span>
+                          <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">MÃ¡s Popular</span>
                         </div>
                       )}
                       <div className="flex justify-center mb-6">
@@ -321,18 +320,18 @@ export const StudentClass = () => {
             </div>
           </section>
 
-          {/* ── Footer ── */}
+          {/* â”€â”€ Footer â”€â”€ */}
           <footer id="contacto" className="relative bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground py-20 text-center overflow-hidden">
             <div className="absolute inset-0 opacity-10">
               <div className="absolute inset-0" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fillOpacity='0.1'%3E%3Cpolygon points='50 0 60 40 100 50 60 60 50 100 40 60 0 50 40 40'/%3E%3C/g%3E%3C/svg%3E")` }} />
             </div>
             <div className="container bg-blue-900 gap-10 p-20 mx-auto px-6 relative">
               <div className="max-w-3xl mx-auto">
-                <h2 className="text-4xl md:text-5xl text text-amber-50 font-bold mb-6 text-balance">¿Listo para comenzar tu aventura?</h2>
-                <p className="mb-8 text-xl leading-relaxed text-primary-foreground/90 text-white">Preinscríbete ahora y asegura tu cupo en la próxima clase. ¡Tu tabla te está esperando!</p>
+                <h2 className="text-4xl md:text-5xl text text-amber-50 font-bold mb-6 text-balance">Â¿Listo para comenzar tu aventura?</h2>
+                <p className="mb-8 text-xl leading-relaxed text-primary-foreground/90 text-white">PreinscrÃ­bete ahora y asegura tu cupo en la prÃ³xima clase. Â¡Tu tabla te estÃ¡ esperando!</p>
                 <div className="flex flex-col sm:flex-row gap-7 justify-center">
                   <button className="bg-white text-primary px-10 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">Preinscribirme Ahora</button>
-                  <button className="border-2 border-white text-white hover:bg-red-800 hover:text-primary px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-300">Más información</button>
+                  <button className="border-2 border-white text-white hover:bg-red-800 hover:text-primary px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-300">MÃ¡s informaciÃ³n</button>
                 </div>
               </div>
             </div>
@@ -341,16 +340,6 @@ export const StudentClass = () => {
         </div>
       </StudentLayout>
     </>
-=======
-import { ClassContent } from "../../pages/Class"
-import { StudentLayout } from "../layout/StudentLayout";
-
-export const StudentClass = () => {
-  return (
-    <StudentLayout>
-      <ClassContent />
-    </StudentLayout>
->>>>>>> bbbbabf265aa2877c2c8feab7570b578ff3ace28
   )
 }
 
