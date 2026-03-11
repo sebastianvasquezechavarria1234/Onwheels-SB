@@ -34,7 +34,7 @@ export const updatePedidoStatus = async (id, data) => {
     return res.data;
 };
 
-export const cancelPedido = async (id) => {
-    const res = await api.put(`${API_URL}/${id}/cancel`);
+export const cancelPedido = async (id, data = {}) => {
+    const res = await api.put(`${API_URL}/${id}/cancel`, data);
     return res.data;
 };

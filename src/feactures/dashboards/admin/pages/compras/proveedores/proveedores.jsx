@@ -1,321 +1,184 @@
-
-
-import React, { useEffect, useState } from "react";
-
-import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import api from "../../../../../../services/api";
 
-export default function Proveedores({ renderLayout = true }) {
+// Helper para clases condicionales
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+export default function Proveedores() {
   const [proveedores, setProveedores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
-  // Modal y formularios
-  const [modalType, setModalType] = useState(null); // "add", "edit", "details", "delete"
+  const [modalType, setModalType] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [addForm, setAddForm] = useState({
-    nit: "",
-    nombre_proveedor: "",
+  const [formData, setFormData] = useState({
+    nombre_contacto: "",
+    nombre_empresa: "",
     email: "",
     telefono: "",
     direccion: "",
+    nit: ""
   });
-  const [editForm, setEditForm] = useState({
-    nit: "",
-    nombre_proveedor: "",
-    email: "",
-    telefono: "",
-    direccion: "",
-  });
-
-  // Notificación
-  const [notification, setNotification] = useState({
-    show: false,
-    message: "",
-    type: "success", // 'success' | 'error'
-  });
+  const [formErrors, setFormErrors] = useState({});
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  // Cerrar modal con Escape
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") closeModal();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    fetchProveedores();
   }, []);
 
-  // Cargar proveedores
   const fetchProveedores = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const res = await fetch("http://localhost:3000/api/proveedores");
-      if (!res.ok) throw new Error("Error en la respuesta del servidor");
-      const data = await res.json();
-      setProveedores(Array.isArray(data) ? data : []);
+      const res = await api.get("/proveedores");
+      setProveedores(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Error al cargar proveedores:", err);
-      setError("No se pudieron cargar los proveedores.");
+      setError(err.message);
       showNotification("Error al cargar proveedores", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchProveedores();
-  }, []);
-
-  // Abrir modal
   const openModal = (type, item = null) => {
     setModalType(type);
-    if (type === "add") {
-      setAddForm({
-        nit: "",
-        nombre_proveedor: "",
-        email: "",
-        telefono: "",
-        direccion: "",
+    setSelected(item);
+    if ((type === "edit" || type === "details") && item) {
+      setFormData({
+        nombre_contacto: item.nombre_contacto || "",
+        nombre_empresa: item.nombre_empresa || "",
+        email: item.email || "",
+        telefono: item.telefono || "",
+        direccion: item.direccion || "",
+        nit: item.nit || ""
       });
-      setSelected(null);
-    } else if (type === "edit" && item) {
-      setSelected(item);
-      setEditForm({ ...item });
     } else {
-      setSelected(item);
+      setFormData({ nombre_contacto: "", nombre_empresa: "", email: "", telefono: "", direccion: "", nit: "" });
     }
+    setFormErrors({});
   };
 
   const closeModal = () => {
     setModalType(null);
     setSelected(null);
+    setFormErrors({});
   };
 
-  // Manejo de cambios en formularios
-  const handleAddChange = (e) => {
-    const { name, value } = e.target;
-    setAddForm((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleSave = async () => {
+    if (!formData.nombre_empresa || !formData.nombre_contacto || !formData.email) {
+      showNotification("Completa los campos obligatorios", "error");
+      return;
+    }
 
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Validación
-  const validateForm = (form) => {
-    if (!form.nit.trim()) {
-      showNotification("El NIT es obligatorio", "error");
-      return false;
-    }
-    if (!/^\d+$/.test(form.nit)) {
-      showNotification("El NIT debe contener solo números", "error");
-      return false;
-    }
-    if (!form.nombre_proveedor.trim()) {
-      showNotification("El nombre del proveedor es obligatorio", "error");
-      return false;
-    }
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      showNotification("El correo electrónico no es válido", "error");
-      return false;
-    }
-    return true;
-  };
-
-  // Guardar nuevo proveedor
-  const saveAdd = async () => {
-    if (!validateForm(addForm)) return;
     try {
-      const res = await fetch("http://localhost:3000/api/proveedores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addForm),
-      });
-      if (!res.ok) throw new Error("Error al crear el proveedor");
-      const newProveedor = await res.json();
-      setProveedores((prev) => [newProveedor, ...prev]);
+      if (modalType === "add") {
+        await api.post("/proveedores", formData);
+        showNotification("Proveedor creado");
+      } else {
+        await api.put(`/proveedores/${selected.id_proveedor}`, formData);
+        showNotification("Proveedor actualizado");
+      }
+      fetchProveedores();
       closeModal();
-      showNotification("Proveedor creado con éxito");
     } catch (err) {
-      console.error(err);
-      showNotification("Error al crear el proveedor", "error");
+      showNotification(err.response?.data?.mensaje || "Error al guardar", "error");
     }
   };
 
-  // Actualizar proveedor
-  const saveEdit = async () => {
-    if (!selected || !validateForm(editForm)) return;
+  const handleDelete = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/proveedores/${selected.nit}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
-      });
-      if (!res.ok) throw new Error("Error al actualizar el proveedor");
-      setProveedores((prev) =>
-        prev.map((p) => (p.nit === selected.nit ? { ...p, ...editForm } : p))
-      );
+      await api.delete(`/proveedores/${selected.id_proveedor}`);
+      showNotification("Proveedor eliminado");
+      fetchProveedores();
       closeModal();
-      showNotification("Proveedor actualizado con éxito");
     } catch (err) {
-      console.error(err);
-      showNotification("Error al actualizar el proveedor", "error");
+      showNotification(err.response?.data?.mensaje || "Error al eliminar", "error");
     }
   };
 
-  // Eliminar proveedor
-  const confirmDelete = async () => {
-    if (!selected) return;
-    try {
-      const res = await fetch(`http://localhost:3000/api/proveedores/${selected.nit}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Error al eliminar el proveedor");
-      setProveedores((prev) =>
-        prev.filter((p) => p.nit !== selected.nit)
-      );
-      closeModal();
-      showNotification("Proveedor eliminado con éxito");
-    } catch (err) {
-      console.error(err);
-      showNotification("Error al eliminar el proveedor", "error");
-    }
-  };
-
-  // Filtrado y paginación
-  const proveedoresFiltrados = proveedores.filter(
-    (p) =>
-      p.nombre_proveedor?.toLowerCase().includes(search.toLowerCase()) ||
-      p.nit?.toString().includes(search)
+  const filtered = proveedores.filter(p =>
+    p.nombre_empresa?.toLowerCase().includes(search.toLowerCase()) ||
+    p.nombre_contacto?.toLowerCase().includes(search.toLowerCase()) ||
+    p.nit?.includes(search)
   );
 
-  const totalPages = Math.max(1, Math.ceil(proveedoresFiltrados.length / itemsPerPage));
-  const currentItems = proveedoresFiltrados.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
-
-  const content = (
-    <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Compras / Proveedores</h2>
-
-        {/* Barra de búsqueda y botón */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div className="relative w-full md:w-96">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-              <Search size={18} />
+  return (
+    <div className="flex flex-col h-full bg-white overflow-hidden">
+      <div className="shrink-0 flex flex-col gap-4 p-4 pb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Compras / Proveedores
+          </h2>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
+              <span className="text-xs font-bold">{filtered.length} aliados</span>
             </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
             <input
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              type="text"
-              placeholder="Buscar proveedor (NIT o nombre)"
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              placeholder="Buscar por empresa, contacto o NIT..."
+              className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 outline-none transition bg-white"
             />
           </div>
           <button
             onClick={() => openModal("add")}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
+            className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold transition shadow-md whitespace-nowrap"
           >
             <Plus size={18} />
-            Añadir Proveedor
+            Nuevo Proveedor
           </button>
         </div>
+      </div>
 
-        {/* Tabla */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-700">
-              <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+      <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
+        <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-left relative">
+              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
                 <tr>
-                  <th className="px-6 py-3 w-1/6">NIT</th>
-                  <th className="px-6 py-3 w-1/4">Nombre</th>
-                  <th className="px-6 py-3 w-1/4">Email</th>
-                  <th className="px-6 py-3 w-1/6">Teléfono</th>
-                  <th className="px-6 py-3 w-1/6">Dirección</th>
-                  <th className="px-6 py-3 w-1/6">Acciones</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Empresa / NIT</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Contacto</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                      Cargando proveedores...
-                    </td>
-                  </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-red-600">
-                      {error}
-                    </td>
-                  </tr>
+                  <tr><td colSpan="3" className="p-8 text-center text-gray-400 text-sm italic">Cargando proveedores...</td></tr>
                 ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
-                      No se encontraron proveedores.
-                    </td>
-                  </tr>
+                  <tr><td colSpan="3" className="p-12 text-center text-gray-400 italic">No se encontraron proveedores</td></tr>
                 ) : (
-                  currentItems.map((prov) => (
-                    <tr
-                      key={prov.nit}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition"
-                    >
-                      <td className="px-6 py-4 font-medium">{prov.nit}</td>
-                      <td className="px-6 py-4 font-medium">{prov.nombre_proveedor}</td>
-                      <td className="px-6 py-4 text-gray-600 line-clamp-1">
-                        {prov.email || "—"}
+                  currentItems.map((p) => (
+                    <tr key={p.id_proveedor} className="group hover:bg-[#F0E6E6]/30 transition-colors">
+                      <td className="px-5 py-4 font-bold text-[#040529] text-sm">
+                        <div>{p.nombre_empresa}</div>
+                        <div className="text-[10px] text-slate-400 font-normal">NIT: {p.nit || "N/A"}</div>
                       </td>
-                      <td className="px-6 py-4 text-gray-600">{prov.telefono || "—"}</td>
-                      <td className="px-6 py-4 text-gray-600 line-clamp-1">
-                        {prov.direccion || "—"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => openModal("details", prov)}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                            title="Ver detalles"
-                          >
-                            <Eye size={16} />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => openModal("edit", prov)}
-                            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                            title="Editar"
-                          >
-                            <Pencil size={16} />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => openModal("delete", prov)}
-                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </motion.button>
+                      <td className="px-5 py-4 text-sm text-slate-600 font-medium">{p.nombre_contacto}</td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openModal("details", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"><Eye size={16} /></button>
+                          <button onClick={() => openModal("edit", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"><Pencil size={16} /></button>
+                          <button onClick={() => openModal("delete", p)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><Trash2 size={16} /></button>
                         </div>
                       </td>
                     </tr>
@@ -324,316 +187,77 @@ export default function Proveedores({ renderLayout = true }) {
               </tbody>
             </table>
           </div>
+          {filtered.length > 0 && (
+            <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
+              <p className="text-xs text-gray-500 font-medium">Página <span className="font-bold text-[#040529]">{currentPage}</span> de <span className="font-bold text-[#040529]">{totalPages}</span></p>
+              <div className="flex items-center gap-2">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 rounded-lg border border-gray-200 bg-white shadow-sm transition"><ChevronLeft className="h-4 w-4" /></button>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 rounded-lg border border-gray-200 bg-white shadow-sm transition"><ChevronRight className="h-4 w-4" /></button>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Paginación */}
-        {proveedoresFiltrados.length > 0 && (
-          <div className="flex justify-center items-center gap-2 mt-6 py-4">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className={`px-4 py-2 rounded-lg ${currentPage === 1
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-gray-600">
-              Página <span className="font-semibold text-blue-700">{currentPage}</span> de{" "}
-              {totalPages}
-            </span>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className={`px-4 py-2 rounded-lg ${currentPage === totalPages
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Notificación Toast */}
       <AnimatePresence>
         {notification.show && (
-          <motion.div
-            initial={{ opacity: 0, x: 300 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 300 }}
-            transition={{ duration: 0.3 }}
-            className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-              }`}
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
             {notification.message}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Modales */}
       <AnimatePresence>
         {modalType && (
-          <motion.div
-            className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
-          >
-            <motion.div
-              className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", damping: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={closeModal}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-              >
-                <X size={20} />
-              </button>
-              <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
-                {modalType === "add"
-                  ? "Añadir Proveedor"
-                  : modalType === "edit"
-                    ? "Editar Proveedor"
-                    : modalType === "details"
-                      ? "Detalles del Proveedor"
-                      : "Eliminar Proveedor"}
-              </h3>
-
-              {modalType === "add" && (
-                <form className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      NIT *
-                    </label>
-                    <input
-                      name="nit"
-                      value={addForm.nit}
-                      onChange={handleAddChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="Ej: 900123456"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre *
-                    </label>
-                    <input
-                      name="nombre_proveedor"
-                      value={addForm.nombre_proveedor}
-                      onChange={handleAddChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="Ej: Distribuidora XYZ"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={addForm.email}
-                      onChange={handleAddChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="contacto@proveedor.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Teléfono
-                    </label>
-                    <input
-                      name="telefono"
-                      value={addForm.telefono}
-                      onChange={handleAddChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="+57 300 123 4567"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Dirección
-                    </label>
-                    <input
-                      name="direccion"
-                      value={addForm.direccion}
-                      onChange={handleAddChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="Calle 123 #45-67"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={closeModal}
-                      className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={saveAdd}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {modalType === "edit" && selected && (
-                <form className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      NIT *
-                    </label>
-                    <input
-                      name="nit"
-                      value={editForm.nit}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="Ej: 900123456"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nombre *
-                    </label>
-                    <input
-                      name="nombre_proveedor"
-                      value={editForm.nombre_proveedor}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="Ej: Distribuidora XYZ"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={editForm.email}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="contacto@proveedor.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Teléfono
-                    </label>
-                    <input
-                      name="telefono"
-                      value={editForm.telefono}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="+57 300 123 4567"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Dirección
-                    </label>
-                    <input
-                      name="direccion"
-                      value={editForm.direccion}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      placeholder="Calle 123 #45-67"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={closeModal}
-                      className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={saveEdit}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    >
-                      Actualizar
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {modalType === "details" && selected && (
-                <div className="space-y-3 text-gray-700">
-                  <div className="flex justify-between">
-                    <span className="font-medium">NIT:</span>
-                    <span>{selected.nit}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Nombre:</span>
-                    <span>{selected.nombre_proveedor}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Email:</span>
-                    <span>{selected.email || "— Sin email —"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Teléfono:</span>
-                    <span>{selected.telefono || "— Sin teléfono —"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Dirección:</span>
-                    <span className="text-right">{selected.direccion || "— Sin dirección —"}</span>
-                  </div>
-                  <div className="flex justify-center pt-4">
-                    <button
-                      onClick={closeModal}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      Cerrar
-                    </button>
-                  </div>
+          <motion.div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+            <motion.div className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modalType === "delete" ? "max-w-sm w-full" : "max-w-2xl w-full"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-[#040529]">{modalType === "add" ? "Nuevo Proveedor" : modalType === "edit" ? "Editar Proveedor" : modalType === "details" ? "Ficha de Proveedor" : "Eliminar"}</h3>
+                  <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
                 </div>
-              )}
 
-              {modalType === "delete" && selected && (
-                <div className="text-center space-y-4">
-                  <p className="text-gray-700">
-                    ¿Está seguro de eliminar al proveedor{" "}
-                    <span className="font-bold text-red-600">{selected.nombre_proveedor}</span>?
-                    <br />
-                    <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
-                  </p>
-                  <div className="flex justify-center gap-3 pt-2">
-                    <button
-                      onClick={closeModal}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={confirmDelete}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                    >
-                      Eliminar
-                    </button>
+                {modalType === "delete" ? (
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-6 underline decoration-red-200">¿Estás seguro de eliminar a <span className="font-bold text-red-600">{selected?.nombre_empresa}</span>?</p>
+                    <div className="flex justify-center gap-3">
+                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">Cancelar</button>
+                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg">Eliminar</button>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : modalType === "details" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><Briefcase size={12} /> Empresa</h4>
+                      <div><label className="text-[9px] font-bold text-slate-400 block pb-1">NOMBRE</label><p className="text-sm font-bold text-[#040529]">{formData.nombre_empresa}</p></div>
+                      <div><label className="text-[9px] font-bold text-slate-400 block pb-1">NIT</label><p className="text-sm font-bold text-[#040529]">{formData.nit || "N/A"}</p></div>
+                    </div>
+                    <div className="p-4 bg-[#040529] text-white rounded-2xl space-y-4">
+                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> Contacto</h4>
+                      <div><label className="text-[9px] font-bold text-white/40 block pb-1">NOMBRE</label><p className="text-sm font-bold">{formData.nombre_contacto}</p></div>
+                      <div><label className="text-[9px] font-bold text-white/40 block pb-1">EMAIL</label><p className="text-sm font-bold">{formData.email}</p></div>
+                    </div>
+                    <div className="md:col-span-2 flex justify-end"><button onClick={closeModal} className="px-6 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Cerrar</button></div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Empresa *</label><input type="text" value={formData.nombre_empresa} onChange={(e) => setFormData({ ...formData, nombre_empresa: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" placeholder="Ej: Suministros S.A." /></div>
+                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">NIT</label><input type="text" value={formData.nit} onChange={(e) => setFormData({ ...formData, nit: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" placeholder="900..." /></div>
+                    </div>
+                    <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Contacto *</label><input type="text" value={formData.nombre_contacto} onChange={(e) => setFormData({ ...formData, nombre_contacto: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Email *</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" /></div>
+                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Teléfono</label><input type="text" value={formData.telefono} onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" /></div>
+                    </div>
+                    <button onClick={handleSave} className="w-full py-3 bg-[#040529] text-white rounded-xl text-sm font-bold transition mt-4">{modalType === "add" ? "Registrar" : "Guardar"}</button>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </section>
+    </div>
   );
-
-  return content;
 }

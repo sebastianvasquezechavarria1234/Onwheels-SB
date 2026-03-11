@@ -1,33 +1,34 @@
-// src/features/dashboards/admin/pages/clases/planes/PlanClasses.jsx
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import api from "../../../../../../services/api";
 
-import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  getPlanes,
-  createPlan,
-  updatePlan,
-  deletePlan
-} from "../../services/planclassServices";
+// Helper para clases condicionales
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
 
-export const PlanClasses = () => {
+const PlanesAdmin = () => {
   const [planes, setPlanes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modalType, setModalType] = useState(null);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Modales
+  const [modalType, setModalType] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [formData, setFormData] = useState({
     nombre_plan: "",
     descripcion: "",
     precio: "",
-    descuento_porcentaje: "",
-    numero_clases: "4"
+    numero_clases: 4,
+    descuento_porcentaje: 0
   });
-  const [search, setSearch] = useState("");
+  const [formErrors, setFormErrors] = useState({});
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
+  // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
@@ -35,585 +36,229 @@ export const PlanClasses = () => {
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
-  const fetchPlanes = useCallback(async () => {
+  const fetchPlanes = async () => {
     try {
       setLoading(true);
-      setError(null);
-      const data = await getPlanes();
-      setPlanes(Array.isArray(data) ? data : []);
+      const res = await api.get("/planes");
+      setPlanes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Error cargando planes:", err);
-      setError("Error al cargar los datos.");
-      showNotification("Error al cargar datos", "error");
+      setError(err.message);
+      showNotification("Error al cargar planes", "error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchPlanes();
-  }, [fetchPlanes]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
   const openModal = (type, plan = null) => {
     setModalType(type);
     setSelectedPlan(plan);
-    if (type === "add") {
+    if (type === "editar" && plan) {
       setFormData({
-        nombre_plan: "",
-        descripcion: "",
-        precio: "",
-        descuento_porcentaje: "",
-        numero_clases: "4"
-      });
-    } else if (type === "edit" && plan) {
-      setFormData({
-        nombre_plan: plan.nombre_plan || "",
+        nombre_plan: plan.nombre_plan,
         descripcion: plan.descripcion || "",
-        precio: plan.precio != null ? String(plan.precio) : "",
-        descuento_porcentaje: plan.descuento_porcentaje != null ? String(plan.descuento_porcentaje) : "",
-        numero_clases: plan.numero_clases != null ? String(plan.numero_clases) : "4"
+        precio: plan.precio,
+        numero_clases: plan.numero_clases || 4,
+        descuento_porcentaje: plan.descuento_porcentaje || 0
       });
+    } else {
+      setFormData({ nombre_plan: "", descripcion: "", precio: "", numero_clases: 4, descuento_porcentaje: 0 });
     }
+    setFormErrors({});
   };
 
   const closeModal = () => {
     setModalType(null);
     setSelectedPlan(null);
-    setFormData({
-      nombre_plan: "",
-      descripcion: "",
-      precio: "",
-      descuento_porcentaje: "",
-      numero_clases: "4"
-    });
+    setFormErrors({});
   };
 
-  const handleCreate = async () => {
-    try {
-      if (!formData.nombre_plan || formData.precio === "") {
-        showNotification("Nombre y precio son obligatorios", "error");
-        return;
-      }
+  const handleSave = async () => {
+    const errors = {};
+    if (!formData.nombre_plan.trim()) errors.nombre_plan = "El nombre es obligatorio";
+    if (!formData.precio) errors.precio = "El precio es obligatorio";
 
-      await createPlan({
-        nombre_plan: formData.nombre_plan,
-        descripcion: formData.descripcion,
-        precio: formData.precio,
-        descuento_porcentaje: formData.descuento_porcentaje || "0",
-        numero_clases: formData.numero_clases || "4"
-      });
-
-      await fetchPlanes();
-      closeModal();
-      showNotification("Plan creado con éxito");
-    } catch (err) {
-      console.error("Error creando plan:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error creando plan";
-      showNotification(errorMessage, "error");
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
     }
-  };
 
-  const handleEdit = async () => {
     try {
-      if (!selectedPlan) return;
-      if (!formData.nombre_plan || formData.precio === "") {
-        showNotification("Nombre y precio son obligatorios", "error");
-        return;
+      if (modalType === "crear") {
+        await api.post("/planes", formData);
+        showNotification("Plan creado");
+      } else {
+        await api.put(`/planes/${selectedPlan.id_plan}`, formData);
+        showNotification("Plan actualizado");
       }
-
-      await updatePlan(selectedPlan.id_plan, {
-        nombre_plan: formData.nombre_plan,
-        descripcion: formData.descripcion,
-        precio: formData.precio,
-        descuento_porcentaje: formData.descuento_porcentaje || "0",
-        numero_clases: formData.numero_clases || "4"
-      });
-
-      await fetchPlanes();
+      fetchPlanes();
       closeModal();
-      showNotification("Plan actualizado con éxito");
     } catch (err) {
-      console.error("Error editando plan:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error editando plan";
-      showNotification(errorMessage, "error");
+      showNotification(err.response?.data?.mensaje || "Error al guardar", "error");
     }
   };
 
   const handleDelete = async () => {
     try {
-      if (!selectedPlan) return;
-      await deletePlan(selectedPlan.id_plan);
-      await fetchPlanes();
+      await api.delete(`/planes/${selectedPlan.id_plan}`);
+      showNotification("Plan eliminado");
+      fetchPlanes();
       closeModal();
-      showNotification("Plan eliminado con éxito");
     } catch (err) {
-      console.error("Error eliminando plan:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error eliminando plan";
-      showNotification(errorMessage, "error");
+      showNotification(err.response?.data?.mensaje || "Error al eliminar", "error");
     }
   };
 
-  const planesFiltrados = planes.filter((p) =>
-    p.nombre_plan?.toLowerCase().includes(search.toLowerCase()) ||
-    p.descripcion?.toLowerCase().includes(search.toLowerCase()) ||
-    String(p.precio).includes(search)
+  const filteredPlanes = planes.filter(p =>
+    p.nombre_plan.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.max(1, Math.ceil(planesFiltrados.length / itemsPerPage));
-  const currentItems = planesFiltrados.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+  const totalPages = Math.max(1, Math.ceil(filteredPlanes.length / itemsPerPage));
+  const currentItems = filteredPlanes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <>
-      <section className="dashboard__pages relative w-full overflow-y-auto h-screen bg-gray-50">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Clases / Planes de Clases</h2>
+    <div className="flex flex-col h-full bg-white overflow-hidden">
+      <div className="shrink-0 flex flex-col gap-4 p-4 pb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Clases / Planes
+          </h2>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
+              <span className="text-xs font-bold">{filteredPlanes.length} planes</span>
+            </div>
+          </div>
+        </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div className="relative w-full md:w-96">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                <Search size={18} />
+        <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              placeholder="Buscar plan por nombre..."
+              className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 outline-none transition bg-white"
+            />
+          </div>
+          <button
+            onClick={() => openModal("crear")}
+            className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+          >
+            <Plus size={18} />
+            Nuevo Plan
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
+        <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-left relative">
+              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+                <tr>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Plan</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Precio</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Clases</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {loading ? (
+                  <tr><td colSpan="4" className="p-8 text-center text-gray-400 text-sm italic">Cargando planes...</td></tr>
+                ) : currentItems.length === 0 ? (
+                  <tr><td colSpan="4" className="p-12 text-center text-gray-400 italic">No se encontraron planes</td></tr>
+                ) : (
+                  currentItems.map((p) => (
+                    <tr key={p.id_plan} className="group hover:bg-[#F0E6E6]/30 transition-colors">
+                      <td className="px-5 py-4 font-bold text-[#040529] text-sm">{p.nombre_plan}</td>
+                      <td className="px-5 py-4 text-right font-bold text-[#040529] text-sm">${Number(p.precio).toLocaleString('es-CO')}</td>
+                      <td className="px-5 py-4 text-center">
+                        <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                          {p.numero_clases} clases
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openModal("editar", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"><Pencil size={16} /></button>
+                          <button onClick={() => { setSelectedPlan(p); openModal("eliminar", p); }} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredPlanes.length > 0 && (
+            <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
+              <p className="text-xs text-gray-500 font-medium">Página <span className="font-bold text-[#040529]">{currentPage}</span> de <span className="font-bold text-[#040529]">{totalPages}</span></p>
+              <div className="flex items-center gap-2">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 rounded-lg border border-gray-200 bg-white disabled:opacity-50 shadow-sm transition"><ChevronLeft className="h-4 w-4" /></button>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 rounded-lg border border-gray-200 bg-white disabled:opacity-50 shadow-sm transition"><ChevronRight className="h-4 w-4" /></button>
               </div>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                placeholder="Buscar plan (Nombre, Descripción, Precio)"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              />
-            </div>
-            <button
-              onClick={() => openModal("add")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
-            >
-              <Plus size={18} />
-              Añadir Plan
-            </button>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-3 w-[20%]">Nombre</th>
-                    <th className="px-6 py-3 w-[25%]">Descripción</th>
-                    <th className="px-6 py-3 w-[10%]">Precio</th>
-                    <th className="px-6 py-3 w-[10%]">Descuento</th>
-                    <th className="px-6 py-3 w-[15%]">Clases</th>
-                    <th className="px-6 py-3 w-[20%]">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                        Cargando planes...
-                      </td>
-                    </tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-red-600">
-                        {error}
-                      </td>
-                    </tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500 italic">
-                        No hay planes registrados.
-                      </td>
-                    </tr>
-                  ) : (
-                    currentItems.map((plan) => (
-                      <tr key={plan.id_plan} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-medium">{plan.nombre_plan}</td>
-                        <td className="px-6 py-4 text-gray-600">{plan.descripcion}</td>
-                        <td className="px-6 py-4 text-gray-600">${plan.precio}</td>
-                        <td className="px-6 py-4 text-gray-600">{plan.descuento_porcentaje}%</td>
-                        <td className="px-6 py-4 text-gray-600">{plan.numero_clases} clases</td>
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("details", plan)}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-                              title="Ver detalles"
-                            >
-                              <Eye size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("edit", plan)}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
-                              title="Editar"
-                            >
-                              <Pencil size={16} />
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openModal("delete", plan)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={16} />
-                            </motion.button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {planesFiltrados.length > 0 && (
-            <div className="flex justify-center items-center gap-2 mt-6 py-4">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={`px-4 py-2 rounded-lg ${currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-600">
-                Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
-              </span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={`px-4 py-2 rounded-lg ${currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                Siguiente
-              </button>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Notificación Toast */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div
-              initial={{ opacity: 0, x: 300 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 300 }}
-              transition={{ duration: 0.3 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-                }`}
-            >
-              {notification.message}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Modales */}
-        <AnimatePresence>
-          {modalType && (
-            <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ type: "spring", damping: 20 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={closeModal}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
-                <h3 className="text-xl font-bold text-gray-800 mb-5 text-center">
-                  {modalType === "add"
-                    ? "Agregar Plan"
-                    : modalType === "edit"
-                      ? "Editar Plan"
-                      : modalType === "details"
-                        ? "Detalles del Plan"
-                        : "Eliminar Plan"}
-                </h3>
+      <AnimatePresence>
+        {modalType && (
+          <motion.div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+            <motion.div className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modalType === "eliminar" ? "max-w-sm w-full" : "max-w-md w-full"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-[#040529]">{modalType === "crear" ? "Nuevo Plan" : modalType === "editar" ? "Editar Plan" : "Eliminar"}</h3>
+                  <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                </div>
 
-                {modalType === "add" && (
-                  <form className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre del Plan *
-                      </label>
-                      <input
-                        type="text"
-                        name="nombre_plan"
-                        value={formData.nombre_plan}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Mensual"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Precio *
-                      </label>
-                      <input
-                        type="number"
-                        name="precio"
-                        value={formData.precio}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 45000"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descuento (%)
-                      </label>
-                      <input
-                        type="number"
-                        name="descuento_porcentaje"
-                        value={formData.descuento_porcentaje}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 10"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Número de clases *
-                      </label>
-                      <input
-                        type="number"
-                        name="numero_clases"
-                        value={formData.numero_clases}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 4"
-                        min="1"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descripción
-                      </label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        rows="2"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Acceso ilimitado a clases mensuales"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={closeModal}
-                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCreate}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                      >
-                        Guardar
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {modalType === "edit" && selectedPlan && (
-                  <form className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre del Plan *
-                      </label>
-                      <input
-                        type="text"
-                        name="nombre_plan"
-                        value={formData.nombre_plan}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Mensual"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Precio *
-                      </label>
-                      <input
-                        type="number"
-                        name="precio"
-                        value={formData.precio}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 45000"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descuento (%)
-                      </label>
-                      <input
-                        type="number"
-                        name="descuento_porcentaje"
-                        value={formData.descuento_porcentaje}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 10"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Número de clases *
-                      </label>
-                      <input
-                        type="number"
-                        name="numero_clases"
-                        value={formData.numero_clases}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: 4"
-                        min="1"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Descripción
-                      </label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        rows="2"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        placeholder="Ej: Acceso ilimitado a clases mensuales"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={closeModal}
-                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleEdit}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                      >
-                        Actualizar
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {modalType === "details" && selectedPlan && (
-                  <div className="space-y-3 text-gray-700">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Nombre:</span>
-                      <span className="text-right">{selectedPlan.nombre_plan}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Descripción:</span>
-                      <span className="text-right">{selectedPlan.descripcion || "—"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Precio:</span>
-                      <span className="text-right">${selectedPlan.precio}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Descuento:</span>
-                      <span className="text-right">{selectedPlan.descuento_porcentaje}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Clases:</span>
-                      <span className="text-right">{selectedPlan.numero_clases} clases</span>
-                    </div>
-                    <div className="flex justify-center pt-4">
-                      <button
-                        onClick={closeModal}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                      >
-                        Cerrar
-                      </button>
+                {modalType === "eliminar" ? (
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-6">¿Estás seguro de eliminar el plan <span className="font-bold text-red-600">{selectedPlan?.nombre_plan}</span>?</p>
+                    <div className="flex justify-center gap-3">
+                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg transition">Cancelar</button>
+                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg transition">Eliminar</button>
                     </div>
                   </div>
-                )}
-
-                {modalType === "delete" && selectedPlan && (
-                  <div className="text-center space-y-4">
-                    <p className="text-gray-700">
-                      ¿Estás seguro de eliminar el plan{" "}
-                      <span className="font-bold text-red-600">{selectedPlan.nombre_plan}</span>?
-                      <br />
-                      <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
-                    </p>
-                    <div className="flex justify-center gap-3 pt-2">
-                      <button
-                        onClick={closeModal}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleDelete}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                      >
-                        Eliminar
-                      </button>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nombre *</label>
+                      <input type="text" value={formData.nombre_plan} onChange={(e) => setFormData({ ...formData, nombre_plan: e.target.value })} className={cn("w-full px-4 py-3 text-sm rounded-xl border outline-none transition", formErrors.nombre_plan && "border-red-400 bg-red-50")} placeholder="Ej: Plan Básico" />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Precio *</label>
+                        <input type="number" value={formData.precio} onChange={(e) => setFormData({ ...formData, precio: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Clases *</label>
+                        <input type="number" value={formData.numero_clases} onChange={(e) => setFormData({ ...formData, numero_clases: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" />
+                      </div>
+                    </div>
+                    <button onClick={handleSave} className="w-full py-3 bg-[#040529] text-white rounded-xl text-sm font-bold shadow-lg transition">
+                      {modalType === "crear" ? "Crear Plan" : "Guardar Cambios"}
+                    </button>
                   </div>
                 )}
-              </motion.div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
-    </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
-export default PlanClasses;
+export default PlanesAdmin;

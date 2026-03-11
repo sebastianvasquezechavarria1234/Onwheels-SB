@@ -1,777 +1,376 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
-import { Search, Plus, Trash2, ArrowLeft, X, Save, AlertTriangle, CheckCircle, Package } from "lucide-react";
+import {
+    ArrowLeft, Save, Plus, Trash2, Search, ShoppingBag,
+    Package, Calendar, Info, CheckCircle2, XCircle,
+    ChevronRight, Archive, Image as ImageIcon
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-    getCompraById,
-    createCompra,
-    updateCompra,
-    getProveedores,
-} from "../../services/comprasService";
-import {
-    getProductos,
-    getColores,
-    getTallas,
-    getVariantes,
-} from "../../services/productosServices";
-import { getCategorias } from "../../services/categoriasService";
+import comprasService from "../../services/comprasService";
+import ProductSelectorView from "./ProductSelectorView";
 
-export default function CompraEditar() {
+// Helper para clases condicionales
+function cn(...classes) {
+    return classes.filter(Boolean).join(" ");
+}
+
+const CompraEditar = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const isEditing = Boolean(id);
+    const isEditing = !!id;
 
-    // Estados Globales
+    // Si se intenta editar, redirigir al listado
+    useEffect(() => {
+        if (isEditing) {
+            navigate("/admin/compras", { replace: true });
+        }
+    }, [isEditing, navigate]);
+
     const [loading, setLoading] = useState(true);
-    const [proveedores, setProveedores] = useState([]);
-    const [productos, setProductos] = useState([]); // con variantes nested
-    const [colores, setColores] = useState([]);
-    const [tallas, setTallas] = useState([]);
-    const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+    const [saving, setSaving] = useState(false);
 
-    // Formulario Compra
-    const [form, setForm] = useState({
-        nit: "", // nit_proveedor
-        fecha_compra: new Date().toISOString().split("T")[0],
-        fecha_aproximada_entrega: "",
-        estado: "Pendiente",
-        items: [],
+    // Estado principal de la compra (sin estado)
+    const [purchase, setPurchase] = useState({
+        nit_proveedor: "",
+        fecha_compra: new Date().toISOString().split('T')[0],
+        total_compra: 0
     });
 
-    // Estados de Modales Internos
-    const [modal, setModal] = useState(null); // 'selectProducto'
-    const [selectedProducts, setSelectedProducts] = useState({});
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [items, setItems] = useState([]);
+    const [proveedores, setProveedores] = useState([]);
+    const [allProducts, setAllProducts] = useState([]);
 
-    // Helpers Notificación
-    const showNotification = useCallback((message, type = "success") => {
+    // Vista de selección de productos
+    const [showProductSelector, setShowProductSelector] = useState(false);
+    const [productSearch, setProductSearch] = useState("");
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [selectedVariant, setSelectedVariant] = useState(null);
+    const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
+
+    const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+
+    const showNotification = (message, type = "success") => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+    };
+
+    useEffect(() => {
+        fetchInitialData();
     }, []);
 
-    // Combinar productos para selección
-    const combinarProductosConVariantes = (productosList = [], variantesList = []) => {
-        const productoMap = new Map();
-        productosList.forEach((p) => productoMap.set(p.id_producto, { ...p, variantes: [] }));
-        variantesList.forEach((v) => {
-            const producto = productoMap.get(v.id_producto);
-            if (producto) {
-                producto.variantes.push({
-                    id_variante: v.id_variante,
-                    id_color: v.id_color,
-                    id_talla: v.id_talla,
-                    stock: v.stock,
-                    nombre_color: v.nombre_color,
-                    nombre_talla: v.nombre_talla,
-                    codigo_hex: v.codigo_hex,
-                });
-            }
-        });
-        return Array.from(productoMap.values());
+    const fetchInitialData = async () => {
+        try {
+            setLoading(true);
+            const [provRes, prodRes] = await Promise.all([
+                comprasService.getProveedores(),
+                comprasService.getProductos()
+            ]);
+            setProveedores(Array.isArray(provRes) ? provRes : []);
+            setAllProducts(Array.isArray(prodRes) ? prodRes : []);
+        } catch (err) {
+            showNotification("Error al cargar datos", "error");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Carga Inicial
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const [provs, prods, vars, cats, cols, tls] = await Promise.all([
-                    getProveedores(),
-                    getProductos(),
-                    getVariantes(),
-                    getCategorias(),
-                    getColores(),
-                    getTallas(),
-                ]);
-
-                setProveedores(provs || []);
-                // setCategorias(cats || []); // Not needed now clearly unless creating new prod inside modal (which is implicit)
-                setColores(cols || []);
-                setTallas(tls || []);
-                setProductos(combinarProductosConVariantes(prods || [], vars || []));
-
-                // Si es edición, cargar la compra
-                if (isEditing) {
-                    const compra = await getCompraById(id);
-                    setForm({
-                        nit: compra.nit_proveedor || compra.nit, // handle inconsistent response safely
-                        fecha_compra: compra.fecha_compra?.split("T")[0],
-                        fecha_aproximada_entrega: compra.fecha_aproximada_entrega?.split("T")[0] || "",
-                        estado: compra.estado,
-                        items: compra.items?.map(it => ({
-                            ...it,
-                            qty: it.cantidad,
-                            price: it.precio_unitario,
-                            nombre_producto: it.nombre_producto,
-                            nombre_color: it.nombre_color,
-                            nombre_talla: it.nombre_talla
-                        })) || [],
-                    });
-                }
-            } catch (err) {
-                console.error("Error data:", err);
-                showNotification("Error cargando datos: " + (err.message || ""), "error");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [id, isEditing, showNotification, navigate]);
-
-    // Manejadores Formulario Principal
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
+    const calculateTotal = (currentItems) => {
+        return currentItems.reduce((acc, item) => acc + (parseFloat(item.subtotal) || 0), 0);
     };
 
-    const updateItemField = (idx, field, value) => {
-        const updated = [...form.items];
-        updated[idx][field] = value;
+    const handleAddItem = () => {
+        if (!selectedProduct || !selectedVariant) {
+            showNotification("Selecciona un producto y variante", "error");
+            return;
+        }
+        const precio = parseFloat(newItemData.precio_unitario) || 0;
+        const cant = parseInt(newItemData.cantidad) || 1;
 
-        // REGLA: Si cambia el precio, actualizar TODOS los variantes del mismo producto
-        if (field === 'price') {
-            const currentItem = updated[idx];
-            const targetId = currentItem.id_producto;
-            const targetName = currentItem.nombre_producto; // Fallback para nuevos productos sin ID aún
-
-            updated.forEach((item, i) => {
-                if (i !== idx) {
-                    // Coincidir por ID (si existe) o Nombre (si es nuevo)
-                    const sameProduct = (targetId && item.id_producto === targetId) ||
-                        (!targetId && item.nombre_producto === targetName);
-
-                    if (sameProduct) {
-                        item.price = value;
-                    }
-                }
-            });
+        if (precio <= 0) {
+            showNotification("El precio unitario debe ser mayor a 0", "error");
+            return;
         }
 
-        setForm(prev => ({ ...prev, items: updated }));
+        const newItem = {
+            id_producto: selectedProduct.id_producto,
+            id_variante: selectedVariant.id_variante || selectedVariant.id_producto_variante,
+            id_color: selectedVariant.id_color,
+            id_talla: selectedVariant.id_talla,
+            nombre_producto: selectedProduct.nombre_producto,
+            nombre_variante: `${selectedVariant.nombre_color || selectedVariant.color || ''} ${selectedVariant.nombre_talla || selectedVariant.talla || ''}`.trim(),
+            cantidad: cant,
+            precio_unitario: precio,
+            subtotal: cant * precio,
+            imagen: selectedProduct.imagen || selectedProduct.url_imagen || null
+        };
+
+        const newItems = [...items, newItem];
+        setItems(newItems);
+        setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
+
+        // Reset selection
+        setSelectedProduct(null);
+        setSelectedVariant(null);
+        setNewItemData({ cantidad: 1, precio_unitario: "" });
+        showNotification("Producto añadido a la lista");
     };
 
     const removeItem = (idx) => {
-        const updated = form.items.filter((_, i) => i !== idx);
-        setForm(prev => ({ ...prev, items: updated }));
+        const newItems = items.filter((_, i) => i !== idx);
+        setItems(newItems);
+        setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
     };
 
-    // ==========================================
-    // Lógica Modal Selección / Creación Producto
-    // ==========================================
-
-    const openSelectModal = () => {
-        setModal('selectProducto');
-    };
-
-    const closeModals = () => {
-        setModal(null);
-        setSelectedProducts({});
-        setSearchTerm("");
-    };
-
-    // 1. Manejo Nuevo Variant Manual
-    const handleProductSelectManual = (productId, checked) => {
-        if (checked) {
-            setSelectedProducts((prev) => ({
-                ...prev,
-                [productId]: { ...prev[productId], manualVariantes: [{ id_variante: null, id_color: "", id_talla: "", qty: 1, price: 0 }] },
-            }));
-        } else {
-            // Remove only manual variants? Or uncheck product entirely?
-            // Simplest: Uncheck product clears manual entry intention.
-            setSelectedProducts(prev => {
-                const copy = { ...prev };
-                delete copy[productId];
-                return copy;
-            });
+    const handleSave = async () => {
+        if (!purchase.nit_proveedor) {
+            showNotification("Selecciona un proveedor", "error");
+            return;
         }
-    };
+        if (items.length === 0) {
+            showNotification("Añade al menos un producto", "error");
+            return;
+        }
 
-    const addManualVariantLine = (productId) => {
-        setSelectedProducts(prev => {
-            const prod = prev[productId] || { manualVariantes: [] };
-            return {
-                ...prev,
-                [productId]: {
-                    ...prod,
-                    manualVariantes: [...(prod.manualVariantes || []), { id_variante: null, id_color: "", id_talla: "", qty: 1, price: 0 }]
-                }
-            };
-        });
-    };
-
-    const updateManualVariant = (productId, idx, field, value) => {
-        setSelectedProducts(prev => {
-            const prod = prev[productId];
-            const vars = [...prod.manualVariantes];
-            vars[idx] = { ...vars[idx], [field]: value };
-            return { ...prev, [productId]: { ...prod, manualVariantes: vars } };
-        });
-    };
-
-
-    // 2. Manejo Variante Existente (Quick Add)
-    const toggleExistingVariant = (product, variant) => {
-        // Check if already selected
-        const isSelected = selectedProducts[product.id_producto]?.existingVariantes?.some(v => v.id_variante === variant.id_variante);
-
-        setSelectedProducts(prev => {
-            const prodData = prev[product.id_producto] || { manualVariantes: [], existingVariantes: [] };
-            let newExisting = prodData.existingVariantes || [];
-
-            if (isSelected) {
-                newExisting = newExisting.filter(v => v.id_variante !== variant.id_variante);
-            } else {
-                newExisting.push({
-                    ...variant,
-                    qty: 1,
-                    price: product.precio_compra || 0
-                });
-            }
-
-            if (newExisting.length === 0 && prodData.manualVariantes.length === 0) {
-                const { [product.id_producto]: _, ...rest } = prev;
-                return rest;
-            }
-
-            return {
-                ...prev,
-                [product.id_producto]: { ...prodData, existingVariantes: newExisting }
-            };
-        });
-    };
-
-    const updateExistingVariantQty = (productId, variantId, field, value) => {
-        setSelectedProducts(prev => {
-            const prodData = prev[productId];
-            const newExisting = prodData.existingVariantes.map(v =>
-                v.id_variante === variantId ? { ...v, [field]: value } : v
-            );
-            return {
-                ...prev,
-                [productId]: { ...prodData, existingVariantes: newExisting }
-            };
-        });
-    };
-
-    const confirmSelection = () => {
-        const newItems = [];
-        Object.entries(selectedProducts).forEach(([pId, data]) => {
-            const product = productos.find(p => p.id_producto === Number(pId));
-            if (!product) return;
-
-            // A. Existentes
-            if (data.existingVariantes) {
-                data.existingVariantes.forEach(v => {
-                    newItems.push({
-                        id_producto: product.id_producto,
-                        nombre_producto: product.nombre_producto,
-                        id_color: Number(v.id_color),
-                        nombre_color: v.nombre_color,
-                        id_talla: Number(v.id_talla),
-                        nombre_talla: v.nombre_talla,
-                        qty: Number(v.qty),
-                        price: Number(v.price),
-                        id_variante: v.id_variante, // Explicit ID
-                    });
-                });
-            }
-
-            // B. Manuales (Nuevos o no encontrados visualmente)
-            if (data.manualVariantes) {
-                data.manualVariantes.forEach(v => {
-                    if (!v.id_color || !v.id_talla) return;
-
-                    const colorObj = colores.find(c => Number(c.id_color) === Number(v.id_color));
-                    const tallaObj = tallas.find(t => Number(t.id_talla) === Number(v.id_talla));
-
-                    newItems.push({
-                        id_producto: product.id_producto,
-                        nombre_producto: product.nombre_producto,
-                        id_color: Number(v.id_color),
-                        nombre_color: colorObj?.nombre_color || "—",
-                        id_talla: Number(v.id_talla),
-                        nombre_talla: tallaObj?.nombre_talla || "—",
-                        qty: Number(v.qty),
-                        price: Number(v.price),
-                        id_variante: null // Backend will find or create
-                    });
-                });
-            }
-        });
-
-        // Merge
-        setForm(prev => {
-            const merged = [...prev.items];
-            newItems.forEach(newItem => {
-                // Check duplicate exact items to merge quantities?
-                // Simplified logic: Just push all. User can edit details. 
-                // Or better: merge if same Product/Color/Size
-                const exists = merged.findIndex(i =>
-                    i.id_producto === newItem.id_producto &&
-                    i.id_color === newItem.id_color &&
-                    i.id_talla === newItem.id_talla
-                );
-                if (exists >= 0) {
-                    // Update only if price matches? Or just qty.
-                    merged[exists].qty += newItem.qty;
-                } else {
-                    merged.push(newItem);
-                }
-            });
-            return { ...prev, items: merged };
-        });
-        closeModals();
-    };
-
-    // ==========================================
-    // Guardar Compra Principal
-    // ==========================================
-    const handleSaveCompra = async () => {
-        if (isSubmitting) return;
-        setIsSubmitting(true);
+        setSaving(true);
         try {
-            if (!form.nit) throw new Error("Seleccione un proveedor");
-            if (form.items.length === 0) throw new Error("Agregue al menos un producto");
-
-            const total = form.items.reduce((sum, i) => sum + (Number(i.qty) * Number(i.price)), 0);
-
-            const payload = {
-                nit_proveedor: form.nit,
-                fecha_compra: form.fecha_compra,
-                fecha_aproximada_entrega: form.fecha_aproximada_entrega || null,
-                estado: form.estado,
-                total_compra: total,
-                items: form.items.map(i => ({
-                    id_producto: i.id_producto,
-                    nombre_producto: i.nombre_producto,
-                    id_color: i.id_color,
-                    id_talla: i.id_talla,
-                    cantidad: Number(i.qty),
-                    precio_unitario: Number(i.price),
-                    descripcion: ""
-                }))
-            };
-
-            if (isEditing) {
-                await updateCompra(id, payload);
-                showNotification("Compra actualizada correctamente", "success");
-            } else {
-                await createCompra(payload);
-                showNotification("Compra creada correctamente", "success");
-            }
-            navigate("/admin/compras");
+            const payload = { ...purchase, items };
+            await comprasService.createCompra(payload);
+            showNotification("Compra registrada con éxito — Stock actualizado");
+            setTimeout(() => navigate("/admin/compras"), 1500);
         } catch (err) {
-            console.error("Error save compra:", err);
-            showNotification(err.message || "Error al guardar compra", "error");
+            showNotification(err?.response?.data?.mensaje || "Error al guardar la orden", "error");
         } finally {
-            setIsSubmitting(false);
+            setSaving(false);
         }
     };
 
-    const isLocked = form.estado === 'Recibida';
-    if (loading) return <div className="p-10 text-center">Cargando...</div>;
+    // Filtrado de productos para la vista de selección
+    const filteredProducts = allProducts.filter(p =>
+        p.nombre_producto?.toLowerCase().includes(productSearch.toLowerCase()) ||
+        p.codigo_referencia?.toLowerCase().includes(productSearch.toLowerCase())
+    );
+
+    if (loading) return <div className="p-8 text-center italic text-slate-400">Cargando gestión de compra...</div>;
+    if (isEditing) return null; // Redirecting...
 
     return (
-        <>
-            <div className="p-6 bg-gray-50 min-h-screen">
-                {/* Header (Igual que antes...) */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => navigate("/admin/compras")} className="p-2 bg-white rounded-full border hover:bg-gray-100">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <h1 className="text-2xl font-bold text-gray-800">
-                            {isEditing ? `Editar Compra #${id}` : "Nueva Compra"}
-                        </h1>
-                    </div>
-                    {isLocked && (
-                        <div className="flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-bold">
-                            <AlertTriangle size={18} />
-                            Compra Recibida - Edición Bloqueada
-                        </div>
-                    )}
-                </div>
-
-                <AnimatePresence>
-                    {notification.show && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className={`fixed top-4 center z-50 px-6 py-3 rounded-lg text-white shadow-lg ${notification.type === 'error' ? 'bg-red-600' : 'bg-green-600'
-                                }`}
-                        >
-                            {notification.message}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Formulario (Igual...) */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-                            <h3 className="font-bold text-gray-700 border-b pb-2">Información General</h3>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                                <select
-                                    name="nit"
-                                    value={form.nit}
-                                    onChange={handleInputChange}
-                                    disabled={isLocked}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value="">Seleccione Proveedor</option>
-                                    {proveedores.map(p => (
-                                        <option key={p.nit || p.NIT_proveedor} value={p.nit || p.NIT_proveedor}>
-                                            {p.nombre_proveedor}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Compra</label>
-                                    <input
-                                        type="date"
-                                        name="fecha_compra"
-                                        value={form.fecha_compra}
-                                        onChange={handleInputChange}
-                                        disabled={isLocked}
-                                        className="w-full p-2 border rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Entrega</label>
-                                    <input
-                                        type="date"
-                                        name="fecha_aproximada_entrega"
-                                        value={form.fecha_aproximada_entrega}
-                                        onChange={handleInputChange}
-                                        disabled={isLocked}
-                                        className="w-full p-2 border rounded-lg"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                                {isEditing && isLocked ? (
-                                    <input type="text" value="Recibida" disabled className="w-full p-2 bg-gray-100 border rounded-lg" />
-                                ) : (
-                                    <select
-                                        name="estado"
-                                        value={form.estado}
-                                        onChange={handleInputChange}
-                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="En tránsito">En tránsito</option>
-                                        <option value="Recibida">Recibida (Finalizar)</option>
-                                        <option value="Cancelada">Cancelada</option>
-                                    </select>
-                                )}
-                                {form.estado === 'Recibida' && !isLocked && (
-                                    <p className="text-xs text-orange-600 mt-1 font-medium">
-                                        ⚠️ AL FINALIZAR, se sumará el stock.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3">
+        <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-primary animate-in fade-in duration-500">
+            {showProductSelector ? (
+                <ProductSelectorView
+                    onClose={() => setShowProductSelector(false)}
+                    allProducts={allProducts}
+                    onAdd={(data) => {
+                        const { product, variant, cantidad, precio_unitario } = data;
+                        const newItem = {
+                            id_producto: product.id_producto,
+                            id_variante: variant.id_variante || variant.id_producto_variante,
+                            id_color: variant.id_color,
+                            id_talla: variant.id_talla,
+                            nombre_producto: product.nombre_producto,
+                            nombre_variante: `${variant.nombre_color || variant.color || ''} ${variant.nombre_talla || variant.talla || ''}`.trim(),
+                            cantidad: cantidad,
+                            precio_unitario: precio_unitario,
+                            subtotal: cantidad * precio_unitario,
+                            imagen: product.imagen || product.url_imagen || (product.imagenes && product.imagenes[0]?.url_imagen) || null
+                        };
+                        const newItems = [...items, newItem];
+                        setItems(newItems);
+                        setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
+                        showNotification("Producto añadido a la lista");
+                    }}
+                />
+            ) : (
+                <>
+                    {/* Header Sticky */}
+                    <header className="shrink-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-20">
+                        <div className="flex items-center gap-4">
                             <button
                                 onClick={() => navigate("/admin/compras")}
-                                className="flex-1 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
+                                className="p-2 rounded-xl hover:bg-slate-100 transition text-slate-400 hover:text-slate-600"
                             >
-                                Cancelar
+                                <ArrowLeft size={20} />
                             </button>
-                            {!isLocked && (
-                                <button
-                                    onClick={handleSaveCompra}
-                                    disabled={isSubmitting}
-                                    className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center justify-center gap-2"
-                                >
-                                    <Save size={18} />
-                                    {isSubmitting ? "Guardando..." : "Guardar Compra"}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Tabla Items */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border flex flex-col h-full">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-gray-700">Productos ({form.items.length})</h3>
-                            {!isLocked && (
-                                <button
-                                    onClick={openSelectModal}
-                                    className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 flex items-center gap-2"
-                                >
-                                    <Plus size={16} /> Agregar Producto
-                                </button>
-                            )}
+                            <div>
+                                <h2 className="text-xl font-extrabold text-[#040529] tracking-tight leading-none" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                                    Nueva Orden de Compra
+                                </h2>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Inventario / Abastecimiento</p>
+                            </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-50 text-gray-600 font-medium">
-                                    <tr>
-                                        <th className="p-3 rounded-l-lg">Producto</th>
-                                        <th className="p-3">Info</th>
-                                        <th className="p-3 text-center">Cant</th>
-                                        <th className="p-3 text-center">Costo Unit.</th>
-                                        <th className="p-3 text-right">Subtotal</th>
-                                        <th className="p-3 rounded-r-lg"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {form.items.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-gray-50">
-                                            <td className="p-3 font-medium">{item.nombre_producto}</td>
-                                            <td className="p-3 text-gray-500 text-xs">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: item.codigo_hex || 'transparent' }}></span>
-                                                    {item.nombre_color} / {item.nombre_talla}
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-center">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={item.qty}
-                                                    onChange={(e) => updateItemField(idx, 'qty', e.target.value)}
-                                                    disabled={isLocked}
-                                                    className="w-16 p-1 border rounded text-center"
-                                                />
-                                            </td>
-                                            <td className="p-3 text-center">
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={item.price}
-                                                    onChange={(e) => updateItemField(idx, 'price', e.target.value)}
-                                                    disabled={isLocked}
-                                                    className="w-20 p-1 border rounded text-center"
-                                                />
-                                            </td>
-                                            <td className="p-3 text-right font-bold">
-                                                ${(item.qty * item.price).toLocaleString()}
-                                            </td>
-                                            <td className="p-3 text-right">
-                                                {!isLocked && (
-                                                    <button onClick={() => removeItem(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded">
-                                                        <Trash2 size={16} />
-                                                    </button>
+                        <div className="flex items-center gap-3">
+                            <div className="px-3 py-1 rounded-full text-[10px] font-bold border bg-emerald-50 text-emerald-600 border-emerald-200 flex items-center gap-1.5">
+                                <CheckCircle2 size={12} />
+                                Stock se actualizará automáticamente
+                            </div>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex items-center gap-2 px-6 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition disabled:opacity-50"
+                            >
+                                <Save size={18} />
+                                {saving ? "Guardando..." : "Registrar Compra"}
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Main Content Scrollable */}
+                    <main className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                            {/* Left: Purchase Info & Product Selector Trigger */}
+                            <div className="lg:col-span-1 space-y-6">
+                                {/* Info Section */}
+                                <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
+                                        <Info size={14} className="text-blue-500" /> Información General
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Proveedor *</label>
+                                            <select
+                                                value={purchase.nit_proveedor}
+                                                onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
+                                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 outline-none text-sm font-bold text-[#040529] focus:ring-4 focus:ring-blue-50"
+                                            >
+                                                <option value="">Seleccionar proveedor...</option>
+                                                {proveedores.map(p => <option key={p.nit || p.id_proveedor} value={p.nit || p.id_proveedor}>{p.nombre_empresa || p.nombre_proveedor}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Fecha de Compra</label>
+                                            <input
+                                                type="date"
+                                                value={purchase.fecha_compra}
+                                                onChange={(e) => setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }))}
+                                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 outline-none text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Product Selector Trigger */}
+                                <section className="bg-[#040529] rounded-3xl p-6 shadow-xl text-white space-y-4 relative overflow-hidden flex flex-col items-center justify-center text-center">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10"><ShoppingBag size={80} /></div>
+
+                                    <Package size={48} className="text-blue-400 mb-2 relative z-10" />
+                                    <h3 className="text-xl font-black relative z-10">
+                                        Productos de la Orden
+                                    </h3>
+                                    <p className="text-xs text-slate-300 relative z-10 mb-4 px-4">
+                                        Explora el inventario, selecciona variantes y define cantidades y costos para añadir a esta compra.
+                                    </p>
+
+                                    <button
+                                        onClick={() => setShowProductSelector(true)}
+                                        className="w-full relative z-10 py-4 bg-white text-[#040529] rounded-xl text-sm font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 shadow-lg"
+                                    >
+                                        <Search size={18} /> Explorar Catálogo
+                                    </button>
+                                </section>
+                            </div>
+
+                            {/* Right: Items List Table */}
+                            <div className="lg:col-span-2 flex flex-col min-h-0">
+                                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col h-full overflow-hidden">
+                                    <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-[#040529] flex items-center gap-2">
+                                            <Archive size={16} className="text-slate-400" /> Lista de Productos Solicitados
+                                        </h3>
+                                        <div className="text-[10px] font-bold text-slate-400 px-3 py-1 bg-slate-50 rounded-lg">
+                                            {items.length} ítems
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 overflow-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead className="bg-slate-50 text-[#040529] sticky top-0 z-10 border-b border-slate-100">
+                                                <tr>
+                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider">Producto</th>
+                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider text-center">Cant.</th>
+                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider text-right">Precio Unit.</th>
+                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider text-right">Subtotal</th>
+                                                    <th className="px-5 py-4 text-right"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {items.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={5} className="p-20 text-center">
+                                                            <div className="flex flex-col items-center opacity-20">
+                                                                <ShoppingBag size={48} className="mb-4 text-[#040529]" />
+                                                                <p className="text-sm italic font-medium">No has añadido productos todavía</p>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    items.map((item, idx) => (
+                                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                                            <td className="px-5 py-4">
+                                                                <div className="font-bold text-[#040529] text-sm leading-tight">{item.nombre_producto}</div>
+                                                                <div className="text-[10px] text-slate-400 font-medium uppercase">{item.nombre_variante}</div>
+                                                            </td>
+                                                            <td className="px-5 py-4 text-center">
+                                                                <span className="px-2 py-1 rounded-lg bg-slate-100 text-[#040529] font-bold text-xs">{item.cantidad}</span>
+                                                            </td>
+                                                            <td className="px-5 py-4 text-right font-medium text-slate-500 text-sm tabular-nums">
+                                                                ${Number(item.precio_unitario).toLocaleString()}
+                                                            </td>
+                                                            <td className="px-5 py-4 text-right font-extrabold text-[#040529] text-sm tabular-nums">
+                                                                ${Number(item.subtotal).toLocaleString()}
+                                                            </td>
+                                                            <td className="px-5 py-4 text-right">
+                                                                <button
+                                                                    onClick={() => removeItem(idx)}
+                                                                    className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
                                                 )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {form.items.length === 0 && (
-                                        <tr>
-                                            <td colSpan="6" className="p-8 text-center text-gray-400 italic">
-                                                No hay productos agregados.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                            </tbody>
+                                        </table>
+                                    </div>
 
-                        <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                            <span className="font-medium text-gray-600">Total Compra Estimado</span>
-                            <span className="text-2xl font-bold text-gray-800">
-                                ${form.items.reduce((s, i) => s + (i.qty * i.price), 0).toLocaleString()}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Modal Mejorado */}
-            <AnimatePresence>
-                {modal === 'selectProducto' && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden"
-                        >
-                            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-                                <div>
-                                    <h2 className="text-lg font-bold text-gray-800">Seleccionar Productos</h2>
-                                    <p className="text-xs text-gray-500">Seleccione variantes existentes o cree nuevas combinaciones.</p>
-                                </div>
-                                <button onClick={closeModals}><X size={20} className="text-gray-500" /></button>
-                            </div>
-
-                            <div className="p-4 border-b bg-white">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre de producto..."
-                                        value={searchTerm}
-                                        onChange={e => setSearchTerm(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
-                                {productos
-                                    .filter(p => p.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .slice(0, 50)
-                                    .map(p => {
-                                        const isProdSelected = !!selectedProducts[p.id_producto];
-                                        return (
-                                            <div key={p.id_producto} className={`bg-white border rounded-xl shadow-sm transition-all overflow-hidden ${isProdSelected ? 'ring-1 ring-blue-500' : ''}`}>
-                                                <div className="p-4 flex items-start gap-4">
-                                                    <div className={`p-3 rounded-lg ${isProdSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
-                                                        <Package size={24} />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h4 className="font-bold text-gray-800 text-lg">{p.nombre_producto}</h4>
-                                                        <p className="text-sm text-gray-500 mb-3">{p.descripcion || "Sin descripción"}</p>
-
-                                                        {/* Sección Variantes Existentes */}
-                                                        {p.variantes.length > 0 && (
-                                                            <div className="mb-4">
-                                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Variantes Existentes (Click para agregar)</h5>
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {p.variantes.map(v => {
-                                                                        const isSelected = selectedProducts[p.id_producto]?.existingVariantes?.some(ev => ev.id_variante === v.id_variante);
-                                                                        return (
-                                                                            <button
-                                                                                key={v.id_variante}
-                                                                                onClick={() => toggleExistingVariant(p, v)}
-                                                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors ${isSelected
-                                                                                    ? 'bg-blue-600 text-white border-blue-600'
-                                                                                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
-                                                                                    }`}
-                                                                            >
-                                                                                <span className="w-2 h-2 rounded-full bg-white border" style={{ backgroundColor: isSelected ? 'white' : v.codigo_hex }}></span>
-                                                                                <span>{v.nombre_color} / {v.nombre_talla}</span>
-                                                                                {isSelected && <CheckCircle size={14} />}
-                                                                            </button>
-                                                                        )
-                                                                    })}
-                                                                </div>
-                                                                {/* Campos Cantidad para seleccionados */}
-                                                                {selectedProducts[p.id_producto]?.existingVariantes?.length > 0 && (
-                                                                    <div className="mt-3 bg-blue-50 p-3 rounded-lg space-y-2">
-                                                                        {selectedProducts[p.id_producto].existingVariantes.map(ev => (
-                                                                            <div key={ev.id_variante} className="flex justify-between items-center text-sm">
-                                                                                <span className="font-medium text-blue-900">{ev.nombre_color} - {ev.nombre_talla}</span>
-                                                                                <div className="flex items-center gap-2">
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        className="w-16 p-1 rounded border text-center text-xs"
-                                                                                        placeholder="Cant"
-                                                                                        value={ev.qty}
-                                                                                        onChange={(e) => updateExistingVariantQty(p.id_producto, ev.id_variante, 'qty', e.target.value)}
-                                                                                    />
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        className="w-20 p-1 rounded border text-center text-xs"
-                                                                                        placeholder="Precio"
-                                                                                        value={ev.price}
-                                                                                        onChange={(e) => updateExistingVariantQty(p.id_producto, ev.id_variante, 'price', e.target.value)}
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {/* Sección Nueva Variante Manual */}
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    id={`manual-${p.id_producto}`}
-                                                                    checked={!!(selectedProducts[p.id_producto]?.manualVariantes?.length > 0)}
-                                                                    onChange={(e) => e.target.checked ? addManualVariantLine(p.id_producto) : handleProductSelectManual(p.id_producto, false)}
-                                                                    className="w-4 h-4 text-blue-600 rounded"
-                                                                />
-                                                                <label htmlFor={`manual-${p.id_producto}`} className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                                                                    Crear nueva variante (Color/Talla personalizada)
-                                                                </label>
-                                                            </div>
-
-                                                            {selectedProducts[p.id_producto]?.manualVariantes?.length > 0 && (
-                                                                <div className="pl-6 space-y-2">
-                                                                    {selectedProducts[p.id_producto].manualVariantes.map((mv, idx) => (
-                                                                        <div key={idx} className="flex gap-2 items-center flex-wrap">
-                                                                            <select
-                                                                                value={mv.id_color}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'id_color', e.target.value)}
-                                                                                className="p-1.5 border rounded text-sm w-32"
-                                                                            >
-                                                                                <option value="">Color...</option>
-                                                                                {colores.map(c => <option key={c.id_color} value={c.id_color}>{c.nombre_color}</option>)}
-                                                                            </select>
-                                                                            <select
-                                                                                value={mv.id_talla}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'id_talla', e.target.value)}
-                                                                                className="p-1.5 border rounded text-sm w-24"
-                                                                            >
-                                                                                <option value="">Talla...</option>
-                                                                                {tallas.map(t => <option key={t.id_talla} value={t.id_talla}>{t.nombre_talla}</option>)}
-                                                                            </select>
-                                                                            <input
-                                                                                type="number"
-                                                                                placeholder="Cant"
-                                                                                value={mv.qty}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'qty', e.target.value)}
-                                                                                className="w-16 p-1.5 border rounded text-sm"
-                                                                            />
-                                                                            <input
-                                                                                type="number"
-                                                                                placeholder="Precio"
-                                                                                value={mv.price}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'price', e.target.value)}
-                                                                                className="w-20 p-1.5 border rounded text-sm"
-                                                                            />
-                                                                            {idx === (selectedProducts[p.id_producto].manualVariantes.length - 1) && (
-                                                                                <button onClick={() => addManualVariantLine(p.id_producto)} className="text-blue-600 text-xs font-bold px-2 py-1 bg-blue-50 rounded hover:bg-blue-100">+ Otro</button>
-                                                                            )}
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                    </div>
-                                                </div>
+                                    {/* Footer Totals */}
+                                    <div className="shrink-0 p-6 bg-[#F0E6E6]/30 border-t border-[#040529]/10">
+                                        <div className="flex flex-col items-end gap-2">
+                                            <div className="flex items-center gap-10 text-slate-500 text-sm font-medium">
+                                                <span>Subtotal Estimado</span>
+                                                <span className="tabular-nums">${Number(purchase.total_compra).toLocaleString()}</span>
                                             </div>
-                                        )
-                                    })}
-
-                                {productos.length === 0 && <div className="text-center py-10 text-gray-400">No hay productos disponibles.</div>}
+                                            <div className="flex items-center gap-10 text-[#040529] text-2xl font-black">
+                                                <span className="tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>TOTAL COMPRA</span>
+                                                <span className="tabular-nums">${Number(purchase.total_compra).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                    </main>
+                </>
+            )}
 
-                            <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
-                                <button onClick={closeModals} className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">Cancelar</button>
-                                <button
-                                    onClick={confirmSelection}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm"
-                                >
-                                    Confirmar Selección
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
+            {/* Notifications */}
+            <AnimatePresence>
+                {notification.show && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0 }}
+                        className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
+                    >
+                        {notification.message}
+                    </motion.div>
                 )}
             </AnimatePresence>
-        </>
+        </div>
     );
-}
+};
+
+export default CompraEditar;

@@ -1,0 +1,42 @@
+# Plan de Implementación
+
+## Resumen de lo Entendido
+Entiendo que hay 8 puntos principales a abordar para corregir y mejorar la aplicación:
+1. **Detalle del producto público y tamaño de imagen:** Permitir ver `/store/product/:id` sin iniciar sesión y reducir el tamaño de la imagen principal.
+2. **Layout del Detalle de Producto autenticado:** Asegurar que si el usuario está logueado, vea el layout correcto (Custom/User Layout) en lugar del landing público con botones de "ingresar".
+3. **Modal de Login en el Carrito:** Restaurar el aviso (modal) que pide iniciar sesión o registrarse al intentar comprar desde el carrito sin estar autenticado, en lugar de redirigir bruscamente.
+4. **Estilos de Checkout y Confirmación:** Mejorar el diseño visual (colores, bordes, hovers) de la pasarela de pago y de la vista de confirmación para que coincida con el "look and feel" del sitio.
+5. **Enrutamiento de Compras (Efectivo vs Inmediato):** Las compras en "Efectivo" deben ir al CRUD de Pedidos (usualmente estado 'Pendiente') y "Pago inmediato" al CRUD de Ventas (estado 'Pagado').
+6. **Tarjetas de Producto en Landing:** Mejorar la estética de las "cards" en el landing principal para que se parezcan a las de la tienda, y cambiar el botón para que obligue a entrar al detalle antes de añadir al carrito.
+7. **Consumo y Estilos de "Mis Compras" y "Mi Perfil":** Asegurar que se cargue la data completa de las compras en los perfiles y mejorar la estética de estas secciones (incluyendo clases u otros datos si aplican para los diferentes roles).
+8. **Validaciones en CRUD de Productos:** Hacer obligatoria la subida de al menos una imagen y corregir el bug del campo "descuento" donde intentar escribir un valor como 50% solo ingresa "5".
+
+## User Review Required
+Por favor, revisa si este plan y los archivos a afectar son los correctos antes de proceder.
+
+## Proposed Changes
+
+### 1 y 2. Detalle de Producto y Layouts (Frontend)
+Modificaremos cómo se ruta el detalle y el componente mismo.
+#### [MODIFY] AppRouter.jsx (o equivalente)
+#### [MODIFY] ProductDetails.jsx
+
+### 3 y 4. Carrito y Checkout (Frontend)
+Restauraremos el modal y mejoraremos el diseño.
+#### [MODIFY] ShoppingCart.jsx / Cart.jsx (Dependiendo del rol)
+#### [MODIFY] Checkout.jsx y Orden Confirmada
+
+### 5. Enrutamiento de Pedidos vs Ventas (Frontend y Backend)
+Ajustaremos los estados que se envían desde el Checkout y cómo el backend los procesa (si es necesario).
+#### [MODIFY] Lógica de submit en Checkout.jsx (Frontend)
+#### [MODIFY] controladores de ventas/pedidos (Backend, src/controllers/)
+
+### 6. Cards de Productos (Frontend)
+#### [MODIFY] CardProduct.jsx y FeaturedProducts.jsx (o Landing Home)
+
+### 7. Perfiles de Usuario (Frontend y Backend)
+#### [MODIFY] Componentes de Perfil (Profile.jsx, MyPurchases.jsx)
+#### [MODIFY] Rutas/Controladores de User Profile (Backend, si falta enviar datos completos)
+
+### 8. CRUD de Productos (Frontend)
+#### [MODIFY] ProductForm.jsx (Para validación de imagen y fix del input numérico de descuento)

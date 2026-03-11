@@ -3,8 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { InstructorLayout } from "../layout/InstructorLayout";
 import { CheckCircle, Package, Home, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
+import { getHomePath, getStoreHomePath } from "../../../../utils/roleHelpers";
 
-export const UsersOrderConfirm = () => {
+export const InstructorOrderConfirm = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -90,7 +93,7 @@ export const UsersOrderConfirm = () => {
           {/* Botones de acción */}
           <div className="flex gap-4 justify-center max-md:flex-col">
             <button
-              onClick={() => navigate("/users/store")}
+              onClick={() => navigate(getStoreHomePath(user))}
               className="flex items-center justify-center gap-2 px-8 py-4 bg-[var(--color-blue)] text-white rounded-full hover:opacity-90 transition shadow-lg font-semibold"
             >
               <ShoppingBag size={20} />
@@ -98,7 +101,7 @@ export const UsersOrderConfirm = () => {
             </button>
 
             <button
-              onClick={() => navigate("/users/home")}
+              onClick={() => navigate(getHomePath(user))}
               className="flex items-center justify-center gap-2 px-8 py-4 border-2 border-black/20 rounded-full hover:bg-gray-50 transition font-semibold"
             >
               <Home size={20} />
@@ -112,7 +115,7 @@ export const UsersOrderConfirm = () => {
               Serás redirigido a la tienda en {countdown} segundos...
             </p>
           )}
-          {countdown === 0 && navigate("/users/store")}
+          {countdown === 0 && navigate(getStoreHomePath(user))}
         </motion.div>
       </section>
     </InstructorLayout>

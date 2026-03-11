@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, Navigate } from "react-router-dom";
 import { Layout } from "../layout/Layout";
+import { AdminLayout } from "../admin/layout/AdminLayout";
+import { StudentLayout } from "../student/layout/StudentLayout";
+import { InstructorLayout } from "../instructor/layout/InstructorLayout";
+import { UsersLayout } from "../users/layout/UsersLayout";
+import { CustomLayout } from "../custom/layout/CustomLayout";
 import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle, ShoppingBag, Plus, Minus } from "lucide-react";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
-import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers";
+import { getStoreHomePath, getCheckoutPath, getProductDetailPath, getCartPath, getUserRoleSlug } from "../../../utils/roleHelpers";
 import { LoginRequiredModal } from "../components/LoginRequiredModal";
+import api from "../../../services/api";
 
 export const ProductDetailsContent = () => {
   const { id } = useParams();
@@ -28,11 +34,8 @@ export const ProductDetailsContent = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/productos/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProduct(data);
-        }
+        const response = await api.get(`/productos/${id}`);
+        setProduct(response.data);
       } catch (error) {
         console.error("Error fetching product details:", error);
       } finally {
@@ -60,7 +63,7 @@ export const ProductDetailsContent = () => {
     );
   }
 
-  const API_URL = "http://localhost:3000";
+  const API_URL = import.meta.env.VITE_REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
   const {
     nombre_producto,
@@ -143,7 +146,7 @@ export const ProductDetailsContent = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <Link to="/shoppingCart" className="block w-full text-center py-2.5 rounded-xl border border-gray-700 text-[#9CA3AF] font-bold text-xs hover:border-gray-500 hover:text-white transition-all uppercase tracking-wide">
+            <Link to={getCartPath(user)} className="block w-full text-center py-2.5 rounded-xl border border-gray-700 text-[#9CA3AF] font-bold text-xs hover:border-gray-500 hover:text-white transition-all uppercase tracking-wide">
               Ver carrito
             </Link>
             <button
@@ -199,11 +202,12 @@ export const ProductDetailsContent = () => {
 
         <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16">
           <div className="w-full lg:w-[55%] flex flex-col lg:flex-row-reverse gap-4">
-            <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[700px] overflow-hidden shadow-sm relative border border-gray-800/50">
+            {/* Main Image */}
+            <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[400px] lg:max-w-[400px] mx-auto overflow-hidden shadow-sm relative border border-gray-800/50 flex justify-center items-center">
               <img
                 src={allImages[selectedImageIndex]}
                 alt={nombre_producto}
-                className="w-full h-full object-cover transition-opacity duration-500"
+                className="w-full h-full object-contain p-4 transition-opacity duration-500"
               />
             </div>
 
@@ -254,6 +258,7 @@ export const ProductDetailsContent = () => {
               {descripcion}
             </p>
 
+            {/* Selectors */}
             {uniqueColors.length > 0 && (
               <div className="mb-8">
                 <span className="block text-xs font-bold text-[#9CA3AF] uppercase tracking-widest mb-4">Seleccionar Color</span>
@@ -261,13 +266,11 @@ export const ProductDetailsContent = () => {
                   {uniqueColors.map((c) => (
                     <button
                       key={c.id}
-                      onClick={() => {
-                        setSelectedColor(c);
-                        setSelectedSize(null);
-                        setQty(1);
-                      }}
-                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ring-offset-4 ring-offset-[#0B0F14] border border-gray-700/50 ${selectedColor?.id === c.id ? "ring-2 ring-[#1E3A8A] scale-110 shadow-lg shadow-[#1E3A8A]/20" : "hover:scale-110"}`}
-                      style={{ backgroundColor: c.hex || "#000" }}
+                      onClick={() => { setSelectedColor(c); setSelectedSize(null); setQty(1); }}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ring-offset-4 ring-offset-[#0B0F14] border border-gray-700/50
+                                        ${selectedColor?.id === c.id ? 'ring-2 ring-[#1E3A8A] scale-110 shadow-lg shadow-[#1E3A8A]/20' : 'hover:scale-110'}
+                                    `}
+                      style={{ backgroundColor: c.hex || '#000' }}
                       title={c.name}
                     >
                       {selectedColor?.id === c.id && <Check size={18} className="text-white invert mix-blend-difference" />}
@@ -292,7 +295,12 @@ export const ProductDetailsContent = () => {
                         key={s.id}
                         onClick={() => setSelectedSize(s)}
                         disabled={s.stock === 0}
-                        className={`min-w-[4rem] h-12 px-5 rounded-xl border flex items-center justify-center text-sm font-bold transition-all duration-300 ${selectedSize?.id === s.id ? "bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/30 scale-105" : "bg-[#121821] text-[#9CA3AF] border-gray-800 hover:border-gray-500 hover:text-white"} ${s.stock === 0 ? "opacity-30 cursor-not-allowed bg-black decoration-slice line-through" : ""}`}
+                        className={`min-w-[4rem] h-12 px-5 rounded-xl border flex items-center justify-center text-sm font-bold transition-all duration-300
+                                            ${selectedSize?.id === s.id
+                            ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/30 scale-105'
+                            : 'bg-[#121821] text-[#9CA3AF] border-gray-800 hover:border-gray-500 hover:text-white'}
+                                            ${s.stock === 0 ? 'opacity-30 cursor-not-allowed bg-black decoration-slice line-through' : ''}
+                                        `}
                       >
                         {s.name}
                       </button>
@@ -316,7 +324,7 @@ export const ProductDetailsContent = () => {
                   </button>
                   <span className="w-12 text-center font-bold text-white text-lg">{qty}</span>
                   <button
-                    onClick={() => setQty((q) => q + 1)}
+                    onClick={() => setQty(q => q + 1)}
                     disabled={currentVariant && qty >= currentVariant.stock}
                     className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-[#121821] hover:text-[#1E3A8A] text-[#9CA3AF] disabled:opacity-30 disabled:hover:text-[#9CA3AF] transition-colors"
                   >
@@ -356,7 +364,14 @@ export const ProductDetailsContent = () => {
   );
 };
 
-export const ProductDetails = () => {
+export const PublicProductDetail = () => {
+  const { user } = useAuth();
+  const { id } = useParams();
+
+  if (user && Object.keys(user).length > 0) {
+    return <Navigate to={getProductDetailPath(user, id)} replace />;
+  }
+
   return (
     <Layout>
       <ProductDetailsContent />
@@ -364,4 +379,32 @@ export const ProductDetails = () => {
   );
 };
 
-export default ProductDetails;
+export const AdminProductDetail = () => (
+  <AdminLayout>
+    <ProductDetailsContent />
+  </AdminLayout>
+);
+
+export const StudentProductDetail = () => (
+  <StudentLayout>
+    <ProductDetailsContent />
+  </StudentLayout>
+);
+
+export const InstructorProductDetail = () => (
+  <InstructorLayout>
+    <ProductDetailsContent />
+  </InstructorLayout>
+);
+
+export const UserProductDetail = () => (
+  <UsersLayout>
+    <ProductDetailsContent />
+  </UsersLayout>
+);
+
+export const CustomProductDetail = () => (
+  <CustomLayout>
+    <ProductDetailsContent />
+  </CustomLayout>
+);

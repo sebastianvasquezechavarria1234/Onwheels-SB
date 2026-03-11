@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { BtnLinkIcon } from "../../components/BtnLinkIcon"
 import { BtnLink } from "../../components/BtnLink"
+import { UserDropdown } from "../../components/UserDropdown"
 
 // Helper: wrapper para íconos con tooltip animado (blanco con texto negro y animación "pro")
 const IconWithTooltip = ({ label, children, className = "", onClick }) => {
@@ -191,7 +192,6 @@ export const AdminHeader = () => {
 
   return (
     <>
-      {/* HEADER FLOTANTE: idéntico a los otros headers */}
       <motion.header
         className="top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 pointer-events-none sticky top-0 mb-[-120px]"
         style={{ perspective: "1200px" }}
@@ -206,7 +206,6 @@ export const AdminHeader = () => {
             }
           `}
         >
-          {/* LOGO */}
           <Link to="/" className="flex items-center gap-2">
             <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
@@ -216,7 +215,6 @@ export const AdminHeader = () => {
             </span>
           </Link>
 
-          {/* NAV DESKTOP */}
           <nav className="hidden md:flex items-center gap-6">
             {items.map((it) => (
               <Link
@@ -239,9 +237,7 @@ export const AdminHeader = () => {
             ))}
           </nav>
 
-          {/* ACCIONES */}
           <div className="flex items-center gap-2">
-            {/* Dashboard destacado pero con el estilo del header ejemplo (círculo, coherente) */}
             <IconWithTooltip label="Dashboard">
               <Link
                 to="/admin/dashboard"
@@ -262,29 +258,9 @@ export const AdminHeader = () => {
               </BtnLinkIcon>
             </IconWithTooltip>
 
-            <IconWithTooltip label="Mi perfil">
-              <BtnLinkIcon
-                title=""
-                link="../admin/profile"
-                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
-              >
-                <User size={18} />
-              </BtnLinkIcon>
-            </IconWithTooltip>
+            {/* DROPDOWN REPLACES PROFILE & LOGOUT */}
+            <UserDropdown isScrolled={scrolled} />
 
-            <IconWithTooltip label="Cerrar sesión">
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="Cerrar sesión"
-                className="w-[60px] cursor-pointer h-[60px] bg-red-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
-                aria-label="Cerrar sesión"
-              >
-                <LogOut size={16} color="white" />
-              </button>
-            </IconWithTooltip>
-
-            {/* Botón de menú móvil */}
             <button
               type="button"
               onClick={() => setOpen(true)}
@@ -297,11 +273,9 @@ export const AdminHeader = () => {
         </div>
       </motion.header>
 
-      {/* MENÚ / SHEET - MOBILE (idéntico al pattern usado en los otros headers) */}
       <AnimatePresence>
         {open && (
           <>
-            {/* overlay (z-40) */}
             <motion.div
               className="fixed inset-0 z-40"
               initial="hidden"
@@ -315,7 +289,6 @@ export const AdminHeader = () => {
               <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
             </motion.div>
 
-            {/* drawer/ sheet centrado */}
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center px-4"
               initial={{ opacity: 0, x: "100%" }}
@@ -366,7 +339,6 @@ export const AdminHeader = () => {
                       </li>
                     ))}
 
-                    {/* Dashboard (opción adicional en el modal móvil) */}
                     <li>
                       <Link
                         to="/admin/dashboard"

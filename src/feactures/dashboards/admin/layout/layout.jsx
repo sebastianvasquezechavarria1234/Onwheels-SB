@@ -313,67 +313,40 @@ export const Layout = ({ children }) => {
 
       {/* CONTENT WITH HEADER */}
       <section className="flex-1 h-full overflow-hidden flex flex-col bg-slate-100/50">
-        {/* Global Header Container */}
-        <div className="px-3 md:px-5 pt-4 pb-1">
-          <header className="bg-white rounded-[1.25rem] px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[0_12px_30px_-10px_rgba(0,0,0,0.1)] border border-white/50">
-            <div className="relative group max-w-sm w-full">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search size={16} className="text-slate-400 group-focus-within:text-blue-800 transition-colors" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search task"
-                className="w-full pl-11 pr-11 py-1.5 bg-slate-50 border-none rounded-full text-xs focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-medium"
-              />
-              <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                <span className="text-[9px] font-black text-slate-400 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 italic">⌘ F</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <button className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-800 hover:bg-blue-50 transition-all relative">
-                  <Mail size={16} strokeWidth={2} />
-                  <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-blue-600 rounded-full border border-white shadow-sm"></span>
-                </button>
-                <button className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-800 hover:bg-blue-50 transition-all">
-                  <Bell size={16} strokeWidth={2} />
-                </button>
-              </div>
-
-              <div className="h-6 w-[1px] bg-slate-100 mx-1 hidden md:block"></div>
-
-              <div className="flex items-center gap-4 pl-2 group cursor-pointer">
-                <div className="flex flex-col items-end hidden sm:flex">
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-blue-800 transition-colors uppercase tracking-tight leading-tight">{userName}</span>
-                  <span className="text-[8px] text-slate-400 font-medium leading-none">{userEmail}</span>
-                </div>
-                <div className="relative">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
-                    <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
-                      alt="Profile"
-                      className="w-7 h-7 object-cover"
-                    />
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="p-1 px-2 text-slate-300 hover:text-red-500 transition-colors border border-transparent hover:border-red-50 hover:bg-red-50 rounded-lg"
-                  title="Salir"
-                >
-                  <LogOutIcon size={14} />
-                </button>
-              </div>
-            </div>
-          </header>
-        </div>
-
         {/* Dynamic Content Body with "White Table" effect */}
-        <div className="flex-1 overflow-hidden px-3 md:px-5 pb-5 pt-2">
+        <div className="flex-1 overflow-hidden p-3 md:p-5 pt-4 md:pt-5 relative flex flex-col">
+
+          {/* FLOATING HEADER (Top Right) */}
+          <div className="absolute top-4 md:top-6 right-4 md:right-6 z-30 flex items-center gap-3 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-sm border border-slate-100 group cursor-pointer transition-all hover:bg-white hover:shadow-md">
+            <div className="flex flex-col items-end hidden sm:flex">
+              <span className="text-[11px] font-bold text-slate-800 group-hover:text-blue-800 transition-colors uppercase tracking-tight leading-tight">{userName}</span>
+              <span className="text-[9px] text-slate-400 font-medium leading-none">{userEmail}</span>
+            </div>
+            <div className="relative">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
+                <img
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
+            </div>
+
+            <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
+
+            <button
+              onClick={handleLogout}
+              className="p-1 text-slate-400 hover:text-rose-500 transition-colors rounded-xl hover:bg-rose-50"
+              title="Cerrar sesión"
+            >
+              <LogOutIcon size={14} />
+            </button>
+          </div>
+
+          {/* Dynamic Content Body with "White Table" effect */}
           <motion.section
-            className="h-full overflow-y-auto bg-white rounded-[2rem] p-3 md:p-5 shadow-[0_15px_40px_-12px_rgba(0,0,0,0.12)] border border-white"
+            className="flex-1 overflow-hidden bg-white rounded-[2rem] p-3 md:p-5 shadow-[0_15px_40px_-12px_rgba(0,0,0,0.12)] border border-white flex flex-col"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}

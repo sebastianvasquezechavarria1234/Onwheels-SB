@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { UsersLayout } from "../layout/UsersLayout";
+import api from "../../../../services/api";
 
 const UsersPreinscriptions = () => {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -49,9 +50,7 @@ const UsersPreinscriptions = () => {
           return;
         }
 
-        const response = await axios.get("http://localhost:3000/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get("/auth/me");
         setCurrentUser(response.data);
         setLoading(false);
       } catch (err) {
@@ -139,7 +138,7 @@ const UsersPreinscriptions = () => {
         headers: { Authorization: `Bearer ${token}` }
       };
 
-      const response = await axios.post("http://localhost:3000/api/preinscripciones", payload, config);
+      const response = await api.post("/preinscripciones", payload);
 
       if (response.status === 201) {
         // Verificar si la respuesta trae credenciales

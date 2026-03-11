@@ -16,7 +16,7 @@ export const useCheckout = () => {
     const [form, setForm] = useState({
         direccion: "",
         telefono: "",
-        metodo_pago: "Efectivo",
+        metodo_pago: "Contraentrega",
         instrucciones_entrega: "",
     });
 
@@ -146,6 +146,7 @@ export const useCheckout = () => {
             const ventaPayload = {
                 id_usuario: user.id_usuario, // Importante para que el controller busque/cree el cliente
                 metodo_pago: form.metodo_pago,
+                estado: form.metodo_pago === "Tarjeta" ? "Pagado" : "Pendiente",
                 direccion: form.instrucciones_entrega
                     ? `${form.direccion} | Nota: ${form.instrucciones_entrega}`
                     : form.direccion, // Se pasarán al update/create de cliente

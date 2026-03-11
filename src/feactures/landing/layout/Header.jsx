@@ -4,28 +4,29 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingCart, User } from "lucide-react";
 import { BtnLinkIcon } from "../components/BtnLinkIcon";
+import { UserDropdown } from "../components/UserDropdown";
+import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 
 export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
 
-  // Detect Scroll for Floating/Accordion Effect
   useEffect(() => {
-    const handleScroll = () => {
-      // Trigger effect earlier for smoother response
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const navLinks = [
     { title: "Inicio", path: "/" },
     { title: "Tienda", path: "/store" },
-    { title: "Clases", path: "/training" },
     { title: "Eventos", path: "/events" },
+    { title: "Clases", path: "/training" },
+    { title: "Nosotros", path: "/about" },
   ];
+
 
   return (
     <>
@@ -83,16 +84,20 @@ export const Header = () => {
               <ShoppingCart size={scrolled ? 18 : 20} />
             </BtnLinkIcon>
 
-            <Link
-              to="/login"
-              className={`
-                bg-white text-black font-bold hover:bg-[var(--color-blue)] hover:text-white transition-all uppercase
-                ${scrolled ? "px-5 py-2 text-[10px]" : "px-6 py-2.5 text-xs"}
-                rounded-full shadow-lg hover:shadow-[var(--color-blue)]/50
-              `}
-            >
-              Ingresar
-            </Link>
+            {isAuthenticated ? (
+              <UserDropdown isScrolled={scrolled} />
+            ) : (
+              <Link
+                to="/login"
+                className={`
+                  bg-white text-black font-bold hover:bg-[var(--color-blue)] hover:text-white transition-all uppercase
+                  ${scrolled ? "px-5 py-2 text-[10px]" : "px-6 py-2.5 text-xs"}
+                  rounded-full shadow-lg hover:shadow-[var(--color-blue)]/50
+                `}
+              >
+                Ingresar
+              </Link>
+            )}
 
             {/* Mobile Menu Toggle */}
             <button

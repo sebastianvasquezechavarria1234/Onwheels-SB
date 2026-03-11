@@ -4,8 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
+import { UserDropdown } from "../../components/UserDropdown";
 
-// Helper: wrapper para íconos con tooltip animado (blanco con texto negro y animación "pro")
 const IconWithTooltip = ({ label, children, className = "", onClick }) => {
   const [hover, setHover] = useState(false);
 
@@ -53,7 +53,6 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
     >
-      {/* elemento visible (ícono / button / link) */}
       <motion.div
         onClick={onClick}
         aria-describedby={`tooltip-${label.replace(/\s+/g, "-")}`}
@@ -65,7 +64,6 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
         {children}
       </motion.div>
 
-      {/* tooltip animado blanco con texto negro y flecha encima del texto */}
       <AnimatePresence>
         {hover && (
           <motion.div
@@ -80,20 +78,18 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
             style={{ pointerEvents: "none", perspective: 800 }}
           >
             <div className="inline-flex flex-col items-center">
-              {/* Arrow (triángulo) ARRIBA del texto, pegado al cuadro */}
               <svg
                 width="16"
                 height="8"
                 viewBox="0 0 16 8"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                style={{ marginBottom: -6 }} /* pega la flecha al cuadro del texto */
+                style={{ marginBottom: -6 }}
                 aria-hidden="true"
               >
                 <path d="M8 0 L16 8 H0 Z" fill="white" stroke="rgba(0,0,0,0.06)" strokeWidth="0.6" />
               </svg>
 
-              {/* Texto un poco más gordito y en italic */}
               <div
                 className="inline-block rounded-lg px-3 py-1.5 text-[13px] font-semibold italic shadow-[0_8px_30px_rgba(16,24,40,0.18)] bg-white text-black"
                 style={{ minWidth: 96, textAlign: "center" }}
@@ -108,10 +104,9 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
   );
 };
 
-// Header con estilos basados en el header de ejemplo (flotante, contenedor redondeado centrado)
 export const StudentHeader = () => {
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false); // solo para efecto visual como en el ejemplo
+  const [scrolled, setScrolled] = useState(false);
   const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
   const modalRef = useRef(null);
@@ -124,10 +119,8 @@ export const StudentHeader = () => {
   }, []);
 
   useEffect(() => {
-    // Bloqueo de scroll cuando modal abierto
     document.body.style.overflow = open ? "hidden" : "";
 
-    // foco automático al abrir
     if (open) {
       const t = setTimeout(() => {
         firstLinkRef.current?.focus();
@@ -144,7 +137,6 @@ export const StudentHeader = () => {
         return;
       }
 
-      // Simple focus trap: si el modal está abierto, cicla entre primer link y el botón cerrar
       if (e.key === "Tab") {
         const focusable = modalRef.current?.querySelectorAll(
           'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -168,11 +160,8 @@ export const StudentHeader = () => {
   }, [open]);
 
   const handleLogout = () => {
-    // Eliminar token y usuario del localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-    // Redirigir a login
     navigate("/login");
   };
 
@@ -202,7 +191,6 @@ export const StudentHeader = () => {
 
   return (
     <>
-      {/* HEADER FLOTANTE - estilo igual al ejemplo */}
       <motion.header
         className="top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 pointer-events-none sticky top-0 mb-[-120px]"
         style={{ perspective: "1200px" }}
@@ -217,7 +205,6 @@ export const StudentHeader = () => {
             }
           `}
         >
-          {/* LOGO */}
           <Link to="../student/home" className="flex items-center gap-2">
             <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
@@ -227,7 +214,6 @@ export const StudentHeader = () => {
             </span>
           </Link>
 
-          {/* NAV DESKTOP */}
           <nav className="hidden md:flex items-center gap-6">
             {items.map((it) => (
               <Link
@@ -250,7 +236,6 @@ export const StudentHeader = () => {
             ))}
           </nav>
 
-          {/* ACCIONES */}
           <div className="flex items-center gap-2">
             <IconWithTooltip label="Carrito de compras">
               <BtnLinkIcon
@@ -262,29 +247,8 @@ export const StudentHeader = () => {
               </BtnLinkIcon>
             </IconWithTooltip>
 
-            <IconWithTooltip label="Mi perfil">
-              <BtnLinkIcon
-                title=""
-                link="../student/setting"
-                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
-              >
-                <User size={18} />
-              </BtnLinkIcon>
-            </IconWithTooltip>
+            <UserDropdown isScrolled={scrolled} />
 
-            <IconWithTooltip label="Cerrar sesión">
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="Cerrar sesión"
-                className="w-[60px] cursor-pointer h-[60px] bg-red-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform max-2xl:w-[45px]! max-2xl:h-[45px]! max-xld:w-[30px]! max-md:h-[30px]!"
-                aria-label="Cerrar sesión"
-              >
-                <LogOut size={16} color="white" />
-              </button>
-            </IconWithTooltip>
-
-            {/* Botón de menú móvil */}
             <button
               type="button"
               onClick={() => setOpen(true)}
@@ -297,11 +261,9 @@ export const StudentHeader = () => {
         </div>
       </motion.header>
 
-      {/* MENÚ / SHEET - MOBILE (estilo acorde al ejemplo: drawer/full overlay) */}
       <AnimatePresence>
         {open && (
           <>
-            {/* overlay (z-40) */}
             <motion.div
               className="fixed inset-0 z-40"
               initial="hidden"
@@ -315,7 +277,6 @@ export const StudentHeader = () => {
               <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
             </motion.div>
 
-            {/* drawer desde la derecha, centrado en pantalla (similar al menú móvil del ejemplo) */}
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center px-4"
               initial={{ opacity: 0, x: "100%" }}
@@ -369,7 +330,6 @@ export const StudentHeader = () => {
                 </nav>
 
                 <div className="mt-6 flex items-center gap-3 justify-end">
-                  {/* BOTÓN DE CERRAR SESIÓN EN EL MODAL CON ESTILOS CONSISTENTES */}
                   <button
                     onClick={() => {
                       handleLogout();

@@ -1,10 +1,13 @@
 
 import React, { useEffect, useState } from "react";
-import { ArrowUpRight, Star, ShoppingBag } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowUpRight, Star, ShoppingBag, Eye } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../../../../services/api";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
+import { getStoreHomePath, getProductDetailPath } from "../../../../utils/roleHelpers";
 
 export const FeaturedProducts = () => {
+    const { user } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -29,12 +32,12 @@ export const FeaturedProducts = () => {
 
         return (
             <Link
-                to={`/store/product/${product?.id_producto}`}
+                to={getProductDetailPath(user, product?.id_producto)}
                 className="group flex flex-col gap-4 bg-transparent transition-all duration-300 hover:-translate-y-1"
             >
+                {/* ... existing content ... */}
                 {/* Image Container - Light */}
                 <div className="relative aspect-square overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm group-hover:border-(--color-blue)/50 transition-all">
-
                     {/* Badge */}
                     {badge && (
                         <span className={`absolute top-4 left-4 z-10 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm
@@ -70,15 +73,11 @@ export const FeaturedProducts = () => {
                         <span className="text-[10px] text-slate-400 ml-2">(12 reviews)</span>
                     </div>
 
-                    {/* Add to Cart Button */}
+                    {/* Add to Cart Button -> Redirect to detail view */}
                     <button
-                        className="mt-3 w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider py-2 rounded-lg hover:bg-(--color-blue) transition-all shadow-md z-20 relative"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            console.log("Add to cart", product?.id_producto);
-                        }}
+                        className="mt-3 w-full flex items-center justify-center gap-2 bg-[#1E3A8A] text-white font-bold text-[10px] uppercase tracking-wider py-2 rounded-lg hover:bg-blue-800 transition-all shadow-md z-20 relative group-hover:shadow-lg group-hover:shadow-[#1E3A8A]/30"
                     >
-                        Agregar <ShoppingBag size={12} />
+                        Ver Detalles <Eye size={12} />
                     </button>
                 </div>
             </Link>
@@ -87,11 +86,11 @@ export const FeaturedProducts = () => {
 
     return (
         <section className="bg-gray-50 py-24 px-4 relative z-0">
-            {/* Background decorations - Lighter */}
+            {/* Background decorations - Lighter ... */}
             <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[60%] h-[300px] bg-(--color-blue)/5 blur-[120px] rounded-full pointer-events-none" />
 
             <div className="max-w-[1200px] mx-auto relative z-10">
-                {/* Section Header */}
+                {/* ... existing content ... */}
                 <div className="flex flex-col items-center mb-16 text-center">
                     <h2 className="text-3xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter mb-4">
                         Our Featured Items
@@ -122,7 +121,7 @@ export const FeaturedProducts = () => {
 
                 <div className="flex justify-center mt-20">
                     <Link
-                        to="/store"
+                        to={getStoreHomePath(user)}
                         className="
                             group flex items-center gap-2 px-8 py-3 
                             bg-slate-900 text-white font-bold uppercase tracking-widest text-xs rounded-full 

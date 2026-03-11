@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, RotateCcw, Hash, ArrowUpDown, ChevronLeft, ChevronRight, AlertCircle, ShieldCheck } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, Download, SlidersHorizontal, ChevronRight, ChevronLeft, ShieldCheck } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getRoles,
@@ -30,7 +30,10 @@ const Roles = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+  const [filterType, setFilterType] = useState("Todos los roles");
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -49,16 +52,30 @@ const Roles = () => {
   }, []);
 
   useEffect(() => {
-    fetchRoles();
     fetchPermisosTotales();
   }, []);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchRoles();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, currentPage]);
 
   const fetchRoles = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getRoles();
-      setRoles(Array.isArray(data) ? data : []);
+      const res = await getRoles({ page: currentPage, limit: itemsPerPage, search });
+      if (res && res.data) {
+        setRoles(res.data);
+        setTotalPages(res.totalPages || 1);
+        setTotalItems(res.total || 0);
+      } else {
+        setRoles(Array.isArray(res) ? res : []);
+        setTotalPages(1);
+        setTotalItems(Array.isArray(res) ? res.length : 0);
+      }
     } catch (err) {
       setError("Error al cargar los roles. Inténtalo de nuevo.");
       console.error(err);
@@ -219,122 +236,173 @@ const Roles = () => {
     }
   };
 
-  const rolesFiltrados = roles.filter(r =>
-    r.nombre_rol?.toLowerCase().includes(search.toLowerCase()) ||
-    r.descripcion?.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleDownload = () => {
+    // Generate CSV from current items
+    if (!roles || roles.length === 0) return;
+    const header = ["ID", "Nombre Rol", "Descripcion", "Estado"];
+    const csvData = currentItems.map(r => [
+      r.id_rol,
+      r.nombre_rol,
+      r.descripcion || "",
+      r.estado ? "Activo" : "Inactivo"
+    ].join(","));
 
-  const totalPages = Math.max(1, Math.ceil(rolesFiltrados.length / itemsPerPage));
-  const currentItems = rolesFiltrados.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...csvData].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "roles_report_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
+  const currentItems = roles.filter(r => {
+    if (filterType === "Activos") return r.estado === true;
+    if (filterType === "Inactivos") return r.estado === false;
+    return true; // Todos los roles
+  });
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white overflow-hidden">
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
+      <div className="flex flex-col h-full bg-white overflow-hidden p-2 md:p-4">
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+          <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Gestión de Roles
+          </h2>
 
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-              Gestión de Roles
-            </h2>
-
-            {/* Compact Stats */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
-                  <Hash size={14} className="text-blue-600" />
-                  <span className="text-xs font-bold">{rolesFiltrados.length}</span>
-                </div>
-              </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Search Bar */}
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar roles..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 transition-all text-slate-700 placeholder:text-slate-400"
+              />
             </div>
-          </div>
 
-          {/* Row 2: Active Toolbar */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar roles..."
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
-                />
-              </div>
-              <button
-                onClick={() => { setModalType("add"); setFormErrors({}); }}
-                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+            {/* Filter Dropdown */}
+            <div className="relative hidden md:block">
+              <select
+                value={filterType}
+                onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+                className="appearance-none bg-white border border-slate-200 text-slate-500 py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 cursor-pointer"
               >
-                <Plus size={18} />
-                Nuevo Rol
-              </button>
+                <option value="Todos los roles">Todos los roles</option>
+                <option value="Activos">Activos</option>
+                <option value="Inactivos">Inactivos</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+              </div>
             </div>
+
+            {/* Download Button */}
+            <button
+              onClick={handleDownload}
+              className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
+            >
+              <Download size={20} />
+            </button>
+
+            {/* Create Button */}
+            <button
+              onClick={() => { setModalType("add"); setFormErrors({}); }}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#040529] hover:bg-black text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+            >
+              <Plus size={18} />
+              Crear Rol
+            </button>
           </div>
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden font-primary">
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
-                  <tr>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">Nombre del Rol</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">Descripción</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-400 text-sm">Cargando roles...</td></tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-400 italic font-primary">No se encontraron roles.</td></tr>
-                  ) : (
-                    currentItems.map((r) => (
-                      <tr key={r.id_rol} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-6 py-4 text-xs font-bold text-gray-400">#{r.id_rol}</td>
-                        <td className="px-6 py-4 font-bold text-[#040529] text-sm">{r.nombre_rol}</td>
-                        <td className="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">{r.descripcion || "—"}</td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                            r.estado ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-700 border border-red-100"
-                          )}>
-                            {r.estado ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => openPermisos(r)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Permisos"><Key size={16} /></button>
-                            <button onClick={() => openEdit(r)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={16} /></button>
-                            <button onClick={() => handleDelete(r)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 size={16} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Footer */}
-            {totalPages > 1 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">Mostrando {currentItems.length} de {rolesFiltrados.length}</p>
-                <div className="flex items-center gap-2">
-                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 shadow-sm"><ChevronLeft className="h-4 w-4" /></button>
-                  <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 shadow-sm"><ChevronRight className="h-4 w-4" /></button>
-                </div>
-              </div>
-            )}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10">
+                <tr>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide rounded-tl-xl w-[10%]">ID</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[25%]">Nombre del Rol</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[35%]">Descripción</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-center w-[15%]">Estado</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-right rounded-tr-xl w-[15%]">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-400 text-sm">Cargando roles...</td></tr>
+                ) : currentItems.length === 0 ? (
+                  <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-400 italic">No se encontraron roles.</td></tr>
+                ) : (
+                  currentItems.map((r, i) => (
+                    <tr key={r.id_rol} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-3 text-sm font-medium text-slate-500">#{r.id_rol}</td>
+                      <td className="px-6 py-3 font-bold text-[#040529] text-base">{r.nombre_rol}</td>
+                      <td className="px-6 py-3 text-sm text-slate-500 truncate max-w-[200px]">{r.descripcion || "—"}</td>
+                      <td className="px-6 py-3">
+                        <div className="flex justify-center">
+                          {r.estado ? (
+                            <span className="px-3 py-1 bg-green-50 text-emerald-600 rounded-full text-xs font-bold flex items-center gap-2 border border-green-100">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                              Activo
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold flex items-center gap-2 border border-rose-100">
+                              <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                              Inactivo
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => openPermisos(r)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Permisos">
+                            <Key size={14} />
+                          </button>
+                          <button onClick={() => openEdit(r)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Editar">
+                            <Pencil size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(r)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 transition shadow-sm" title="Eliminar">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
+
+          {/* Pagination Footer */}
+          {totalPages > 0 && (
+            <div className="border-t border-slate-100 px-6 py-4 bg-white flex items-center justify-between mt-auto">
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#040529]">{currentPage}</span> de <span className="text-[#040529]">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
