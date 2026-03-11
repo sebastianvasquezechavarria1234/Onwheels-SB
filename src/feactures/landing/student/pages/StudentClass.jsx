@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { useState, useEffect } from "react"
 import { CheckCircle2, Users, Clock, Star, Zap, Trophy, Target, BookOpen, MapPin, Calendar } from "lucide-react"
 import { StudentLayout } from "../layout/StudentLayout";
@@ -341,16 +340,6 @@ export const StudentClass = () => {
         </div>
       </StudentLayout>
     </>
-=======
-import { ClassContent } from "../../pages/Class"
-import { StudentLayout } from "../layout/StudentLayout";
-
-export const StudentClass = () => {
-  return (
-    <StudentLayout>
-      <ClassContent />
-    </StudentLayout>
->>>>>>> bbbbabf265aa2877c2c8feab7570b578ff3ace28
   )
 }
 
