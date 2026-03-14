@@ -22,7 +22,7 @@ const Roles = () => {
   const [permisosTotales, setPermisosTotales] = useState([]);
   const [permisosAsignados, setPermisosAsignados] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [modalType, setModalType] = useState(null);
+  const [modalType, setModalType] = useState(null); // 'add', 'edit', 'permisos', 'delete'
   const [editForm, setEditForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
   const [addForm, setAddForm] = useState({ nombre_rol: "", descripcion: "", estado: true });
   const [formErrors, setFormErrors] = useState({});
@@ -175,7 +175,8 @@ const Roles = () => {
       fetchRoles();
       closeModal();
     } catch (err) {
-      showNotification("Error al actualizar el rol", "error");
+      const errMsg = err.response?.data?.mensaje || "Error al actualizar el rol";
+      showNotification(errMsg, "error");
     }
   };
 
@@ -189,19 +190,31 @@ const Roles = () => {
       fetchRoles();
       closeModal();
     } catch (err) {
-      showNotification("Error al crear el rol", "error");
+      const errMsg = err.response?.data?.mensaje || "Error al crear el rol";
+      showNotification(errMsg, "error");
     }
   };
 
-  const handleDelete = async (rol) => {
-    if (window.confirm(`¿Estás seguro de eliminar el rol "${rol.nombre_rol}"?`)) {
-      try {
-        await deleteRole(rol.id_rol);
-        showNotification("Rol eliminado");
-        fetchRoles();
-      } catch (err) {
-        showNotification("Error al eliminar", "error");
-      }
+  const confirmDelete = (rol) => {
+    setSelected(rol);
+    setModalType("delete");
+  };
+
+  const handleDelete = async () => {
+    if (!selected) return;
+    try {
+      setLoading(true);
+      await deleteRole(selected.id_rol);
+      showNotification("Rol eliminado correctamente");
+      fetchRoles();
+      closeModal();
+    } catch (err) {
+      // Mostrar el error exacto del backend (ej: "No se pueden eliminar roles oficiales")
+      const errMsg = err.response?.data?.mensaje || "Error al eliminar el rol";
+      showNotification(errMsg, "error");
+      closeModal();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -339,41 +352,59 @@ const Roles = () => {
                 ) : currentItems.length === 0 ? (
                   <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-400 italic">No se encontraron roles.</td></tr>
                 ) : (
-                  currentItems.map((r, i) => (
-                    <tr key={r.id_rol} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-3 text-sm font-medium text-slate-500">#{r.id_rol}</td>
-                      <td className="px-6 py-3 font-bold text-[#040529] text-base">{r.nombre_rol}</td>
-                      <td className="px-6 py-3 text-sm text-slate-500 truncate max-w-[200px]">{r.descripcion || "—"}</td>
-                      <td className="px-6 py-3">
-                        <div className="flex justify-center">
-                          {r.estado ? (
-                            <span className="px-3 py-1 bg-green-50 text-emerald-600 rounded-full text-xs font-bold flex items-center gap-2 border border-green-100">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                              Activo
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold flex items-center gap-2 border border-rose-100">
-                              <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                              Inactivo
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => openPermisos(r)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Permisos">
-                            <Key size={14} />
-                          </button>
-                          <button onClick={() => openEdit(r)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Editar">
-                            <Pencil size={14} />
-                          </button>
-                          <button onClick={() => handleDelete(r)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 transition shadow-sm" title="Eliminar">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  currentItems.map((r, i) => {
+                    const isOfficial = [3, 9, 10, 12].includes(r.id_rol);
+                            return (
+                              <tr key={r.id_rol} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-6 py-3 text-sm font-medium text-slate-500">#{r.id_rol}</td>
+                                <td className="px-6 py-3 font-bold text-[#040529] text-base">{r.nombre_rol}</td>
+                                <td className="px-6 py-3 text-sm text-slate-500 truncate max-w-[200px]">{r.descripcion || "—"}</td>
+                                <td className="px-6 py-3">
+                                  <div className="flex justify-center">
+                                    {r.estado ? (
+                                      <span className="px-3 py-1 bg-green-50 text-emerald-600 rounded-full text-xs font-bold flex items-center gap-2 border border-green-100">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                        Activo
+                                      </span>
+                                    ) : (
+                                      <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold flex items-center gap-2 border border-rose-100">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                                        Inactivo
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-3 text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <button 
+                                      onClick={() => openPermisos(r)} 
+                                      disabled={isOfficial}
+                                      className={cn("w-8 h-8 flex items-center justify-center rounded-xl border transition shadow-sm", isOfficial ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed" : "bg-white border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50")} 
+                                      title={isOfficial ? "Rol protegido del sistema" : "Permisos"}
+                                    >
+                                      <Key size={14} />
+                                    </button>
+                                    <button 
+                                      onClick={() => openEdit(r)} 
+                                      disabled={isOfficial}
+                                      className={cn("w-8 h-8 flex items-center justify-center rounded-xl border transition shadow-sm", isOfficial ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed" : "bg-white border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50")} 
+                                      title={isOfficial ? "Rol protegido del sistema" : "Editar"}
+                                    >
+                                      <Pencil size={14} />
+                                    </button>
+                                    <button 
+                                      onClick={() => confirmDelete(r)} 
+                                      disabled={isOfficial}
+                                      className={cn("w-8 h-8 flex items-center justify-center rounded-xl border transition shadow-sm", isOfficial ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed" : "bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100")} 
+                                      title={isOfficial ? "Rol protegido del sistema" : "Eliminar"}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
                 )}
               </tbody>
             </table>
@@ -415,7 +446,7 @@ const Roles = () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {modalType && (
+        {modalType && modalType !== "delete" && (
           <motion.div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
             <motion.div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
               <div className="flex h-[550px]">
@@ -482,6 +513,32 @@ const Roles = () => {
                     {modalType === "edit" && <button onClick={saveEdit} className="px-6 py-2 bg-[#040529] text-white rounded-xl shadow-md font-bold text-xs uppercase tracking-wider">Actualizar Rol</button>}
                     {modalType === "permisos" && <button onClick={guardarPermisos} className="px-6 py-2 bg-[#040529] text-white rounded-xl shadow-md font-bold text-xs uppercase tracking-wider flex items-center gap-2"><Save size={14} /> Guardar Permisos</button>}
                   </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        
+        {/* Delete Confirmation Modal */}
+        {modalType === "delete" && selected && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+            <motion.div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 mx-auto bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-500">
+                  <Trash2 size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-[#040529] mb-2">Eliminar Rol</h3>
+                <p className="text-sm text-gray-500 mb-6 font-medium">
+                  ¿Estás seguro que deseas eliminar el rol <span className="font-bold text-[#040529]">"{selected.nombre_rol}"</span>?
+                  Esta acción no se puede deshacer.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={closeModal} disabled={loading} className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition min-w-[100px]">
+                    Cancelar
+                  </button>
+                  <button onClick={handleDelete} disabled={loading} className="px-5 py-2.5 rounded-xl bg-rose-500 text-white font-bold text-sm hover:bg-rose-600 transition shadow-md min-w-[100px] flex justify-center items-center">
+                    {loading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : "Eliminar"}
+                  </button>
                 </div>
               </div>
             </motion.div>

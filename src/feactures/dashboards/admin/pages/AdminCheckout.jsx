@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Check, AlertTriangle, ShoppingBag, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCheckout } from "../../../../hooks/useCheckout";
 
 export const AdminCheckout = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const {
         cart,
         loading,
@@ -30,7 +32,7 @@ export const AdminCheckout = () => {
         if (result.success) {
             showNotification("¡Compra realizada exitosamente!", "success");
             setTimeout(() => {
-                navigate("/admin/dashboard");
+                navigate(`${basePath}/dashboard`);
             }, 1500);
         } else {
             showNotification(result.message, "error");
@@ -50,7 +52,7 @@ export const AdminCheckout = () => {
             <div className="pt-24 min-h-screen flex flex-col items-center justify-center bg-[#0B0F14] text-white">
                 <ShoppingBag size={48} className="text-gray-500 mb-6" />
                 <h3 className="text-2xl font-black mb-4">El carrito está vacío</h3>
-                <button onClick={() => navigate("/admin/shoppingCart")} className="text-[#1E3A8A] hover:underline font-bold">
+                <button onClick={() => navigate(`${basePath}/shoppingCart`)} className="text-[#1E3A8A] hover:underline font-bold">
                     Volver al carrito
                 </button>
             </div>
@@ -64,7 +66,7 @@ export const AdminCheckout = () => {
                     <div className="w-[65%] max-lg:w-full">
                         <div className="mb-6">
                             <button
-                                onClick={() => navigate("/admin/shoppingCart")}
+                                onClick={() => navigate(`${basePath}/shoppingCart`)}
                                 className="flex items-center gap-2 text-[#9CA3AF] hover:text-white mb-6 tracking-wider text-xs font-bold transition-colors"
                             >
                                 <ArrowLeft size={16} />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Eye, Edit, Trash2, Search, Plus, X, ChevronLeft, ChevronRight, Hash, User, Calendar, BookOpen, AlertTriangle } from "lucide-react";
+import { Eye, Edit, Trash2, Search, Plus, X, ChevronLeft, ChevronRight, Hash, User, Calendar, BookOpen, AlertTriangle, DollarSign, CheckCircle, RefreshCw, ClipboardList, Pause, Play, MoreVertical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getMatriculas,
@@ -19,8 +19,18 @@ const MatriculasAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState(null); // "details" | "delete" | "editar" | "nueva"
+  const [modal, setModal] = useState(null); // "details" | "delete" | "editar" | "nueva" | "pagos" | "registrar_pago" | "finalizar"
   const [selectedMatricula, setSelectedMatricula] = useState(null);
+  
+  const [pagos, setPagos] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingPagos, setLoadingPagos] = useState(false);
+  const [isSubmittingPago, setIsSubmittingPago] = useState(false);
+  const [formPago, setFormPago] = useState({ monto: "", nota: "", fecha: new Date().toISOString().split("T")[0] });
+  
+  const [historialEstudiante, setHistorialEstudiante] = useState([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(false);
+  const [motivoPausa, setMotivoPausa] = useState("");
 
   // Datos para formularios
   const [clases, setClases] = useState([]);
@@ -50,6 +60,13 @@ const MatriculasAdmin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const showNotification = useCallback((message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -178,6 +195,94 @@ const MatriculasAdmin = () => {
     }
   };
 
+  const fetchPagos = async (id_matricula) => {
+    try {
+      setLoadingPagos(true);
+      const res = await api.get(`/matriculas/${id_matricula}/pagos`);
+      setPagos(res.data);
+    } catch (error) {
+      showNotification("Error al cargar pagos", "error");
+    } finally {
+      setLoadingPagos(false);
+    }
+  };
+
+  const handleRegistrarPago = async () => {
+    try {
+      setIsSubmittingPago(true);
+      const saldoPendiente = selectedMatricula ? Number(selectedMatricula.precio_plan) - Number(selectedMatricula.total_pagado) : 0;
+      
+      if (!formPago.monto || formPago.monto <= 0) {
+        showNotification("Monto inválido", "error");
+        return;
+      }
+      
+      if (Number(formPago.monto) > saldoPendiente) {
+        showNotification(`El pago excede el saldo de $${saldoPendiente}`, "error");
+        return;
+      }
+
+      await api.post(`/matriculas/${selectedMatricula.id_matricula}/pagos`, formPago);
+      showNotification("Pago registrado exitosamente");
+      fetchMatriculas();
+      closeModal();
+    } catch (error) {
+      showNotification("Error al registrar pago", "error");
+    } finally {
+      setIsSubmittingPago(false);
+    }
+  };
+
+  const handleFinalizarMatricula = async () => {
+    try {
+      await updateMatricula(selectedMatricula.id_matricula, { estado: "Finalizada" });
+      showNotification("Matrícula finalizada");
+      fetchMatriculas();
+      closeModal();
+    } catch (error) {
+      showNotification("Error al finalizar", "error");
+    }
+  };
+
+  const fetchHistorialEstudiante = useCallback(async (id_estudiante) => {
+    try {
+      setLoadingHistorial(true);
+      const res = await api.get(`/matriculas/estudiante/${id_estudiante}`);
+      setHistorialEstudiante(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error al cargar historial del estudiante:", err);
+      showNotification("Error al cargar el expediente", "error");
+    } finally {
+      setLoadingHistorial(false);
+    }
+  }, [showNotification]);
+
+  const handlePausar = async () => {
+    try {
+      if (!motivoPausa.trim()) {
+        showNotification("Debes ingresar un motivo para pausar", "error");
+        return;
+      }
+      await api.post(`/matriculas/${selectedMatricula.id_matricula}/pausar`, { motivo: motivoPausa });
+      showNotification("Matrícula pausada correctamente");
+      setMotivoPausa("");
+      closeModal();
+      fetchMatriculas();
+    } catch (error) {
+      showNotification(error.response?.data?.mensaje || "Error al pausar", "error");
+    }
+  };
+
+  const handleReanudar = async (id) => {
+    try {
+      await api.post(`/matriculas/${id}/reanudar`);
+      showNotification("Matrícula reanudada correctamente (vigencia extendida)");
+      fetchMatriculas();
+    } catch (error) {
+      showNotification(error.response?.data?.mensaje || "Error al reanudar", "error");
+    }
+  };
+
   const filtered = matriculas.filter(m =>
     (m.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
     (m.documento || "").includes(search) ||
@@ -235,6 +340,8 @@ const MatriculasAdmin = () => {
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Estudiante</th>
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Clase / Nivel</th>
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Plan</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Fechas</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Pagos / Saldo</th>
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
                 </tr>
@@ -270,38 +377,177 @@ const MatriculasAdmin = () => {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-center">
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-[10px] font-bold border transition-colors capitalize",
-                          m.estado === 'Activa' ? 'bg-green-50 text-green-600 border-green-200' :
-                            m.estado === 'Vencida' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                              'bg-red-50 text-red-600 border-red-200'
-                        )}>
+                        <div className="flex flex-col items-center">
+                          <span className={cn(
+                            "text-[10px] font-medium whitespace-nowrap",
+                            m.fecha_fin && new Date(m.fecha_fin) < new Date(Date.now() + 7*24*60*60*1000)
+                              ? "text-amber-500 font-bold" : "text-slate-500"
+                          )}>Inicio: {m.fecha_inicio ? new Date(m.fecha_inicio).toLocaleDateString() : '-'}</span>
+                          <span className={cn(
+                            "text-[10px] font-medium whitespace-nowrap",
+                            m.fecha_fin && new Date(m.fecha_fin) < new Date()
+                              ? "text-red-500 font-bold" 
+                              : m.fecha_fin && new Date(m.fecha_fin) < new Date(Date.now() + 7*24*60*60*1000)
+                              ? "text-amber-500 font-bold" : "text-slate-500"
+                          )}>Fin: {m.fecha_fin ? new Date(m.fecha_fin).toLocaleDateString() : '-'}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex flex-col items-end">
+                          <span className="text-[11px] font-bold text-green-600">Total: ${Number(m.total_pagado || 0).toLocaleString()}</span>
+                          <span className="text-[10px] font-bold text-red-500">Saldo: ${(Number(m.precio_plan) || Number(m.precio) || 0) - Number(m.total_pagado || 0)}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span 
+                          className={cn(
+                            "px-3 py-1 rounded-full text-[10px] font-bold border transition-colors capitalize",
+                            m.estado === 'Activa' ? 'bg-green-50 text-green-600 border-green-200' :
+                              m.estado === 'Vencida' ? 'bg-red-50 text-red-600 border-red-200' :
+                                m.estado === 'Pausada' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                  'bg-slate-50 text-slate-500 border-slate-200'
+                          )}
+                          title={m.estado === 'Pausada' ? `Motivo: ${m.motivo_pausa || 'No especificado'}` : ''}
+                        >
                           {m.estado}
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* 4 ACCIONES PRINCIPALES */}
                           <button
                             onClick={() => openModal("details", m)}
-                            className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
+                            className="p-1.5 flex items-center justify-center rounded-lg bg-slate-50 text-slate-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-slate-100"
                             title="Ver Detalle"
                           >
-                            <Eye size={16} />
+                            <Eye size={14} />
                           </button>
+                          
                           <button
                             onClick={() => openModal("editar", m)}
-                            className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
+                            className="p-1.5 flex items-center justify-center rounded-lg bg-slate-50 text-slate-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-slate-100"
                             title="Editar"
                           >
-                            <Edit size={16} />
+                            <Edit size={14} />
                           </button>
+
+                          {m.estado !== 'Finalizada' && m.estado !== 'Cancelada' && m.estado !== 'Pausada' && (
+                            <button
+                              onClick={() => {
+                                setSelectedMatricula(m);
+                                setModal("finalizar");
+                              }}
+                              className="p-1.5 flex items-center justify-center rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white transition shadow-sm border border-purple-100"
+                              title="Finalizar Matrícula"
+                            >
+                              <CheckCircle size={14} />
+                            </button>
+                          )}
+
                           <button
                             onClick={() => openModal("delete", m)}
-                            className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
+                            className="p-1.5 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
                             title="Eliminar"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} />
                           </button>
+
+                          {/* MENÚ DESPLEGABLE PARA ADICIONALES */}
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(openMenuId === m.id_matricula ? null : m.id_matricula);
+                              }}
+                              className={cn(
+                                "p-1.5 flex items-center justify-center rounded-lg transition shadow-sm border",
+                                openMenuId === m.id_matricula 
+                                  ? "bg-[#040529] text-white border-[#040529]" 
+                                  : "bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100"
+                              )}
+                            >
+                              <MoreVertical size={14} />
+                            </button>
+
+                            <AnimatePresence>
+                              {openMenuId === m.id_matricula && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-2"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    onClick={() => {
+                                      setSelectedMatricula(m);
+                                      fetchPagos(m.id_matricula);
+                                      setModal("pagos");
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                                  >
+                                    <DollarSign size={14} className="text-emerald-500" />
+                                    Ver Pagos
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setFormPago({ monto: "", nota: "", fecha: new Date().toISOString().split("T")[0] });
+                                      setSelectedMatricula(m);
+                                      setModal("registrar_pago");
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                                  >
+                                    <Plus size={14} className="text-blue-500" />
+                                    Registrar Pago
+                                  </button>
+
+                                  {m.estado === 'Activa' && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedMatricula(m);
+                                        setMotivoPausa("");
+                                        setModal("pausar");
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                                    >
+                                      <Pause size={14} className="text-orange-500" />
+                                      Pausar Matrícula
+                                    </button>
+                                  )}
+
+                                  {m.estado === 'Pausada' && (
+                                    <button
+                                      onClick={() => {
+                                        handleReanudar(m.id_matricula);
+                                        setOpenMenuId(null);
+                                      }}
+                                      className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                                    >
+                                      <Play size={14} className="text-blue-500" />
+                                      Reanudar Matrícula
+                                    </button>
+                                  )}
+
+                                  <button
+                                    onClick={() => {
+                                      setSelectedMatricula(m);
+                                      setModal("expediente");
+                                      fetchHistorialEstudiante(m.id_estudiante);
+                                      setOpenMenuId(null);
+                                    }}
+                                    className="w-full px-4 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                                  >
+                                    <ClipboardList size={14} className="text-indigo-500" />
+                                    Expediente Estudiante
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -341,8 +587,7 @@ const MatriculasAdmin = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
+            className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-xl shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
           >
             {notification.message}
           </motion.div>
@@ -371,7 +616,13 @@ const MatriculasAdmin = () => {
                   <h3 className="text-xl font-bold text-[#040529]">
                     {modal === 'nueva' ? 'Nueva Matrícula' :
                       modal === 'editar' ? 'Editar Matrícula' :
-                        modal === 'delete' ? 'Eliminar Matrícula' : 'Detalles de Inscripción'}
+                        modal === 'delete' ? 'Eliminar Matrícula' : 
+                          modal === 'details' ? 'Detalles de Inscripción' :
+                            modal === 'pagos' ? 'Historial de Pagos' :
+                              modal === 'registrar_pago' ? 'Registrar Pago' :
+                                modal === 'finalizar' ? 'Finalizar Matrícula' :
+                                    modal === 'pausar' ? 'Pausar Matrícula' :
+                                      modal === 'expediente' ? 'Expediente del Estudiante' : ''}
                   </h3>
                   <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]">
                     <X size={20} />
@@ -382,8 +633,8 @@ const MatriculasAdmin = () => {
                   <div className="text-center">
                     <p className="text-sm text-gray-500 mb-6 italic">¿Estás seguro de eliminar la matrícula de <span className="font-bold text-red-600">{selectedMatricula?.nombre_completo}</span>?</p>
                     <div className="flex justify-center gap-3">
-                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Eliminar</button>
+                      <button onClick={closeModal} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancelar</button>
+                      <button onClick={handleDelete} className="px-5 py-2.5 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition shadow-md hover:shadow-lg">Eliminar</button>
                     </div>
                   </div>
                 ) : modal === 'details' ? (
@@ -449,19 +700,205 @@ const MatriculasAdmin = () => {
                       Actualizar Matrícula
                     </button>
                   </div>
+                ) : modal === 'pagos' ? (
+                  <div className="space-y-4">
+                    {/* Header info */}
+                    <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl mb-4 text-center">
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Precio Plan</p>
+                        <p className="font-bold text-[#040529]">${Number(selectedMatricula?.precio_plan || selectedMatricula?.precio || 0).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Total Pagado</p>
+                        <p className="font-bold text-green-600">${Number(selectedMatricula?.total_pagado || 0).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Saldo</p>
+                        <p className="font-bold text-red-500">${(Number(selectedMatricula?.precio_plan || selectedMatricula?.precio || 0) - Number(selectedMatricula?.total_pagado || 0)).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    {/* Pagos table */}
+                    <div className="max-h-[50vh] overflow-y-auto">
+                      {loadingPagos ? (
+                        <p className="text-center text-sm text-gray-500 p-4">Cargando pagos...</p>
+                      ) : pagos.length === 0 ? (
+                        <p className="text-center text-sm text-gray-500 p-4 italic">No hay pagos registrados</p>
+                      ) : (
+                        <table className="w-full text-left bg-white border border-slate-100 rounded-xl overflow-hidden">
+                          <thead className="bg-[#F0E6E6] text-[#040529]">
+                            <tr>
+                              <th className="px-4 py-3 font-bold text-xs uppercase">Fecha</th>
+                              <th className="px-4 py-3 font-bold text-xs uppercase">Monto</th>
+                              <th className="px-4 py-3 font-bold text-xs uppercase">Nota</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {pagos.map(p => (
+                              <tr key={p.id}>
+                                <td className="px-4 py-3 text-sm">{new Date(p.fecha).toLocaleDateString()}</td>
+                                <td className="px-4 py-3 text-sm font-bold text-green-600">${Number(p.monto).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{p.nota || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                    <div className="flex justify-end pt-2">
+                       <button onClick={closeModal} className="px-6 py-2 bg-[#040529] text-white rounded-xl text-sm font-bold shadow-md transition">Cerrar</button>
+                    </div>
+                  </div>
+                ) : modal === 'registrar_pago' ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 mb-2">Registrando pago para <strong>{selectedMatricula?.nombre_completo}</strong></p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Monto ($) *</label>
+                        <input
+                          type="number"
+                          className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 outline-none"
+                          value={formPago.monto}
+                          onChange={(e) => setFormPago({...formPago, monto: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Fecha *</label>
+                        <input
+                          type="date"
+                          className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 outline-none"
+                          value={formPago.fecha}
+                          onChange={(e) => setFormPago({...formPago, fecha: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nota / Observación</label>
+                      <textarea
+                        className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 outline-none"
+                        rows="2"
+                        value={formPago.nota}
+                        onChange={(e) => setFormPago({...formPago, nota: e.target.value})}
+                        placeholder="Ej: Pago en efectivo, Transferencia Bancolombia..."
+                      ></textarea>
+                    </div>
+                    <button 
+                      onClick={handleRegistrarPago} 
+                      disabled={isSubmittingPago}
+                      className="w-full py-3 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold shadow-lg transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed">
+                      {isSubmittingPago ? 'Guardando Pago...' : 'Guardar Pago'}
+                    </button>
+                  </div>
+                ) : modal === 'expediente' ? (
+                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xl font-bold">
+                        {selectedMatricula?.nombre_completo?.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-[#040529]">{selectedMatricula?.nombre_completo}</h4>
+                        <p className="text-[10px] text-slate-500">{selectedMatricula?.documento} • {selectedMatricula?.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Historial de Matrículas</h5>
+                      {loadingHistorial ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        </div>
+                      ) : historialEstudiante.length === 0 ? (
+                        <p className="text-center py-8 text-sm text-slate-400 italic">No hay historial previo registrado.</p>
+                      ) : (
+                        historialEstudiante.map((hist, idx) => (
+                          <div key={hist.id_matricula} className={cn(
+                            "p-4 rounded-xl border transition-all",
+                            hist.estado === 'Activa' ? "bg-white border-green-200 shadow-sm" : "bg-slate-50 border-slate-200 opacity-80"
+                          )}>
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <span className={cn(
+                                  "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase",
+                                  hist.estado === 'Activa' ? "bg-green-100 text-green-700" :
+                                    hist.estado === 'Vencida' ? "bg-red-100 text-red-700" :
+                                      "bg-slate-200 text-slate-600"
+                                )}>
+                                  {hist.estado}
+                                </span>
+                                <h6 className="text-sm font-bold text-[#040529] mt-1">{hist.nombre_plan}</h6>
+                              </div>
+                              <p className="text-[10px] font-bold text-slate-700">${Number(hist.precio_plan).toLocaleString('es-CO')}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar size={10} />
+                                <span>{new Date(hist.fecha_inicio).toLocaleDateString()} - {new Date(hist.fecha_fin).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center justify-end gap-1">
+                                <CheckCircle size={10} className={Number(hist.total_pagado) >= Number(hist.precio_plan) ? "text-green-500" : "text-amber-500"} />
+                                <span className="font-medium text-slate-700">Pagado: ${Number(hist.total_pagado).toLocaleString('es-CO')}</span>
+                              </div>
+                            </div>
+                            <p className="text-[9px] text-slate-400 mt-2 border-t pt-1 border-slate-100 italic">Clase: {hist.nombre_nivel} — {hist.nombre_sede}</p>
+                            {hist.estado === 'Pausada' && hist.motivo_pausa && (
+                              <div className="mt-2 p-2 bg-amber-50 border border-amber-100 rounded-xl">
+                                <p className="text-[9px] text-amber-700 font-bold uppercase">Motivo de Pausa:</p>
+                                <p className="text-[10px] text-amber-800">{hist.motivo_pausa}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : modal === 'pausar' ? (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-orange-50 rounded-xl border border-orange-100 mb-2">
+                      <p className="text-sm text-orange-700 font-medium text-center">
+                        <AlertTriangle className="inline-block mr-2 mb-1" size={16} />
+                        Estás a punto de pausar la matrícula de <strong>{selectedMatricula?.nombre_completo}</strong>.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Motivo de la pausa</label>
+                      <textarea
+                        className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 outline-none bg-white focus:border-orange-500 transition-colors"
+                        placeholder="Ej: Accidente, viaje familiar, dificultad económica..."
+                        rows="3"
+                        value={motivoPausa}
+                        onChange={(e) => setMotivoPausa(e.target.value)}
+                      ></textarea>
+                      <p className="text-[10px] text-slate-400 mt-1 italic">Este motivo será visible en el historial del estudiante.</p>
+                    </div>
+                    <button 
+                      onClick={handlePausar} 
+                      className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-bold shadow-lg transition mt-2 flex items-center justify-center gap-2"
+                    >
+                      <Pause size={16} />
+                      Confirmar Pausa
+                    </button>
+                  </div>
+                ) : modal === 'finalizar' ? (
+                  <div className="text-center">
+                    <AlertTriangle className="mx-auto text-amber-500 mb-4" size={48} />
+                    <p className="text-sm text-gray-600 mb-6">¿Deseas dar por terminada (finalizada) la matrícula de <span className="font-bold text-[#040529]">{selectedMatricula?.nombre_completo}</span>?</p>
+                    <div className="flex justify-center gap-3">
+                      <button onClick={closeModal} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancelar</button>
+                      <button onClick={handleFinalizarMatricula} className="px-5 py-2.5 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition shadow-md hover:shadow-lg">Finalizar Matrícula</button>
+                    </div>
+                  </div>
                 ) : (
                   // Modal Nueva Matrícula
                   <div className="space-y-4">
                     <div className="flex bg-slate-100 p-1 rounded-xl mb-4">
                       <button
                         onClick={() => setModoMatricula('existente')}
-                        className={cn("flex-1 py-2 text-xs font-bold rounded-lg transition", modoMatricula === 'existente' ? "bg-white text-[#040529] shadow-sm" : "text-slate-500")}
+                        className={cn("flex-1 py-2 text-xs font-bold rounded-xl transition", modoMatricula === 'existente' ? "bg-white text-[#040529] shadow-sm" : "text-slate-500")}
                       >
                         Estudiante Existente
                       </button>
                       <button
                         onClick={() => setModoMatricula('nuevo')}
-                        className={cn("flex-1 py-2 text-xs font-bold rounded-lg transition", modoMatricula === 'nuevo' ? "bg-white text-[#040529] shadow-sm" : "text-slate-500")}
+                        className={cn("flex-1 py-2 text-xs font-bold rounded-xl transition", modoMatricula === 'nuevo' ? "bg-white text-[#040529] shadow-sm" : "text-slate-500")}
                       >
                         Vincular Nuevo Usuario
                       </button>

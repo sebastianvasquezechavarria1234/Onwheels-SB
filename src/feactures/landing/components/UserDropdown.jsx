@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, LogOut, ShoppingBag, BookOpen } from "lucide-react";
+import { User, LogOut, ShoppingBag, BookOpen, LayoutDashboard } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { getProfilePath, getPurchasesPath, getUserRoleSlug } from "../../../utils/roleHelpers";
@@ -41,6 +41,12 @@ export const UserDropdown = ({ isScrolled = false }) => {
 
     // Definición de menú dinámico basado en roleHelpers
     const menuOptions = [
+        {
+            label: "Área Administrativa",
+            icon: <LayoutDashboard size={16} />,
+            path: roleSlug === 'admin' ? '/admin/dashboard' : '/custom/dashboard',
+            show: roleSlug === "admin" || roleSlug === "custom",
+        },
         {
             label: "Mi Perfil",
             icon: <User size={16} />,

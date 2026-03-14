@@ -7,6 +7,7 @@ import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { getStoreHomePath, getProductDetailPath } from "../../../../utils/roleHelpers";
 
 export const FeaturedProducts = () => {
+    const API_URL = "http://localhost:3000";
     const { user } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -27,76 +28,97 @@ export const FeaturedProducts = () => {
     }, []);
 
     const ProductCard = ({ product, index }) => {
-        // Dummy badge logic for visual reference matching
-        const badge = index === 0 ? "NEW" : index === 2 ? "SALE" : null;
+        // Correct image consumption
+        const imageUrl = product.imagenes && product.imagenes.length > 0
+            ? (product.imagenes[0].url_imagen?.startsWith('http') 
+                ? product.imagenes[0].url_imagen 
+                : `${API_URL}${product.imagenes[0].url_imagen}`)
+            : "/bg_hero_shop.jpg";
+
+        const hasDiscount = Number(product?.descuento_producto) > 0;
+        const discountAmount = Number(product?.descuento_producto) || 0;
+        const precioBase = Number(product?.precio) || 0;
+        const precioFinal = hasDiscount ? precioBase * (1 - discountAmount / 100) : precioBase;
 
         return (
             <Link
                 to={getProductDetailPath(user, product?.id_producto)}
-                className="group flex flex-col gap-4 bg-transparent transition-all duration-300 hover:-translate-y-1"
+                className="group relative flex flex-col bg-zinc-900/60 border border-zinc-800/50 rounded-[2rem] overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:border-[var(--color-blue)]/50 hover:shadow-2xl hover:shadow-[var(--color-blue)]/10"
             >
-                {/* ... existing content ... */}
-                {/* Image Container - Light */}
-                <div className="relative aspect-square overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm group-hover:border-(--color-blue)/50 transition-all">
-                    {/* Badge */}
-                    {badge && (
-                        <span className={`absolute top-4 left-4 z-10 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm
-                            ${badge === 'SALE' ? 'bg-red-500 text-white' : 'bg-slate-900 text-white'}
-                        `}>
-                            {badge}
-                        </span>
-                    )}
-
+                {/* Image Container */}
+                <div className="relative aspect-square overflow-hidden bg-zinc-900/40">
                     <img
-                        src={product?.imagen || "/bg_hero_shop.jpg"}
+                        src={imageUrl}
                         alt={product?.nombre_producto}
-                        className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
+                        className="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-110"
                     />
+                    
+                    {/* Overlay subtle gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-60" />
+
+                    {/* Discount Badge */}
+                    {hasDiscount && (
+                        <div className="absolute top-4 left-4 z-20">
+                            <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-xl shadow-red-900/20 border border-red-500/50 animate-pulse">
+                                -{discountAmount}% OFF
+                            </span>
+                        </div>
+                    )}
                 </div>
 
-                {/* Content */}
-                <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-start gap-4">
-                        <h3 className="text-slate-900 font-bold text-sm md:text-base leading-tight group-hover:text-(--color-blue) transition-colors">
+                {/* Content - Compact */}
+                <div className="p-6 pt-2 flex flex-col gap-3">
+                    <div className="space-y-0.5">
+                        <span className="text-[var(--color-blue)] text-[9px] font-black uppercase tracking-[0.3em] opacity-80">Premium Gear</span>
+                        <h3 className="text-white font-bold text-sm md:text-base leading-tight group-hover:text-[var(--color-blue)] transition-colors line-clamp-2 min-h-[2.5rem]">
                             {product?.nombre_producto}
                         </h3>
-                        <span className="text-slate-900 font-mono font-bold text-sm">
-                            ${new Intl.NumberFormat("es-CO").format(product?.precio_venta)}
-                        </span>
                     </div>
 
-                    {/* Stars / Subtitle */}
-                    <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                            <Star key={s} size={10} className="text-yellow-500 fill-yellow-500" />
-                        ))}
-                        <span className="text-[10px] text-slate-400 ml-2">(12 reviews)</span>
+                    <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                                <Star key={s} size={9} className="text-yellow-500 fill-yellow-500" />
+                            ))}
+                            <span className="text-[9px] text-zinc-500 ml-1.5 font-bold uppercase tracking-widest">(12)</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-white font-mono font-black text-base">
+                                ${new Intl.NumberFormat("es-CO").format(precioFinal)}
+                            </span>
+                            {hasDiscount && (
+                                <span className="text-[10px] text-zinc-500 line-through font-bold opacity-70">
+                                    ${new Intl.NumberFormat("es-CO").format(precioBase)}
+                                </span>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Add to Cart Button -> Redirect to detail view */}
-                    <button
-                        className="mt-3 w-full flex items-center justify-center gap-2 bg-[#1E3A8A] text-white font-bold text-[10px] uppercase tracking-wider py-2 rounded-lg hover:bg-blue-800 transition-all shadow-md z-20 relative group-hover:shadow-lg group-hover:shadow-[#1E3A8A]/30"
+                    {/* CTA Button - Smaller */}
+                    <div
+                        className="w-full flex items-center justify-center gap-2 bg-white text-black font-black text-[9px] uppercase tracking-[0.2em] py-3 rounded-xl hover:bg-[var(--color-blue)] hover:text-white transition-all shadow-xl"
                     >
                         Ver Detalles <Eye size={12} />
-                    </button>
+                    </div>
                 </div>
             </Link>
         );
     };
 
     return (
-        <section className="bg-gray-50 py-24 px-4 relative z-0">
-            {/* Background decorations - Lighter ... */}
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[60%] h-[300px] bg-(--color-blue)/5 blur-[120px] rounded-full pointer-events-none" />
+        <section className="bg-zinc-950 py-32 px-4 relative z-0 border-t border-zinc-900">
+            {/* Background decorations - Lighter */}
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[60%] h-[300px] bg-[var(--color-blue)]/5 blur-[120px] rounded-full pointer-events-none" />
 
             <div className="max-w-[1200px] mx-auto relative z-10">
                 {/* ... existing content ... */}
-                <div className="flex flex-col items-center mb-16 text-center">
-                    <h2 className="text-3xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter mb-4">
-                        Our Featured Items
+                <div className="flex flex-col items-center mb-20 text-center space-y-4">
+                    <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-[0.4em]">Performance Shop</span>
+                    <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none">
+                        ITEMS <span className="text-zinc-800 italic">DESTACADOS</span>
                     </h2>
-                    <p className="text-slate-500 max-w-lg text-sm md:text-base leading-relaxed">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Purus faucibus massa dignissim tempus.
+                    <p className="text-zinc-500 max-w-lg text-sm md:text-base font-medium leading-relaxed">
+                        Equipamiento profesional seleccionado por nuestro equipo élite para maximizar tu progresión.
                     </p>
                 </div>
 
@@ -104,11 +126,11 @@ export const FeaturedProducts = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
                     {loading ? (
                         [1, 2, 3, 4].map(i => (
-                            <div key={i} className="flex flex-col gap-4 animate-pulse">
-                                <div className="aspect-square bg-slate-200 rounded-xl w-full" />
-                                <div className="flex justify-between">
-                                    <div className="h-4 bg-slate-200 rounded w-1/2" />
-                                    <div className="h-4 bg-slate-200 rounded w-1/4" />
+                            <div key={i} className="flex flex-col gap-6 animate-pulse">
+                                <div className="aspect-square bg-zinc-900 rounded-[2rem] w-full" />
+                                <div className="space-y-3">
+                                    <div className="h-4 bg-zinc-900 rounded w-3/4" />
+                                    <div className="h-4 bg-zinc-900 rounded w-1/4" />
                                 </div>
                             </div>
                         ))
@@ -123,9 +145,9 @@ export const FeaturedProducts = () => {
                     <Link
                         to={getStoreHomePath(user)}
                         className="
-                            group flex items-center gap-2 px-8 py-3 
-                            bg-slate-900 text-white font-bold uppercase tracking-widest text-xs rounded-full 
-                            hover:bg-(--color-blue) hover:text-white transition-all shadow-lg hover:shadow-(--color-blue)/40
+                            group flex items-center gap-3 px-10 py-4 
+                            bg-white text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-full 
+                            hover:bg-[var(--color-blue)] hover:text-white transition-all shadow-2xl hover:shadow-[var(--color-blue)]/40
                         "
                     >
                         Ver Todo

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Search, Funnel, ChevronDown, Check } from "lucide-react";
+import { Search, Funnel, ChevronDown, Check, Tag } from "lucide-react";
 
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -63,6 +63,8 @@ export const FilterBar = ({
     setSelectedCategory,
     selectedPriceRange,
     setSelectedPriceRange,
+    showDiscountOnly,
+    setShowDiscountOnly,
 }) => {
     const categoryOptions = categories.map(cat => ({ value: cat, label: cat }));
     const priceOptions = [
@@ -115,6 +117,19 @@ export const FilterBar = ({
                             placeholder="Rango de Precio"
                         />
                     </div>
+                    
+                    <button
+                        type="button"
+                        onClick={() => setShowDiscountOnly(!showDiscountOnly)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all text-sm font-bold uppercase tracking-wider
+                            ${showDiscountOnly 
+                                ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20" 
+                                : "bg-[#0B0F14] border-gray-800 text-[#9CA3AF] hover:border-gray-700 hover:text-white"
+                            }`}
+                    >
+                        <Tag size={16} className={showDiscountOnly ? "animate-bounce" : ""} />
+                        <span>Con Descuento</span>
+                    </button>
                 </div>
 
             </div>

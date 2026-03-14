@@ -201,7 +201,7 @@ export const AdminHeader = () => {
             flex items-center justify-between px-7 py-4 rounded-full
             backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
             ${scrolled
-              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[60%] max-w-[1400px] mx-auto"
+              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[85%] lg:w-[80%] max-w-[1400px] mx-auto"
               : "bg-black/40 border border-white/5 w-full max-w-[1600px]"
             }
           `}
@@ -210,8 +210,8 @@ export const AdminHeader = () => {
             <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-lg uppercase tracking-tighter text-white">
-              Performance SB admin
+            <span className="font-bold text-lg tracking-tighter text-white whitespace-nowrap">
+              Performance SB
             </span>
           </Link>
 
@@ -238,15 +238,6 @@ export const AdminHeader = () => {
           </nav>
 
           <div className="flex items-center gap-2">
-            <IconWithTooltip label="Dashboard">
-              <Link
-                to="/admin/dashboard"
-                className="inline-flex items-center justify-center w-[60px] h-[60px] rounded-full bg-emerald-600 overflow-hidden"
-                aria-label="Ir al Dashboard"
-              >
-                <LayoutDashboard color="white" strokeWidth={1.5} size={18} />
-              </Link>
-            </IconWithTooltip>
 
             <IconWithTooltip label="Carrito de compras">
               <BtnLinkIcon

@@ -23,19 +23,24 @@ export const getUserRoleSlug = (user) => {
 
     // Extraction of roles from different possible structures
     const rolesArray = Array.isArray(user.roles)
-        ? user.roles.map(r => (typeof r === 'string' ? r : r.nombre_rol).toLowerCase())
-        : (user.rol ? [user.rol.toLowerCase()] : []);
+        ? user.roles.map(r => (typeof r === 'string' ? r : r.nombre_rol).trim().toLowerCase())
+        : (user.rol ? [user.rol.trim().toLowerCase()] : []);
 
     if (rolesArray.length === 0) return 'store';
 
     // Prioritize 'administrador'
     if (rolesArray.includes('administrador')) return 'admin';
-    if (rolesArray.includes('custom')) return 'custom';
+    
+    // Check if it has any role that is NOT a main role
+    const mainRoles = ['administrador', 'instructor', 'estudiante', 'cliente'];
+    const hasCustomRole = rolesArray.some(role => !mainRoles.includes(role));
+    if (hasCustomRole || rolesArray.includes('custom')) return 'custom';
+
     if (rolesArray.includes('instructor')) return 'instructor';
     if (rolesArray.includes('estudiante')) return 'student';
     if (rolesArray.includes('cliente')) return 'users';
 
-    return ROLE_PATH_MAP[rolesArray[0]] || 'store';
+    return 'store';
 };
 
 /**
@@ -44,6 +49,7 @@ export const getUserRoleSlug = (user) => {
 export const getProfilePath = (user) => {
     const roleSlug = getUserRoleSlug(user);
     if (roleSlug === 'admin') return '/admin/profile';
+    if (roleSlug === 'custom') return '/custom/profile'; // Changed from /custom/setting
     if (roleSlug === 'store') return '/login';
     return `/${roleSlug}/setting`;
 };
@@ -79,6 +85,8 @@ export const getProductDetailPath = (user, productId) => {
 export const getHomePath = (user) => {
     const roleSlug = getUserRoleSlug(user);
     if (roleSlug === 'store') return '/';
+    if (roleSlug === 'custom') return '/custom/home';
+    if (roleSlug === 'admin') return '/admin/dashboard';
     return `/${roleSlug}/home`;
 };
 

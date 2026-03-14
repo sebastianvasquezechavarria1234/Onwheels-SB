@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../services/api";
-import { getStoreHomePath as getRoleHomePath } from "../../../utils/roleHelpers";
+import { getHomePath as getRoleHomePath } from "../../../utils/roleHelpers";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { ArrowLeft } from "lucide-react";
 
@@ -66,7 +66,7 @@ const Login = () => {
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-(--color-blue)">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
+            <span className="font-bold text-xl tracking-tighter text-white drop-shadow-md whitespace-nowrap">
               Performance SB
             </span>
           </Link>
@@ -110,7 +110,7 @@ const Login = () => {
 
           <div className="space-y-2">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray">Iniciar Sesión</h2>
-            <p className="text-gray-400 text-base">Accede a tu cuenta Performance Sb</p>
+            <p className="text-gray-400 text-base">Accede a tu cuenta Performance SB</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 mt-6">

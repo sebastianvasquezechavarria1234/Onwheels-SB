@@ -7,7 +7,7 @@ import {
   rechazarPreinscripcion,
   aceptarPreinscripcionYCrearMatricula
 } from "../../services/preinscripcionesService";
-import axios from "axios";
+import api from "../../../../../../services/api";
 
 // Helper para clases condicionales
 function cn(...classes) {
@@ -68,8 +68,8 @@ const PreinscripcionesAdmin = () => {
 
       const [preinscripcionesData, clasesData, planesData] = await Promise.all([
         getPreinscripcionesPendientes(),
-        axios.get("http://localhost:3000/api/clases").then(r => r.data),
-        axios.get("http://localhost:3000/api/planes").then(r => r.data)
+        api.get("/clases").then(r => r.data),
+        api.get("/planes").then(r => r.data)
       ]);
 
       setPreinscripciones(Array.isArray(preinscripcionesData) ? preinscripcionesData : []);

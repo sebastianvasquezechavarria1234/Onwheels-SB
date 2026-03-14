@@ -156,7 +156,7 @@ export const UsersHeader = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="font-bold text-lg tracking-tighter text-white">
+            <span className="font-bold text-lg tracking-tighter text-white whitespace-nowrap">
               Performance SB
             </span>
           </Link>

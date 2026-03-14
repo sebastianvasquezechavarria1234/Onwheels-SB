@@ -284,8 +284,10 @@ export default function Usuarios() {
       showNotification("Usuario eliminado con éxito");
     } catch (err) {
       console.error("Error eliminando usuario:", err);
+      // Mostrar el error exacto del backend
       const errorMessage = err.response?.data?.mensaje || "Error eliminando usuario";
       showNotification(errorMessage, "error");
+      closeModal(); // Cerrar modal después del error
     }
   };
 

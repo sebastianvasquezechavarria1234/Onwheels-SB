@@ -53,6 +53,7 @@ export default function Eventos() {
         imagenArchivo: null,
         imageMode: "file", // "file" | "url"
         estado: "activo",
+        google_forms: [],
     });
 
     const [formErrors, setFormErrors] = useState({});
@@ -172,9 +173,10 @@ export default function Eventos() {
     const openModal = (type, evento = null) => {
         setModal(type);
         setSelected(evento);
+        const initialGoogleForms = Array.isArray(evento?.google_forms) ? evento.google_forms : [];
         setForm(
             evento
-                ? { ...evento, imagenArchivo: null }
+                ? { ...evento, imagenArchivo: null, google_forms: initialGoogleForms }
                 : {
                     id_categoria_evento: "",
                     id_patrocinador: "",
@@ -188,6 +190,7 @@ export default function Eventos() {
                     imagenArchivo: null,
                     imageMode: "file",
                     estado: "activo",
+                    google_forms: [],
                 }
         );
         setFormErrors({});
@@ -209,6 +212,7 @@ export default function Eventos() {
             imagenArchivo: null,
             imageMode: "file",
             estado: "activo",
+            google_forms: [],
         });
         setFormErrors({});
     };
@@ -249,6 +253,27 @@ export default function Eventos() {
 
     const handleBlur = (e) => {
         validateField(e.target.name, e.target.value);
+    };
+
+    const addGoogleFormLink = () => {
+        setForm(prev => ({
+            ...prev,
+            google_forms: [...prev.google_forms, ""]
+        }));
+    };
+
+    const removeGoogleFormLink = (index) => {
+        setForm(prev => ({
+            ...prev,
+            google_forms: prev.google_forms.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleGoogleFormChange = (index, value) => {
+        setForm(prev => ({
+            ...prev,
+            google_forms: prev.google_forms.map((item, i) => i === index ? value : item)
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -769,6 +794,62 @@ export default function Eventos() {
                                                             className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.descripcion ? "border-red-500" : "border-gray-200"}`}
                                                         />
                                                         {formErrors.descripcion && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.descripcion}</p>}
+                                                    </div>
+
+                                                    {/* Google Forms Links Section */}
+                                                    <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
+                                                        <div className="flex justify-between items-center mb-3">
+                                                            <h4 className="text-xs font-bold text-blue-900/40 uppercase flex items-center gap-2">
+                                                                <ExternalLink size={14} /> Enlaces Google Forms
+                                                            </h4>
+                                                            {modal !== "ver" && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={addGoogleFormLink}
+                                                                    className="flex items-center gap-1 px-2 py-1 bg-[#040529] text-white text-[10px] font-bold rounded-md hover:bg-[#040529]/90 transition"
+                                                                >
+                                                                    <Plus size={10} /> Añadir Enlace
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            {form.google_forms.length === 0 ? (
+                                                                <p className="text-[11px] text-blue-900/30 italic text-center py-2">No se han añadido formularios.</p>
+                                                            ) : (
+                                                                form.google_forms.map((link, index) => (
+                                                                    <div key={index} className="flex gap-2">
+                                                                        <input
+                                                                            type="url"
+                                                                            value={link}
+                                                                            onChange={(e) => handleGoogleFormChange(index, e.target.value)}
+                                                                            readOnly={modal === "ver"}
+                                                                            disabled={modal === "ver"}
+                                                                            placeholder="https://docs.google.com/forms/..."
+                                                                            className="flex-1 px-3 py-2 bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 outline-none transition text-xs text-[#040529]"
+                                                                        />
+                                                                        {modal !== "ver" && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => removeGoogleFormLink(index)}
+                                                                                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                                            >
+                                                                                <X size={16} />
+                                                                            </button>
+                                                                        )}
+                                                                        {modal === "ver" && link && (
+                                                                            <a
+                                                                                href={link}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition"
+                                                                            >
+                                                                                <ExternalLink size={16} />
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     <div>

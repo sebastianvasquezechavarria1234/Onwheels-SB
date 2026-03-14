@@ -17,20 +17,12 @@ export const CustomLayout = ({ children }) => {
   return (
     <>
       <CustomHeader />
-      {user && (
-        <div
-          style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            padding: "1rem",
-            textAlign: "center",
-            color: "white",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "1.1rem" }}>
-            Bienvenido, <strong>{user.name || "Usuario"}</strong>
-          </p>
+      <div className="flex justify-center pt-24 pb-4">
+        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">SB</div>
+          <span className="text-white font-bold tracking-tighter text-sm whitespace-nowrap">Performance SB</span>
         </div>
-      )}
+      </div>
       <main>{children}</main>
       <Footer />
     </>

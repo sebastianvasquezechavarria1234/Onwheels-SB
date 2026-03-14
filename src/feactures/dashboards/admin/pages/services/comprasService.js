@@ -10,14 +10,14 @@ const handle = async (promise) => {
   }
 };
 
-export const getCompras = () => handle(api.get("/compras"));
+export const getCompras = (params = {}) => handle(api.get("/compras", { params }));
 export const getCompraById = (id) => handle(api.get(`/compras/${id}`));
 export const createCompra = (data) => handle(api.post("/compras", data));
 export const updateCompra = (id, data) => handle(api.put(`/compras/${id}`, data));
 export const deleteCompra = (id) => handle(api.delete(`/compras/${id}`));
 export const updateCompraStatus = (id, payload) => handle(api.patch(`/compras/${id}/status`, payload));
 
-export const getProveedores = () => handle(api.get("/proveedores"));
+export const getProveedores = (params = {}) => handle(api.get("/proveedores", { params }));
 export const getComprasByProveedor = (nit) => handle(api.get(`/compras?nit=${encodeURIComponent(nit)}`));
 export const getProductos = () => handle(api.get("/productos"));
 

@@ -1,275 +1,173 @@
-"use client"
-
-import { useEffect, useRef, useState } from "react"
-import { LogOut, Menu, ShoppingCart, User, X, LayoutDashboard } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion"
-import { BtnLinkIcon } from "../../components/BtnLinkIcon"
-import { BtnLink } from "../../components/BtnLink"
-import { UserDropdown } from "../../components/UserDropdown"
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { ShoppingCart, User, Menu, X, ChevronRight, LogIn, LayoutDashboard } from "lucide-react";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
+// Corregido: CartContext está en src/context/CartContext.jsx
+import { useCart } from "../../../../context/CartContext";
+import { UserDropdown } from "../../components/UserDropdown";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const CustomHeader = () => {
-  const [open, setOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const firstLinkRef = useRef(null)
-  const closeButtonRef = useRef(null)
-  const modalRef = useRef(null)
-  const navigate = useNavigate()
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { user } = useAuth();
+  const { cart } = useCart();
+  const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : ""
+  const totalItems = cart ? cart.reduce((acc, item) => acc + (item.quantity || 1), 0) : 0;
 
-    if (open) {
-      const t = setTimeout(() => {
-        firstLinkRef.current?.focus()
-      }, 120)
-      return () => clearTimeout(t)
-    }
-  }, [open])
-
-  useEffect(() => {
-    function onKey(e) {
-      if (!open) return
-      if (e.key === "Escape") {
-        setOpen(false)
-        return
-      }
-
-      if (e.key === "Tab") {
-        const focusable = modalRef.current?.querySelectorAll(
-          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        )
-        if (!focusable || focusable.length === 0) return
-        const first = focusable[0]
-        const last = focusable[focusable.length - 1]
-        if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        }
-      }
-    }
-
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [open])
-
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    navigate("/login")
-  }
-
-  const overlayVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-  }
-
-  const sheetVariants = {
-    hidden: { y: -20, opacity: 0, scale: 0.99 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      scale: 1,
-      transition: { type: "spring", stiffness: 300, damping: 28 },
-    },
-    exit: { y: -12, opacity: 0, transition: { duration: 0.16 } },
-  }
-
-  const items = [
-    { title: "Inicio", to: "/custom/home" },
-    { title: "Tienda", to: "/custom/store" },
-    { title: "Eventos", to: "/custom/events" },
-    { title: "Sobre nosotros", to: "/custom/about" },
-  ]
+  const navLinks = [
+    { name: "Inicio", path: "/custom/home" },
+    { name: "Tienda", path: "/custom/store" },
+    { name: "Eventos", path: "/custom/events" },
+    { name: "Nosotros", path: "/custom/about" },
+    { name: "Clases", path: "/custom/training" },
+  ];
 
   return (
-    <motion.header
-      className="fixed top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 transition-all duration-300 pointer-events-none"
+    <header
+      className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${
+        scrolled ? "py-3 bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-2xl" : "py-6 bg-transparent"
+      }`}
     >
-      <nav
-        className={`
-          flex items-center justify-between px-6 py-2 rounded-full 
-          backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
-          w-[95%] max-w-[1400px]
-          ${scrolled
-            ? "bg-black/80 border border-white/10 shadow-2xl"
-            : "bg-black/40 border border-white/5"
-          }
-        `}
-      >
-        <ul className="flex gap-[20px] items-center">
-          <li>
-            <Link to="/custom/home">
-              <h4 className={`font-primary transition-all duration-300 px-4 ${scrolled ? "text-[18px]" : "text-[30px] max-lg:text-[18px] max-lg:px-[10px]"}`}>Performance-SB</h4>
-            </Link>
-          </li>
+      <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
+        {/* LOGO */}
+        <Link to="/custom/home" className="group flex items-center gap-3 relative z-10">
+          <div className="relative">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center transform group-hover:rotate-[360deg] transition-all duration-700 shadow-lg shadow-white/10">
+              <span className="text-black font-black text-xl italic tracking-tighter">SB</span>
+            </div>
+            <div className="absolute -inset-2 bg-white/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-white leading-none tracking-tighter whitespace-nowrap group-hover:text-blue-400 transition">
+              Performance SB
+            </span>
+          </div>
+        </Link>
 
-          {items.map((it) => (
-            <li key={it.to} className="max-xl:hidden">
-              <BtnLink
-                link={it.to + "#"}
-                title={it.title}
-                className={`transition-all duration-300 ${scrolled ? 'text-xs' : 'text-sm'}`}
-              />
-            </li>
-          ))}
-
-          <li className="max-xl:hidden">
+        {/* DESKTOP NAV */}
+        <nav className="hidden lg:flex items-center gap-10">
+          {navLinks.map((link) => (
             <Link
-              to="/custom/dashboard"
-              className={`cursor-pointer bg-purple-200 text-purple-700 inline-flex items-center rounded-full gap-[8px] hover:bg-purple-300 transition-colors ${scrolled ? 'p-[2px_10px_2px_2px]' : 'p-[3px_13px_3px_3px]'}`}
-              title="Ir al Dashboard"
+              key={link.path}
+              to={link.path}
+              className={`relative text-xs font-black uppercase tracking-[0.2em] transition-all hover:text-white group py-2 ${
+                location.pathname === link.path ? "text-white" : "text-gray-400"
+              }`}
             >
-              <div className={`flex justify-center items-center bg-purple-600 rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
-                <LayoutDashboard color="white" strokeWidth={1.8} size={scrolled ? 16 : 20} />
-              </div>
-              <p className={`transition-all ${scrolled ? 'text-xs' : 'text-sm'}`}>Dashboard</p>
+              {link.name}
+              <span
+                className={`absolute bottom-0 left-0 h-[3px] bg-red-600 transition-all duration-300 ${
+                  location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
+                }`}
+              ></span>
             </Link>
-          </li>
-        </ul>
+          ))}
+        </nav>
 
-        <ul className="flex gap-[5px] items-center">
-          <li>
-            <BtnLinkIcon
-              title="Carrito de compras"
-              link="/custom/cart"
-              style="bg-[transparent]! text-white! max-xl:hidden"
-              styleIcon="bg-white!"
-            >
-              <ShoppingCart color="black" strokeWidth={1.5} size={scrolled ? 18 : 20} className="transition-all" />
-            </BtnLinkIcon>
-          </li>
-
-          <li>
-            <UserDropdown isScrolled={scrolled} />
-          </li>
-
-          <li>
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              aria-expanded={open}
-              aria-label="Abrir menú"
-              title="Menu"
-              className="hidden! max-xl:flex! bg-white p-[1px_8px_1px_1px] rounded-full justify-center items-center gap-[3px] cursor-pointer"
-            >
-              <span className={`flex justify-center items-center bg-[var(--color-blue)] rounded-full transition-all duration-300 ${scrolled ? "w-[35px] h-[35px]" : "w-[60px] h-[60px] max-2xl:w-[45px] max-2xl:h-[45px] max-md:w-[30px] max-md:h-[30px]"}`}>
-                <Menu className="text-white" strokeWidth={1.5} size={scrolled ? 16 : 20} />
+        {/* ACTIONS */}
+        <div className="flex items-center gap-4 lg:gap-8">
+          <Link
+            to="/custom/cart"
+            className="group relative p-2 text-white/70 hover:text-white transition-colors"
+          >
+            <ShoppingCart size={22} strokeWidth={2.5} />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-black animate-in zoom-in duration-300">
+                {totalItems}
               </span>
-              <h4 className={`text-black transition-all ${scrolled ? "text-xs" : ""}`}>Menu</h4>
-            </button>
-          </li>
-        </ul>
-      </nav>
+            )}
+          </Link>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={overlayVariants}
-              transition={{ duration: 0.18 }}
-              onClick={() => setOpen(false)}
-              aria-hidden="true"
-            >
-              <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
-            </motion.div>
-
-            <motion.div
-              className="fixed left-0 right-0 top-[20px] z-50 mx-auto max-w-[900px] px-4"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={sheetVariants}
-            >
-              <motion.div
-                ref={modalRef}
-                className="relative rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Menú principal"
-                onClick={(e) => e.stopPropagation()}
+          {user ? (
+            <div className="relative group flex items-center gap-4">
+               {/* Dashboard Link for Custom Roles */}
+               <Link
+                to="/custom/dashboard"
+                className="hidden xl:flex items-center gap-2 bg-purple-600/20 text-purple-400 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-primary text-xl">Menú</h3>
-                  <div className="flex items-center gap-2">
-                    <BtnLinkIcon
-                      title="Carrito"
-                      link="/custom/cart"
-                      style="hidden! max-xl:flex! border-1 border-black/10 "
-                      styleIcon="bg-white!"
-                    >
-                      <ShoppingCart color="black" strokeWidth={1.5} size={18} />
-                    </BtnLinkIcon>
+                <LayoutDashboard size={14} />
+                Dashboard
+              </Link>
+              <UserDropdown />
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden sm:flex items-center gap-3 bg-white text-black px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-400 hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-white/5"
+            >
+              <LogIn size={14} />
+              Acceso
+            </Link>
+          )}
 
-                    <button
-                      ref={closeButtonRef}
-                      type="button"
-                      onClick={() => setOpen(false)}
-                      className="w-[35px] h-[35px] cursor-pointer rounded-full flex justify-center items-center border-1 border-black/10  bg-white"
-                      aria-label="Cerrar menú"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                </div>
+          <button
+            className="lg:hidden p-2 text-white/70 active:text-white transition"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
+      </div>
 
-                <nav>
-                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {items.map((it, idx) => (
-                      <li key={it.to}>
-                        <Link
-                          to={it.to}
-                          onClick={() => setOpen(false)}
-                          ref={idx === 0 ? firstLinkRef : null}
-                          className="text-[14px]! italic py-[5px] block"
-                        >
-                          {it.title}
-                        </Link>
-                      </li>
-                    ))}
-                    <li>
-                      <Link
-                        to="/custom/dashboard"
-                        onClick={() => setOpen(false)}
-                        className="text-[14px]! italic py-[5px] block text-purple-600 font-semibold"
-                      >
-                        Dashboard
-                      </Link>
-                    </li>
-                  </ul>
-                </nav>
+      {/* MOBILE MENU */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="lg:hidden absolute top-full left-0 w-full bg-black/95 backdrop-blur-2xl border-b border-white/10 p-6 shadow-2xl"
+          >
+            <div className="flex flex-col gap-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center justify-between py-4 border-b border-white/5 text-sm font-black uppercase tracking-widest transition ${
+                    location.pathname === link.path ? "text-red-600" : "text-white"
+                  }`}
+                >
+                  {link.name}
+                  <ChevronRight size={16} className="opacity-50" />
+                </Link>
+              ))}
+              
+              {user && (
+                <Link
+                  to="/custom/dashboard"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-between py-4 border-b border-white/5 text-sm font-black uppercase tracking-widest text-purple-400"
+                >
+                  Dashboard
+                  <LayoutDashboard size={16} className="opacity-50" />
+                </Link>
+              )}
 
-                <div className="mt-6 flex items-center gap-3 justify-end">
-                  <button
-                    onClick={() => {
-                      handleLogout()
-                      setOpen(false)
-                    }}
-                    className="bg-[var(--color-blue)] text-white px-4 py-2 rounded-lg text-[14px] hover:bg-blue-700 transition-colors"
-                  >
-                    Cerrar sesión
-                  </button>
-                  <BtnLink link="/custom/store#" style="text-[14px]!" title="Tienda" />
-                </div>
-              </motion.div>
-            </motion.div>
-          </>
+              {!user && (
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="mt-4 flex items-center justify-center gap-3 bg-white text-black py-5 rounded-2xl text-xs font-black uppercase tracking-[0.3em]"
+                >
+                  <LogIn size={16} />
+                  Iniciar Sesión
+                </Link>
+              )}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
-  )
-}
+    </header>
+  );
+};

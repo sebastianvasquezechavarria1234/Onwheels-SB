@@ -51,11 +51,11 @@ export const UpcomingEvents = () => {
       <div className="max-w-[1000px] mx-auto px-6">
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
-            Próximos <span className="text-zinc-600">Eventos</span>
+            Próximos <span className="text-zinc-500">Eventos</span>
           </h2>
           <Link
             to="/events"
-            className="text-xs font-bold text-(--color-blue) uppercase tracking-wider hover:underline"
+            className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wider hover:underline"
           >
             Ver Calendario
           </Link>
@@ -87,9 +87,18 @@ export const UpcomingEvents = () => {
               return (
                 <div
                   key={index}
-                  className="flex items-center bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 rounded-xl p-4 transition-all hover:border-(--color-blue) hover:shadow-lg group"
+                  className="flex items-center bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 rounded-xl p-4 transition-all hover:border-[var(--color-blue)] hover:shadow-lg group"
                 >
-                  <div className="flex flex-col items-center justify-center w-14 h-14 bg-zinc-800 rounded-lg group-hover:bg-(--color-blue) transition-colors shrink-0 mr-6">
+                  {/* Event Thumbnail */}
+                  <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 mr-6 bg-zinc-800 border border-zinc-700">
+                    <img
+                      src={event?.imagen || "/bg_eventosL.jpg"}
+                      alt={event?.nombre_evento}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center w-14 h-14 bg-zinc-800 rounded-lg group-hover:bg-[var(--color-blue)] transition-colors shrink-0 mr-6">
                     <span className="text-xl font-bold text-white leading-none">
                       {day}
                     </span>
@@ -99,7 +108,7 @@ export const UpcomingEvents = () => {
                   </div>
 
                   <div className="flex-1 min-w-0 pr-4">
-                    <h3 className="text-lg font-bold text-white mb-1 truncate group-hover:text-(--color-blue) transition-colors">
+                    <h3 className="text-lg font-bold text-white mb-1 truncate group-hover:text-[var(--color-blue)] transition-colors">
                       {event?.nombre_evento ||
                         event?.descripcion ||
                         "Evento General"}

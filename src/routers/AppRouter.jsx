@@ -12,6 +12,7 @@ import { Store } from "../feactures/landing/pages/Store";
 import Class from "../feactures/landing/pages/Class";
 import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
+import { Events } from "../feactures/landing/pages/Events";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
 import { PublicProductDetail, AdminProductDetail, StudentProductDetail, InstructorProductDetail, UserProductDetail, CustomProductDetail } from "../feactures/landing/pages/ProductDetails";
 // import { Event } from "../feactures/landing/pages/Eventos";
@@ -45,6 +46,8 @@ import ClassLevels from "../feactures/dashboards/admin/pages/clases/niveles/Clas
 import PlanClasses from "../feactures/dashboards/admin/pages/clases/planes/plans";
 import Administradores from "../feactures/dashboards/admin/pages/configuracion/admin/Administradores";
 import Dashboard from "../feactures/dashboards/admin/pages/dashboard/Dashboard"
+import { AdminShoppingCart } from "../feactures/dashboards/admin/pages/AdminShoppingCart"
+import { AdminCheckout } from "../feactures/dashboards/admin/pages/AdminCheckout"
 // import Clientes from "../feactures/dashboards/admin/pages/ventas/clientes/clientes"
 
 // Dashboard student
@@ -104,35 +107,20 @@ import { AdminStore } from "../feactures/landing/admin/pages/AdminStore"
 import { AdminProfile } from "../feactures/landing/admin/pages/AdminProfile"
 import { AdminPurchases } from "../feactures/landing/admin/pages/AdminPurchases"
 import AdminPurchaseDetail from "../feactures/landing/admin/pages/AdminPurchaseDetail"
-import { AdminClass } from "../feactures/landing/admin/pages/AdminClass"
 import { AdminEvents } from "../feactures/landing/admin/pages/AdminEvents"
+import { AdminTraining } from "../feactures/landing/admin/pages/AdminTraining"
 import { AdminAbout } from "../feactures/landing/admin/pages/AdminAbout"
 
 // Custom Roles
 import { CustomHome } from "../feactures/landing/custom/pages/CustomHome"
 import { CustomStore } from "../feactures/landing/custom/pages/CustomStore"
+import { CustomEvents } from "../feactures/landing/custom/pages/CustomEvents"
+import { CustomAbout } from "../feactures/landing/custom/pages/CustomAbout"
+import { CustomTraining } from "../feactures/landing/custom/pages/CustomTraining"
 import { CustomProfile } from "../feactures/dashboards/custom/pages/CustomProfile"
 import { CustomMyPurchases } from "../feactures/dashboards/custom/pages/CustomMyPurchases"
 import { CustomPurchases } from "../feactures/landing/custom/pages/CustomPurchases"
 import { CustomDashboard } from "../feactures/dashboards/custom/pages/CustomDashboard"
-import { CustomUsuarios } from "../feactures/dashboards/custom/pages/CRUDs/CustomUsuarios"
-import { CustomRoles } from "../feactures/dashboards/custom/pages/CRUDs/CustomRoles"
-import { CustomProductos } from "../feactures/dashboards/custom/pages/CRUDs/CustomProductos"
-import { CustomEstudiantes } from "../feactures/dashboards/custom/pages/CRUDs/CustomEstudiantes"
-import { CustomClases } from "../feactures/dashboards/custom/pages/CRUDs/CustomClases"
-import { CustomInstructores } from "../feactures/dashboards/custom/pages/CRUDs/CustomInstructores"
-import { CustomMatriculas } from "../feactures/dashboards/custom/pages/CRUDs/CustomMatriculas"
-import { CustomPreinscripciones } from "../feactures/dashboards/custom/pages/CRUDs/CustomPreinscripciones"
-import { CustomPlanes } from "../feactures/dashboards/custom/pages/CRUDs/CustomPlanes"
-import { CustomCompras } from "../feactures/dashboards/custom/pages/CRUDs/CustomCompras"
-import { CustomProveedores } from "../feactures/dashboards/custom/pages/CRUDs/CustomProveedores"
-import { CustomCategorias } from "../feactures/dashboards/custom/pages/CRUDs/CustomCategorias"
-import { CustomEventos } from "../feactures/dashboards/custom/pages/CRUDs/CustomEventos"
-import { CustomCategoriaEventos } from "../feactures/dashboards/custom/pages/CRUDs/CustomCategoriaEventos"
-import { CustomSedes } from "../feactures/dashboards/custom/pages/CRUDs/CustomSedes"
-import { CustomPatrocinadores } from "../feactures/dashboards/custom/pages/CRUDs/CustomPatrocinadores"
-import { CustomVentas } from "../feactures/dashboards/custom/pages/CRUDs/CustomVentas"
-import { CustomNiveles } from "../feactures/dashboards/custom/pages/CRUDs/CustomNiveles"
 import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos"
 import Ventas from "../feactures/dashboards/admin/pages/ventas/ventas/ventas"
 import VentaDetalle from "../feactures/dashboards/admin/pages/ventas/ventas/VentaDetalle"
@@ -141,11 +129,10 @@ import Pedidos from "../feactures/dashboards/admin/pages/ventas/pedidos/pedidos"
 import PedidoDetalle from "../feactures/dashboards/admin/pages/ventas/pedidos/PedidoDetalle"
 import PedidoEditar from "../feactures/dashboards/admin/pages/ventas/pedidos/PedidoEditar"
 import Clientes from "../feactures/dashboards/admin/pages/ventas/clientes/clientes"
-import AdminShoppingCart from "../feactures/dashboards/admin/pages/AdminShoppingCart"
-import { AdminCheckout } from "../feactures/dashboards/admin/pages/AdminCheckout";
-import { CustomShoppingCart } from "../feactures/dashboards/custom/pages/CustomShoppingCart";
-import { CustomCheckout } from "../feactures/dashboards/custom/pages/CustomCheckout";
-import Events from "../feactures/landing/pages/Events"
+import { CustomShoppingCart } from "../feactures/dashboards/custom/pages/CustomShoppingCart"
+import { CustomCheckout } from "../feactures/dashboards/custom/pages/CustomCheckout"
+import { CustomLayoutWrapper } from "../feactures/dashboards/custom/layout/CustomLayoutWrapper"
+
 
 const AppRouter = () => {
   const location = useLocation()
@@ -200,8 +187,8 @@ const AppRouter = () => {
           {/* Admin Landing Pages (Public-facing for admins, NO Sidebar) */}
           <Route path="admin/home" element={<AdminHome />} />
           <Route path="admin/store" element={<AdminStore />} />
-          <Route path="admin/training" element={<AdminClass />} />
           <Route path="admin/events" element={<AdminEvents />} />
+          <Route path="admin/training" element={<AdminTraining />} />
           <Route path="admin/about" element={<AdminAbout />} />
           <Route path="admin/profile" element={<AdminProfile />} />
           <Route path="admin/purchases" element={<AdminPurchases />} />
@@ -232,20 +219,19 @@ const AppRouter = () => {
             <Route path="admin/instructores" element={<Instructores />} />
             <Route path="admin/estudiantes" element={<Estudiantes />} />
             <Route path="admin/admins" element={<Administradores />} />
-            <Route path="/admin/ventas" element={<Ventas />} />
-            <Route path="/admin/ventas/crear" element={<VentaEditar />} />
-            <Route path="/admin/ventas/editar/:id" element={<VentaEditar />} />
-            <Route path="/admin/ventas/detalle/:id" element={<VentaDetalle />} />
-            <Route path="/admin/pedidos" element={<Pedidos />} />
-            <Route path="/admin/pedidos/crear" element={<PedidoEditar />} />
-            <Route path="/admin/pedidos/editar/:id" element={<PedidoEditar />} />
-            <Route path="/admin/pedidos/detalle/:id" element={<PedidoDetalle />} />
+            <Route path="admin/ventas" element={<Ventas />} />
+            <Route path="admin/ventas/crear" element={<VentaEditar />} />
+            <Route path="admin/ventas/editar/:id" element={<VentaEditar />} />
+            <Route path="admin/ventas/detalle/:id" element={<VentaDetalle />} />
+            <Route path="admin/pedidos" element={<Pedidos />} />
+            <Route path="admin/pedidos/crear" element={<PedidoEditar />} />
+            <Route path="admin/pedidos/editar/:id" element={<PedidoEditar />} />
+            <Route path="admin/pedidos/detalle/:id" element={<PedidoDetalle />} />
             <Route path="admin/clientes" element={<Clientes />} />
             <Route path="admin/compras/detalle/:id" element={<CompraDetalle />} />
             <Route path="admin/compras/editar/:id" element={<CompraEditar />} />
             <Route path="admin/compras/crear" element={<CompraEditar />} />
             <Route path="admin/correos-masivos" element={<EnviarCorreosMasivos />} />
-            <Route path="admin/clientes" element={<Clientes />} />
           </Route>
         </Route>
 
@@ -301,38 +287,53 @@ const AppRouter = () => {
 
         {/* Custom Roles - PROTEGIDAS */}
         <Route element={<ProtectedRoute allowedRoles={["custom"]} />}>
-          {/* Landing personalizada */}
+          {/* Landing personalizada (sin sidebar) */}
           <Route path="custom/home" element={<CustomHome />} />
           <Route path="custom/store" element={<CustomStore />} />
+          <Route path="custom/events" element={<CustomEvents />} />
+          <Route path="custom/about" element={<CustomAbout />} />
+          <Route path="custom/training" element={<CustomTraining />} />
           <Route path="custom/store/product/:id" element={withAnimation(CustomProductDetail)} />
           <Route path="custom/purchases" element={<CustomPurchases />} />
-
           <Route path="custom/profile" element={<CustomProfile />} />
           <Route path="custom/my-purchases" element={<CustomMyPurchases />} />
           <Route path="custom/cart" element={<CustomShoppingCart />} />
           <Route path="custom/checkout" element={<CustomCheckout />} />
 
-          {/* Dashboard personalizado - sidebar con CRUDs según permisos */}
-          <Route path="custom/dashboard" element={<CustomDashboard />} />
-
-          <Route path="custom/usuarios" element={<CustomUsuarios />} />
-          <Route path="custom/roles" element={<CustomRoles />} />
-          <Route path="custom/productos" element={<CustomProductos />} />
-          <Route path="custom/categorias" element={<CustomCategorias />} />
-          <Route path="custom/proveedores" element={<CustomProveedores />} />
-          <Route path="custom/compras" element={<CustomCompras />} />
-          <Route path="custom/ventas" element={<CustomVentas />} />
-          <Route path="custom/eventos" element={<CustomEventos />} />
-          <Route path="custom/categoria-eventos" element={<CustomCategoriaEventos />} />
-          <Route path="custom/sedes" element={<CustomSedes />} />
-          <Route path="custom/patrocinadores" element={<CustomPatrocinadores />} />
-          <Route path="custom/clases" element={<CustomClases />} />
-          <Route path="custom/niveles" element={<CustomNiveles />} />
-          <Route path="custom/estudiantes" element={<CustomEstudiantes />} />
-          <Route path="custom/instructores" element={<CustomInstructores />} />
-          <Route path="custom/preinscripciones" element={<CustomPreinscripciones />} />
-          <Route path="custom/matriculas" element={<CustomMatriculas />} />
-          <Route path="custom/planes" element={<CustomPlanes />} />
+          {/* Dashboard personalizado (con sidebar via CustomLayoutWrapper) */}
+          <Route element={<CustomLayoutWrapper />}>
+            <Route path="custom/dashboard" element={<CustomDashboard />} />
+            <Route path="custom/usuarios" element={<Usuarios />} />
+            <Route path="custom/roles" element={<Roles />} />
+            <Route path="custom/productos" element={<Products />} />
+            <Route path="custom/categorias" element={<CategoriaProductos />} />
+            <Route path="custom/proveedores" element={<Proveedores />} />
+            <Route path="custom/compras" element={<Compras />} />
+            <Route path="custom/compras/detalle/:id" element={<CompraDetalle />} />
+            <Route path="custom/compras/editar/:id" element={<CompraEditar />} />
+            <Route path="custom/compras/crear" element={<CompraEditar />} />
+            <Route path="custom/ventas" element={<Ventas />} />
+            <Route path="custom/ventas/detalle/:id" element={<VentaDetalle />} />
+            <Route path="custom/ventas/editar/:id" element={<VentaEditar />} />
+            <Route path="custom/ventas/crear" element={<VentaEditar />} />
+            <Route path="custom/pedidos" element={<Pedidos />} />
+            <Route path="custom/pedidos/detalle/:id" element={<PedidoDetalle />} />
+            <Route path="custom/pedidos/editar/:id" element={<PedidoEditar />} />
+            <Route path="custom/pedidos/crear" element={<PedidoEditar />} />
+            <Route path="custom/clientes" element={<Clientes />} />
+            <Route path="custom/eventos" element={<Eventos />} />
+            <Route path="custom/categoria-eventos" element={<CategoriaEventos />} />
+            <Route path="custom/sedes" element={<Sedes />} />
+            <Route path="custom/patrocinadores" element={<Patrocinadores />} />
+            <Route path="custom/clases" element={<Clases />} />
+            <Route path="custom/niveles" element={<ClassLevels />} />
+            <Route path="custom/estudiantes" element={<Estudiantes />} />
+            <Route path="custom/instructores" element={<Instructores />} />
+            <Route path="custom/preinscripciones" element={<PreinscripcionesAdmin />} />
+            <Route path="custom/matriculas" element={<Matriculas />} />
+            <Route path="custom/planes" element={<PlanClasses />} />
+            <Route path="custom/plans" element={<PlanClasses />} />
+          </Route>
         </Route>
       </Routes>
     </AnimatePresence>

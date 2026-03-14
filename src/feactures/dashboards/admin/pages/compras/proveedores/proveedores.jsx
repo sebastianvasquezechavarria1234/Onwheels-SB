@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../../../../../services/api";
 
@@ -13,14 +13,17 @@ export default function Proveedores() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  
+  // Backend Pagination State
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPorPagina = 10;
 
   const [modalType, setModalType] = useState(null);
   const [selected, setSelected] = useState(null);
   const [formData, setFormData] = useState({
-    nombre_contacto: "",
-    nombre_empresa: "",
+    nombre_proveedor: "",
     email: "",
     telefono: "",
     direccion: "",
@@ -35,14 +38,30 @@ export default function Proveedores() {
   };
 
   useEffect(() => {
-    fetchProveedores();
-  }, []);
+    fetchData();
+  }, [paginaActual, search]);
 
-  const fetchProveedores = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/proveedores");
-      setProveedores(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get("/proveedores", {
+        params: {
+          page: paginaActual,
+          limit: itemsPorPagina,
+          search: search
+        }
+      });
+      
+      const data = res.data;
+      if (data && data.proveedores) {
+        setProveedores(data.proveedores);
+        setTotalPaginas(data.totalPages || 1);
+        setTotalItems(data.totalProveedores || 0);
+      } else {
+        setProveedores(Array.isArray(data) ? data : []);
+        setTotalPaginas(1);
+        setTotalItems(Array.isArray(data) ? data.length : 0);
+      }
     } catch (err) {
       setError(err.message);
       showNotification("Error al cargar proveedores", "error");
@@ -56,15 +75,14 @@ export default function Proveedores() {
     setSelected(item);
     if ((type === "edit" || type === "details") && item) {
       setFormData({
-        nombre_contacto: item.nombre_contacto || "",
-        nombre_empresa: item.nombre_empresa || "",
+        nombre_proveedor: item.nombre_proveedor || "",
         email: item.email || "",
         telefono: item.telefono || "",
         direccion: item.direccion || "",
         nit: item.nit || ""
       });
     } else {
-      setFormData({ nombre_contacto: "", nombre_empresa: "", email: "", telefono: "", direccion: "", nit: "" });
+      setFormData({ nombre_proveedor: "", email: "", telefono: "", direccion: "", nit: "" });
     }
     setFormErrors({});
   };
@@ -76,8 +94,8 @@ export default function Proveedores() {
   };
 
   const handleSave = async () => {
-    if (!formData.nombre_empresa || !formData.nombre_contacto || !formData.email) {
-      showNotification("Completa los campos obligatorios", "error");
+    if (!formData.nombre_proveedor || !formData.email || !formData.nit) {
+      showNotification("Completa los campos obligatorios (Nombre, Email, NIT)", "error");
       return;
     }
 
@@ -86,10 +104,10 @@ export default function Proveedores() {
         await api.post("/proveedores", formData);
         showNotification("Proveedor creado");
       } else {
-        await api.put(`/proveedores/${selected.id_proveedor}`, formData);
+        await api.put(`/proveedores/${selected.nit}`, formData);
         showNotification("Proveedor actualizado");
       }
-      fetchProveedores();
+      fetchData();
       closeModal();
     } catch (err) {
       showNotification(err.response?.data?.mensaje || "Error al guardar", "error");
@@ -98,9 +116,9 @@ export default function Proveedores() {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/proveedores/${selected.id_proveedor}`);
+      await api.delete(`/proveedores/${selected.nit}`);
       showNotification("Proveedor eliminado");
-      fetchProveedores();
+      fetchData();
       closeModal();
     } catch (err) {
       showNotification(err.response?.data?.mensaje || "Error al eliminar", "error");
@@ -108,8 +126,7 @@ export default function Proveedores() {
   };
 
   const filtered = proveedores.filter(p =>
-    p.nombre_empresa?.toLowerCase().includes(search.toLowerCase()) ||
-    p.nombre_contacto?.toLowerCase().includes(search.toLowerCase()) ||
+    p.nombre_proveedor?.toLowerCase().includes(search.toLowerCase()) ||
     p.nit?.includes(search)
   );
 
@@ -117,68 +134,111 @@ export default function Proveedores() {
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
-      <div className="shrink-0 flex flex-col gap-4 p-4 pb-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-            Compras / Proveedores
-          </h2>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
-              <span className="text-xs font-bold">{filtered.length} aliados</span>
+    <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
+      {/* Header & Stats */}
+      <div className="shrink-0 flex flex-col gap-6 p-8 pb-4 bg-white">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold text-[#040529] font-['Outfit'] tracking-tight">
+              Aliados Estratégicos
+            </h2>
+            <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
+              <span>{totalItems} proveedores totales</span>
+              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+              <span>Gestión de suministros</span>
             </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+             <button
+              onClick={() => {/* Lógica de descarga */}}
+              className="p-2.5 text-gray-400 hover:text-[#040529] hover:bg-gray-50 rounded-xl transition-all border border-gray-200 shadow-sm"
+              title="Descargar Reporte"
+            >
+              <Download size={20} />
+            </button>
+            <button
+              onClick={() => openModal("add")}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#040529] text-white rounded-xl text-sm font-bold hover:bg-[#040529]/90 transition-all shadow-lg shadow-[#040529]/10 active:scale-95"
+            >
+              <Plus size={18} />
+              <span>Nuevo Proveedor</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
+        {/* Toolbar: Search */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+          <div className="relative flex-1 w-full group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#040529] transition-colors" size={18} />
             <input
+              type="text"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              placeholder="Buscar por empresa, contacto o NIT..."
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 outline-none transition bg-white"
+              onChange={(e) => { setSearch(e.target.value); setPaginaActual(1); }}
+              placeholder="Buscar por NIT, razón social o contacto..."
+              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm"
             />
           </div>
-          <button
-            onClick={() => openModal("add")}
-            className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold transition shadow-md whitespace-nowrap"
-          >
-            <Plus size={18} />
-            Nuevo Proveedor
-          </button>
         </div>
       </div>
 
-      <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-        <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-left relative">
-              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+      {/* Table Area */}
+      <div className="flex-1 p-8 pt-0 overflow-hidden flex flex-col min-h-0">
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/50 flex flex-col h-full overflow-hidden">
+          <div className="flex-1 overflow-auto custom-scrollbar">
+            <table className="w-full text-left border-separate border-spacing-0">
+              <thead className="bg-slate-50/50 text-slate-400 sticky top-0 z-10">
                 <tr>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Empresa / NIT</th>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Contacto</th>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-slate-800">Proveedor / NIT</th>
+                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100">Contacto Directo</th>
+                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-50">
                 {loading ? (
-                  <tr><td colSpan="3" className="p-8 text-center text-gray-400 text-sm italic">Cargando proveedores...</td></tr>
-                ) : currentItems.length === 0 ? (
-                  <tr><td colSpan="3" className="p-12 text-center text-gray-400 italic">No se encontraron proveedores</td></tr>
+                  <tr>
+                    <td colSpan="3" className="p-20 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin" />
+                        <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Sincronizando aliados...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : proveedores.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" className="p-20 text-center space-y-4">
+                       <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto border border-slate-100">
+                         <Briefcase className="text-slate-200" size={32} />
+                       </div>
+                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sin resultados</p>
+                    </td>
+                  </tr>
                 ) : (
-                  currentItems.map((p) => (
-                    <tr key={p.id_proveedor} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                      <td className="px-5 py-4 font-bold text-[#040529] text-sm">
-                        <div>{p.nombre_empresa}</div>
-                        <div className="text-[10px] text-slate-400 font-normal">NIT: {p.nit || "N/A"}</div>
+                  proveedores.map((p) => (
+                    <tr key={p.nit} className="group hover:bg-slate-50/50 transition-all">
+                      <td className="px-8 py-6 font-bold text-slate-800 text-sm">
+                        <div className="flex flex-col">
+                           <span>{p.nombre_proveedor}</span>
+                           <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-1">NIT: {p.nit || "N/A"}</span>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 text-sm text-slate-600 font-medium">{p.nombre_contacto}</td>
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => openModal("details", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"><Eye size={16} /></button>
-                          <button onClick={() => openModal("edit", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"><Pencil size={16} /></button>
-                          <button onClick={() => openModal("delete", p)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"><Trash2 size={16} /></button>
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col gap-1">
+                           <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                             <Mail size={12} className="text-indigo-500" />
+                             {p.email}
+                           </div>
+                           <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400 italic">
+                             <MapPin size={10} className="text-slate-300" />
+                             {p.direccion || "Dirección no registrada"}
+                           </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => openModal("details", p)} className="p-2.5 rounded-xl bg-white text-slate-400 hover:text-slate-900 shadow-sm border border-slate-100 transition-all hover:scale-110"><Eye size={16} /></button>
+                          <button onClick={() => openModal("edit", p)} className="p-2.5 rounded-xl bg-white text-slate-400 hover:text-slate-900 shadow-sm border border-slate-100 transition-all hover:scale-110"><Pencil size={16} /></button>
+                          <button onClick={() => openModal("delete", p)} className="p-2.5 rounded-xl bg-white text-rose-300 hover:text-rose-500 shadow-sm border border-slate-100 transition-all hover:scale-110"><Trash2 size={16} /></button>
                         </div>
                       </td>
                     </tr>
@@ -187,21 +247,62 @@ export default function Proveedores() {
               </tbody>
             </table>
           </div>
-          {filtered.length > 0 && (
-            <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-              <p className="text-xs text-gray-500 font-medium">Página <span className="font-bold text-[#040529]">{currentPage}</span> de <span className="font-bold text-[#040529]">{totalPages}</span></p>
-              <div className="flex items-center gap-2">
-                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="p-2 rounded-lg border border-gray-200 bg-white shadow-sm transition"><ChevronLeft className="h-4 w-4" /></button>
-                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="p-2 rounded-lg border border-gray-200 bg-white shadow-sm transition"><ChevronRight className="h-4 w-4" /></button>
-              </div>
+
+          <div className="shrink-0 border-t border-gray-100 px-8 py-4 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-500">
+              Mostrando <span className="font-bold text-[#040529]">{proveedores.length}</span> de <span className="font-bold text-[#040529]">{totalItems}</span> registros
             </div>
-          )}
+            
+            <div className="flex items-center gap-2">
+              <button
+                disabled={paginaActual === 1}
+                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <ChevronLeft size={20} className="text-gray-600" />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(totalPaginas)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setPaginaActual(i + 1)}
+                    className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                      paginaActual === i + 1
+                        ? "bg-[#040529] text-white shadow-lg shadow-[#040529]/20"
+                        : "text-gray-400 hover:text-[#040529] hover:bg-white"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                disabled={paginaActual === totalPaginas}
+                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <ChevronRight size={20} className="text-gray-600" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <AnimatePresence>
         {notification.show && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.9 }} 
+            animate={{ opacity: 1, y: 0, scale: 1 }} 
+            exit={{ opacity: 0, scale: 0.9 }} 
+            className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-8 py-4 rounded-3xl shadow-2xl text-[11px] font-black uppercase tracking-[0.2em] border backdrop-blur-md flex items-center gap-3 ${
+              notification.type === "success" 
+                ? "bg-slate-900/90 text-white border-slate-700" 
+                : "bg-rose-500/90 text-white border-rose-400"
+            }`}
+          >
+            <div className={`w-2 h-2 rounded-full animate-pulse ${notification.type === "success" ? "bg-emerald-400" : "bg-white"}`} />
             {notification.message}
           </motion.div>
         )}
@@ -209,48 +310,157 @@ export default function Proveedores() {
 
       <AnimatePresence>
         {modalType && (
-          <motion.div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modalType === "delete" ? "max-w-sm w-full" : "max-w-2xl w-full"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#040529]">{modalType === "add" ? "Nuevo Proveedor" : modalType === "edit" ? "Editar Proveedor" : modalType === "details" ? "Ficha de Proveedor" : "Eliminar"}</h3>
-                  <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+          <motion.div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#040529]/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+            <motion.div className={`bg-white rounded-3xl shadow-2xl relative overflow-hidden border border-gray-200 ${modalType === "delete" ? "max-w-sm w-full" : "max-w-4xl w-full"}`} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} onClick={(e) => e.stopPropagation()}>
+              <div className="p-10">
+                <div className="flex justify-between items-center mb-10">
+                  <div className="space-y-1">
+                     <h3 className="text-2xl font-black text-slate-800 tracking-tight">
+                       {modalType === "add" ? "Nuevo Aliado" : modalType === "edit" ? "Editar Aliado" : modalType === "details" ? "Ficha de Proveedor" : "Eliminar Registro"}
+                     </h3>
+                     <p className="text-xs text-slate-400 font-medium">{modalType === "add" || modalType === "edit" ? "Complete la información comercial" : "Resumen de perfil comercial"}</p>
+                  </div>
+                  <button onClick={closeModal} className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-300 hover:text-slate-900"><X size={24} /></button>
                 </div>
 
                 {modalType === "delete" ? (
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-6 underline decoration-red-200">¿Estás seguro de eliminar a <span className="font-bold text-red-600">{selected?.nombre_empresa}</span>?</p>
-                    <div className="flex justify-center gap-3">
-                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">Cancelar</button>
-                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg">Eliminar</button>
+                  <div className="text-center space-y-8">
+                    <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto ring-8 ring-rose-50/50">
+                      <Trash2 size={32} className="text-rose-500" />
                     </div>
+                    <div>
+                      <p className="text-slate-400 text-sm font-medium leading-relaxed">¿Confirmas la baja permanente del aliado <span className="text-slate-900 font-bold">"{selected?.nombre_proveedor}"</span>?</p>
+                    </div>
+                     <div className="flex flex-col gap-3">
+                       <button onClick={handleDelete} className="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg active:scale-95">Eliminar Proveedor</button>
+                       <button onClick={closeModal} className="w-full py-4 bg-gray-50 text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Cancelar</button>
+                     </div>
                   </div>
                 ) : modalType === "details" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><Briefcase size={12} /> Empresa</h4>
-                      <div><label className="text-[9px] font-bold text-slate-400 block pb-1">NOMBRE</label><p className="text-sm font-bold text-[#040529]">{formData.nombre_empresa}</p></div>
-                      <div><label className="text-[9px] font-bold text-slate-400 block pb-1">NIT</label><p className="text-sm font-bold text-[#040529]">{formData.nit || "N/A"}</p></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 space-y-8">
+                       <div className="grid grid-cols-2 gap-8">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Razón Social</label>
+                            <p className="text-lg font-black text-slate-800 ml-1 leading-none">{formData.nombre_proveedor}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NIT / Documento</label>
+                            <p className="text-lg font-black text-slate-800 ml-1 leading-none">{formData.nit || "N/A"}</p>
+                          </div>
+                       </div>
+                       
+                       <div className="space-y-4">
+                          <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] ml-1">Información de Contacto</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
+                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500">
+                                   <Mail size={18} />
+                                </div>
+                                <div className="truncate">
+                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Correo</p>
+                                   <p className="text-xs font-bold text-slate-600 truncate">{formData.email}</p>
+                                </div>
+                             </div>
+                             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
+                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500">
+                                   <Phone size={18} />
+                                </div>
+                                <div>
+                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Línea</p>
+                                   <p className="text-xs font-bold text-slate-600">{formData.telefono || "N/A"}</p>
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Domicilio Fiscal</label>
+                          <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
+                             <MapPin size={18} className="text-slate-300 shrink-0" />
+                             <p className="text-xs font-bold text-slate-600">{formData.direccion || "Sin dirección registrada"}</p>
+                          </div>
+                       </div>
                     </div>
-                    <div className="p-4 bg-[#040529] text-white rounded-2xl space-y-4">
-                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><User size={12} /> Contacto</h4>
-                      <div><label className="text-[9px] font-bold text-white/40 block pb-1">NOMBRE</label><p className="text-sm font-bold">{formData.nombre_contacto}</p></div>
-                      <div><label className="text-[9px] font-bold text-white/40 block pb-1">EMAIL</label><p className="text-sm font-bold">{formData.email}</p></div>
+
+                    <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col justify-between relative overflow-hidden">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
+                       <div className="space-y-6">
+                          <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center">
+                             <Briefcase size={28} className="text-white" />
+                          </div>
+                          <div className="space-y-2">
+                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Estado Aliado</p>
+                             <span className="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-500/30 inline-block">Verificado</span>
+                          </div>
+                       </div>
+                       <button onClick={closeModal} className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all mt-8">Cerrar Ficha</button>
                     </div>
-                    <div className="md:col-span-2 flex justify-end"><button onClick={closeModal} className="px-6 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold">Cerrar</button></div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Empresa *</label><input type="text" value={formData.nombre_empresa} onChange={(e) => setFormData({ ...formData, nombre_empresa: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" placeholder="Ej: Suministros S.A." /></div>
-                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">NIT</label><input type="text" value={formData.nit} onChange={(e) => setFormData({ ...formData, nit: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" placeholder="900..." /></div>
+                  <div className="space-y-8">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Razón Social *</label>
+                         <input 
+                           type="text" 
+                           value={formData.nombre_proveedor} 
+                           onChange={(e) => setFormData({ ...formData, nombre_proveedor: e.target.value })} 
+                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all placeholder:text-gray-300" 
+                           placeholder="Nombre comercial" 
+                         />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NIT / ID Fiscal *</label>
+                         <input 
+                           type="text" 
+                           value={formData.nit} 
+                           onChange={(e) => setFormData({ ...formData, nit: e.target.value })} 
+                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-gray-50 border border-gray-300 rounded-xl outline-none disabled:opacity-50" 
+                           placeholder="Número de identificación" 
+                           disabled={modalType === "edit"} 
+                         />
+                      </div>
                     </div>
-                    <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Contacto *</label><input type="text" value={formData.nombre_contacto} onChange={(e) => setFormData({ ...formData, nombre_contacto: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Email *</label><input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" /></div>
-                      <div><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Teléfono</label><input type="text" value={formData.telefono} onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" /></div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico *</label>
+                       <input 
+                         type="email" 
+                         value={formData.email} 
+                         onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                         className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all" 
+                         placeholder="proveedor@ejemplo.com"
+                       />
                     </div>
-                    <button onClick={handleSave} className="w-full py-3 bg-[#040529] text-white rounded-xl text-sm font-bold transition mt-4">{modalType === "add" ? "Registrar" : "Guardar"}</button>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono Móvil</label>
+                         <input 
+                           type="text" 
+                           value={formData.telefono} 
+                           onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} 
+                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all" 
+                         />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección Física</label>
+                         <input 
+                           type="text" 
+                           value={formData.direccion} 
+                           onChange={(e) => setFormData({ ...formData, direccion: e.target.value })} 
+                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all" 
+                         />
+                      </div>
+                    </div>
+
+                     <div className="pt-4 flex gap-4">
+                        <button onClick={closeModal} className="flex-1 py-3.5 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Cancelar</button>
+                        <button onClick={handleSave} className="flex-[2] py-3.5 bg-[#040529] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#040529]/10 hover:bg-[#040529]/90 transition-all active:scale-95">
+                          {modalType === "add" ? "Registrar Aliado" : "Guardar Cambios"}
+                        </button>
+                     </div>
                   </div>
                 )}
               </div>

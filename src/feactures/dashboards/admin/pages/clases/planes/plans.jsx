@@ -24,7 +24,8 @@ const PlanesAdmin = () => {
     descripcion: "",
     precio: "",
     numero_clases: 4,
-    descuento_porcentaje: 0
+    descuento_porcentaje: 0,
+    duracion_meses: 1
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -62,10 +63,11 @@ const PlanesAdmin = () => {
         descripcion: plan.descripcion || "",
         precio: plan.precio,
         numero_clases: plan.numero_clases || 4,
-        descuento_porcentaje: plan.descuento_porcentaje || 0
+        descuento_porcentaje: plan.descuento_porcentaje || 0,
+        duracion_meses: plan.duracion_meses || 1
       });
     } else {
-      setFormData({ nombre_plan: "", descripcion: "", precio: "", numero_clases: 4, descuento_porcentaje: 0 });
+      setFormData({ nombre_plan: "", descripcion: "", precio: "", numero_clases: 4, descuento_porcentaje: 0, duracion_meses: 1 });
     }
     setFormErrors({});
   };
@@ -162,6 +164,7 @@ const PlanesAdmin = () => {
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Plan</th>
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Precio</th>
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Clases</th>
+                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Duración</th>
                   <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
                 </tr>
               </thead>
@@ -178,6 +181,11 @@ const PlanesAdmin = () => {
                       <td className="px-5 py-4 text-center">
                         <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
                           {p.numero_clases} clases
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                          {p.duracion_meses || 1} {p.duracion_meses === 1 ? 'mes' : 'meses'}
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -237,7 +245,7 @@ const PlanesAdmin = () => {
                       <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nombre *</label>
                       <input type="text" value={formData.nombre_plan} onChange={(e) => setFormData({ ...formData, nombre_plan: e.target.value })} className={cn("w-full px-4 py-3 text-sm rounded-xl border outline-none transition", formErrors.nombre_plan && "border-red-400 bg-red-50")} placeholder="Ej: Plan Básico" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Precio *</label>
                         <input type="number" value={formData.precio} onChange={(e) => setFormData({ ...formData, precio: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" placeholder="0" />
@@ -245,6 +253,10 @@ const PlanesAdmin = () => {
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Clases *</label>
                         <input type="number" value={formData.numero_clases} onChange={(e) => setFormData({ ...formData, numero_clases: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Duración (Meses) *</label>
+                        <input type="number" value={formData.duracion_meses} onChange={(e) => setFormData({ ...formData, duracion_meses: e.target.value })} className="w-full px-4 py-3 text-sm rounded-xl border outline-none" min="1" />
                       </div>
                     </div>
                     <button onClick={handleSave} className="w-full py-3 bg-[#040529] text-white rounded-xl text-sm font-bold shadow-lg transition">

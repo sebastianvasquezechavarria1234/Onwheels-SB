@@ -209,7 +209,7 @@ export const StudentHeader = () => {
             <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-lg uppercase tracking-tighter text-white">
+            <span className="font-bold text-lg tracking-tighter text-white whitespace-nowrap">
               Performance SB
             </span>
           </Link>

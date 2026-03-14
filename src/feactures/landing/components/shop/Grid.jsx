@@ -10,6 +10,7 @@ export const Grid = () => {
 
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedPriceRange, setSelectedPriceRange] = useState("");
+    const [showDiscountOnly, setShowDiscountOnly] = useState(false);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -41,16 +42,18 @@ export const Grid = () => {
 
         let matchPrice = true;
         if (selectedPriceRange) {
-            const price = Number(p.precio_venta) || 0;
+            const price = Number(p.precio) || 0;
             const [min, max] = selectedPriceRange.split("-").map(Number);
             if (max) {
                 matchPrice = price >= min && price <= max;
-            } else {
-                matchPrice = price >= min;
             }
         }
 
-        return matchSearch && matchCategory && matchPrice;
+        const matchDiscount = showDiscountOnly
+            ? Number(p.descuento_producto) > 0
+            : true;
+
+        return matchSearch && matchCategory && matchPrice && matchDiscount;
     });
 
     return (
@@ -83,6 +86,8 @@ export const Grid = () => {
                         setSelectedCategory={setSelectedCategory}
                         selectedPriceRange={selectedPriceRange}
                         setSelectedPriceRange={setSelectedPriceRange}
+                        showDiscountOnly={showDiscountOnly}
+                        setShowDiscountOnly={setShowDiscountOnly}
                     />
                 </div>
 

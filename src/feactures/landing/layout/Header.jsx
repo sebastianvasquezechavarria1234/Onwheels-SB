@@ -54,7 +54,7 @@ export const Header = () => {
             `}>
               <img src="/logo.png" alt="OW" className="w-full h-full object-cover" />
             </div>
-            <span className={`font-bold uppercase tracking-tighter transition-all duration-500 ${scrolled ? 'text-sm text-white' : 'text-lg text-white'}`}>
+            <span className={`font-bold tracking-tighter transition-all duration-500 whitespace-nowrap ${scrolled ? 'text-sm text-white' : 'text-lg text-white'}`}>
               Performance SB
             </span>
           </Link>

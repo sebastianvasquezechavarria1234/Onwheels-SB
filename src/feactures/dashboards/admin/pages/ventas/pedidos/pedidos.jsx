@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import {
   Pen,
@@ -57,6 +57,8 @@ function cn(...classes) { return classes.filter(Boolean).join(" "); }
 
 function Pedidos() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
   const [ventas, setVentas] = useState([]);
   const [usuarios, setUsuarios] = useState([]); // todos los usuarios (posibles clientes)
   const [clientes, setClientes] = useState([]); // solo quienes tienen perfil cliente
@@ -177,7 +179,7 @@ function Pedidos() {
       return;
     } else if (type === "ver" && venta) {
       // Navegar a la vista de detalle en lugar de abrir modal
-      navigate(`/admin/pedidos/detalle/${venta.id_venta}`);
+      navigate(`${basePath}/pedidos/detalle/${venta.id_venta}`);
       return;
     }
 
@@ -608,7 +610,7 @@ function Pedidos() {
               </div>
 
               <button
-                onClick={() => navigate("/admin/pedidos/crear")}
+                onClick={() => navigate(`${basePath}/pedidos/crear`)}
                 className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
               >
                 <Plus size={18} />
@@ -701,9 +703,9 @@ function Pedidos() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => navigate(`/admin/pedidos/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
+                            <button onClick={() => navigate(`${basePath}/pedidos/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
                             {v.estado === "Pendiente" && (
-                              <button onClick={() => navigate(`/admin/pedidos/editar/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={16} /></button>
+                              <button onClick={() => navigate(`${basePath}/pedidos/editar/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={16} /></button>
                             )}
                             {v.estado !== "Cancelada" && (
                               <button onClick={() => { setStatusFormEstado(v.estado); setCancelJustificacion(""); openModal("status", v); }} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Actualizar estado"><Package size={16} /></button>

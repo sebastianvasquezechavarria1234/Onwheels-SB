@@ -17,23 +17,30 @@ import {
   FileText,
   CreditCard,
   Layers,
-  LogOut
+  LogOut,
+  UserPlus,
+  ChartBarIncreasing,
+  ChevronRight
 } from "lucide-react"
 import { canView, canManage, getUserPermissions } from "../../../../utils/permissions"
+import { motion } from "framer-motion"
 
 const SidebarItem = ({ title, link, icon, isActive }) => (
   <Link
     to={link}
-    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-sm font-medium
+    className={`flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-300 group text-sm font-bold tracking-tight
       ${isActive
-        ? "bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)] border border-emerald-500/20"
-        : "text-slate-400 hover:bg-slate-800 hover:text-white"
+        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+        : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
       }`}
   >
-    <span className={`${isActive ? "text-emerald-400" : "text-slate-500 group-hover:text-white"}`}>
-      {icon}
-    </span>
-    {title}
+    <div className="flex items-center gap-3">
+      <span className={`${isActive ? "text-white" : "text-slate-500 group-hover:text-blue-400"}`}>
+        {icon}
+      </span>
+      {title}
+    </div>
+    {isActive && <ChevronRight size={14} className="opacity-50" />}
   </Link>
 )
 
@@ -81,9 +88,9 @@ export const CustomSidebar = () => {
         },
         {
           title: "Categorías",
+          permission: "categoria_productos",
           link: "/custom/categorias",
-          icon: <Layers size={20} />,
-          permission: "categorias",
+          icon: <ChartBarIncreasing size={20} />,
         },
         {
           title: "Proveedores",
@@ -115,22 +122,10 @@ export const CustomSidebar = () => {
           permission: "eventos",
         },
         {
-          title: "Cat. Eventos",
-          link: "/custom/categoria-eventos",
-          icon: <Award size={20} />,
-          permission: "categoria_eventos",
-        },
-        {
           title: "Sedes",
           link: "/custom/sedes",
           icon: <MapPin size={20} />,
           permission: "sedes",
-        },
-        {
-          title: "Patrocinadores",
-          link: "/custom/patrocinadores",
-          icon: <Award size={20} />,
-          permission: "patrocinadores",
         },
       ],
     },
@@ -142,24 +137,6 @@ export const CustomSidebar = () => {
           link: "/custom/clases",
           icon: <BookOpen size={20} />,
           permission: "clases",
-        },
-        {
-          title: "Niveles",
-          link: "/custom/niveles",
-          icon: <Layers size={20} />,
-          permission: "niveles",
-        },
-        {
-          title: "Estudiantes",
-          link: "/custom/estudiantes",
-          icon: <GraduationCap size={20} />,
-          permission: "estudiantes",
-        },
-        {
-          title: "Instructores",
-          link: "/custom/instructores",
-          icon: <UserCheck size={20} />,
-          permission: "instructores",
         },
         {
           title: "Inscripciones",
@@ -189,19 +166,26 @@ export const CustomSidebar = () => {
   }
 
   return (
-    <aside className="w-[280px] h-screen bg-[#0f172a] flex flex-col sticky top-0 border-r border-slate-800 overflow-hidden shadow-2xl">
-      <div className="p-6 pb-2">
-        <Link to="/custom/home" className="block">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/30">
-              OW
+    <aside className="w-[300px] h-screen bg-[#020617] flex flex-col sticky top-0 border-r border-slate-800/50 overflow-hidden shadow-2xl">
+      <div className="p-8">
+        <Link to="/custom/home" className="group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center transform group-hover:rotate-12 transition-all duration-500 shadow-xl shadow-white/5">
+              <span className="text-black font-black text-xl italic tracking-tighter">SB</span>
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">Performance SB<span className="text-emerald-500">.</span></span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-white leading-none tracking-tighter whitespace-nowrap">
+                Performance SB
+              </span>
+              <span className="text-[10px] font-bold tracking-[0.3em] text-blue-500 uppercase leading-none mt-1">
+                Dashboard
+              </span>
+            </div>
           </div>
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <nav className="flex-1 overflow-y-auto px-6 pb-6 space-y-8 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
         {sidebarConfig.map((item, index) => {
           if (!item.section) {
             if (!hasAccess(item.permission)) return null
@@ -220,12 +204,12 @@ export const CustomSidebar = () => {
           if (visibleItems.length === 0) return null
 
           return (
-            <div key={index} className="animate-in fade-in duration-500">
-              <h4 className="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+            <div key={index} className="animate-in fade-in slide-in-from-left-4 duration-500">
+              <h4 className="px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                <span className="w-1 h-1 rounded-full bg-blue-600"></span>
                 {item.section}
               </h4>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {visibleItems.map((subItem, subIndex) => (
                   <SidebarItem
                     key={`${index}-${subIndex}`}
@@ -241,17 +225,15 @@ export const CustomSidebar = () => {
         })}
       </nav>
 
-      <div className="p-4 bg-[#0B1120] border-t border-slate-800">
+      <div className="p-6 bg-[#020617] border-t border-slate-800/50">
         <Link
           to="/custom/home"
-          className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 border border-transparent transition-all duration-300 group"
+          className="flex items-center justify-center gap-3 w-full p-4 rounded-2xl bg-slate-900 text-slate-400 hover:bg-red-500/10 hover:text-red-400 border border-slate-800 hover:border-red-500/30 transition-all duration-500 group"
         >
-          <LogOut size={18} />
-          <span className="font-medium text-sm">Salir del Dashboard</span>
+          <LogOut size={18} className="transition-transform group-hover:-translate-x-1" />
+          <span className="font-bold text-xs uppercase tracking-widest">Salir</span>
         </Link>
       </div>
     </aside>
   )
 }
-
- 

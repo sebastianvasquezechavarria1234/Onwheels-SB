@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/compras/productos/Products.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock } from "lucide-react";
+import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock, Download, ChevronDown, TrendingUp, PlusCircle, AlertTriangle, FileText, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getProductos,
@@ -28,6 +28,7 @@ function cn(...classes) {
 const API_URL = "http://localhost:3000";
 
 export default function Productos({ renderLayout = true }) {
+  console.log("🚀 [Antigravity] Products.jsx v2 - Grouped Variants Fixed");
   const [busqueda, setBusqueda] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroPrecio, setFiltroPrecio] = useState("");
@@ -45,7 +46,10 @@ export default function Productos({ renderLayout = true }) {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [productoToDelete, setProductoToDelete] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
-  const productosPorPagina = 5;
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const productosPorPagina = 10;
+  
   const [productForm, setProductForm] = useState({
     id_producto: null,
     nombre_producto: "",
@@ -162,19 +166,42 @@ export default function Productos({ renderLayout = true }) {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
+
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    cargarDatos();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      cargarDatos();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [paginaActual, busqueda, filtroCategoria]);
+
   const cargarDatos = async () => {
     try {
-      const [prods, cats, cols, tls, vars] = await Promise.all([
-        getProductos(),
+      setLoading(true);
+      const [resProds, cats, cols, tls, vars] = await Promise.all([
+        getProductos({ 
+          page: paginaActual, 
+          limit: productosPorPagina, 
+          search: busqueda,
+          id_categoria: filtroCategoria 
+        }),
         getCategorias(),
         getColores(),
         getTallas(),
         getVariantes(),
       ]);
-      setProductos(prods || []);
+      
+      if (resProds && resProds.data) {
+        setProductos(resProds.data);
+        setTotalPaginas(resProds.totalPages || 1);
+        setTotalItems(resProds.total || 0);
+      } else {
+        setProductos(Array.isArray(resProds) ? resProds : []);
+        setTotalPaginas(1);
+        setTotalItems(Array.isArray(resProds) ? resProds.length : 0);
+      }
+      
       setCategorias(cats || []);
       setColores(cols || []);
       setTallas(tls || []);
@@ -182,6 +209,8 @@ export default function Productos({ renderLayout = true }) {
     } catch (err) {
       console.error("Error cargando datos:", err);
       showNotification("Error cargando datos", "error");
+    } finally {
+      setLoading(false);
     }
   };
   const handleProductChange = (e) => {
@@ -286,7 +315,14 @@ export default function Productos({ renderLayout = true }) {
       setImagenesUrls([]);
 
       const vars = (variantesGlobales || []).filter((v) => v.id_producto === producto.id_producto);
-      setVariants(vars || []);
+      // Agrupar variantes por color para el UI
+      const grouped = vars.reduce((acc, v) => {
+        const colorName = getColorNombre(v.id_color);
+        if (!acc[colorName]) acc[colorName] = { color: colorName, tallas: [] };
+        acc[colorName].tallas.push({ talla: getTallaNombre(v.id_talla), cantidad: v.stock });
+        return acc;
+      }, {});
+      setVariants(Object.values(grouped));
     } else {
       setProductForm({
         id_producto: null,
@@ -357,8 +393,21 @@ export default function Productos({ renderLayout = true }) {
       formData.append("imagenes_urls", JSON.stringify(imagenesUrls));
       // Imágenes que no borramos de la DB
       formData.append("imagenes_conservadas", JSON.stringify(imagenesConservadas));
-      // Variantes local states -> stringified
-      formData.append("variantes", JSON.stringify(variants));
+      // Flatten grouped variants for backend
+      const flatVariants = [];
+      for (const v of variants) {
+        if (!v.tallas) continue;
+        for (const t of v.tallas) {
+          const colorObj = colores.find(c => c.nombre_color === v.color);
+          const tallaObj = tallas.find(tt => tt.nombre_talla === t.talla);
+          flatVariants.push({
+            id_color: colorObj?.id_color,
+            id_talla: tallaObj?.id_talla,
+            stock: Number(t.cantidad)
+          });
+        }
+      }
+      formData.append("variantes", JSON.stringify(flatVariants));
 
       let resAPI;
       if (productForm.id_producto) {
@@ -440,55 +489,27 @@ export default function Productos({ renderLayout = true }) {
       const validTallas = currentVariant.tallas.filter(
         (t) => t.talla?.toString().trim() && Number(t.cantidad) >= 0
       );
-      if (validTallas.length === 0)
-        return showNotification("Agrega al menos una talla con cantidad válida", "error");
-      const newVariants = [];
-      for (const t of validTallas) {
-        let id_color = null;
-        let id_talla = null;
-        let colorMatch = colores.find(
-          (c) =>
-            String(c.codigo_hex || c.hex || "").toLowerCase() ===
-            String(currentVariant.color).toLowerCase() ||
-            c.nombre_color === currentVariant.color
-        );
-        if (!colorMatch) {
-          const newColor = await createColor({
-            nombre_color: currentVariant.color,
-            codigo_hex: currentVariant.color,
-          });
-          if (newColor) {
-            colorMatch = newColor;
-            setColores((prev) => [...prev, newColor]);
-          }
+
+      const newGrouping = {
+        color: currentVariant.color,
+        tallas: validTallas.map(t => ({ talla: t.talla, cantidad: Number(t.cantidad) }))
+      };
+
+      setVariants(prev => {
+        const idx = prev.findIndex(v => v.color === newGrouping.color);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = newGrouping;
+          return updated;
         }
-        if (colorMatch) id_color = colorMatch.id_color;
-        let tallaMatch = tallas.find((tt) => tt.nombre_talla === t.talla);
-        if (!tallaMatch) {
-          const newTalla = await createTalla({ nombre_talla: t.talla });
-          if (newTalla) {
-            tallaMatch = newTalla;
-            setTallas((prev) => [...prev, newTalla]);
-          }
-        }
-        if (tallaMatch) id_talla = tallaMatch.id_talla;
-        const variantObj = {
-          id_color,
-          id_talla,
-          stock: Number(t.cantidad) || 0,
-          nombre_color: currentVariant.color,
-          nombre_talla: t.talla,
-          codigo_hex: currentVariant.color,
-        };
-        newVariants.push(variantObj);
-      }
-      setVariants((prev) => [...prev, ...newVariants]);
+        return [...prev, newGrouping];
+      });
+
       setCurrentVariant({ color: "#2563eb", tallas: [{ talla: "", cantidad: "" }] });
-      setIsVariantModalOpen(false);
       showNotification("Variante agregada con éxito");
     } catch (err) {
       console.error("saveVariant error:", err);
-      showNotification("Error guardando variante: " + (err.message || err), "error");
+      showNotification("Error guardando variante", "error");
     }
   };
   const removeVariant = (variant) => {
@@ -534,27 +555,6 @@ export default function Productos({ renderLayout = true }) {
       showNotification("Error creando talla: " + (err.message || err), "error");
     }
   };
-  const indexOfLast = paginaActual * productosPorPagina;
-  const indexOfFirst = indexOfLast - productosPorPagina;
-  let productosFiltrados = productos.filter(p => {
-    const matchBusqueda = p.nombre_producto?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.descripcion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      String(p.id_producto).includes(busqueda);
-    const matchCategoria = filtroCategoria ? String(p.id_categoria) === String(filtroCategoria) : true;
-    return matchBusqueda && matchCategoria;
-  });
-
-  if (filtroPrecio) {
-    productosFiltrados.sort((a, b) => filtroPrecio === "asc" ? Number(a.precio) - Number(b.precio) : Number(b.precio) - Number(a.precio));
-  } else if (filtroAlfabetico) {
-    productosFiltrados.sort((a, b) => filtroAlfabetico === "asc" ? a.nombre_producto.localeCompare(b.nombre_producto) : b.nombre_producto.localeCompare(a.nombre_producto));
-  }
-
-  const productosActuales = productosFiltrados.slice(indexOfFirst, indexOfLast);
-  const totalPaginas = Math.max(1, Math.ceil(productosFiltrados.length / productosPorPagina));
-  useEffect(() => {
-    if (paginaActual > totalPaginas) setPaginaActual(1);
-  }, [totalPaginas, paginaActual, busqueda]);
   const getCategoriaNombre = (idCat) => {
     const cat = categorias.find((c) => c.id_categoria === idCat);
     return cat ? cat.nombre_categoria : "—";
@@ -572,167 +572,167 @@ export default function Productos({ renderLayout = true }) {
     <>
       <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
 
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 px-6 pt-6">
+          <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Gestión de Productos
+          </h2>
 
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between ">
-            <div className="flex items-center gap-4">
-              <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
-                Gestión de Productos
-              </h2>
-
-              {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l pl-4">
-                <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md ">
-                  <Hash className="h-3 w-3 " />
-                  <span className="text-xs font-bold!">{productosFiltrados.length}</span>
-                </div>
-              </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Search Bar */}
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={busqueda}
+                onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
+                className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 transition-all text-slate-700 placeholder:text-slate-400"
+              />
             </div>
-          </div>
 
-          {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
-            {/* Search & Create Group */}
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={busqueda}
-                  onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
-                  placeholder="Buscar productos..."
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
-                />
-                {busqueda && (
-                  <button onClick={() => setBusqueda("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+            {/* Filter Dropdown */}
+            <div className="relative hidden md:block">
               <select
                 value={filtroCategoria}
                 onChange={(e) => { setFiltroCategoria(e.target.value); setPaginaActual(1); }}
-                className="px-3 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition bg-gray-50 text-gray-700"
+                className="appearance-none bg-white border border-slate-200 text-slate-500 py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 cursor-pointer w-48"
               >
                 <option value="">Todas las categorías</option>
                 {categorias.map(c => (
                   <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>
                 ))}
               </select>
-              <select
-                value={filtroPrecio}
-                onChange={(e) => { setFiltroPrecio(e.target.value); setFiltroAlfabetico(""); setPaginaActual(1); }}
-                className="px-3 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition bg-gray-50 text-gray-700"
-              >
-                <option value="">Precio (Todos)</option>
-                <option value="asc">Menor a mayor</option>
-                <option value="desc">Mayor a menor</option>
-              </select>
-              <select
-                value={filtroAlfabetico}
-                onChange={(e) => { setFiltroAlfabetico(e.target.value); setFiltroPrecio(""); setPaginaActual(1); }}
-                className="px-3 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition bg-gray-50 text-gray-700"
-              >
-                <option value="">Alfabético (Todos)</option>
-                <option value="asc">A-Z</option>
-                <option value="desc">Z-A</option>
-              </select>
-              {canManage("productos") && (
-                <button
-                  onClick={() => openProductModal(null)}
-                  className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-                >
-                  <Plus className="h-4 w-4" />
-                  Crear Producto
-                </button>
-              )}
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                <ChevronDown size={18} />
+              </div>
             </div>
+
+            {/* Download Button */}
+            <button
+               className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
+            >
+              <Download size={20} />
+            </button>
+
+            {canManage("productos") && (
+              <button
+                onClick={() => openProductModal(null)}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#040529] hover:bg-black text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+              >
+                <Plus size={18} />
+                Registrar Producto
+              </button>
+            )}
           </div>
         </div>
-
-        {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+        {/* Table Area */}
+        <div className="flex-1 px-6 pb-6 overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
+            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              <table className="w-full text-left relative border-separate border-spacing-0">
+                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-20 shadow-sm">
                   <tr>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Imagen</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[20%]">Nombre</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Categoría</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Precios</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Stock Var.</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Estado</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right w-[15%]">Acciones</th>
+                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Imagen</th>
+                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[25%]">Nombre</th>
+                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Categoría</th>
+                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[20%]">Precios</th>
+                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Stock</th>
+                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[10%] text-center">Estado</th>
+                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-right w-[10%]">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {productosActuales.length === 0 ? (
+                <tbody className="divide-y divide-slate-100">
+                  {loading ? (
                     <tr>
-                      <td colSpan="7" className="p-12 text-center text-gray-400">
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                          <Tag className="h-8 w-8" />
-                          <p className="text-sm">No se encontraron productos</p>
+                      <td colSpan="7" className="p-20 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+                          <p className="text-sm text-slate-500 font-medium">Cargando productos...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : productos.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-20 text-center text-slate-400">
+                        <div className="flex flex-col items-center gap-4 opacity-40">
+                          <Tag className="h-12 w-12" />
+                          <div className="space-y-1">
+                            <p className="text-lg font-bold text-slate-600">No se encontraron productos</p>
+                            <p className="text-sm">Prueba ajustando los filtros o la búsqueda</p>
+                          </div>
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    productosActuales.map((p) => {
+                    productos.map((p) => {
                       const pVars = variantesGlobales.filter(v => v.id_producto === p.id_producto);
                       const totalStock = pVars.reduce((acc, v) => acc + (v.stock || 0), 0);
 
                       return (
-                        <tr key={p.id_producto} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                          <td className="px-5 py-4">
-                            <div className="h-12 w-16 shrink-0 bg-white border border-gray-100 rounded-lg overflow-hidden flex items-center justify-center shadow-sm">
+                        <tr key={p.id_producto} className="group hover:bg-slate-50/80 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="h-14 w-14 shrink-0 bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
                               {p.imagenes && p.imagenes.length > 0 ? (
-                                <img src={p.imagenes[0].url_imagen?.startsWith('http') ? p.imagenes[0].url_imagen : `${API_URL}${p.imagenes[0].url_imagen}`} alt="Producto" className="w-full h-full object-cover" />
+                                <img 
+                                  src={p.imagenes[0].url_imagen?.startsWith('http') ? p.imagenes[0].url_imagen : `${API_URL}${p.imagenes[0].url_imagen}`} 
+                                  alt={p.nombre_producto} 
+                                  className="w-full h-full object-cover" 
+                                />
                               ) : (
-                                <ImageIcon className="h-5 w-5 text-gray-300" />
+                                <ImageIcon className="h-6 w-6 text-slate-300" />
                               )}
                             </div>
                           </td>
-                          <td className="px-5 py-4 font-bold text-[#040529] text-sm">{p.nombre_producto}</td>
-                          <td className="px-5 py-4 text-sm text-gray-600">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-slate-800 text-sm leading-snug">{p.nombre_producto}</span>
+                              <span className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-tight">ID: {p.id_producto}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
                               {getCategoriaNombre(p.id_categoria)}
                             </span>
                           </td>
-                          <td className="px-5 py-4 text-sm flex flex-col gap-1">
-                            <div className="flex items-center gap-1.5 border-b border-gray-100 pb-1 mb-1">
-                              <span className="text-xs text-gray-400 w-12">Compra:</span>
-                              <span className="text-xs font-semibold text-gray-600">${Number(p.precio_compra || 0).toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs text-gray-400 w-12">Venta:</span>
-                              <span className={`text-xs font-bold ${Number(p.descuento_producto || 0) > 0 ? 'text-gray-400 line-through' : 'text-[#040529]'}`}>${Number(p.precio || 0).toFixed(2)}</span>
-                            </div>
-                            {Number(p.descuento_producto || 0) > 0 && (
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] font-bold text-white bg-red-500 px-1 rounded">-{p.descuento_producto}%</span>
-                                <span className="text-sm font-bold text-green-600">${(Number(p.precio || 0) - (Number(p.precio || 0) * Number(p.descuento_producto || 0) / 100)).toFixed(2)}</span>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-slate-400">$</span>
+                                <span className={`text-sm font-bold ${Number(p.descuento_producto || 0) > 0 ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                                  {Number(p.precio || 0).toLocaleString()}
+                                </span>
                               </div>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 text-sm text-gray-600">
-                            <div className="flex flex-col gap-1.5">
-                              <span className="font-bold text-[#040529]">Total: {totalStock} und.</span>
+                              {Number(p.descuento_producto || 0) > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">-{p.descuento_producto}%</span>
+                                  <span className="text-sm font-black text-emerald-600">
+                                    ${(Number(p.precio || 0) * (1 - Number(p.descuento_producto || 0) / 100)).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </td>
-                          <td className="px-5 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${p.estado ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${p.estado ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className={`text-sm font-black ${totalStock <= 5 ? 'text-rose-600' : 'text-slate-700'}`}>
+                                {totalStock} <span className="text-[10px] font-bold text-slate-400 ml-1">und.</span>
+                              </span>
+                              {totalStock <= 5 && <span className="text-[10px] font-bold text-rose-400 mt-0.5">Stock bajo</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${p.estado ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${p.estado ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                               {p.estado ? 'Activo' : 'Inactivo'}
                             </span>
                           </td>
-                          <td className="px-5 py-4 text-right">
+                          <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => openViewModal(p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
+                              <button onClick={() => openViewModal(p)} className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm border border-slate-100" title="Ver"><Eye className="h-4 w-4" /></button>
                               {canManage("productos") && (
                                 <>
-                                  <button onClick={() => openProductModal(p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pen className="h-4 w-4" /></button>
-                                  <button onClick={() => openDeleteConfirm(p)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                                  <button onClick={() => openProductModal(p)} className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm border border-slate-100" title="Editar"><Pen className="h-4 w-4" /></button>
+                                  <button onClick={() => openDeleteConfirm(p)} className="p-2 rounded-xl bg-rose-50 text-rose-400 hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
                                 </>
                               )}
                             </div>
@@ -746,15 +746,26 @@ export default function Productos({ renderLayout = true }) {
             </div>
 
             {/* Footer Pagination */}
-            {totalPaginas > 1 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">
-                  Mostrando <span className="font-bold text-[#040529]">{Math.min(productosActuales.length, productosPorPagina)}</span> de <span className="font-bold text-[#040529]">{productosFiltrados.length}</span> resultados
+            {totalPaginas > 0 && (
+              <div className="border-t border-slate-100 px-6 py-4 bg-white flex items-center justify-between mt-auto">
+                <p className="text-sm font-bold text-slate-500">
+                  Página <span className="text-[#040529]">{paginaActual}</span> de <span className="text-[#040529]">{totalPaginas}</span>
                 </p>
                 <div className="flex items-center gap-2">
-                  <button disabled={paginaActual === 1} onClick={() => setPaginaActual(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
-                  <span className="text-sm font-bold text-[#040529] px-2">{paginaActual}</span>
-                  <button disabled={paginaActual === totalPaginas} onClick={() => setPaginaActual(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+                  <button
+                    disabled={paginaActual === 1}
+                    onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    disabled={paginaActual === totalPaginas}
+                    onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
               </div>
             )}
@@ -773,91 +784,105 @@ export default function Productos({ renderLayout = true }) {
         {/* --- MODALS --- */}
         <AnimatePresence>
           {isProductModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsProductModalOpen(false)}
+          >
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsProductModalOpen(false)}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                className="bg-white rounded-2xl shadow-2xl relative overflow-hidden max-w-4xl w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
-
-                  {/* Left Side (Image Preview & Summary) */}
-                  <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col border-r border-gray-100 relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-5 pattern-grid-lg" />
-                    {/* Image Area */}
-                    <div className="h-1/2 w-full p-6 flex flex-col items-center justify-center relative z-10 border-b border-gray-200/50">
+              <div className="flex h-[600px] overflow-hidden">
+                {/* Left Side (Visual Preview) */}
+                <div className="hidden lg:flex w-1/3 bg-slate-50 flex-col relative overflow-hidden border-r border-slate-100">
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                    </div>
+                    
+                    <div className="h-48 w-full p-8 flex flex-col items-center justify-center relative z-10">
                       {(() => {
                         const getFullUrl = (url) => url ? (url.startsWith('http') ? url : `${API_URL}${url}`) : null;
                         const dbImg = imagenesGuardadas.find(img => !imagenesConservadas || imagenesConservadas.includes(img.id_imagen))?.url_imagen;
+                        const fileImg = imagenesArchivos[0] ? URL.createObjectURL(imagenesArchivos[0]) : null;
+                        const urlImg = imagenesUrls[0] || null;
+                        const currentDisplay = dbImg || fileImg || urlImg;
 
-                        const previewImgUrl =
-                          getFullUrl(dbImg)
-                          || getFullUrl(imagenesUrls[0])
-                          || (imagenesArchivos.length > 0 ? URL.createObjectURL(imagenesArchivos[0]) : null);
-
-                        return previewImgUrl ? (
-                          <div className="w-full h-full rounded-xl overflow-hidden shadow-sm bg-white p-2 border border-gray-100">
-                            <img src={previewImgUrl} alt="Preview" className="w-full h-full object-contain rounded-lg" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block' }} />
-                            <div className="w-full h-full items-center justify-center bg-gray-50 hidden text-xs text-gray-400">Error al cargar imagen</div>
-                          </div>
-                        ) : (
-                          <div className="w-full h-full rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-white/50 text-gray-400 gap-2">
-                            <ImageIcon size={32} />
-                            <span className="text-xs font-medium">Sin imagen</span>
+                        if (currentDisplay) {
+                          return <img src={currentDisplay.startsWith('blob:') ? currentDisplay : getFullUrl(currentDisplay)} alt="Preview" className="h-full w-full object-contain drop-shadow-2xl" />;
+                        }
+                        return (
+                          <div className="flex flex-col items-center gap-3 opacity-20">
+                            <ImageIcon size={48} />
+                            <p className="font-black text-[10px] uppercase tracking-[0.2em]">Sin imagen</p>
                           </div>
                         );
                       })()}
                     </div>
 
-                    {/* Summary Info */}
-                    <div className="flex-1 p-6 z-10 overflow-y-auto">
-                      <h4 className="text-[#040529] font-bold text-lg leading-tight mb-4">{productForm.nombre_producto || "Nuevo Producto"}</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3 text-sm text-gray-600">
-                          <Tag size={16} className="mt-0.5 text-blue-500 shrink-0" />
-                          <span>{getCategoriaNombre(productForm.id_categoria) || "Categoría sin definir"}</span>
+                    <div className="flex-1 p-8 z-10 overflow-y-auto">
+                      <div className="space-y-6">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Vista Previa</p>
+                          <h4 className="text-slate-900 font-bold text-xl leading-tight font-['Outfit']">{productForm.nombre_producto || "Nuevo Producto"}</h4>
                         </div>
-                        <div className="flex items-start gap-3 text-sm text-gray-600">
-                          <MapPin size={16} className="mt-0.5 text-green-500 shrink-0" />
-                          <span>Precio Venta: ${productForm.precio || "0.00"}</span>
-                        </div>
-                        {Number(productForm.descuento_producto) > 0 && (
-                          <div className="flex items-start gap-3 text-sm text-gray-600 font-bold text-green-600">
-                            <Tag size={16} className="mt-0.5 shrink-0" />
-                            <span>Precio Final: ${(Number(productForm.precio || 0) - (Number(productForm.precio || 0) * Number(productForm.descuento_producto || 0) / 100)).toFixed(2)} (-{productForm.descuento_producto}%)</span>
+                        
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
+                            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-500">
+                              <Tag size={16} />
+                            </div>
+                            <span>{getCategoriaNombre(productForm.id_categoria) || "Sin categoría"}</span>
                           </div>
-                        )}
-                        <div className="flex items-start gap-3 text-sm text-gray-600">
-                          <User size={16} className="mt-0.5 text-orange-500 shrink-0" />
-                          <span>Ganancia: {productForm.porcentaje_ganancia || "0"}%</span>
-                        </div>
-                        <div className="flex items-start gap-3 text-sm text-gray-600">
-                          <Calendar size={16} className="mt-0.5 text-purple-500 shrink-0" />
-                          <span>Variantes a agregar: {variants.length}</span>
+                          <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
+                            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-500">
+                              <MapPin size={16} />
+                            </div>
+                            <span>Venta: ${Number(productForm.precio || 0).toLocaleString()}</span>
+                          </div>
+                          {Number(productForm.descuento_producto) > 0 && (
+                            <div className="flex items-center gap-3 text-sm text-emerald-600 font-bold bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
+                              <div className="p-1 px-2 bg-rose-500 rounded-lg text-white text-[10px] font-black uppercase">
+                                -{productForm.descuento_producto}%
+                              </div>
+                              <span>Final: ${(Number(productForm.precio || 0) * (1 - Number(productForm.descuento_producto || 0) / 100)).toLocaleString()}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Right Side (Form) */}
-                  <div className="flex-1 flex flex-col h-full overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
-                      <h3 className="text-xl font-bold text-[#040529]">
-                        {productForm.id_producto ? "Editar Producto" : "Registrar Producto"}
-                      </h3>
-                      <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                  <div className="flex-1 flex flex-col h-full overflow-hidden bg-white">
+                    <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center shrink-0">
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-800 font-['Outfit'] tracking-tight">
+                          {productForm.id_producto ? "Editar Producto" : "Nuevo Producto"}
+                        </h3>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">Complete la información detallada del artículo</p>
+                      </div>
+                      <button 
+                        onClick={() => setIsProductModalOpen(false)} 
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                      >
+                        <X size={20} />
+                      </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6 lg:p-8">
-                      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                      <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
 
                         {/* Group 1: Basics */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="md:col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Producto *</label>
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Nombre del Producto *</label>
                             <input
                               autoFocus
                               name="nombre_producto"
@@ -865,319 +890,329 @@ export default function Productos({ renderLayout = true }) {
                               onChange={handleProductChange}
                               onBlur={handleProductBlur}
                               placeholder="Ej: Camiseta de Verano"
-                              className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.nombre_producto ? "border-red-500" : "border-gray-200"}`}
+                              className={`w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 outline-none transition-all text-sm font-medium text-slate-700 ${formErrors.nombre_producto ? "border-rose-400 bg-rose-50" : "border-slate-300 focus:border-[#040529]"}`}
                             />
-                            {formErrors.nombre_producto && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.nombre_producto}</p>}
+                            {formErrors.nombre_producto && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.nombre_producto}</p>}
                           </div>
 
                           <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Categoría *</label>
-                            <div className="relative mt-1">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Categoría *</label>
+                            <div className="relative">
                               <select
                                 name="id_categoria"
                                 value={productForm.id_categoria ?? ""}
                                 onChange={handleProductChange}
                                 onBlur={handleProductBlur}
-                                className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] appearance-none ${formErrors.id_categoria ? "border-red-500" : "border-gray-200"}`}
+                                className={`w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 outline-none transition-all text-sm font-medium text-slate-700 appearance-none cursor-pointer ${formErrors.id_categoria ? "border-rose-400 bg-rose-50" : "border-slate-300 focus:border-[#040529]"}`}
                               >
                                 <option value="">Seleccionar...</option>
                                 {categorias.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>)}
                               </select>
-                              <Tag className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                             </div>
-                            {formErrors.id_categoria && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.id_categoria}</p>}
+                            {formErrors.id_categoria && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.id_categoria}</p>}
                           </div>
 
                           <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Estado *</label>
-                            <div className="relative mt-1">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Estado *</label>
+                            <div className="relative">
                               <select
                                 name="estado"
                                 value={productForm.estado}
                                 onChange={handleProductChange}
                                 onBlur={handleProductBlur}
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] appearance-none"
+                                className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-medium text-slate-700 appearance-none cursor-pointer"
                               >
                                 <option value="activo">Activo</option>
                                 <option value="inactivo">Inactivo</option>
                               </select>
-                              <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                             </div>
-                            {formErrors.estado && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.estado}</p>}
                           </div>
                         </div>
 
                         {/* Group 2: Prices */}
-                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                          <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2"><Clock size={14} /> Gestión de Precios</h4>
+                        <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100">
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                             <TrendingUp size={14} className="text-emerald-500" /> 
+                             Gestión de Precios
+                          </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Compra *</label>
-                              <input
-                                name="precio_compra"
-                                type="number"
-                                step="0.01"
-                                value={productForm.precio_compra}
-                                onChange={handleProductChange}
-                                onBlur={handleProductBlur}
-                                className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm ${formErrors.precio_compra ? "border-red-500" : "border-gray-200"}`}
-                              />
-                              {formErrors.precio_compra && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.precio_compra}</p>}
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Compra *</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
+                                <input
+                                  name="precio_compra"
+                                  type="number"
+                                  step="0.01"
+                                  value={productForm.precio_compra}
+                                  onChange={handleProductChange}
+                                  onBlur={handleProductBlur}
+                                  className={`w-full pl-7 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.precio_compra ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
+                                />
+                              </div>
+                              {formErrors.precio_compra && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.precio_compra}</p>}
                             </div>
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Venta *</label>
-                              <input
-                                name="precio"
-                                type="number"
-                                step="0.01"
-                                value={productForm.precio}
-                                onChange={handleProductChange}
-                                onBlur={handleProductBlur}
-                                className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm ${formErrors.precio ? "border-red-500" : "border-gray-200"}`}
-                              />
-                              {formErrors.precio && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.precio}</p>}
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Venta *</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
+                                <input
+                                  name="precio"
+                                  type="number"
+                                  step="0.01"
+                                  value={productForm.precio}
+                                  onChange={handleProductChange}
+                                  onBlur={handleProductBlur}
+                                  className={`w-full pl-7 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.precio ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
+                                />
+                              </div>
+                              {formErrors.precio && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.precio}</p>}
                             </div>
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">% Ganancia</label>
-                              <input
-                                name="porcentaje_ganancia"
-                                type="number"
-                                step="0.01"
-                                value={productForm.porcentaje_ganancia}
-                                onChange={handleProductChange}
-                                onBlur={handleProductBlur}
-                                className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm ${formErrors.porcentaje_ganancia ? "border-red-500" : "border-gray-200"}`}
-                              />
-                              {formErrors.porcentaje_ganancia && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.porcentaje_ganancia}</p>}
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">% Ganancia</label>
+                              <div className="relative">
+                                <input
+                                  name="porcentaje_ganancia"
+                                  type="number"
+                                  step="0.01"
+                                  value={productForm.porcentaje_ganancia}
+                                  onChange={handleProductChange}
+                                  onBlur={handleProductBlur}
+                                  className={`w-full pr-8 pl-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.porcentaje_ganancia ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">%</span>
+                              </div>
+                              {formErrors.porcentaje_ganancia && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.porcentaje_ganancia}</p>}
                             </div>
                             <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Desc. %</label>
-                              <input
-                                name="descuento_producto"
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="any"
-                                value={productForm.descuento_producto}
-                                onChange={handleProductChange}
-                                onBlur={handleProductBlur}
-                                className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm ${formErrors.descuento_producto ? "border-red-500" : "border-gray-200"}`}
-                              />
-                              {formErrors.descuento_producto && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.descuento_producto}</p>}
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Desc. %</label>
+                              <div className="relative">
+                                <input
+                                  name="descuento_producto"
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="any"
+                                  value={productForm.descuento_producto}
+                                  onChange={handleProductChange}
+                                  onBlur={handleProductBlur}
+                                  className={`w-full pr-8 pl-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.descuento_producto ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-rose-400 text-sm font-bold">%</span>
+                              </div>
+                              {formErrors.descuento_producto && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.descuento_producto}</p>}
                             </div>
                           </div>
                         </div>
 
                         {/* Group 3: Description & Image */}
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                           <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Descripción *</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Descripción *</label>
                             <textarea
                               name="descripcion"
                               value={productForm.descripcion}
                               onChange={handleProductChange}
                               onBlur={handleProductBlur}
-                              placeholder="Detalles del producto..."
+                              placeholder="Detalles sobre materiales, uso, o características especiales..."
                               rows={3}
-                              className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.descripcion ? "border-red-500" : "border-gray-200"}`}
+                              className={`w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-medium text-slate-700 ${formErrors.descripcion ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
                             />
-                            {formErrors.descripcion && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.descripcion}</p>}
+                            {formErrors.descripcion && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.descripcion}</p>}
                           </div>
 
-                          <div className="md:col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Imágenes del Producto *</label>
-                            <div className="flex flex-col gap-3 mt-1">
-                              <input
-                                type="file"
-                                multiple
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#040529] file:text-white hover:file:bg-[#040529]/90 transition cursor-pointer"
-                              />
+                          <div className="md:col-span-2 space-y-4">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Galería de Imágenes *</label>
+                            
+                            <div className="flex flex-col gap-4">
+                              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer group">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <Upload className="h-6 w-6 text-slate-400 group-hover:text-slate-600 mb-2 transition-colors" />
+                                  <p className="text-xs text-slate-500 font-bold group-hover:text-slate-700 transition-colors">Click para subir o arrastra y suelta</p>
+                                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-widest">PNG, JPG o WEBP</p>
+                                </div>
+                                <input
+                                  type="file"
+                                  multiple
+                                  accept="image/*"
+                                  onChange={handleFileChange}
+                                  className="hidden"
+                                />
+                              </label>
 
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
                                 <input
                                   type="text"
                                   value={urlInput}
                                   onChange={(e) => setUrlInput(e.target.value)}
-                                  placeholder="O cargar URL manual..."
-                                  className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-[#040529] outline-none focus:ring-2 focus:ring-[#040529]/20"
+                                  placeholder="O pega una URL de imagen..."
+                                  className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all"
                                 />
-                                <button type="button" onClick={addUrlManual} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-bold text-sm transition shrink-0">Añadir URL</button>
+                                <button type="button" onClick={addUrlManual} className="px-5 py-2 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all shadow-sm active:scale-95">Añadir</button>
                               </div>
 
                               {(imagenesGuardadas.length > 0 || imagenesArchivos.length > 0 || imagenesUrls.length > 0) && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {imagenesGuardadas.map((img) => {
-                                    const isKept = !imagenesConservadas || imagenesConservadas.includes(img.id_imagen);
-                                    const imgSrc = img.url_imagen || img.url;
-                                    const fullImgSrc = imgSrc?.startsWith('http') ? imgSrc : `${API_URL}${imgSrc}`;
-                                    return (
-                                      <div key={img.id_imagen} className={`relative w-20 h-20 border rounded-md overflow-hidden ${!isKept ? 'opacity-30 border-red-300' : 'border-gray-200'}`}>
-                                        <img src={fullImgSrc} alt="saved" className="w-full h-full object-cover" />
-                                        <button type="button" onClick={() => toggleConservarImagen(img.id_imagen)} title={!isKept ? "Deshacer eliminación" : "Eliminar"} className={`absolute top-1 right-1 rounded-full p-1 transition ${!isKept ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-white/80 text-gray-700 hover:bg-red-500 hover:text-white'}`}>
-                                          {isKept ? <X size={12} /> : <Plus size={12} className="rotate-45" />}
-                                        </button>
-                                      </div>
-                                    )
-                                  })}
-                                  {imagenesUrls.map((url, idx) => (
-                                    <div key={`url-${idx}`} className="relative w-20 h-20 border border-blue-200 rounded-md overflow-hidden">
-                                      <img src={url} alt="url" className="w-full h-full object-cover" />
-                                      <button type="button" onClick={() => removeUrlManual(idx)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition">
-                                        <X size={12} />
+                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-2">
+                                  {/* Existing Images */}
+                                  {imagenesGuardadas.map((img) => (
+                                    <div key={`db-${img.id_imagen}`} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-200">
+                                      <img src={img.url_imagen?.startsWith('http') ? img.url_imagen : `${API_URL}${img.url_imagen}`} alt="Existente" className={`w-full h-full object-cover transition-opacity ${!imagenesConservadas?.includes(img.id_imagen) ? 'opacity-30' : 'opacity-100'}`} />
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleConservarImagen(img.id_imagen)}
+                                        className={`absolute top-1 right-1 p-1 rounded-full shadow-md transition-all ${!imagenesConservadas?.includes(img.id_imagen) ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white opacity-0 group-hover:opacity-100'}`}
+                                      >
+                                        {!imagenesConservadas?.includes(img.id_imagen) ? <CheckCircle size={10} strokeWidth={4} /> : <Trash2 size={10} strokeWidth={4} />}
                                       </button>
                                     </div>
                                   ))}
-                                  {imagenesArchivos.map((file, idx) => {
-                                    const objectUrl = URL.createObjectURL(file);
-                                    return (
-                                      <div key={`file-${idx}`} className="relative w-20 h-20 border border-green-200 rounded-md overflow-hidden">
-                                        <img src={objectUrl} alt="file" className="w-full h-full object-cover" onLoad={() => URL.revokeObjectURL(objectUrl)} />
-                                        <button type="button" onClick={() => removeArchivo(idx)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition">
-                                          <X size={12} />
-                                        </button>
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-
-                        {/* === Gestión de Variantes === */}
-                        <div className="border border-gray-100 rounded-xl overflow-hidden mt-6">
-                          <div className="bg-[#F0E6E6] px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-                            <h4 className="text-sm font-bold text-[#040529] uppercase tracking-wider">Variantes (Color/Talla)</h4>
-                          </div>
-                          <div className="p-4 bg-gray-50">
-                            <div className="flex flex-col gap-3">
-                              <div className="flex flex-wrap gap-2 items-end">
-                                {/* Color */}
-                                <div className="flex-1 min-w-[120px]">
-                                  <label className="block text-xs font-semibold text-gray-600 mb-1">Color</label>
-                                  <div className="flex gap-1">
-                                    <select
-                                      value={currentVariant.color}
-                                      onChange={(e) => handleVariantChange('color', e.target.value)}
-                                      onBlur={validateVariantsInline}
-                                      className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-[#040529] outline-none focus:ring-2 focus:ring-[#040529]/20"
-                                    >
-                                      <option value="">Seleccionar...</option>
-                                      {colores.map(c => (
-                                        <option key={c.id_color} value={c.nombre_color}>{c.nombre_color}</option>
-                                      ))}
-                                    </select>
-                                    <button onClick={() => setIsCreateColorOpen(true)} className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-gray-600" title="Nuevo color"><Plus size={16} /></button>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap gap-2 items-end mt-2">
-                                {/* Tallas */}
-                                <div className="flex-1 min-w-[200px] flex flex-col gap-2">
-                                  <label className="block text-xs font-semibold text-gray-600">Tallas</label>
-                                  {currentVariant.tallas.map((t, idx) => (
-                                    <div key={idx} className="flex gap-2 items-center">
-                                      <div className="flex flex-1 gap-1">
-                                        <select
-                                          value={t.talla}
-                                          onChange={(e) => handleTallaChange(idx, 'talla', e.target.value)}
-                                          onBlur={validateVariantsInline}
-                                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-[#040529] outline-none focus:ring-2 focus:ring-[#040529]/20 flex-1"
-                                        >
-                                          <option value="">Seleccionar talla</option>
-                                          {tallas.map(tl => <option key={tl.id_talla} value={tl.nombre_talla}>{tl.nombre_talla}</option>)}
-                                        </select>
-                                        <button
-                                          onClick={() => setIsCreateTallaOpen(true)}
-                                          className="p-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-gray-600"
-                                          title="Crear nueva talla"
-                                        >
-                                          <Plus size={16} />
-                                        </button>
-                                      </div>
-                                      <input
-                                        type="number"
-                                        placeholder="Cantidad"
-                                        value={t.cantidad}
-                                        onChange={(e) => handleTallaChange(idx, 'cantidad', e.target.value)}
-                                        onBlur={validateVariantsInline}
-                                        className="w-24 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-[#040529] outline-none focus:ring-2 focus:ring-[#040529]/20"
-                                      />
-                                      {idx === currentVariant.tallas.length - 1 && (
-                                        <button onClick={addTalla} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100" title="Agregar otra fila de talla">
-                                          <Plus size={16} />
-                                        </button>
-                                      )}
-                                      {currentVariant.tallas.length > 1 && (
-                                        <button onClick={() => removeTalla(idx)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100" title="Quitar talla">
-                                          <X size={16} />
-                                        </button>
-                                      )}
+                                  {imagenesArchivos.map((file, idx) => (
+                                    <div key={`file-${idx}`} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-200">
+                                      <img src={URL.createObjectURL(file)} alt="Nueva" className="w-full h-full object-cover" />
+                                      <button type="button" onClick={() => removeArchivo(idx)} className="absolute top-1 right-1 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-all">
+                                        <X size={10} strokeWidth={4} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {imagenesUrls.map((url, idx) => (
+                                    <div key={`url-${idx}`} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-200">
+                                      <img src={url} alt="URL" className="w-full h-full object-cover" />
+                                      <button type="button" onClick={() => removeUrlManual(idx)} className="absolute top-1 right-1 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-all">
+                                        <X size={10} strokeWidth={4} />
+                                      </button>
                                     </div>
                                   ))}
                                 </div>
-                              </div>
-                              <button
-                                onClick={saveVariant}
-                                className="mt-3 px-4 py-2 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 transition w-full md:w-auto self-end shadow-sm"
-                              >
-                                Agregar variante a la lista
-                              </button>
-                              {variantError && <p className="text-red-500 text-xs mt-1 font-medium">{variantError}</p>}
+                              )}
                             </div>
+                            {formErrors.imagenes && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.imagenes}</p>}
+                          </div>
+                        </div>
 
-                            {/* Lista de variantes agregadas */}
-                            {variants.length > 0 ? (
-                              <div className="mt-4 border rounded-xl overflow-hidden shadow-sm bg-white">
-                                <table className="w-full text-sm">
-                                  <thead className="bg-[#F0E6E6] text-xs text-[#040529] uppercase tracking-wider">
-                                    <tr>
-                                      <th className="px-4 py-2 text-left font-bold">Color</th>
-                                      <th className="px-4 py-2 text-left font-bold">Talla</th>
-                                      <th className="px-4 py-2 text-left font-bold">Stock</th>
-                                      <th className="px-4 py-2 w-10"></th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-100">
-                                    {variants.map((v, i) => (
-                                      <tr key={i} className="group hover:bg-gray-50">
-                                        <td className="px-4 py-2 font-medium">{v.nombre_color}</td>
-                                        <td className="px-4 py-2 text-gray-600">{v.nombre_talla}</td>
-                                        <td className="px-4 py-2 text-gray-600">{v.stock}</td>
-                                        <td className="px-4 py-2 text-right">
-                                          <button onClick={() => removeVariant(v)} className="text-red-400 hover:text-red-600 p-1">
-                                            <Trash2 size={16} />
-                                          </button>
-                                        </td>
-                                      </tr>
+
+                        {/* === Gestión de Variantes === */}
+                        <div className="pt-8 border-t border-slate-100 flex flex-col gap-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                                 <PlusCircle size={14} className="text-indigo-500" /> 
+                                 Atributos y Stock
+                               </h4>
+                               <p className="text-[11px] text-slate-400 font-medium">Defina las combinaciones de color y tallas disponibles</p>
+                            </div>
+                            {canManage("productos") && (
+                                <button 
+                                  type="button" 
+                                  onClick={saveVariant}
+                                  className="px-5 py-2.5 bg-slate-900 text-white rounded-[1.2rem] text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95 flex items-center gap-2"
+                                >
+                                <Plus size={14} strokeWidth={3} /> Guardar Combinación
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="bg-slate-50 border-2 border-slate-200 rounded-[2rem] p-6 lg:p-8 space-y-8 relative overflow-hidden">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                              {/* Color Selection */}
+                              <div className="space-y-4">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Color de la Prenda</label>
+                                <div className="flex gap-2">
+                                   <div className="relative flex-1">
+                                      <select
+                                        value={currentVariant.color}
+                                        onChange={(e) => handleVariantChange('color', e.target.value)}
+                                        className="w-full px-5 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 appearance-none cursor-pointer"
+                                      >
+                                        <option value="">Seleccionar color...</option>
+                                        {colores.map(c => <option key={c.id_color} value={c.nombre_color}>{c.nombre_color}</option>)}
+                                      </select>
+                                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                                   </div>
+                                   <button type="button" onClick={() => setIsCreateColorOpen(true)} className="p-3.5 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 text-slate-400 transition-colors shadow-sm"><Plus size={20} /></button>
+                                </div>
+                              </div>
+
+                              {/* Tallas and Cantidad */}
+                              <div className="space-y-4">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Distribución de Tallas</label>
+                                <div className="space-y-3">
+                                  {currentVariant.tallas.map((t, idx) => (
+                                      <div key={idx} className="flex gap-2 group animate-in slide-in-from-right-4 duration-300">
+                                        <div className="relative flex-1">
+                                          <select
+                                            value={t.talla}
+                                            onChange={(e) => handleTallaChange(idx, 'talla', e.target.value)}
+                                            className="w-full px-5 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 appearance-none cursor-pointer"
+                                          >
+                                            <option value="">Talla...</option>
+                                            {tallas.map(tl => <option key={tl.id_talla} value={tl.nombre_talla}>{tl.nombre_talla}</option>)}
+                                          </select>
+                                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                                        </div>
+                                        <div className="relative w-32">
+                                          <input
+                                            type="number"
+                                            placeholder="Cant."
+                                            value={t.cantidad}
+                                            onChange={(e) => handleTallaChange(idx, 'cantidad', e.target.value)}
+                                            className="w-full px-5 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-black text-slate-700 placeholder:text-slate-300 placeholder:font-medium"
+                                          />
+                                        </div>
+                                        {idx === currentVariant.tallas.length - 1 ? (
+                                          <button type="button" onClick={addTalla} className="p-3.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl hover:bg-[#040529] hover:text-white transition-colors shadow-sm" title="Añadir talla"><Plus size={20} /></button>
+                                        ) : (
+                                          <button type="button" onClick={() => removeTalla(idx)} className="p-3.5 bg-rose-50 text-rose-500 border border-rose-100 rounded-xl hover:bg-rose-100 transition-colors shadow-sm" title="Quitar talla"><Trash2 size={20} /></button>
+                                        )}
+                                      </div>
                                     ))}
-                                  </tbody>
-                                </table>
+                                  </div>
+                                </div>
+                              </div>
+                              {variantError && <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-2 text-rose-600 animate-shake"><AlertTriangle size={14} /><p className="text-[10px] font-black uppercase tracking-wider">{variantError}</p></div>}
+                            {variants.length > 0 ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {variants.map((v, idx) => (
+                                    <div key={idx} className="p-4 bg-white border-2 border-slate-200 rounded-[1.5rem] shadow-sm flex items-center justify-between group hover:border-slate-400 transition-all">
+                                      <div className="flex flex-col gap-1.5">
+                                        <span className="text-xs font-black text-slate-800 uppercase tracking-tight">{v.color}</span>
+                                        <div className="flex flex-wrap gap-1">
+                                          {v.tallas?.map((t, tid) => (
+                                            <span key={tid} className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[9px] font-bold text-slate-500">
+                                              {t.talla}: {t.cantidad}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                      <button onClick={() => removeVariant(v)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  ))}
                               </div>
                             ) : (
-                              <p className="text-xs text-gray-400 italic text-center mt-4">No se han agregado variantes a este producto</p>
+                              <div className="py-8 text-center bg-slate-100/50 rounded-[1.5rem] border-2 border-dashed border-slate-200">
+                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Sin variantes registradas</p>
+                              </div>
                             )}
                           </div>
                         </div>
                       </form>
                     </div>
 
-                    {/* Footer Base Form */}
-                    <div className="p-6 border-t border-gray-100 shrink-0 bg-gray-50 flex justify-end gap-3">
+                    <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                       <button
                         onClick={() => setIsProductModalOpen(false)}
-                        className="px-5 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm"
+                        className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={saveProduct}
-                        className="px-5 py-2 text-sm font-bold text-white bg-[#040529] rounded-lg hover:bg-[#040529]/90 transition shadow-md hover:shadow-lg"
+                        className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95"
                       >
-                        Guardar Producto
+                        Guardar Cambios
                       </button>
                     </div>
                   </div>
@@ -1187,168 +1222,141 @@ export default function Productos({ renderLayout = true }) {
           )}
         </AnimatePresence>
 
-        {/* === Modal de Vista === */}
+                  {/* === Modal de Vista === */}
         <AnimatePresence>
           {isViewModalOpen && selectedProductForView && (
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md"
               onClick={() => setIsViewModalOpen(false)}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white rounded-2xl shadow-2xl relative overflow-hidden max-w-4xl w-full"
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-[2.5rem] shadow-2xl relative overflow-hidden max-w-5xl w-full border border-slate-200"
+                initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
-
-                  {/* Left Side (Image Preview & Summary) */}
-                  <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col border-r border-gray-100 relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-5 pattern-grid-lg" />
-
-                    {/* Image Area */}
-                    <div className="h-[40%] lg:h-1/2 w-full p-6 flex flex-col items-center justify-center relative z-10 border-b border-gray-200/50 bg-white">
+                <div className="flex flex-col lg:flex-row h-[600px] lg:h-[750px]">
+                  
+                  {/* Left Side: Media Showcase */}
+                  <div className="lg:w-[45%] bg-slate-50 relative flex flex-col">
+                    <div className="flex-1 p-8 flex items-center justify-center bg-white m-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden group">
                       {selectedProductForView.imagenes && selectedProductForView.imagenes.length > 0 ? (
-                        <div className="w-full h-full flex overflow-x-auto gap-4 snap-x pb-2 scrollbar-thin scrollbar-thumb-gray-200">
-                          {selectedProductForView.imagenes.map((img) => {
-                            const fullUrl = img.url_imagen?.startsWith('http') ? img.url_imagen : `${API_URL}${img.url_imagen}`;
-                            return (
-                              <div key={img.id_imagen} className="shrink-0 w-full sm:w-64 h-full rounded-xl overflow-hidden shadow-sm border border-gray-100 snap-center relative group">
-                                <img src={fullUrl} alt="Preview" className="w-full h-full object-contain bg-white" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }} />
-                                <div className="absolute inset-0 bg-gray-50 hidden flex-col items-center justify-center text-xs text-gray-400">
-                                  <ImageIcon size={24} className="mb-2 opacity-50" />
-                                  Error al cargar
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <img 
+                          src={selectedProductForView.imagenes[0].url_imagen?.startsWith('http') ? selectedProductForView.imagenes[0].url_imagen : `${API_URL}${selectedProductForView.imagenes[0].url_imagen}`} 
+                          alt={selectedProductForView.nombre_producto}
+                          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                        />
                       ) : (
-                        <div className="w-full h-full rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50/50 text-gray-400 gap-2">
-                          <ImageIcon size={32} />
-                          <span className="text-xs font-medium">Sin imagen</span>
+                        <div className="flex flex-col items-center gap-3 opacity-20">
+                          <ImageIcon size={64} />
+                          <p className="font-black text-xs uppercase tracking-widest">Sin imagen</p>
                         </div>
                       )}
                     </div>
 
-                    {/* Summary Info */}
-                    <div className="flex-1 p-6 z-10 overflow-y-auto">
-                      <h4 className="text-[#040529] font-bold text-lg leading-tight mb-4">{selectedProductForView.nombre_producto}</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3 text-sm text-gray-600">
-                          <Tag size={16} className="mt-0.5 text-blue-500 shrink-0" />
-                          <span>{getCategoriaNombre(selectedProductForView.id_categoria) || "Categoría sin definir"}</span>
-                        </div>
-                        <div className="flex items-start gap-3 text-sm text-gray-600">
-                          <MapPin size={16} className="mt-0.5 text-green-500 shrink-0" />
-                          <span>Precio Venta: ${Number(selectedProductForView.precio || 0).toFixed(2)}</span>
-                        </div>
-                        <div className="flex items-start gap-3 text-sm text-gray-600">
-                          <CheckCircle size={16} className="mt-0.5 text-purple-500 shrink-0" />
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold border ${selectedProductForView.estado ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
-                            {selectedProductForView.estado ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
+                  {/* Right Side: Details */}
+                  <div className="flex-1 flex flex-col h-full bg-white relative">
+                    <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                      <div className="space-y-10">
+                        {/* Header Section */}
+                        <div className="space-y-4">
+                           <div className="flex items-center gap-2">
+                             <span className="px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
+                               {getCategoriaNombre(selectedProductForView.id_categoria)}
+                             </span>
+                             {selectedProductForView.estado ? (
+                               <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-emerald-100">Activo</span>
+                             ) : (
+                               <span className="px-3 py-1 bg-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-slate-200">Inactivo</span>
+                             )}
+                           </div>
+                           <h2 className="text-4xl font-bold text-slate-800 font-['Outfit'] tracking-tighter leading-none">
+                             {selectedProductForView.nombre_producto}
+                           </h2>
+                           <p className="text-slate-400 font-medium text-sm">ID del producto: #{selectedProductForView.id_producto}</p>
+                        </div>
 
-                  {/* Right Side (Form ReadOnly) */}
-                  <div className="flex-1 flex flex-col h-full overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
-                      <h3 className="text-xl font-bold text-[#040529]">
-                        Detalles del Producto
-                      </h3>
-                      <button onClick={() => setIsViewModalOpen(false)} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-6 lg:p-8">
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 text-sm">
-                          <div>
-                            <div className="font-bold text-gray-500 uppercase text-xs mb-1">ID Producto</div>
-                            <div className="text-[#040529] font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">{selectedProductForView.id_producto}</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-500 uppercase text-xs mb-1">Nombre</div>
-                            <div className="text-[#040529] font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">{selectedProductForView.nombre_producto}</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-500 uppercase text-xs mb-1">Categoría</div>
-                            <div className="text-[#040529] font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">{getCategoriaNombre(selectedProductForView.id_categoria)}</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-500 uppercase text-xs mb-1">Precio Compra</div>
-                            <div className="text-[#040529] font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">${Number(selectedProductForView.precio_compra || 0).toFixed(2)}</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-500 uppercase text-xs mb-1">Precio Venta</div>
-                            <div className="text-[#040529] font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">${Number(selectedProductForView.precio || 0).toFixed(2)}</div>
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-500 uppercase text-xs mb-1">% Ganancia</div>
-                            <div className="text-[#040529] font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">{selectedProductForView.porcentaje_ganancia}%</div>
-                          </div>
-                          <div className="md:col-span-2">
-                            <div className="font-bold text-gray-500 uppercase text-xs mb-1">Descripción</div>
-                            <div className="text-[#040529] font-medium bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 whitespace-pre-wrap">{selectedProductForView.descripcion || "—"}</div>
+                        {/* Price Area */}
+                        <div className="flex items-end gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio Online</p>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-4xl font-bold text-slate-800 font-['Outfit'] ${Number(selectedProductForView.descuento_producto) > 0 ? 'text-slate-300 line-through text-2xl' : ''}`}>
+                                ${Number(selectedProductForView.precio).toLocaleString()}
+                              </span>
+                              {Number(selectedProductForView.descuento_producto) > 0 && (
+                                <div className="flex items-center gap-3">
+                                   <span className="text-4xl font-black text-rose-500 font-['Outfit']">
+                                     ${(Number(selectedProductForView.precio) * (1 - Number(selectedProductForView.descuento_producto) / 100)).toLocaleString()}
+                                   </span>
+                                   <div className="p-1 px-2 bg-rose-500 rounded-lg text-white text-[10px] font-black uppercase">
+                                     -{selectedProductForView.descuento_producto}%
+                                   </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="border border-gray-100 rounded-xl overflow-hidden mt-6">
-                          <div className="bg-[#F0E6E6] px-4 py-3 border-b border-gray-200">
-                            <h4 className="text-sm font-bold text-[#040529] uppercase tracking-wider">Variantes Disponibles</h4>
-                          </div>
-                          <div className="p-4 bg-gray-50">
-                            {variantesGlobales
-                              .filter(v => v.id_producto === selectedProductForView.id_producto)
-                              .length === 0 ? (
-                              <p className="text-sm text-gray-500 italic text-center py-4 bg-white rounded-lg border border-gray-100 shadow-sm">No hay variantes registradas para este producto.</p>
-                            ) : (
-                              <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm bg-white">
-                                <table className="w-full text-sm text-left">
-                                  <thead className="bg-[#F0E6E6]/50 text-xs text-[#040529] uppercase tracking-wider">
-                                    <tr>
-                                      <th className="px-4 py-3 font-bold">Color</th>
-                                      <th className="px-4 py-3 font-bold">Talla</th>
-                                      <th className="px-4 py-3 font-bold">Stock</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-100">
-                                    {variantesGlobales
-                                      .filter(v => v.id_producto === selectedProductForView.id_producto)
-                                      .map((v, idx) => (
-                                        <tr key={idx} className="hover:bg-gray-50">
-                                          <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                              <div
-                                                className="w-5 h-5 rounded-full border border-gray-200 shadow-sm"
-                                                style={{ backgroundColor: colores.find(c => c.id_color === v.id_color)?.codigo_hex || "#ccc" }}
-                                              />
-                                              <span className="font-medium text-gray-800">{getColorNombre(v.id_color)}</span>
-                                            </div>
-                                          </td>
-                                          <td className="px-4 py-3 text-gray-600">{getTallaNombre(v.id_talla)}</td>
-                                          <td className="px-4 py-3 font-bold text-[#040529]">{v.stock}</td>
-                                        </tr>
-                                      ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                          </div>
+                        {/* Inventory Section */}
+                        <div className="space-y-6">
+                           <div className="flex items-center justify-between">
+                              <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Hash size={14} className="text-indigo-500" /> Stock por Atributos
+                              </h4>
+                              <span className="text-xs font-bold text-slate-800 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                                Total: {(variantesGlobales || []).filter(v => v.id_producto === selectedProductForView.id_producto).reduce((acc, v) => acc + (v.stock || 0), 0)} und.
+                              </span>
+                           </div>
+
+                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                             {(() => {
+                               const prodVars = (variantesGlobales || []).filter(v => v.id_producto === selectedProductForView.id_producto);
+                               const grouped = prodVars.reduce((acc, v) => {
+                                 const cName = getColorNombre(v.id_color);
+                                 if (!acc[cName]) acc[cName] = { color: cName, tallas: [] };
+                                 acc[cName].tallas.push({ talla: getTallaNombre(v.id_talla), stock: v.stock });
+                                 return acc;
+                               }, {});
+                               return Object.values(grouped).map((v, vIdx) => (
+                                 <div key={vIdx} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-3 group hover:border-slate-300 transition-all">
+                                   <div className="flex flex-col gap-1.5">
+                                     <span className="text-[10px] font-black text-slate-800 uppercase tracking-tight">{v.color}</span>
+                                     <div className="flex flex-wrap gap-1">
+                                       {(v.tallas || []).map((t, tIdx) => (
+                                         <div key={tIdx} className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg">
+                                           <span className="text-[10px] font-black text-slate-700 uppercase tracking-tighter">{t.talla}</span>
+                                           <span className={`text-[10px] font-bold ${t.stock <= 5 ? 'text-rose-500' : 'text-slate-400'}`}>{t.stock}</span>
+                                         </div>
+                                       ))}
+                                     </div>
+                                   </div>
+                                 </div>
+                               ));
+                             })()}
+                           </div>
+                        </div>
+
+                        {/* Description Section */}
+                        <div className="space-y-3">
+                           <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                             <FileText size={14} className="text-amber-500" /> Descripción Técnica
+                           </h4>
+                           <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 italic text-slate-600 text-sm leading-relaxed">
+                             "{selectedProductForView.descripcion || "Este producto no cuenta con una descripción detallada en este momento."}"
+                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="p-6 border-t border-gray-100 shrink-0 bg-gray-50 flex justify-end">
-                      <button
-                        onClick={() => setIsViewModalOpen(false)}
-                        className="px-5 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm"
-                      >
-                        Cerrar Vista
-                      </button>
+                    <div className="p-8 shrink-0 flex gap-4">
+                       <button 
+                         onClick={() => { setIsViewModalOpen(false); openProductModal(selectedProductForView); }}
+                         className="flex-1 py-4 bg-slate-900 text-white rounded-3xl font-bold text-sm hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-95"
+                       >
+                         <Pen size={18} /> Editar Producto
+                       </button>
                     </div>
                   </div>
                 </div>
@@ -1361,36 +1369,39 @@ export default function Productos({ renderLayout = true }) {
         <AnimatePresence>
           {isDeleteConfirmOpen && productoToDelete && (
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
               onClick={() => setIsDeleteConfirmOpen(false)}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-hidden"
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-[2rem] shadow-2xl max-w-sm w-full relative overflow-hidden border border-slate-100"
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-6 text-center">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Trash2 size={32} className="text-red-500" />
+                <div className="p-8 text-center space-y-6">
+                  <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto ring-8 ring-rose-50/50">
+                    <Trash2 size={32} className="text-rose-500" />
                   </div>
-                  <h3 className="text-xl font-bold text-[#040529] mb-2">Eliminar Producto</h3>
-                  <p className="text-sm text-gray-500 mb-6">
-                    ¿Estás seguro de que deseas eliminar el producto <span className="font-bold text-[#040529]">"{productoToDelete.nombre_producto}"</span>?<br />
-                    <span className="text-xs text-red-400 block mt-2">Esta acción no se puede deshacer.</span>
-                  </p>
-                  <div className="flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => setIsDeleteConfirmOpen(false)}
-                      className="px-5 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
-                    >
-                      Cancelar
-                    </button>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-slate-800 tracking-tight font-['Outfit']">¿Eliminar Producto?</h3>
+                    <p className="text-slate-400 text-sm font-medium leading-relaxed px-2">
+                      Estás por eliminar <span className="text-slate-900 font-bold">"{productoToDelete.nombre_producto}"</span>. Esta acción borrará permanentemente todos sus registros y stock.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3 pt-2">
                     <button
                       onClick={confirmDelete}
-                      className="px-5 py-2 text-sm font-bold text-white bg-red-500 rounded-lg hover:bg-red-600 transition shadow-md hover:shadow-lg"
+                      className="w-full py-4 bg-rose-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-100 active:scale-95"
                     >
-                      Eliminar
+                      Sí, Eliminar Permanentemente
+                    </button>
+                    <button
+                      onClick={() => setIsDeleteConfirmOpen(false)}
+                      className="w-full py-4 bg-slate-50 text-slate-400 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+                    >
+                      No, Mantenerlo
                     </button>
                   </div>
                 </div>
@@ -1403,43 +1414,64 @@ export default function Productos({ renderLayout = true }) {
         <AnimatePresence>
           {isCreateColorOpen && (
             <motion.div
-              className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
+              className="fixed inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-md z-[200] p-4"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-xs"
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-sm border border-slate-100"
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               >
-                <h3 className="font-bold text-lg text-[#040529] mb-4">Crear color rápido</h3>
-                <input
-                  type="text"
-                  placeholder="Nombre color"
-                  value={newColorName}
-                  onChange={(e) => setNewColorName(e.target.value)}
-                  className="w-full px-3 py-2 mb-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529] outline-none focus:ring-2 focus:ring-[#040529]/20"
-                />
-                <div className="flex items-center gap-3 mb-5">
-                  <input
-                    type="color"
-                    value={newColorHex}
-                    onChange={(e) => setNewColorHex(e.target.value)}
-                    className="w-10 h-10 p-0 border border-gray-200 rounded-lg cursor-pointer"
-                  />
-                  <input readOnly value={newColorHex} className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]" />
+                <div className="flex items-center gap-4 mb-8">
+                   <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
+                     <Plus className="text-white" size={24} />
+                   </div>
+                   <div>
+                     <h3 className="font-bold text-xl text-slate-800 tracking-tight font-['Outfit']">Nuevo Color</h3>
+                     <p className="text-xs text-slate-400 font-medium">Agréguelo instantáneamente</p>
+                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
+
+                <div className="space-y-6">
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
+                     <input
+                       type="text"
+                       placeholder="Ej: Azul Medianoche"
+                       value={newColorName}
+                       onChange={(e) => setNewColorName(e.target.value)}
+                       className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:ring-8 focus:ring-slate-100 outline-none transition-all text-sm font-bold text-slate-700"
+                     />
+                   </div>
+
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selector de Tono</label>
+                     <div className="flex items-center gap-3">
+                       <input
+                         type="color"
+                         value={newColorHex}
+                         onChange={(e) => setNewColorHex(e.target.value)}
+                         className="w-14 h-14 p-0 border-2 border-slate-300 rounded-2xl cursor-pointer overflow-hidden shadow-sm hover:scale-105 transition-transform"
+                       />
+                       <div className="flex-1 px-5 py-3.5 bg-slate-100 border-2 border-slate-200 rounded-2xl text-xs font-black text-slate-400 uppercase tracking-widest">
+                         {newColorHex}
+                       </div>
+                     </div>
+                   </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-10">
                   <button
                     onClick={() => {
                       setIsCreateColorOpen(false);
                       setNewColorName("");
                       setNewColorHex("#ff0000");
                     }}
-                    className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                    className="px-6 py-2.5 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    Cancelar
+                    Cerrar
                   </button>
-                  <button onClick={handleCreateColor} className="px-4 py-2 text-sm font-bold text-white bg-[#040529] rounded-lg hover:bg-[#040529]/90 transition shadow-md">
-                    Crear
+                  <button onClick={handleCreateColor} className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95">
+                    Registrar
                   </button>
                 </div>
               </motion.div>
@@ -1450,33 +1482,46 @@ export default function Productos({ renderLayout = true }) {
         <AnimatePresence>
           {isCreateTallaOpen && (
             <motion.div
-              className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
+              className="fixed inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-md z-[200] p-4"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-xs"
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-sm border border-slate-100"
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               >
-                <h3 className="font-bold text-lg text-[#040529] mb-4">Crear talla rápida</h3>
-                <input
-                  type="text"
-                  placeholder="Nombre talla"
-                  value={newTallaName}
-                  onChange={(e) => setNewTallaName(e.target.value)}
-                  className="w-full px-3 py-2 mb-5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529] outline-none focus:ring-2 focus:ring-[#040529]/20"
-                />
-                <div className="flex justify-end gap-2">
+                <div className="flex items-center gap-4 mb-8">
+                   <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
+                     <Plus className="text-white" size={24} />
+                   </div>
+                   <div>
+                     <h3 className="font-bold text-xl text-slate-800 tracking-tight font-['Outfit']">Nueva Talla</h3>
+                     <p className="text-xs text-slate-400 font-medium">Expanda sus existencias</p>
+                   </div>
+                </div>
+
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre / Identificación</label>
+                   <input
+                     type="text"
+                     placeholder="Ej: XXL o 42"
+                     value={newTallaName}
+                     onChange={(e) => setNewTallaName(e.target.value)}
+                     className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:ring-8 focus:ring-slate-100 outline-none transition-all text-sm font-bold text-slate-700"
+                   />
+                </div>
+
+                <div className="flex justify-end gap-3 mt-10">
                   <button
                     onClick={() => {
                       setIsCreateTallaOpen(false);
                       setNewTallaName("");
                     }}
-                    className="px-4 py-2 text-sm font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                    className="px-6 py-2.5 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    Cancelar
+                    Cerrar
                   </button>
-                  <button onClick={handleCreateTalla} className="px-4 py-2 text-sm font-bold text-white bg-[#040529] rounded-lg hover:bg-[#040529]/90 transition shadow-md">
-                    Crear
+                  <button onClick={handleCreateTalla} className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95">
+                    Registrar
                   </button>
                 </div>
               </motion.div>

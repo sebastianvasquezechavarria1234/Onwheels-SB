@@ -1,104 +1,56 @@
-import { CustomDashboardLayout } from "../layout/CustomDashboardLayout"
 import { Package, Users, Calendar, ShoppingCart } from "lucide-react"
 
 export const CustomDashboard = () => {
   return (
-    <CustomDashboardLayout>
-      <div>
-        <h2 style={{ fontSize: "2rem", fontWeight: "700", marginBottom: "2rem" }}>Bienvenido a tu Dashboard</h2>
+    <div className="p-8 bg-gray-50 min-h-full">
+      <h2 className="text-2xl font-bold text-[#040529] mb-6">Bienvenido a tu Dashboard</h2>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "1.5rem",
-            marginBottom: "2rem",
-          }}
-        >
-          <div
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              padding: "1.5rem",
-              borderRadius: "12px",
-              color: "white",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <p style={{ margin: 0, opacity: 0.9 }}>Total Productos</p>
-                <h3 style={{ fontSize: "2rem", fontWeight: "700", margin: "0.5rem 0 0 0" }}>124</h3>
-              </div>
-              <Package size={48} style={{ opacity: 0.8 }} />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+        <div className="bg-gradient-to-br from-[#667eea] to-[#764ba2] p-6 rounded-2xl text-white shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-80">Total Productos</p>
+              <h3 className="text-3xl font-bold mt-1">124</h3>
             </div>
-          </div>
-
-          <div
-            style={{
-              background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-              padding: "1.5rem",
-              borderRadius: "12px",
-              color: "white",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <p style={{ margin: 0, opacity: 0.9 }}>Total Usuarios</p>
-                <h3 style={{ fontSize: "2rem", fontWeight: "700", margin: "0.5rem 0 0 0" }}>89</h3>
-              </div>
-              <Users size={48} style={{ opacity: 0.8 }} />
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-              padding: "1.5rem",
-              borderRadius: "12px",
-              color: "white",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <p style={{ margin: 0, opacity: 0.9 }}>Eventos Activos</p>
-                <h3 style={{ fontSize: "2rem", fontWeight: "700", margin: "0.5rem 0 0 0" }}>12</h3>
-              </div>
-              <Calendar size={48} style={{ opacity: 0.8 }} />
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-              padding: "1.5rem",
-              borderRadius: "12px",
-              color: "white",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <p style={{ margin: 0, opacity: 0.9 }}>Ventas del Mes</p>
-                <h3 style={{ fontSize: "2rem", fontWeight: "700", margin: "0.5rem 0 0 0" }}>$2.5M</h3>
-              </div>
-              <ShoppingCart size={48} style={{ opacity: 0.8 }} />
-            </div>
+            <Package size={40} className="opacity-70" />
           </div>
         </div>
-
-        <div
-          style={{
-            background: "white",
-            padding: "2rem",
-            borderRadius: "12px",
-            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <h3 style={{ marginBottom: "1rem" }}>Información</h3>
-          <p style={{ color: "#64748b", lineHeight: "1.6" }}>
-            Este es tu dashboard personalizado. Usa el menú lateral para navegar entre las diferentes secciones según
-            tus permisos asignados.
-          </p>
+        <div className="bg-gradient-to-br from-[#f093fb] to-[#f5576c] p-6 rounded-2xl text-white shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-80">Total Usuarios</p>
+              <h3 className="text-3xl font-bold mt-1">89</h3>
+            </div>
+            <Users size={40} className="opacity-70" />
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-[#4facfe] to-[#00f2fe] p-6 rounded-2xl text-white shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-80">Eventos Activos</p>
+              <h3 className="text-3xl font-bold mt-1">12</h3>
+            </div>
+            <Calendar size={40} className="opacity-70" />
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-[#43e97b] to-[#38f9d7] p-6 rounded-2xl text-white shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm opacity-80">Ventas del Mes</p>
+              <h3 className="text-3xl font-bold mt-1">$2.5M</h3>
+            </div>
+            <ShoppingCart size={40} className="opacity-70" />
+          </div>
         </div>
       </div>
-    </CustomDashboardLayout>
+
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold text-[#040529] mb-2">Información</h3>
+        <p className="text-gray-500 leading-relaxed text-sm">
+          Este es tu dashboard personalizado. Usa el menú lateral para navegar entre las
+          diferentes secciones según tus permisos asignados.
+        </p>
+      </div>
+    </div>
   )
 }

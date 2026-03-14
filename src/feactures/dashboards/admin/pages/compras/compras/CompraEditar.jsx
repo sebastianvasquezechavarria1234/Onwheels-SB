@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
     ArrowLeft, Save, Plus, Trash2, Search, ShoppingBag,
     Package, Calendar, Info, CheckCircle2, XCircle,
@@ -17,12 +17,14 @@ function cn(...classes) {
 const CompraEditar = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const isEditing = !!id;
 
     // Si se intenta editar, redirigir al listado
     useEffect(() => {
         if (isEditing) {
-            navigate("/admin/compras", { replace: true });
+            navigate(`${basePath}/compras`, { replace: true });
         }
     }, [isEditing, navigate]);
 
@@ -63,10 +65,10 @@ const CompraEditar = () => {
             setLoading(true);
             const [provRes, prodRes] = await Promise.all([
                 comprasService.getProveedores(),
-                comprasService.getProductos()
+                comprasService.getProductos({ limit: 1000 }) // Load all for selector
             ]);
             setProveedores(Array.isArray(provRes) ? provRes : []);
-            setAllProducts(Array.isArray(prodRes) ? prodRes : []);
+            setAllProducts(Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : []);
         } catch (err) {
             showNotification("Error al cargar datos", "error");
         } finally {
@@ -76,43 +78,6 @@ const CompraEditar = () => {
 
     const calculateTotal = (currentItems) => {
         return currentItems.reduce((acc, item) => acc + (parseFloat(item.subtotal) || 0), 0);
-    };
-
-    const handleAddItem = () => {
-        if (!selectedProduct || !selectedVariant) {
-            showNotification("Selecciona un producto y variante", "error");
-            return;
-        }
-        const precio = parseFloat(newItemData.precio_unitario) || 0;
-        const cant = parseInt(newItemData.cantidad) || 1;
-
-        if (precio <= 0) {
-            showNotification("El precio unitario debe ser mayor a 0", "error");
-            return;
-        }
-
-        const newItem = {
-            id_producto: selectedProduct.id_producto,
-            id_variante: selectedVariant.id_variante || selectedVariant.id_producto_variante,
-            id_color: selectedVariant.id_color,
-            id_talla: selectedVariant.id_talla,
-            nombre_producto: selectedProduct.nombre_producto,
-            nombre_variante: `${selectedVariant.nombre_color || selectedVariant.color || ''} ${selectedVariant.nombre_talla || selectedVariant.talla || ''}`.trim(),
-            cantidad: cant,
-            precio_unitario: precio,
-            subtotal: cant * precio,
-            imagen: selectedProduct.imagen || selectedProduct.url_imagen || null
-        };
-
-        const newItems = [...items, newItem];
-        setItems(newItems);
-        setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
-
-        // Reset selection
-        setSelectedProduct(null);
-        setSelectedVariant(null);
-        setNewItemData({ cantidad: 1, precio_unitario: "" });
-        showNotification("Producto añadido a la lista");
     };
 
     const removeItem = (idx) => {
@@ -136,7 +101,7 @@ const CompraEditar = () => {
             const payload = { ...purchase, items };
             await comprasService.createCompra(payload);
             showNotification("Compra registrada con éxito — Stock actualizado");
-            setTimeout(() => navigate("/admin/compras"), 1500);
+            setTimeout(() => navigate(`${basePath}/compras`), 1500);
         } catch (err) {
             showNotification(err?.response?.data?.mensaje || "Error al guardar la orden", "error");
         } finally {
@@ -144,227 +109,260 @@ const CompraEditar = () => {
         }
     };
 
-    // Filtrado de productos para la vista de selección
-    const filteredProducts = allProducts.filter(p =>
-        p.nombre_producto?.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.codigo_referencia?.toLowerCase().includes(productSearch.toLowerCase())
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center h-screen bg-slate-50 gap-4">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Iniciando gestor...</p>
+        </div>
     );
-
-    if (loading) return <div className="p-8 text-center italic text-slate-400">Cargando gestión de compra...</div>;
-    if (isEditing) return null; // Redirecting...
+    
+    if (isEditing) return null;
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-primary animate-in fade-in duration-500">
-            {showProductSelector ? (
-                <ProductSelectorView
-                    onClose={() => setShowProductSelector(false)}
-                    allProducts={allProducts}
-                    onAdd={(data) => {
-                        const { product, variant, cantidad, precio_unitario } = data;
-                        const newItem = {
-                            id_producto: product.id_producto,
-                            id_variante: variant.id_variante || variant.id_producto_variante,
-                            id_color: variant.id_color,
-                            id_talla: variant.id_talla,
-                            nombre_producto: product.nombre_producto,
-                            nombre_variante: `${variant.nombre_color || variant.color || ''} ${variant.nombre_talla || variant.talla || ''}`.trim(),
-                            cantidad: cantidad,
-                            precio_unitario: precio_unitario,
-                            subtotal: cantidad * precio_unitario,
-                            imagen: product.imagen || product.url_imagen || (product.imagenes && product.imagenes[0]?.url_imagen) || null
-                        };
-                        const newItems = [...items, newItem];
-                        setItems(newItems);
-                        setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
-                        showNotification("Producto añadido a la lista");
-                    }}
-                />
-            ) : (
-                <>
-                    {/* Header Sticky */}
-                    <header className="shrink-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-20">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => navigate("/admin/compras")}
-                                className="p-2 rounded-xl hover:bg-slate-100 transition text-slate-400 hover:text-slate-600"
-                            >
-                                <ArrowLeft size={20} />
-                            </button>
-                            <div>
-                                <h2 className="text-xl font-extrabold text-[#040529] tracking-tight leading-none" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                                    Nueva Orden de Compra
-                                </h2>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Inventario / Abastecimiento</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <div className="px-3 py-1 rounded-full text-[10px] font-bold border bg-emerald-50 text-emerald-600 border-emerald-200 flex items-center gap-1.5">
-                                <CheckCircle2 size={12} />
-                                Stock se actualizará automáticamente
-                            </div>
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex items-center gap-2 px-6 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition disabled:opacity-50"
-                            >
-                                <Save size={18} />
-                                {saving ? "Guardando..." : "Registrar Compra"}
-                            </button>
-                        </div>
-                    </header>
-
-                    {/* Main Content Scrollable */}
-                    <main className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                            {/* Left: Purchase Info & Product Selector Trigger */}
-                            <div className="lg:col-span-1 space-y-6">
-                                {/* Info Section */}
-                                <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
-                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                        <Info size={14} className="text-blue-500" /> Información General
-                                    </h3>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Proveedor *</label>
-                                            <select
-                                                value={purchase.nit_proveedor}
-                                                onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
-                                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 outline-none text-sm font-bold text-[#040529] focus:ring-4 focus:ring-blue-50"
-                                            >
-                                                <option value="">Seleccionar proveedor...</option>
-                                                {proveedores.map(p => <option key={p.nit || p.id_proveedor} value={p.nit || p.id_proveedor}>{p.nombre_empresa || p.nombre_proveedor}</option>)}
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Fecha de Compra</label>
-                                            <input
-                                                type="date"
-                                                value={purchase.fecha_compra}
-                                                onChange={(e) => setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }))}
-                                                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 outline-none text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                </section>
-
-                                {/* Product Selector Trigger */}
-                                <section className="bg-[#040529] rounded-3xl p-6 shadow-xl text-white space-y-4 relative overflow-hidden flex flex-col items-center justify-center text-center">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10"><ShoppingBag size={80} /></div>
-
-                                    <Package size={48} className="text-blue-400 mb-2 relative z-10" />
-                                    <h3 className="text-xl font-black relative z-10">
-                                        Productos de la Orden
-                                    </h3>
-                                    <p className="text-xs text-slate-300 relative z-10 mb-4 px-4">
-                                        Explora el inventario, selecciona variantes y define cantidades y costos para añadir a esta compra.
-                                    </p>
-
-                                    <button
-                                        onClick={() => setShowProductSelector(true)}
-                                        className="w-full relative z-10 py-4 bg-white text-[#040529] rounded-xl text-sm font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 shadow-lg"
-                                    >
-                                        <Search size={18} /> Explorar Catálogo
-                                    </button>
-                                </section>
+        <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
+            <AnimatePresence mode="wait">
+                {showProductSelector ? (
+                    <ProductSelectorView
+                        key="selector"
+                        onClose={() => setShowProductSelector(false)}
+                        allProducts={allProducts}
+                        onAdd={(data) => {
+                            const { product, variant, cantidad, precio_unitario } = data;
+                            const newItem = {
+                                id_producto: product.id_producto,
+                                id_variante: variant.id_variante || variant.id_producto_variante,
+                                id_color: variant.id_color,
+                                id_talla: variant.id_talla,
+                                nombre_producto: product.nombre_producto,
+                                nombre_variante: `${variant.nombre_color || variant.color || ''} ${variant.nombre_talla || variant.talla || ''}`.trim(),
+                                cantidad: cantidad,
+                                precio_unitario: precio_unitario,
+                                subtotal: cantidad * precio_unitario,
+                                imagen: product.imagen || product.url_imagen || (product.imagenes && product.imagenes[0]?.url_imagen) || null
+                            };
+                            const newItems = [...items, newItem];
+                            setItems(newItems);
+                            setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
+                            showNotification("Producto añadido a la lista");
+                        }}
+                    />
+                ) : (
+                    <motion.div 
+                        key="form"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="flex flex-col h-full overflow-hidden"
+                    >
+                        {/* Header Sticky */}
+                        <header className="shrink-0 bg-white border-b border-slate-100 px-10 py-6 flex items-center justify-between z-20">
+                            <div className="flex items-center gap-6">
+                                <button
+                                    onClick={() => navigate(`${basePath}/compras`)}
+                                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95 border border-slate-100"
+                                >
+                                    <ArrowLeft size={20} strokeWidth={2.5} />
+                                </button>
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase leading-none">
+                                        Crear Abastecimiento
+                                    </h2>
+                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1.5 leading-none italic">Formulario de Orden de Compra</p>
+                                </div>
                             </div>
 
-                            {/* Right: Items List Table */}
-                            <div className="lg:col-span-2 flex flex-col min-h-0">
-                                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col h-full overflow-hidden">
-                                    <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-[#040529] flex items-center gap-2">
-                                            <Archive size={16} className="text-slate-400" /> Lista de Productos Solicitados
+                            <div className="flex items-center gap-4">
+                                <div className="hidden sm:flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Sincronización de Stock Activa</span>
+                                </div>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving || items.length === 0}
+                                    className="flex items-center gap-3 px-8 py-3.5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95"
+                                >
+                                    <Save size={16} strokeWidth={3} />
+                                    <span>{saving ? "Procesando..." : "Registrar Entrada"}</span>
+                                </button>
+                            </div>
+                        </header>
+
+                        {/* Main Content Scrollable */}
+                        <main className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+                                {/* Left: Info Sidebar */}
+                                <div className="lg:col-span-4 space-y-8">
+                                    {/* Info Section */}
+                                    <section className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200/50 border border-slate-100 space-y-8 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full translate-x-12 -translate-y-12" />
+                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-3 relative z-10">
+                                            <Info size={16} className="text-indigo-500" /> Cabecera de Orden
                                         </h3>
-                                        <div className="text-[10px] font-bold text-slate-400 px-3 py-1 bg-slate-50 rounded-lg">
-                                            {items.length} ítems
-                                        </div>
-                                    </div>
 
-                                    <div className="flex-1 overflow-auto">
-                                        <table className="w-full text-left border-collapse">
-                                            <thead className="bg-slate-50 text-[#040529] sticky top-0 z-10 border-b border-slate-100">
-                                                <tr>
-                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider">Producto</th>
-                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider text-center">Cant.</th>
-                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider text-right">Precio Unit.</th>
-                                                    <th className="px-5 py-4 font-bold text-[10px] uppercase tracking-wider text-right">Subtotal</th>
-                                                    <th className="px-5 py-4 text-right"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-50">
-                                                {items.length === 0 ? (
+                                        <div className="space-y-6 relative z-10">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Proveedor Autorizado *</label>
+                                                <select
+                                                    value={purchase.nit_proveedor}
+                                                    onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100 outline-none transition-all appearance-none cursor-pointer uppercase tracking-tight"
+                                                >
+                                                    <option value="">Seleccionar del Registro...</option>
+                                                    {proveedores.map(p => (
+                                                        <option key={p.nit || p.id_proveedor} value={p.nit || p.id_proveedor}>
+                                                            {p.nombre_empresa || p.nombre_proveedor}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Transacción</label>
+                                                <input
+                                                    type="date"
+                                                    value={purchase.fecha_compra}
+                                                    onChange={(e) => setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }))}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100 outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Product Selector Trigger */}
+                                    <button 
+                                        onClick={() => setShowProductSelector(true)}
+                                        className="w-full group bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl shadow-slate-300 text-white space-y-6 relative overflow-hidden text-left hover:scale-[1.02] transition-all active:scale-95"
+                                    >
+                                        <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-125 transition-transform"><ShoppingBag size={120} /></div>
+                                        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
+                                           <Package size={28} className="text-indigo-400" />
+                                        </div>
+                                        <div className="space-y-2 relative z-10">
+                                            <h3 className="text-2xl font-black uppercase tracking-tight leading-tight">
+                                                Añadir Productos
+                                            </h3>
+                                            <p className="text-[10px] font-medium text-slate-400 leading-relaxed uppercase tracking-widest">
+                                                Explorar el catálogo para definir variantes, cantidades y costos
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] pt-4">
+                                           Abrir Catálogo <ChevronRight size={14} />
+                                        </div>
+                                    </button>
+                                </div>
+
+                                {/* Right: Items List Table */}
+                                <div className="lg:col-span-8 flex flex-col min-h-[500px]">
+                                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/50 flex flex-col h-full overflow-hidden">
+                                        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+                                            <div className="space-y-1">
+                                               <h3 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-3">
+                                                   <Archive size={16} className="text-indigo-500" /> Detalle de Adquisición
+                                               </h3>
+                                               <p className="text-[10px] text-slate-400 font-medium">Items listos para ingresar al inventario</p>
+                                            </div>
+                                            <span className="px-5 py-2 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-sm">
+                                                {items.length} productos
+                                            </span>
+                                        </div>
+
+                                        <div className="flex-1 overflow-auto custom-scrollbar">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead className="bg-slate-50/50 text-slate-400 sticky top-0 z-10">
                                                     <tr>
-                                                        <td colSpan={5} className="p-20 text-center">
-                                                            <div className="flex flex-col items-center opacity-20">
-                                                                <ShoppingBag size={48} className="mb-4 text-[#040529]" />
-                                                                <p className="text-sm italic font-medium">No has añadido productos todavía</p>
-                                                            </div>
-                                                        </td>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100">Item / Variante</th>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-center">Cant.</th>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-right">Inversión Un.</th>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-right">Neto</th>
+                                                        <th className="px-10 py-5 border-b border-slate-100"></th>
                                                     </tr>
-                                                ) : (
-                                                    items.map((item, idx) => (
-                                                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                                            <td className="px-5 py-4">
-                                                                <div className="font-bold text-[#040529] text-sm leading-tight">{item.nombre_producto}</div>
-                                                                <div className="text-[10px] text-slate-400 font-medium uppercase">{item.nombre_variante}</div>
-                                                            </td>
-                                                            <td className="px-5 py-4 text-center">
-                                                                <span className="px-2 py-1 rounded-lg bg-slate-100 text-[#040529] font-bold text-xs">{item.cantidad}</span>
-                                                            </td>
-                                                            <td className="px-5 py-4 text-right font-medium text-slate-500 text-sm tabular-nums">
-                                                                ${Number(item.precio_unitario).toLocaleString()}
-                                                            </td>
-                                                            <td className="px-5 py-4 text-right font-extrabold text-[#040529] text-sm tabular-nums">
-                                                                ${Number(item.subtotal).toLocaleString()}
-                                                            </td>
-                                                            <td className="px-5 py-4 text-right">
-                                                                <button
-                                                                    onClick={() => removeItem(idx)}
-                                                                    className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {items.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={5} className="p-32 text-center">
+                                                                <div className="flex flex-col items-center gap-6 opacity-30">
+                                                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center border-4 border-dashed border-slate-200">
+                                                                       <ShoppingBag size={32} className="text-slate-300" />
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                       <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Canasta Vacía</p>
+                                                                       <p className="text-[10px] italic font-medium max-w-[180px] mx-auto leading-relaxed">Añade productos desde el panel izquierdo para comenzar la orden</p>
+                                                                    </div>
+                                                                </div>
                                                             </td>
                                                         </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                    ) : (
+                                                        items.map((item, idx) => (
+                                                            <tr key={idx} className="group hover:bg-slate-50/50 transition-all">
+                                                                <td className="px-10 py-6">
+                                                                    <div className="flex flex-col gap-0.5">
+                                                                       <span className="font-bold text-slate-800 text-sm leading-tight">{item.nombre_producto}</span>
+                                                                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{item.nombre_variante}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-10 py-6 text-center">
+                                                                    <span className="bg-slate-100 text-slate-800 px-4 py-1.5 rounded-xl font-black text-xs tabular-nums border border-slate-200/50 italic">{item.cantidad}</span>
+                                                                </td>
+                                                                <td className="px-10 py-6 text-right font-bold text-slate-400 text-sm tabular-nums">
+                                                                    ${Number(item.precio_unitario).toLocaleString('es-CO')}
+                                                                </td>
+                                                                <td className="px-10 py-6 text-right font-black text-slate-800 text-sm tabular-nums">
+                                                                    ${Number(item.subtotal).toLocaleString('es-CO')}
+                                                                </td>
+                                                                <td className="px-10 py-6 text-right">
+                                                                    <button
+                                                                        onClick={() => removeItem(idx)}
+                                                                        className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                                    {/* Footer Totals */}
-                                    <div className="shrink-0 p-6 bg-[#F0E6E6]/30 border-t border-[#040529]/10">
-                                        <div className="flex flex-col items-end gap-2">
-                                            <div className="flex items-center gap-10 text-slate-500 text-sm font-medium">
-                                                <span>Subtotal Estimado</span>
-                                                <span className="tabular-nums">${Number(purchase.total_compra).toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex items-center gap-10 text-[#040529] text-2xl font-black">
-                                                <span className="tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>TOTAL COMPRA</span>
-                                                <span className="tabular-nums">${Number(purchase.total_compra).toLocaleString()}</span>
+                                        {/* Footer Totals */}
+                                        <div className="shrink-0 p-10 bg-slate-900 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -translate-x-12 -translate-y-12" />
+                                            <div className="flex flex-col items-end gap-2 relative z-10">
+                                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] opacity-80 mb-2">Resumen de Liquidación</p>
+                                                <div className="flex items-center gap-10 opacity-40 text-[11px] font-black uppercase tracking-widest">
+                                                    <span>Base de Items</span>
+                                                    <span className="tabular-nums">${Number(purchase.total_compra).toLocaleString('es-CO')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-10 mt-2">
+                                                    <span className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40">Gran Total</span>
+                                                    <span className="text-4xl font-black tracking-tighter tabular-nums">${Number(purchase.total_compra).toLocaleString('es-CO')}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </main>
-                </>
-            )}
+                        </main>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Notifications */}
             <AnimatePresence>
                 {notification.show && (
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0 }}
-                        className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }} 
+                        animate={{ opacity: 1, y: 0, scale: 1 }} 
+                        exit={{ opacity: 0, scale: 0.9 }} 
+                        className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-8 py-4 rounded-3xl shadow-2xl text-[11px] font-black uppercase tracking-[0.2em] border backdrop-blur-md flex items-center gap-3 ${
+                        notification.type === "success" 
+                            ? "bg-slate-900/90 text-white border-slate-700" 
+                            : "bg-rose-500/90 text-white border-rose-400"
+                        }`}
                     >
+                        <div className={`w-2 h-2 rounded-full animate-pulse ${notification.type === "success" ? "bg-emerald-400" : "bg-white"}`} />
                         {notification.message}
                     </motion.div>
                 )}

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import {
   Pen,
@@ -57,6 +57,8 @@ function cn(...classes) { return classes.filter(Boolean).join(" "); }
 
 function Ventas() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
   const [ventas, setVentas] = useState([]);
   const [usuarios, setUsuarios] = useState([]); // todos los usuarios (posibles clientes)
   const [clientes, setClientes] = useState([]); // solo quienes tienen perfil cliente
@@ -175,7 +177,7 @@ function Ventas() {
       return;
     } else if (type === "ver" && venta) {
       // Navegar a la vista de detalle en lugar de abrir modal
-      navigate(`/admin/ventas/detalle/${venta.id_venta}`);
+      navigate(`${basePath}/ventas/detalle/${venta.id_venta}`);
       return;
     }
 
@@ -695,7 +697,7 @@ function Ventas() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => navigate(`/admin/ventas/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
+                            <button onClick={() => navigate(`${basePath}/ventas/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
                             <button onClick={() => openModal("status", v)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Actualizar estado"><Package size={16} /></button>
                             {v.estado !== "Cancelada" && (
                               <button onClick={() => openModal("cancelar", v)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Cancelar venta"><Ban size={16} /></button>

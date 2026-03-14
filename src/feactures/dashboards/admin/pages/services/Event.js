@@ -45,6 +45,9 @@ export const createEvento = async (evento) => {
     Object.keys(evento).forEach(key => {
       if (key === 'imagenArchivo') {
         formData.append('imagen', evento.imagenArchivo);
+      } else if (key === 'google_forms' && Array.isArray(evento[key])) {
+        // Enviar cada link del array
+        evento[key].forEach(link => formData.append('google_forms[]', link));
       } else if (evento[key] !== null && evento[key] !== undefined) {
         formData.append(key, evento[key]);
       }
@@ -69,6 +72,9 @@ export const updateEvento = async (id, evento) => {
     Object.keys(evento).forEach(key => {
       if (key === 'imagenArchivo') {
         formData.append('imagen', evento.imagenArchivo);
+      } else if (key === 'google_forms' && Array.isArray(evento[key])) {
+        // Enviar cada link del array
+        evento[key].forEach(link => formData.append('google_forms[]', link));
       } else if (evento[key] !== null && evento[key] !== undefined) {
          formData.append(key, evento[key]);
       }
