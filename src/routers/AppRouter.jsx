@@ -104,6 +104,9 @@ import { AdminStore } from "../feactures/landing/admin/pages/AdminStore"
 import { AdminProfile } from "../feactures/landing/admin/pages/AdminProfile"
 import { AdminPurchases } from "../feactures/landing/admin/pages/AdminPurchases"
 import AdminPurchaseDetail from "../feactures/landing/admin/pages/AdminPurchaseDetail"
+import { AdminClass } from "../feactures/landing/admin/pages/AdminClass"
+import { AdminEvents } from "../feactures/landing/admin/pages/AdminEvents"
+import { AdminAbout } from "../feactures/landing/admin/pages/AdminAbout"
 
 // Custom Roles
 import { CustomHome } from "../feactures/landing/custom/pages/CustomHome"
@@ -197,6 +200,9 @@ const AppRouter = () => {
           {/* Admin Landing Pages (Public-facing for admins, NO Sidebar) */}
           <Route path="admin/home" element={<AdminHome />} />
           <Route path="admin/store" element={<AdminStore />} />
+          <Route path="admin/training" element={<AdminClass />} />
+          <Route path="admin/events" element={<AdminEvents />} />
+          <Route path="admin/about" element={<AdminAbout />} />
           <Route path="admin/profile" element={<AdminProfile />} />
           <Route path="admin/purchases" element={<AdminPurchases />} />
           <Route path="admin/myPurchases/:id" element={<AdminPurchaseDetail />} />
