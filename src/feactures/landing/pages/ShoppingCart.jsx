@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Layout } from "../layout/Layout";
 import { ShoppingBag, ArrowRight, LogIn, Trash2 } from "lucide-react";
 import CardProduct from "../components/CardProduct";
@@ -9,10 +9,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { getCheckoutPath as getRoleBasedCheckoutPath, getStoreHomePath } from "../../../utils/roleHelpers";
 
 export const ShoppingCartContent = () => {
-    const { cart, clearCart, isLoaded } = useCart();
-    const navigate = useNavigate();
-    const { user } = useAuth();
-    const [showLoginModal, setShowLoginModal] = useState(false);
+  const { cart, clearCart, isLoaded } = useCart();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
     // Function to get the checkout path based on role
     const getCheckoutPath = () => {
@@ -27,23 +27,25 @@ export const ShoppingCartContent = () => {
         }
     };
 
-    const handleCheckoutAction = () => {
-        if (!user || (!user.id && !user.id_usuario && !user.email)) {
-            setShowLoginModal(true);
-            return;
-        }
-        const checkoutPath = getCheckoutPath();
-        navigate(checkoutPath);
-    };
+  const handleCheckoutAction = () => {
+    if (!user || (!user.id && !user.id_usuario && !user.email)) {
+      setShowLoginModal(true);
+      return;
+    }
+    const checkoutPath = getCheckoutPath();
+    navigate(checkoutPath);
+  };
 
-    const format = (n) =>
-        n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+  const format = (n) =>
+    n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 
-    if (!isLoaded) return (
-        <div className="min-h-[60vh] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-        </div>
+  if (!isLoaded) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+      </div>
     );
+  }
 
     return (
         <div className="pt-20 lg:pt-24 bg-[#0B0F14] min-h-screen flex flex-col font-primary text-white">
@@ -100,22 +102,20 @@ export const ShoppingCartContent = () => {
                                 ))}
                             </div>
 
-                            <div className="mt-8 p-6 bg-[#121821] rounded-2xl border border-gray-800/50">
-                                <p className="text-xs text-center lg:text-left text-[#9CA3AF] font-medium leading-relaxed">
-                                    El envío se calcula al momento del checkout.<br />
-                                    Todos los precios mostrados incluyen impuestos (IVA).<br />
-                                    Compra segura y protegida.
-                                </p>
-                            </div>
-                        </div>
+              <div className="mt-8 p-6 bg-[#121821] rounded-2xl border border-gray-800/50">
+                <p className="text-xs text-center lg:text-left text-[#9CA3AF] font-medium leading-relaxed">
+                  El envio se calcula al momento del checkout.<br />
+                  Todos los precios mostrados incluyen impuestos (IVA).<br />
+                  Compra segura y protegida.
+                </p>
+              </div>
+            </div>
 
-                        {/* Order Summary Section */}
-                        <div className="lg:col-span-1 sticky top-24 ">
-                            <div className="bg-[#121821] border border-gray-800 shadow-2xl rounded-[2rem] p-6 md:p-8 overflow-hidden relative">
-                                {/* Decorative element */}
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-[#1E3A8A] rounded-full -mr-16 -mt-16 opacity-10 blur-2xl"></div>
+            <div className="lg:col-span-1 sticky top-24">
+              <div className="bg-[#121821] border border-gray-800 shadow-2xl rounded-[2rem] p-6 md:p-8 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#1E3A8A] rounded-full -mr-16 -mt-16 opacity-10 blur-2xl"></div>
 
-                                <h3 className="text-xl font-black text-white mb-8 pb-4 border-b border-gray-800 relative font-primary">Resumen de Orden</h3>
+                <h3 className="text-xl font-black text-white mb-8 pb-4 border-b border-gray-800 relative font-primary">Resumen de Orden</h3>
 
                                 <div className="space-y-4 mb-8 relative">
                                     <div className="flex justify-between text-[#9CA3AF] font-bold text-sm tracking-wide">
@@ -173,19 +173,28 @@ export const ShoppingCartContent = () => {
                     </div>
                 )}
 
-                <LoginRequiredModal
-                    isOpen={showLoginModal}
-                    onClose={() => setShowLoginModal(false)}
-                />
-            </div>
-        </div>
-    );
+        <LoginRequiredModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+        />
+      </div>
+    </div>
+  );
 };
 
 export const ShoppingCart = () => {
+<<<<<<< HEAD
     return (
         <Layout>
             <ShoppingCartContent />
         </Layout>
     );
 };
+=======
+  return (
+    <Layout>
+      <ShoppingCartContent />
+    </Layout>
+  );
+};
+>>>>>>> 1123fce43dff93714b7430bf6a5cbaca05344c3c

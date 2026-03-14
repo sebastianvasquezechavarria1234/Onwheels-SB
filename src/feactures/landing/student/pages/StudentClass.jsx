@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { CheckCircle2, Users, Clock, Star, Zap, Trophy, Target, BookOpen, MapPin, Calendar } from "lucide-react"
 import { StudentLayout } from "../layout/StudentLayout";
 

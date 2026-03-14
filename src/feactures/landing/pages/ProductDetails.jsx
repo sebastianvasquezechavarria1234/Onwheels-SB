@@ -72,16 +72,16 @@ export const ProductDetailsContent = () => {
     descuento,
     imagen_producto,
     imagenes,
-    variantes = []
+    variantes = [],
   } = product;
 
   const getImageUrl = (url) => {
     if (!url) return "/bg_hero_shop.jpg";
-    if (url.startsWith('http') || url.startsWith('data:image')) return url;
+    if (url.startsWith("http") || url.startsWith("data:image")) return url;
     return `${API_URL}${url}`;
   };
 
-  const validImages = (imagenes || []).filter(img => img && img.url_imagen).map(img => getImageUrl(img.url_imagen));
+  const validImages = (imagenes || []).filter((img) => img && img.url_imagen).map((img) => getImageUrl(img.url_imagen));
   const mainImage = validImages.length > 0 ? validImages[0] : getImageUrl(imagen_producto);
   const allImages = validImages.length > 0 ? validImages : [mainImage];
 
@@ -92,7 +92,7 @@ export const ProductDetailsContent = () => {
 
   const uniqueColors = [];
   const colorMap = new Map();
-  variantes.forEach(v => {
+  variantes.forEach((v) => {
     if (v.id_color && !colorMap.has(v.id_color)) {
       colorMap.set(v.id_color, true);
       uniqueColors.push({ id: v.id_color, name: v.nombre_color, hex: v.color_hex });
@@ -102,15 +102,13 @@ export const ProductDetailsContent = () => {
   let availableSizes = [];
   if (selectedColor) {
     availableSizes = variantes
-      .filter(v => v.id_color === selectedColor.id && v.stock > 0)
-      .map(v => ({ id: v.id_talla, name: v.nombre_talla, stock: v.stock, id_variante: v.id_variante }));
+      .filter((v) => v.id_color === selectedColor.id && v.stock > 0)
+      .map((v) => ({ id: v.id_talla, name: v.nombre_talla, stock: v.stock, id_variante: v.id_variante }));
   }
 
   const currentVariant = selectedColor && selectedSize
-    ? variantes.find(v => v.id_color === selectedColor.id && v.id_talla === selectedSize.id)
+    ? variantes.find((v) => v.id_color === selectedColor.id && v.id_talla === selectedSize.id)
     : null;
-
-  const maxStock = currentVariant ? currentVariant.stock : 0;
 
   const handleAddToCart = () => {
     if (variantes.length > 0) {
@@ -138,7 +136,7 @@ export const ProductDetailsContent = () => {
       toast.custom(
         <div className="p-5 font-primary bg-[#121821] rounded-xl shadow-2xl border border-gray-800 max-w-sm">
           <div className="flex items-center gap-2 mb-3 text-emerald-500 text-sm font-bold uppercase tracking-wide">
-            <Check size={16} strokeWidth={3} /> Artículo agregado
+            <Check size={16} strokeWidth={3} /> Articulo agregado
           </div>
           <div className="flex gap-4 mb-4">
             <img src={mainImage} alt={nombre_producto} className="w-16 h-16 rounded-lg object-cover bg-[#0B0F14]" />
@@ -170,7 +168,8 @@ export const ProductDetailsContent = () => {
 
   const handleBuyNow = () => {
     if (!user || Object.keys(user).length === 0 || !localStorage.getItem("token")) {
-      toast.error("Debes iniciar sesión para comprar este producto");
+      setShowLoginModal(true);
+      toast.error("Debes iniciar sesion para comprar este producto");
       return;
     }
 
@@ -194,7 +193,6 @@ export const ProductDetailsContent = () => {
   return (
     <div className="bg-[#0B0F14] min-h-screen text-white pb-24">
       <section className="pt-[120px] lg:pt-[140px] max-w-[1200px] mx-auto p-4 md:p-8">
-
         <Link to={backLink} className="inline-flex items-center gap-2 text-[#9CA3AF] hover:text-white mb-8 transition-colors group">
           <div className="w-8 h-8 rounded-full bg-[#121821] flex items-center justify-center group-hover:bg-gray-800 transition-colors">
             <ArrowLeft size={16} />
@@ -203,8 +201,11 @@ export const ProductDetailsContent = () => {
         </Link>
 
         <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16">
+<<<<<<< HEAD
 
           {/* Left: Image Gallery */}
+=======
+>>>>>>> 1123fce43dff93714b7430bf6a5cbaca05344c3c
           <div className="w-full lg:w-[55%] flex flex-col lg:flex-row-reverse gap-4">
             {/* Main Image */}
             <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[400px] lg:max-w-[400px] mx-auto overflow-hidden shadow-sm relative border border-gray-800/50 flex justify-center items-center">
@@ -215,14 +216,13 @@ export const ProductDetailsContent = () => {
               />
             </div>
 
-            {/* Thumbnails Sidebar / Bottom */}
             {allImages.length > 1 && (
               <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-y-auto pb-4 lg:pb-0 custom-scrollbar w-full lg:w-24 shrink-0">
                 {allImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
-                    className={`relative w-20 h-24 lg:w-full lg:h-32 rounded-2xl overflow-hidden shrink-0 border border-transparent transition-all ${selectedImageIndex === idx ? 'opacity-100 shadow-xl shadow-[#1E3A8A]/20 ring-2 ring-[#1E3A8A]' : 'opacity-50 hover:opacity-100 hover:border-gray-700'}`}
+                    className={`relative w-20 h-24 lg:w-full lg:h-32 rounded-2xl overflow-hidden shrink-0 border border-transparent transition-all ${selectedImageIndex === idx ? "opacity-100 shadow-xl shadow-[#1E3A8A]/20 ring-2 ring-[#1E3A8A]" : "opacity-50 hover:opacity-100 hover:border-gray-700"}`}
                   >
                     <img src={img} alt={`${nombre_producto} ${idx}`} className="w-full h-full object-cover" />
                   </button>
@@ -231,7 +231,6 @@ export const ProductDetailsContent = () => {
             )}
           </div>
 
-          {/* Right: Info */}
           <div className="w-full lg:w-[45%] flex flex-col justify-center">
             <div className="mb-4">
               <h1 className="font-primary text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
@@ -269,7 +268,7 @@ export const ProductDetailsContent = () => {
               <div className="mb-8">
                 <span className="block text-xs font-bold text-[#9CA3AF] uppercase tracking-widest mb-4">Seleccionar Color</span>
                 <div className="flex flex-wrap gap-3">
-                  {uniqueColors.map(c => (
+                  {uniqueColors.map((c) => (
                     <button
                       key={c.id}
                       onClick={() => { setSelectedColor(c); setSelectedSize(null); setQty(1); }}
@@ -296,7 +295,7 @@ export const ProductDetailsContent = () => {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {selectedColor ? (
-                    availableSizes.map(s => (
+                    availableSizes.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setSelectedSize(s)}
@@ -312,19 +311,18 @@ export const ProductDetailsContent = () => {
                       </button>
                     ))
                   ) : (
-                    <div className="text-gray-600 text-sm font-medium bg-[#121821] px-4 py-3 rounded-xl border border-gray-800/80">Esperando selección de color...</div>
+                    <div className="text-gray-600 text-sm font-medium bg-[#121821] px-4 py-3 rounded-xl border border-gray-800/80">Esperando seleccion de color...</div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Quantity */}
             <div className="mb-10">
               <span className="block text-xs font-bold text-[#9CA3AF] uppercase tracking-widest mb-4">Cantidad</span>
               <div className="flex items-center gap-5">
                 <div className="flex items-center bg-[#0B0F14] rounded-xl p-1 w-fit border border-gray-800 shadow-inner">
                   <button
-                    onClick={() => setQty(q => Math.max(1, q - 1))}
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
                     className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-[#121821] hover:text-[#1E3A8A] text-[#9CA3AF] transition-colors"
                   >
                     <Minus size={18} />
@@ -340,14 +338,13 @@ export const ProductDetailsContent = () => {
                   </button>
                 </div>
                 {currentVariant && (
-                  <span className={`text-sm font-medium ${currentVariant.stock < 5 ? 'text-amber-500' : 'text-[#9CA3AF]'}`}>
+                  <span className={`text-sm font-medium ${currentVariant.stock < 5 ? "text-amber-500" : "text-[#9CA3AF]"}`}>
                     {currentVariant.stock} disponibles
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mt-auto">
               <button
                 onClick={handleAddToCart}
@@ -364,7 +361,6 @@ export const ProductDetailsContent = () => {
                 COMPRAR AHORA
               </button>
             </div>
-
           </div>
         </div>
 
