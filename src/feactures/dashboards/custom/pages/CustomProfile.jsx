@@ -14,6 +14,40 @@ export const CustomProfile = () => {
     }
   }, [])
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !user?.id_usuario) return
+    
+    try {
+      const formDataImg = new FormData()
+      formDataImg.append("foto_perfil", file)
+      const token = localStorage.getItem("token")
+      
+      // Intentar usar VITE_REACT_APP_API_URL o VITE_API_URL
+      const apiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000'
+      const photoRes = await fetch(`${apiUrl}/api/usuarios/${user.id_usuario}/foto`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formDataImg
+      })
+      
+      if (!photoRes.ok) {
+        const errData = await photoRes.json()
+        throw new Error(errData.mensaje || "Error al subir la imagen")
+      }
+      
+      const photoData = await photoRes.json()
+      // Update local storage and state
+      const updatedUser = { ...user, foto_perfil: photoData.foto_perfil || photoData.secure_url }
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      setUser(updatedUser)
+      window.dispatchEvent(new Event("storage"))
+      alert("Foto de perfil actualizada correctamente")
+    } catch (err) {
+      alert(err.message || "Error al subir la imagen")
+    }
+  }
+
   if (!user) {
     return (
       <CustomLayout>
@@ -50,21 +84,22 @@ export const CustomProfile = () => {
                 <div className="relative group/avatar cursor-pointer">
                   <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/20 bg-[#0B0F14] flex items-center justify-center">
                     <img
-                      src="/placeholder.svg?height=144&width=144"
+                      src={user?.foto_perfil || "/placeholder.svg?height=144&width=144"}
                       alt="Avatar"
                       className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                    <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer">
                       <Camera className="text-white" size={32} />
-                    </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                    </label>
                   </div>
                   <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-full border-4 border-[#121821] flex items-center justify-center shadow-md">
                     <Star size={16} fill="currentColor" />
                   </div>
                 </div>
-                <button className="mt-4 text-xs font-bold text-[#3b82f6] uppercase tracking-wider hover:text-white transition-colors">
-                  Editar Foto
-                </button>
+                <span className="mt-4 text-xs font-bold text-[#3b82f6] uppercase tracking-wider">
+                  Haz clic para cambiar tu foto
+                </span>
               </div>
 
               {/* Info Section */}
@@ -77,7 +112,7 @@ export const CustomProfile = () => {
                 </div>
 
                 <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">
-                  {user.name || "Usuario"}
+                  {user.nombre_completo || user.name || "Usuario"}
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

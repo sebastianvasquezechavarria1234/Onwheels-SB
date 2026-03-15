@@ -39,8 +39,8 @@ export default function VentaEditar() {
         direccion: "",
         telefono: "",
         fecha_venta: new Date().toISOString().split("T")[0],
-        metodo_pago: "Efectivo",
-        estado: "Pendiente",
+        metodo_pago: "transferencia",
+        estado: "Entregada",
         items: [],
     });
 
@@ -450,11 +450,10 @@ export default function VentaEditar() {
                                     <select
                                         value={form.metodo_pago}
                                         onChange={e => setForm({ ...form, metodo_pago: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none transition focus:ring-2 focus:ring-blue-500"
                                     >
-                                        <option value="Efectivo">Efectivo</option>
-                                        <option value="Tarjeta">Tarjeta</option>
-                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="efectivo">Efectivo</option>
                                     </select>
                                 </div>
                             </div>

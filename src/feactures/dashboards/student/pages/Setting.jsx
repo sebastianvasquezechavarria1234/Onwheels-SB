@@ -9,7 +9,7 @@ export const Setting = () => {
   const [loading, setLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [editData, setEditData] = useState({ nombre_completo: "", telefono: "" });
+  const [editData, setEditData] = useState({ nombre_completo: "", telefono: "", foto_perfil: null });
   const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [passwordValidation, setPasswordValidation] = useState({
     currentPassword: { valid: null, message: "" },
@@ -73,7 +73,7 @@ export const Setting = () => {
         if (!userId) { window.location.href = '/login'; return; }
         const data = await api.getUsuario(userId);
         setUserData(data);
-        setEditData({ nombre_completo: data.nombre_completo || "", telefono: data.telefono || "" });
+        setEditData({ nombre_completo: data.nombre_completo || "", telefono: data.telefono || "", foto_perfil: null });
       } catch (err) { console.error('Error fetching user', err); }
       finally { setLoading(false); }
     };
@@ -164,7 +164,33 @@ export const Setting = () => {
       const userId = getCurrentUserId();
       const updateData = { nombre_completo: editData.nombre_completo, telefono: editData.telefono };
       const response = await api.updateUsuario(userId, updateData);
-      setUserData(response.usuario);
+      
+      // Subir foto si la hay
+      if (editData.foto_perfil) {
+         const formDataImg = new FormData();
+         formDataImg.append("foto_perfil", editData.foto_perfil);
+         const token = getCurrentUserToken();
+         const photoRes = await fetch(`${API_BASE_URL}/usuarios/${userId}/foto`, {
+           method: "POST",
+           headers: { Authorization: `Bearer ${token}` },
+           body: formDataImg
+         });
+         if (!photoRes.ok) {
+           const errData = await photoRes.json();
+           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
+         }
+         const photoData = await photoRes.json();
+         // Update user in local storage
+         const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
+         currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
+         localStorage.setItem("user", JSON.stringify(currentUserData));
+         window.dispatchEvent(new Event("storage"));
+      }
+
+      // Volvemos a pedir los datos después de que se grabó la imagen
+      const finalData = await api.getUsuario(userId);
+      setUserData(finalData);
+
       setSuccessMessage("Perfil actualizado correctamente");
       setIsEditingProfile(false);
     } catch (err) {
@@ -210,7 +236,7 @@ export const Setting = () => {
 
   const handleCancelProfile = () => {
     setIsEditingProfile(false);
-    setEditData({ nombre_completo: userData.nombre_completo || "", telefono: userData.telefono || "" });
+    setEditData({ nombre_completo: userData.nombre_completo || "", telefono: userData.telefono || "", foto_perfil: null });
     setPasswordError("");
     setSuccessMessage("");
   };
@@ -259,21 +285,34 @@ export const Setting = () => {
                 <div className="relative group/avatar cursor-pointer">
                   <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[#1E3A8A] bg-[#0B0F14] flex items-center justify-center shadow-lg shadow-[#1E3A8A]/20">
                     <img
-                      src="/placeholder.svg?height=144&width=144"
+                      src={editData.foto_perfil ? URL.createObjectURL(editData.foto_perfil) : (userData?.foto_perfil || "/placeholder.svg?height=144&width=144")}
                       alt="Avatar"
-                      className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all opacity-50"
+                      className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all opacity-90"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-                      <Camera className="text-white" size={32} />
-                    </div>
+                    {isEditingProfile && (
+                      <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer">
+                        <Camera className="text-white" size={32} />
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                           if(e.target.files && e.target.files[0]) {
+                              setEditData(p => ({...p, foto_perfil: e.target.files[0]}));
+                           }
+                        }} />
+                      </label>
+                    )}
                   </div>
                   <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-full border-4 border-[#121821] flex items-center justify-center shadow-md">
                     <Star size={16} fill="currentColor" />
                   </div>
                 </div>
-                <button className="mt-4 text-xs font-bold text-[#3b82f6] uppercase tracking-wider hover:text-white transition-colors">
-                  Editar Foto
-                </button>
+                {isEditingProfile ? (
+                   <span className="mt-4 text-xs font-bold text-[#3b82f6] uppercase tracking-wider">
+                     Haz clic en la foto para cambiarla
+                   </span>
+                ) : (
+                   <span className="mt-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                     Foto de Perfil
+                   </span>
+                )}
               </div>
 
               <div className="flex-1 text-center md:text-left w-full">

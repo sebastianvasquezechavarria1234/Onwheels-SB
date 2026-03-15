@@ -46,6 +46,7 @@ export const Layout = ({ children }) => {
 
   const [userName, setUserName] = useState("Admin");
   const [userEmail, setUserEmail] = useState("admin@empresa.com");
+  const [userProfilePic, setUserProfilePic] = useState(null);
 
   const navigate = useNavigate();
 
@@ -56,6 +57,7 @@ export const Layout = ({ children }) => {
         const user = JSON.parse(userData);
         setUserName(user.nombre || "Administrador");
         setUserEmail(user.email || "admin@Performance SB.com");
+        setUserProfilePic(user.foto_perfil || null);
       } catch (e) {
         console.error("Error parsing user data");
       }
@@ -116,14 +118,33 @@ export const Layout = ({ children }) => {
               {isCollapsed ? <ChevronRight size={16} /> : <ChevronRight size={16} className="rotate-180" />}
             </button>
 
-            <div className={`mb-8 flex items-center justify-center transition-all duration-300
-            ${isCollapsed ? "scale-90" : "px-4"}
+            <div className={`flex flex-col items-center justify-center transition-all duration-300 mb-6 gap-3
+            ${isCollapsed ? "scale-90" : "px-2"}
           `}>
               <img
                 src="/logo.png"
                 alt="Onwheels"
                 className={isCollapsed ? "h-7 object-contain" : "h-14 w-auto object-contain"}
               />
+
+              {!isCollapsed && (
+                <div className="flex items-center gap-3 px-3 py-2 mt-1">
+                  {userProfilePic ? (
+                    <img
+                      src={userProfilePic}
+                      alt="Perfil"
+                      className="w-10 h-10 rounded-full object-cover border-2 border-[#040529] shadow-sm shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 flex items-center justify-center shrink-0 rounded-full bg-[#040529] text-white font-bold">
+                      {userName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="text-slate-800 text-lg font-bold tracking-wide lowercase truncate max-w-[150px]">
+                    {userName}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="sidebar flex-1 overflow-y-auto pr-1 space-y-3">
@@ -161,16 +182,16 @@ export const Layout = ({ children }) => {
                     <div className={`flex items-center ${isCollapsed ? "justify-center w-full" : "gap-3"}`}>
                       <div className={`
                       transition-all duration-300 flex items-center justify-center shrink-0
-                      ${isCollapsed ? "w-11 h-11 rounded-xl shadow-[0_8px_15px_-5px_rgba(59,130,246,0.2)]" : "w-10 h-10 rounded-xl"}
+                      ${isCollapsed ? "w-11 h-11 rounded-xl shadow-[0_8px_15px_-5px_rgba(4,5,41,0.2)]" : "w-10 h-10 rounded-xl"}
                       ${openModule === key
-                          ? "text-white bg-blue-800 shadow-lg shadow-blue-800/20"
-                          : "text-slate-400 bg-white border border-slate-100 group-hover:text-blue-800 group-hover:border-blue-100 group-hover:bg-blue-50/30"}
+                          ? "text-white bg-[#040529] shadow-md"
+                          : "text-slate-400 bg-white border border-slate-100 group-hover:text-white group-hover:bg-[#040529] group-hover:border-[#040529]"}
                     `}>
                         {Icon}
                       </div>
                       {!isCollapsed && (
-                        <h4 className={`text-sm font-bold transition-all duration-300 whitespace-nowrap overflow-hidden tracking-tight
-                        ${openModule === key ? "text-slate-800" : "text-slate-500 group-hover:text-slate-800"}
+                        <h4 className={`text-[18px] md:text-[19px] font-bold transition-all duration-300 whitespace-nowrap overflow-hidden tracking-tight
+                        ${openModule === key ? "text-[#040529]" : "text-slate-500 group-hover:text-[#040529]"}
                       `}>
                           {label}
                         </h4>
@@ -295,18 +316,16 @@ export const Layout = ({ children }) => {
               ))}
             </div>
 
-            {/* User logout button only when collapsed */}
-            {isCollapsed && (
-              <div className="mt-auto pt-4 flex justify-center border-t border-slate-100">
-                <button
-                  onClick={handleLogout}
-                  className="w-11 h-11 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                  title="Cerrar sesión"
-                >
-                  <LogOutIcon size={18} />
-                </button>
-              </div>
-            )}
+            {/* User logout button */}
+            <div className="mt-auto pt-4 flex justify-center w-full px-2 pb-2">
+              <button
+                onClick={handleLogout}
+                className="w-12 h-12 flex items-center justify-center rounded-[1rem] bg-[#040529] text-white hover:bg-slate-800 transition-all shadow-md group"
+                title="Cerrar sesión"
+              >
+                <LogOutIcon size={22} className="group-hover:scale-110 transition-transform translate-x-0.5" />
+              </button>
+            </div>
           </nav>
         </div>
       )}
@@ -316,33 +335,6 @@ export const Layout = ({ children }) => {
         {/* Dynamic Content Body with "White Table" effect */}
         <div className="flex-1 overflow-hidden p-3 md:p-5 pt-4 md:pt-5 relative flex flex-col">
 
-          {/* FLOATING HEADER (Top Right) */}
-          <div className="absolute top-4 md:top-6 right-4 md:right-6 z-30 flex items-center gap-3 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-sm border border-slate-100 group cursor-pointer transition-all hover:bg-white hover:shadow-md">
-            <div className="flex flex-col items-end hidden sm:flex">
-              <span className="text-[11px] font-bold text-slate-800 group-hover:text-blue-800 transition-colors uppercase tracking-tight leading-tight">{userName}</span>
-              <span className="text-[9px] text-slate-400 font-medium leading-none">{userEmail}</span>
-            </div>
-            <div className="relative">
-              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
-            </div>
-
-            <div className="h-5 w-[1px] bg-slate-200 mx-1"></div>
-
-            <button
-              onClick={handleLogout}
-              className="p-1 text-slate-400 hover:text-rose-500 transition-colors rounded-xl hover:bg-rose-50"
-              title="Cerrar sesión"
-            >
-              <LogOutIcon size={14} />
-            </button>
-          </div>
 
           {/* Dynamic Content Body with "White Table" effect */}
           <motion.section

@@ -21,3 +21,14 @@ export const getClasesPorInstructor = (idInstructor) =>
 
 // ✅ NUEVA: Clases del estudiante autenticado
 export const getMisClases = () => api.get(`${API_URL}/mis-clases`).then(r => r.data);
+
+// ✅ Subir imagen de clase
+export const uploadClaseImage = async (file) => {
+  const formData = new FormData();
+  formData.append("imagen", file);
+  const response = await api.post(`${API_URL}/upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+

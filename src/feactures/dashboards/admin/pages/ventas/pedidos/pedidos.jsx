@@ -73,6 +73,7 @@ function Pedidos() {
     id_cliente: "",
     fecha_venta: "",
     estado: "Pendiente",
+    metodo_pago: "contraentrega",
     items: [],
   });
   const [searchTerm, setSearchTerm] = useState("");
@@ -189,6 +190,7 @@ function Pedidos() {
         id_cliente: "",
         fecha_venta: new Date().toISOString().split("T")[0],
         estado: "Pendiente",
+        metodo_pago: "contraentrega",
         items: [],
       });
       setHistorialCliente([]);
@@ -199,6 +201,7 @@ function Pedidos() {
           id_cliente: ventaCompleta.id_cliente,
           fecha_venta: ventaCompleta.fecha_venta?.split?.("T")[0] || "",
           estado: ventaCompleta.estado || "Pendiente",
+          metodo_pago: ventaCompleta.metodo_pago || "contraentrega",
           items: ventaCompleta.items ? JSON.parse(JSON.stringify(ventaCompleta.items)) : [],
         });
         loadHistorial(ventaCompleta.id_cliente);
@@ -340,8 +343,12 @@ function Pedidos() {
     if (!selectedVenta) return;
     try {
       if (estado === "Cancelada") {
+        if (!cancelJustificacion || !cancelJustificacion.trim()) {
+          showNotification("Por favor, ingrese una justificación para la cancelación", "error");
+          return;
+        }
         // Use the cancel endpoint with justification
-        await cancelPedido(selectedVenta.id_venta, { justificacion_cancelacion: cancelJustificacion || 'Sin justificación proporcionada' });
+        await cancelPedido(selectedVenta.id_venta, { motivo_cancelacion: cancelJustificacion || 'Sin justificación proporcionada' });
       } else {
         await updatePedidoStatus(selectedVenta.id_venta, { estado });
       }

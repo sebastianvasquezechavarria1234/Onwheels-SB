@@ -43,6 +43,8 @@ export default function Usuarios() {
     años_experiencia: "",
     estado_estudiante: true,
     estado_instructor: true,
+    foto_perfil: null, // Guardaremos el File seleccionado temporalmente
+    foto_perfil_url: "", // Guardaremos la URL actual para previsualizar
   });
   const [search, setSearch] = useState("");
   const [formErrors, setFormErrors] = useState({});
@@ -180,7 +182,28 @@ export default function Usuarios() {
         id_rol: formData.id_rol ? Number(formData.id_rol) : null,
       };
 
-      await createUsuario(payload);
+      const newUserRes = await createUsuario(payload);
+      
+      // Si el usuario seleccionó una foto, la subimos
+      if (formData.foto_perfil && newUserRes?.usuario?.id_usuario) {
+        const formDataImg = new FormData();
+        formDataImg.append("foto_perfil", formData.foto_perfil);
+        const token = localStorage.getItem("token");
+        const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:3000";
+        const photoRes = await fetch(`${API_URL}/api/usuarios/${newUserRes.usuario.id_usuario}/foto`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          body: formDataImg
+        });
+        
+        if (!photoRes.ok) {
+           const errData = await photoRes.json();
+           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
+        }
+      }
+
       await fetchData();
       closeModal();
       showNotification("Usuario creado con éxito");
@@ -211,6 +234,37 @@ export default function Usuarios() {
       };
 
       await updateUsuario(selectedUsuario.id_usuario, payload);
+
+      // Si el usuario seleccionó una foto, la subimos
+      if (formData.foto_perfil) {
+        const formDataImg = new FormData();
+        formDataImg.append("foto_perfil", formData.foto_perfil);
+        const token = localStorage.getItem("token");
+        
+        const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:3000";
+        const photoRes = await fetch(`${API_URL}/api/usuarios/${selectedUsuario.id_usuario}/foto`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          body: formDataImg
+        });
+
+        if (!photoRes.ok) {
+           const errData = await photoRes.json();
+           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
+        }
+        
+        // Actualizamos localstorage si nos estamos editando a nosotros mismos
+        const photoData = await photoRes.json();
+        const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
+        if(String(currentUserData.id_usuario) === String(selectedUsuario.id_usuario)){
+          currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
+          localStorage.setItem("user", JSON.stringify(currentUserData));
+          window.dispatchEvent(new Event("storage")); 
+        }
+      }
+
       await fetchData();
       closeModal();
       showNotification("Usuario actualizado con éxito");
@@ -250,6 +304,8 @@ export default function Usuarios() {
         fecha_nacimiento: usuario.fecha_nacimiento ? usuario.fecha_nacimiento.split("T")[0] : "",
         contrasena: "", // No prellenar contraseña al editar
         id_rol: usuario.roles && usuario.roles.length > 0 ? String(usuario.roles[0].id_rol) : "",
+        foto_perfil: null,
+        foto_perfil_url: usuario.foto_perfil || "",
       });
     } else if (!usuario) {
       setFormData({
@@ -264,6 +320,8 @@ export default function Usuarios() {
         años_experiencia: "",
         estado_estudiante: true,
         estado_instructor: true,
+        foto_perfil: null,
+        foto_perfil_url: "",
       });
     }
   };
@@ -280,6 +338,8 @@ export default function Usuarios() {
       fecha_nacimiento: "",
       contrasena: "",
       id_rol: "",
+      foto_perfil: null,
+      foto_perfil_url: "",
     });
   };
 
@@ -429,7 +489,7 @@ export default function Usuarios() {
                             <Mail size={14} className="shrink-0 text-slate-400" />
                             <span className="text-sm">{u.email}</span>
                           </div>
-                          {u.telefono && (
+                              {u.telefono && (
                             <div className="flex items-center gap-2 text-slate-500">
                               <Phone size={14} className="shrink-0 text-slate-400" />
                               <span className="text-xs font-medium">{u.telefono}</span>
@@ -562,8 +622,61 @@ export default function Usuarios() {
                       </div>
                     ) : (
                       <form className="space-y-4 font-primary">
+                        
+                        {/* INICIO: SECCIÓN SUBIR FOTO */}
+                        <div className="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
+                          {modal === "ver" ? (
+                             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#040529] shadow-sm bg-white flex items-center justify-center shrink-0">
+                               {selectedUsuario?.foto_perfil ? (
+                                  <img src={selectedUsuario.foto_perfil} alt="perfil" className="w-full h-full object-cover" />
+                               ) : (
+                                  <User size={24} className="text-gray-400" />
+                               )}
+                             </div>
+                          ) : (
+                            <div className="relative group cursor-pointer">
+                              <label htmlFor="foto_perfil_upload" className="block cursor-pointer">
+                                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-dashed border-gray-300 hover:border-[#040529] bg-white flex items-center justify-center shrink-0 relative transition-colors shadow-sm">
+                                  {formData.foto_perfil ? (
+                                    <img src={URL.createObjectURL(formData.foto_perfil)} alt="Preview" className="w-full h-full object-cover" />
+                                  ) : formData.foto_perfil_url ? (
+                                    <img src={formData.foto_perfil_url} alt="Current" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User size={24} className="text-gray-300 group-hover:text-[#040529] transition-colors" />
+                                  )}
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <Plus size={20} className="text-white" />
+                                  </div>
+                                </div>
+                                <input
+                                  type="file"
+                                  id="foto_perfil_upload"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    if(e.target.files && e.target.files[0]) {
+                                      setFormData(p => ({...p, foto_perfil: e.target.files[0]}));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          )}
+                          
+                          <div className="flex-1">
+                            <h4 className="text-sm font-bold text-[#040529]">Foto de Perfil</h4>
+                            <p className="text-xs text-gray-500">Sube una imagen cuadrada para mejorar la visualización. (JPG, PNG, WEBP max 5MB).</p>
+                            {modal !== "ver" && (
+                              <label htmlFor="foto_perfil_upload" className="inline-block cursor-pointer mt-1 text-xs font-bold text-[#040529] hover:underline">
+                                Seleccionar archivo...
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                        {/* FIN: SECCIÓN SUBIR FOTO */}
+                        
                         {/* Secciones de formulario */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 mt-2">
                           <div>
                             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Tipo Doc.</label>
                             {modal === "ver" ? (

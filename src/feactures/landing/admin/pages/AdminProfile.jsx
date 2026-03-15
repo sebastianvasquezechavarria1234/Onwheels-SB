@@ -16,7 +16,8 @@ export const AdminProfile = () => {
     telefono: "",
     email: "", // Generalmente el email no se debería editar tan fácil, pero lo pondré como disabled si se desea
     documento: "",
-    tipo_documento: ""
+    tipo_documento: "",
+    foto_perfil: null
   })
 
   useEffect(() => {
@@ -42,7 +43,8 @@ export const AdminProfile = () => {
         telefono: response.data.telefono || "",
         email: response.data.email || "",
         documento: response.data.documento || "",
-        tipo_documento: response.data.tipo_documento || ""
+        tipo_documento: response.data.tipo_documento || "",
+        foto_perfil: null
       })
     } catch (error) {
       console.error("Error fetching user data:", error)
@@ -74,6 +76,19 @@ export const AdminProfile = () => {
         // documento: formData.documento // Depende si permitimos cambiar documento
       })
 
+      // Subir foto si la hay
+      if (formData.foto_perfil) {
+        const formDataImg = new FormData();
+        formDataImg.append("foto_perfil", formData.foto_perfil);
+        const photoRes = await api.post(`/usuarios/${userData.id_usuario}/foto`, formDataImg);
+        
+        // Actualizar user en local storage
+        const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
+        currentUserData.foto_perfil = photoRes.data?.foto_perfil || photoRes.data?.secure_url;
+        localStorage.setItem("user", JSON.stringify(currentUserData));
+        window.dispatchEvent(new Event("storage")); 
+      }
+
       // Actualizar vista y cerrar edición
       await fetchUserData()
       setEditing(false)
@@ -81,7 +96,8 @@ export const AdminProfile = () => {
       alert("Perfil actualizado correctamente")
     } catch (error) {
       console.error("Error updating profile:", error)
-      alert("Error al actualizar perfil")
+      const errorMsg = error.response?.data?.mensaje || "Error al actualizar perfil";
+      alert(errorMsg);
     }
   }
 
@@ -115,17 +131,25 @@ export const AdminProfile = () => {
 
           <div className="flex flex-col items-center mb-8">
             <div className="relative group cursor-pointer">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-50 bg-emerald-100 flex items-center justify-center">
-                {userData?.imagen ? (
-                  <img src={userData.imagen} alt="Profile" className="w-full h-full object-cover" />
+              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-50 bg-emerald-100 flex items-center justify-center shadow-sm">
+                {userData?.preview_foto || userData?.foto_perfil || userData?.imagen ? (
+                  <img src={userData.preview_foto || userData.foto_perfil || userData.imagen} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <User size={48} className="text-emerald-400" />
                 )}
               </div>
               {/* Overlay para cambiar foto (visual por ahora) */}
-              <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                <Camera size={24} />
-              </div>
+              {editing && (
+                <label className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer">
+                  <Camera size={28} />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                    if(e.target.files && e.target.files[0]) {
+                       setFormData(p => ({...p, foto_perfil: e.target.files[0]}));
+                       setUserData(p => ({...p, preview_foto: URL.createObjectURL(e.target.files[0])}));
+                    }
+                  }} />
+                </label>
+              )}
             </div>
 
             <div className="mt-4 text-center">

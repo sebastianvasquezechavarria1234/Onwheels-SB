@@ -70,7 +70,8 @@ function Ventas() {
   const [form, setForm] = useState({
     id_cliente: "",
     fecha_venta: "",
-    estado: "Pendiente",
+    estado: "Entregada",
+    metodo_pago: "transferencia", // Default para Ventas CRUD
     items: [],
   });
   const [searchTerm, setSearchTerm] = useState("");
@@ -186,7 +187,8 @@ function Ventas() {
       setForm({
         id_cliente: "",
         fecha_venta: new Date().toISOString().split("T")[0],
-        estado: "Pendiente",
+        estado: "Entregada",
+        metodo_pago: "transferencia",
         items: [],
       });
       setHistorialCliente([]);
@@ -196,7 +198,8 @@ function Ventas() {
         setForm({
           id_cliente: ventaCompleta.id_cliente,
           fecha_venta: ventaCompleta.fecha_venta?.split?.("T")[0] || "",
-          estado: ventaCompleta.estado || "Pendiente",
+          estado: ventaCompleta.estado || "Entregada",
+          metodo_pago: ventaCompleta.metodo_pago || "transferencia",
           items: ventaCompleta.items ? JSON.parse(JSON.stringify(ventaCompleta.items)) : [],
         });
         loadHistorial(ventaCompleta.id_cliente);
@@ -326,8 +329,8 @@ function Ventas() {
 
   const handleCancel = async () => {
     if (!selectedVenta) return;
-    if (!justificacion.trim()) {
-      showNotification("Por favor, ingrese una justificación", "error");
+    if (!justificacion || !justificacion.trim()) {
+      showNotification("Por favor, ingrese una justificación para la cancelación", "error");
       return;
     }
     try {
@@ -598,7 +601,13 @@ function Ventas() {
                 </div>
               </div>
 
-              {/* Nueva venta se quitó porque solo se pueden crear desde Pedidos */}
+              <button
+                onClick={() => navigate("/admin/ventas/crear")}
+                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+              >
+                <Plus size={18} />
+                Crear Nueva Venta
+              </button>
             </div>
           </div>
         </div>
@@ -820,6 +829,18 @@ function Ventas() {
                       readOnly
                       className="w-full p-2 border border-gray-300 rounded-md bg-gray-100"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago *</label>
+                    <select
+                      value={form.metodo_pago}
+                      onChange={(e) => setForm((prev) => ({ ...prev, metodo_pago: e.target.value }))}
+                      className="w-full p-2 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition"
+                      required
+                    >
+                      <option value="transferencia">Transferencia</option>
+                      <option value="efectivo">Efectivo</option>
+                    </select>
                   </div>
                 </div>
 

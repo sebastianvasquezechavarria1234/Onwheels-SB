@@ -40,7 +40,7 @@ export default function PedidoEditar() {
         direccion: "",
         telefono: "",
         fecha_venta: new Date().toISOString().split("T")[0],
-        metodo_pago: "Efectivo",
+        metodo_pago: "contraentrega",
         estado: "Pendiente",
         items: [],
     });
@@ -451,11 +451,10 @@ export default function PedidoEditar() {
                                     <select
                                         value={form.metodo_pago}
                                         onChange={e => setForm({ ...form, metodo_pago: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-gray-50 cursor-not-allowed"
+                                        disabled
                                     >
-                                        <option value="Efectivo">Efectivo</option>
-                                        <option value="Tarjeta">Tarjeta</option>
-                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="contraentrega">Contraentrega</option>
                                     </select>
                                 </div>
                             </div>

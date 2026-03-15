@@ -18,7 +18,7 @@ export const BtnSideBar = ({ title, children, style, styleIcon, link, isCollapse
       <span className={
         `${styleIcon} transition-all duration-200 flex justify-center items-center rounded-xl shrink-0
          ${isCollapsed ? "w-11 h-11 bg-white shadow-md border border-slate-50" : "w-10 h-10 bg-slate-50"}
-         text-slate-400 group-hover:text-blue-800 group-hover:bg-blue-50/50 group-hover:shadow-sm
+         text-slate-400 group-hover:text-white group-hover:bg-[#040529] group-hover:shadow-sm
         `
       }>
         <span className="flex items-center justify-center">
@@ -27,7 +27,7 @@ export const BtnSideBar = ({ title, children, style, styleIcon, link, isCollapse
       </span>
 
       {!isCollapsed && (
-        <p className="text-[15px] font-bold tracking-tight text-slate-500 group-hover:text-slate-900 transition-colors" style={{ fontFamily: '"Outfit", sans-serif' }}>
+        <p className="text-[17px] md:text-[18px] font-bold tracking-tight text-slate-500 group-hover:text-[#040529] group-hover:translate-x-1 transition-all" style={{ fontFamily: '"Outfit", sans-serif' }}>
           {title}
         </p>
       )}

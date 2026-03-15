@@ -3,7 +3,8 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Eye, Plus, Search, Pencil, Trash2, X, User,
   ChevronLeft, ChevronRight, Hash, TrendingUp,
-  SlidersHorizontal, ArrowUpDown, Download, AlertCircle
+  SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
+  Image as ImageIcon, Link as LinkIcon, Upload
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -13,7 +14,8 @@ import {
   deleteClase,
   getNiveles,
   getSedes,
-  getInstructores
+  getInstructores,
+  uploadClaseImage
 } from "../../services/clasesService";
 
 // Helper para clases condicionales
@@ -24,6 +26,7 @@ function cn(...classes) {
 export const Clases = () => {
   // --- ESTADOS ---
   const [clases, setClases] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const [niveles, setNiveles] = useState([]);
   const [sedes, setSedes] = useState([]);
   const [instructores, setInstructores] = useState([]);
@@ -45,7 +48,8 @@ export const Clases = () => {
     descripcion: "",
     estado: "Disponible",
     hora_inicio: "",
-    hora_fin: ""
+    hora_fin: "",
+    url_imagen: ""
   });
 
   const [search, setSearch] = useState("");
@@ -187,7 +191,8 @@ export const Clases = () => {
         descripcion: formData.descripcion,
         estado: formData.estado,
         hora_inicio: formatTime(formData.hora_inicio),
-        hora_fin: formatTime(formData.hora_fin)
+        hora_fin: formatTime(formData.hora_fin),
+        url_imagen: formData.url_imagen
       };
       await createClase(payload);
       await fetchData();
@@ -219,7 +224,8 @@ export const Clases = () => {
         descripcion: formData.descripcion,
         estado: formData.estado,
         hora_inicio: formatTime(formData.hora_inicio),
-        hora_fin: formatTime(formData.hora_fin)
+        hora_fin: formatTime(formData.hora_fin),
+        url_imagen: formData.url_imagen
       };
       await updateClase(selectedClase.id_clase, payload);
       await fetchData();
@@ -266,7 +272,8 @@ export const Clases = () => {
         descripcion: clase.descripcion || "",
         estado: clase.estado || "Disponible",
         hora_inicio: clase.hora_inicio || "",
-        hora_fin: clase.hora_fin || ""
+        hora_fin: clase.hora_fin || "",
+        url_imagen: clase.url_imagen || ""
       });
     } else {
       setFormData(defaultData);
@@ -279,8 +286,25 @@ export const Clases = () => {
     setFormData({
       id_nivel: "", id_sede: "", instructores: [], instructorTemporal: "",
       cupo_maximo: "", dia_semana: "", descripcion: "", estado: "Disponible",
-      hora_inicio: "", hora_fin: ""
+      hora_inicio: "", hora_fin: "", url_imagen: ""
     });
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const res = await uploadClaseImage(file);
+      setFormData(prev => ({ ...prev, url_imagen: res.url_imagen }));
+      showNotification("Imagen subida con éxito");
+    } catch (err) {
+      console.error("Error subiendo imagen:", err);
+      showNotification("Error al subir imagen", "error");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAgregarInstructor = () => {
@@ -427,8 +451,14 @@ export const Clases = () => {
                       <tr key={c.id_clase} className="group hover:bg-[#F0E6E6]/30 transition-colors">
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
-                              {c.descripcion?.substring(0, 2).toUpperCase() || "CL"}
+                            <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-100 overflow-hidden border border-gray-100 shadow-sm">
+                              {c.url_imagen ? (
+                                <img src={c.url_imagen} alt={c.descripcion} className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center bg-[#040529] text-[#F0E6E6] font-bold text-xs uppercase">
+                                  {c.descripcion?.substring(0, 2) || "CL"}
+                                </div>
+                              )}
                             </div>
                             <div className="min-w-0">
                               <p className="font-bold text-[#040529] text-sm leading-tight mb-0.5">{c.descripcion}</p>
@@ -540,10 +570,17 @@ export const Clases = () => {
                   <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
                     {/* Left Side (Visual) */}
                     <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                      <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                        <User size={48} strokeWidth={1.5} />
+                      <div className="w-full aspect-video bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-gray-300 overflow-hidden border border-gray-100">
+                        {formData.url_imagen ? (
+                          <img src={formData.url_imagen} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                             <ImageIcon size={48} strokeWidth={1} />
+                             <span className="text-[10px] font-bold text-gray-400">SIN IMAGEN</span>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Configuración de Clase</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Visualización de Clase</p>
                     </div>
 
                     {/* Right Side (Form) */}
@@ -618,6 +655,54 @@ export const Clases = () => {
                         <div className="grid grid-cols-2 gap-4">
                           <div><label className="text-xs font-bold text-gray-500 uppercase ml-1">Inicio</label><input type="time" name="hora_inicio" value={formData.hora_inicio} onChange={handleChange} readOnly={modal === "ver"} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none" /></div>
                           <div><label className="text-xs font-bold text-gray-500 uppercase ml-1">Fin</label><input type="time" name="hora_fin" value={formData.hora_fin} onChange={handleChange} readOnly={modal === "ver"} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none" /></div>
+                        </div>
+
+                        <div className="space-y-3 pt-2">
+                          <label className="text-xs font-bold text-gray-500 uppercase ml-1 block">Imagen de la Clase</label>
+                          <div className="flex flex-col gap-3">
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                <input
+                                  type="text"
+                                  name="url_imagen"
+                                  value={formData.url_imagen}
+                                  onChange={handleChange}
+                                  readOnly={modal === "ver"}
+                                  disabled={modal === "ver"}
+                                  className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
+                                  placeholder="Pegar URL de imagen..."
+                                />
+                              </div>
+                              {modal !== "ver" && (
+                                <div className="relative">
+                                  <input
+                                    type="file"
+                                    id="file-upload"
+                                    className="hidden"
+                                    onChange={handleFileUpload}
+                                    accept="image/*"
+                                    disabled={uploading}
+                                  />
+                                  <label
+                                    htmlFor="file-upload"
+                                    className={cn(
+                                      "flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 cursor-pointer hover:bg-gray-50 transition shadow-sm",
+                                      uploading && "opacity-50 cursor-not-allowed"
+                                    )}
+                                  >
+                                    <Upload size={14} />
+                                    {uploading ? "Subiendo..." : "Subir Archivo"}
+                                  </label>
+                                </div>
+                              )}
+                            </div>
+                            {formData.url_imagen && (
+                                <p className="text-[10px] text-gray-400 truncate ml-1">
+                                    URL actual: {formData.url_imagen}
+                                </p>
+                            )}
+                          </div>
                         </div>
 
                         <div className="pt-2">
