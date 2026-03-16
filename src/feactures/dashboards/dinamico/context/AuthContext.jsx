@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import api from "../../../../services/api";
 
 const AuthContext = createContext();
-
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 // Hook personalizado con validación
 export const useAuth = () => {

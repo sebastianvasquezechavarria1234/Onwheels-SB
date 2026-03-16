@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { UsersLayout } from "../layout/UsersLayout";
 import { CheckCircle, Package, Home, ShoppingBag } from "lucide-react";
@@ -10,16 +10,8 @@ export const UsersOrderConfirm = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // const orderId = searchParams.get("orderId");
   const orderId = searchParams.get("orderId");
-  const [countdown, setCountdown] = useState(5);
-
-  useEffect(() => {
-    // Countdown para redirección automática
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
 
   return (
     <UsersLayout>
@@ -112,14 +104,6 @@ export const UsersOrderConfirm = () => {
                 Ir al inicio
               </button>
             </div>
-
-            {/* Mensaje de redirección */}
-            {countdown > 0 && (
-              <p className="text-xs text-[#9CA3AF] mt-8 font-bold tracking-widest relative z-10">
-                Redirigiendo en <span className="text-white">{countdown}</span>s...
-              </p>
-            )}
-            {countdown === 0 && navigate(getStoreHomePath(user))}
           </motion.div>
         </section>
       </div>

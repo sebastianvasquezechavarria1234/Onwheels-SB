@@ -134,8 +134,8 @@ export const InstructorCheckout = () => {
                 <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
                   💳 Método de Pago
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {["Efectivo", "Contraentrega", "Tarjeta"].map((metodo) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {["Contraentrega", "Transferencia"].map((metodo) => (
                     <label
                       key={metodo}
                       className={`flex items-center justify-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${form.metodo_pago === metodo

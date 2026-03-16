@@ -81,6 +81,7 @@ const PlanesAdmin = () => {
   const handleSave = async () => {
     const errors = {};
     if (!formData.nombre_plan.trim()) errors.nombre_plan = "El nombre es obligatorio";
+    if (!formData.descripcion.trim() || formData.descripcion.length > 700) errors.descripcion = "La descripción es obligatoria y no superior a 700 col";
     if (!formData.precio) errors.precio = "El precio es obligatorio";
 
     if (Object.keys(errors).length > 0) {
@@ -244,6 +245,23 @@ const PlanesAdmin = () => {
                     <div>
                       <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nombre *</label>
                       <input type="text" value={formData.nombre_plan} onChange={(e) => setFormData({ ...formData, nombre_plan: e.target.value })} className={cn("w-full px-4 py-3 text-sm rounded-xl border outline-none transition", formErrors.nombre_plan && "border-red-400 bg-red-50")} placeholder="Ej: Plan Básico" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block">Descripción *</label>
+                        <span className={`text-[10px] font-bold ${formData.descripcion.length >= 700 ? 'text-red-500' : 'text-slate-400'}`}>
+                          {formData.descripcion.length}/700
+                        </span>
+                      </div>
+                      <textarea 
+                        maxLength={700}
+                        rows={3}
+                        value={formData.descripcion} 
+                        onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} 
+                        className={cn("w-full px-4 py-3 text-sm rounded-xl border outline-none transition resize-none", formErrors.descripcion && "border-red-400 bg-red-50")} 
+                        placeholder="Ej: Formación intensiva de alto rendimiento..." 
+                      />
+                      {formErrors.descripcion && <span className="text-red-500 text-xs font-medium mt-1 inline-block">{formErrors.descripcion}</span>}
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
