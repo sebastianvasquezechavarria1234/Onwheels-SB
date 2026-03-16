@@ -66,9 +66,6 @@ const Compras = () => {
   // Filter logic handled by backend, but we keep the structure for compatibility if needed
   const displayItems = compras;
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
       {/* Header & Stats */}
