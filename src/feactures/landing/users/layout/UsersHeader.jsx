@@ -5,7 +5,7 @@ import { Menu, X, ShoppingCart } from "lucide-react";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { UserDropdown } from "../../components/UserDropdown";
 import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
-import { getHomePath, getStoreHomePath, getCartPath, getPreinscriptionPath } from "../../../../utils/roleHelpers";
+import { getHomePath, getStoreHomePath, getCartPath, getPreinscriptionPath, getUserRoleSlug } from "../../../../utils/roleHelpers";
 
 /* ================================
    TOOLTIP ANIMADO (EXACTO AL ORIGINAL)
@@ -114,6 +114,9 @@ export const UsersHeader = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const roleSlug = getUserRoleSlug(user);
+  const classesPath = roleSlug === "student" || roleSlug === "instructor" ? `/${roleSlug}/training` : "/users/training";
+  const eventsPath = roleSlug === "student" ? "/student/events" : roleSlug === "instructor" ? "/instructor/events" : "/users/events";
 
   // Scroll detection ...
   useEffect(() => {
@@ -126,8 +129,8 @@ export const UsersHeader = () => {
     { title: "Inicio", path: getHomePath(user) },
     { title: "Pre-inscripciones", path: getPreinscriptionPath(user) },
     { title: "Tienda", path: getStoreHomePath(user) },
-    { title: "Clases", path: user?.rol === 'Instructor' ? '/instructor/training' : '/users/training' },
-    { title: "Eventos", path: user?.rol === 'Instructor' ? '/instructor/events' : '/users/events' },
+    { title: "Clases", path: classesPath },
+    { title: "Eventos", path: eventsPath },
   ];
 
   return (

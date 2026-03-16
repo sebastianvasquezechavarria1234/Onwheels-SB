@@ -1,174 +1,356 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Menu, X, ChevronRight, LogIn, LayoutDashboard } from "lucide-react";
-import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
-// Corregido: CartContext está en src/context/CartContext.jsx
-import { useCart } from "../../../../context/CartContext";
-import { UserDropdown } from "../../components/UserDropdown";
+import React, { useEffect, useRef, useState } from "react";
+import { Menu, ShoppingCart, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { BtnLinkIcon } from "../../components/BtnLinkIcon";
+import { BtnLink } from "../../components/BtnLink";
+import { UserDropdown } from "../../components/UserDropdown";
 
-export const CustomHeader = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const { user } = useAuth();
-  const { cart } = useCart();
-  const location = useLocation();
+const IconWithTooltip = ({ label, children, className = "", onClick }) => {
+  const [hover, setHover] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const tooltipVariants = {
+    hidden: {
+      opacity: 0,
+      y: -10,
+      scale: 0.9,
+      rotateX: 18,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      rotateX: 0,
+      transformPerspective: 800,
+      transformOrigin: "50% 0%",
+      transition: {
+        type: "spring",
+        stiffness: 700,
+        damping: 20,
+        mass: 0.7,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -6,
+      scale: 0.98,
+      transition: { duration: 0.14, ease: "easeIn" },
+    },
+  };
 
-  const cartItems = Array.isArray(cart) ? cart : (Array.isArray(cart?.items) ? cart.items : []);
-  const totalItems = cartItems.reduce((acc, item) => acc + (item.qty || item.quantity || 1), 0);
-
-  const navLinks = [
-    { name: "Inicio", path: "/custom/home" },
-    { name: "Tienda", path: "/custom/store" },
-    { name: "Eventos", path: "/custom/events" },
-    { name: "Nosotros", path: "/custom/about" },
-    { name: "Clases", path: "/custom/training" },
-  ];
+  const popPulse = {
+    initial: { scale: 1 },
+    hover: { scale: 1.03, transition: { yoyo: Infinity, duration: 0.9 } },
+  };
 
   return (
-    <header
-      className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${
-        scrolled ? "py-3 bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-2xl" : "py-6 bg-transparent"
-      }`}
+    <div
+      className={`relative inline-flex ${className}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}
     >
-      <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
-        {/* LOGO */}
-        <Link to="/custom/home" className="group flex items-center gap-3 relative z-10">
-          <div className="relative">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center transform group-hover:rotate-[360deg] transition-all duration-700 shadow-lg shadow-white/10">
-              <span className="text-black font-black text-xl italic tracking-tighter">SB</span>
-            </div>
-            <div className="absolute -inset-2 bg-white/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-bold text-white leading-none tracking-tighter whitespace-nowrap group-hover:text-blue-400 transition">
-              Performance SB
-            </span>
-          </div>
-        </Link>
+      <motion.div
+        onClick={onClick}
+        aria-describedby={`tooltip-${label ? label.replace(/\s+/g, "-") : "null"}`}
+        className="flex items-center"
+        initial="initial"
+        animate={hover ? "hover" : "initial"}
+        variants={popPulse}
+      >
+        {children}
+      </motion.div>
 
-        {/* DESKTOP NAV */}
-        <nav className="hidden lg:flex items-center gap-10">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`relative text-xs font-black uppercase tracking-[0.2em] transition-all hover:text-white group py-2 ${
-                location.pathname === link.path ? "text-white" : "text-gray-400"
-              }`}
-            >
-              {link.name}
-              <span
-                className={`absolute bottom-0 left-0 h-[3px] bg-red-600 transition-all duration-300 ${
-                  location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
-                }`}
-              ></span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* ACTIONS */}
-        <div className="flex items-center gap-4 lg:gap-8">
-          <Link
-            to="/custom/cart"
-            className="group relative p-2 text-white/70 hover:text-white transition-colors"
-          >
-            <ShoppingCart size={22} strokeWidth={2.5} />
-            {totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-black animate-in zoom-in duration-300">
-                {totalItems}
-              </span>
-            )}
-          </Link>
-
-          {user ? (
-            <div className="relative group flex items-center gap-4">
-               {/* Dashboard Link for Custom Roles */}
-               <Link
-                to="/custom/dashboard"
-                className="hidden xl:flex items-center gap-2 bg-purple-600/20 text-purple-400 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all"
-              >
-                <LayoutDashboard size={14} />
-                Dashboard
-              </Link>
-              <UserDropdown />
-            </div>
-          ) : (
-            <Link
-              to="/login"
-              className="hidden sm:flex items-center gap-3 bg-white text-black px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-400 hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-white/5"
-            >
-              <LogIn size={14} />
-              Acceso
-            </Link>
-          )}
-
-          <button
-            className="lg:hidden p-2 text-white/70 active:text-white transition"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
-        </div>
-      </div>
-
-      {/* MOBILE MENU */}
       <AnimatePresence>
-        {isMenuOpen && (
+        {hover && label && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden absolute top-full left-0 w-full bg-black/95 backdrop-blur-2xl border-b border-white/10 p-6 shadow-2xl"
+            key="tooltip"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={tooltipVariants}
+            role="status"
+            aria-hidden={!hover}
+            className="absolute left-1/2 top-full z-50 mt-3 -translate-x-1/2 whitespace-nowrap"
+            style={{ pointerEvents: "none", perspective: 800 }}
           >
-            <div className="flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center justify-between py-4 border-b border-white/5 text-sm font-black uppercase tracking-widest transition ${
-                    location.pathname === link.path ? "text-red-600" : "text-white"
-                  }`}
-                >
-                  {link.name}
-                  <ChevronRight size={16} className="opacity-50" />
-                </Link>
-              ))}
-              
-              {user && (
-                <Link
-                  to="/custom/dashboard"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-between py-4 border-b border-white/5 text-sm font-black uppercase tracking-widest text-purple-400"
-                >
-                  Dashboard
-                  <LayoutDashboard size={16} className="opacity-50" />
-                </Link>
-              )}
+            <div className="inline-flex flex-col items-center">
+              <svg
+                width="16"
+                height="8"
+                viewBox="0 0 16 8"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ marginBottom: -6 }}
+                aria-hidden="true"
+              >
+                <path d="M8 0 L16 8 H0 Z" fill="white" stroke="rgba(0,0,0,0.06)" strokeWidth="0.6" />
+              </svg>
 
-              {!user && (
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="mt-4 flex items-center justify-center gap-3 bg-white text-black py-5 rounded-2xl text-xs font-black uppercase tracking-[0.3em]"
-                >
-                  <LogIn size={16} />
-                  Iniciar Sesión
-                </Link>
-              )}
+              <div
+                className="inline-block rounded-lg px-3 py-1.5 text-[13px] font-semibold italic shadow-[0_8px_30px_rgba(16,24,40,0.18)] bg-white text-black"
+                style={{ minWidth: 96, textAlign: "center" }}
+              >
+                {label}
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </div>
+  );
+};
+
+export const CustomHeader = () => {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const firstLinkRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const modalRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+
+    if (open) {
+      const timer = setTimeout(() => {
+        firstLinkRef.current?.focus();
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    function onKey(e) {
+      if (!open) return;
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+
+      if (e.key === "Tab") {
+        const focusable = modalRef.current?.querySelectorAll(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable || focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+  };
+
+  const sheetVariants = {
+    hidden: { y: -20, opacity: 0, scale: 0.99 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      transition: { type: "spring", stiffness: 300, damping: 28 },
+    },
+    exit: { y: -12, opacity: 0, transition: { duration: 0.16 } },
+  };
+
+  const items = [
+    { title: "Inicio", to: "/custom/home" },
+    { title: "Tienda", to: "/custom/store" },
+    { title: "Formacion", to: "/custom/training" },
+    { title: "Eventos", to: "/custom/events" },
+    { title: "Sobre nosotros", to: "/custom/about" },
+  ];
+
+  return (
+    <>
+      <motion.header
+        className="top-0 left-0 right-0 z-[100] flex justify-center pt-4 pb-2 px-4 pointer-events-none sticky top-0 mb-[-120px]"
+        style={{ perspective: "1200px" }}
+      >
+        <div
+          className={`
+            flex items-center justify-between px-3 py-1 rounded-full
+            backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
+            ${scrolled
+              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[60%] max-w-[1400px] mx-auto"
+              : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
+            }
+          `}
+        >
+          <Link to="/custom/home" className="flex items-center gap-2">
+            <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
+              <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="font-bold text-lg tracking-tighter text-white whitespace-nowrap">
+              Performance SB
+            </span>
+          </Link>
+
+          <nav className="hidden md:flex items-center gap-6">
+            {items.map((it) => (
+              <Link
+                key={it.to}
+                to={it.to}
+                className="group relative text-xs font-bold uppercase tracking-widest text-white/90"
+              >
+                {it.title}
+                <span
+                  className="
+                    absolute left-0 top-[110%]
+                    block h-[1px] w-full
+                    bg-white
+                    opacity-0
+                    transition-opacity duration-300
+                    group-hover:opacity-100
+                  "
+                />
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <IconWithTooltip label="Carrito de compras">
+              <BtnLinkIcon
+                title=""
+                link="/custom/cart"
+                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
+              >
+                <ShoppingCart size={18} />
+              </BtnLinkIcon>
+            </IconWithTooltip>
+
+            <UserDropdown isScrolled={scrolled} />
+
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="md:hidden text-white p-2"
+              aria-label="Abrir menú"
+            >
+              <Menu size={20} />
+            </button>
+          </div>
+        </div>
+      </motion.header>
+
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-40"
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              variants={overlayVariants}
+              transition={{ duration: 0.18 }}
+              onClick={() => setOpen(false)}
+              aria-hidden="true"
+            >
+              <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
+            </motion.div>
+
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ duration: 0.28 }}
+            >
+              <motion.div
+                ref={modalRef}
+                className="relative w-full max-w-[900px] rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
+                variants={sheetVariants}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Menú principal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-primary text-xl">Menú</h3>
+                  <div className="flex items-center gap-2">
+                    <BtnLinkIcon
+                      title="Carrito"
+                      link="/custom/cart"
+                      style="hidden! max-xl:flex! border-1 border-black/10 "
+                      styleIcon="bg-white!"
+                    >
+                      <ShoppingCart color="black" strokeWidth={1.5} size={18} />
+                    </BtnLinkIcon>
+
+                    <button
+                      ref={closeButtonRef}
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="w-[35px] h-[35px] cursor-pointer rounded-full flex justify-center items-center border-1 border-black/10  bg-white"
+                      aria-label="Cerrar menú"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <nav>
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {items.map((it, idx) => (
+                      <li key={it.to}>
+                        <Link
+                          to={it.to}
+                          onClick={() => setOpen(false)}
+                          ref={idx === 0 ? firstLinkRef : null}
+                          className="text-[18px] font-bold italic py-[8px] block"
+                        >
+                          {it.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+
+                <div className="mt-6 flex items-center gap-3 justify-end">
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setOpen(false);
+                    }}
+                    className="bg-[var(--color-blue)] text-white px-4 py-2 rounded-lg text-[14px] hover:bg-blue-700 transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
+                  <BtnLink link="/custom/store#" style="text-[14px]!" title="Tienda" />
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
