@@ -1,9 +1,12 @@
 "use client"
-import { Routes, Route, useLocation } from "react-router-dom"
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom"
 import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useRef } from "react"
 import ProtectedRoute from "./ProtectedRoute"
 import { AdminLayoutWrapper } from "./AdminLayoutWrapper"
 import RootRedirect from "./RootRedirect"
+import { useAuth } from "../feactures/dashboards/dinamico/context/AuthContext"
+import { getUserRoleSlug, getHomePath } from "../utils/roleHelpers"
 
 // pages landing
 
@@ -136,6 +139,28 @@ import { CustomLayoutWrapper } from "../feactures/dashboards/custom/layout/Custo
 
 const AppRouter = () => {
   const location = useLocation()
+
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const prevRoleSlugRef = useRef(null)
+
+  // Redirect user when their role changes (e.g. cliente → estudiante after admin enrolls them)
+  useEffect(() => {
+    if (!user) return
+    const roleSlug = getUserRoleSlug(user)
+    const prevSlug = prevRoleSlugRef.current
+
+    if (prevSlug && prevSlug !== roleSlug) {
+      // Role changed: redirect if current path belongs to the OLD role prefix
+      const oldPrefixes = { users: '/users/', student: '/student/', instructor: '/instructor/', admin: '/admin/', custom: '/custom/' }
+      const currentPath = location.pathname
+      if (oldPrefixes[prevSlug] && currentPath.startsWith(oldPrefixes[prevSlug])) {
+        navigate(getHomePath(user), { replace: true })
+      }
+    }
+
+    prevRoleSlugRef.current = roleSlug
+  }, [user, navigate])
 
   // rutas landing que tendrán animación
   const landingRoutes = ["/", "/store", "/class", "/events", "/preinscriptions", "/about", "/shoppingCart"]
