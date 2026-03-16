@@ -99,7 +99,7 @@ export const AdminPurchases = () => {
                       <Package size={28} className="text-[#3b82f6]" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Orden #{c.id_venta}</p>
+                      <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Orden #{purchases.length - purchases.indexOf(c)}</p>
                       <div className="flex items-center gap-2 text-white font-medium">
                         <Calendar size={14} className="text-gray-500" />
                         <span>{formatDate(c.fecha_venta)}</span>

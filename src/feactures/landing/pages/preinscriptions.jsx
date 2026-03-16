@@ -17,9 +17,8 @@ const Preinscriptions = () => {
     // Datos del formulario (campos de ESTUDIANTES)
     const [formData, setFormData] = useState({
         nombre_completo: "",
-        email: "",
-        fecha_nacimiento: "",
-        enfermedad: "",
+        genero: "",
+        tipo_preinscripcion: "TERCERO",
         nivel_experiencia: "",
         edad: "",
         id_acudiente: null,
@@ -61,8 +60,8 @@ const Preinscriptions = () => {
         try {
             // Validar datos básicos para invitados
             if (!currentUser) {
-                if (!formData.nombre_completo || !formData.email || !formData.fecha_nacimiento) {
-                    setError("Por favor completa tus datos básicos (Nombre, Email y Fecha de Nacimiento)");
+                if (!formData.nombre_completo || !formData.email) {
+                    toast.error("Por favor complete los datos obligatorios del tercero (Nombre y Email)");
                     return;
                 }
             }
@@ -86,7 +85,7 @@ const Preinscriptions = () => {
                     datos_tercero: {
                         nombre_completo: formData.nombre_completo,
                         email: formData.email,
-                        fecha_nacimiento: formData.fecha_nacimiento
+                        genero: formData.genero
                     }
                 }),
                 enfermedad: hasEnfermedad === "si" ? formData.enfermedad : "No aplica",
@@ -198,14 +197,17 @@ const Preinscriptions = () => {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Fecha Nacimiento:</label>
-                                                    <input
-                                                        type="date"
-                                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
-                                                        value={formData.fecha_nacimiento}
-                                                        onChange={(e) => setFormData(prev => ({ ...prev, fecha_nacimiento: e.target.value }))}
-                                                        required
-                                                    />
+                                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Género <span className="text-gray-400 capitalize normal-case text-[10px]">(Opcional)</span></label>
+                                                    <select
+                                                        value={formData.genero}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, genero: e.target.value }))}
+                                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition [&>option]:bg-zinc-800 [&>option]:text-white"
+                                                    >
+                                                        <option value="">Seleccionar</option>
+                                                        <option value="Masculino">Masculino</option>
+                                                        <option value="Femenino">Femenino</option>
+                                                        <option value="Otro">Otro</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>

@@ -1,9 +1,10 @@
 // src/features/dashboards/student/pages/MyClasses.jsx
 import React, { useEffect, useState } from "react";
 import { StudentLayout } from "../../../landing/student/layout/StudentLayout";
-import { Eye, Phone, Calendar, MapPin, Clock, Users } from "lucide-react";
+import { Eye, Phone, Calendar, MapPin, Clock, Users, Mail, MessageCircle, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import api from "../../../../services/api";
 
 const initialClases = [
     {
@@ -38,6 +39,13 @@ export const MyClasses = () => {
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [quoteMenuOpen, setQuoteMenuOpen] = useState(false);
+
+  const contactPhone = import.meta.env.VITE_CONTACT_PHONE || "+57 300 123 4567";
+  const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || "contacto@onwheels.com";
+  const contactWhatsApp = import.meta.env.VITE_CONTACT_WHATSAPP || "+57 300 123 4567";
+  const whatsappDigits = contactWhatsApp.replace(/\D/g, "");
+  const whatsappMessage = encodeURIComponent("Hola, quiero cotizar una nueva clase.");
 
     useEffect(() => {
         const onKey = (e) => {
@@ -45,6 +53,75 @@ export const MyClasses = () => {
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
+    }, []);
+
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (!e.target.closest("[data-quote-menu]")) {
+        setQuoteMenuOpen(false);
+      }
+    };
+
+    if (quoteMenuOpen) {
+      document.addEventListener("mousedown", onClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [quoteMenuOpen]);
+
+    const normalizeClassItem = (item = {}) => {
+        const joinedInstructors = Array.isArray(item.instructores)
+            ? item.instructores
+                    .map((i) => i?.nombre_instructor || i?.nombre)
+                    .filter(Boolean)
+                    .join(", ")
+            : null;
+
+        const computedHora = item.hora || ((item.hora_inicio || item.hora_fin)
+            ? `${item.hora_inicio || "--"} a ${item.hora_fin || "--"}`
+            : "Por definir");
+
+        return {
+            id: item.id_clase || item.id_matricula || item.id,
+            nombre: item.nombre || item.nombre_clase || item.nombre_nivel || "Clase",
+            instructor: item.instructor || item.nombre_instructor || joinedInstructors || "Por asignar",
+            nivel: item.nivel || item.nombre_nivel || "General",
+            ubicacion: item.ubicacion || item.nombre_sede || item.sede || "Sin sede",
+            direccion: item.direccion || item.direccion_sede || "Sin direccion",
+            dia: item.dia || item.dia_semana || "Por definir",
+            hora: computedHora,
+            cantidadEstudiantes: item.cantidadEstudiantes || item.cantidad_estudiantes || item.total_estudiantes || 0,
+            descripcion: item.descripcion || item.descripcion_clase || item.observaciones || "Sin descripcion disponible.",
+        };
+    };
+
+    useEffect(() => {
+        const fetchMisClases = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                let rawData = [];
+
+                try {
+                    const { data } = await api.get("/clases/mis-clases");
+                    rawData = Array.isArray(data) ? data : [];
+                } catch (primaryError) {
+                    const { data } = await api.get("/matriculas/mis-matriculas");
+                    rawData = Array.isArray(data) ? data : [];
+                }
+
+                setClases(rawData.map(normalizeClassItem));
+            } catch (err) {
+                console.error("Error cargando mis clases del estudiante:", err);
+                setError("No se pudieron cargar tus clases. Intenta de nuevo.");
+                setClases([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMisClases();
     }, []);
 
   const openView = (c) => { setSelected({ ...c }); setModalOpen(true); };
@@ -84,15 +161,73 @@ export const MyClasses = () => {
                             <p className="text-[#9CA3AF] mt-2 font-medium">Revisa tus horarios y detalles de las clases inscritas</p>
                         </div>
 
-                        <Link
-                            to="/student/class"
-                            className="flex items-center gap-2 bg-[#1E3A8A] text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 group"
-                        >
-                            <Phone size={16} className="group-hover:-translate-y-0.5 transition-transform" />
-                            Cotizar Nueva Clase
-                        </Link>
+                        <div className="relative" data-quote-menu>
+                            <button
+                                type="button"
+                                onClick={() => setQuoteMenuOpen((prev) => !prev)}
+                                className="flex items-center gap-2 bg-[#1E3A8A] text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 group"
+                            >
+                                <Phone size={16} className="group-hover:-translate-y-0.5 transition-transform" />
+                                Cotizar Nueva Clase
+                                <ChevronDown size={14} className={`transition-transform ${quoteMenuOpen ? "rotate-180" : ""}`} />
+                            </button>
+
+                            {quoteMenuOpen && (
+                                <div className="absolute right-0 mt-3 w-[290px] bg-[#121821] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-20">
+                                    <a
+                                        href={`tel:${contactPhone.replace(/\s+/g, "")}`}
+                                        className="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-[#1E293B] transition-colors"
+                                        onClick={() => setQuoteMenuOpen(false)}
+                                    >
+                                        <Phone size={16} className="text-[#3b82f6]" />
+                                        <span>Llamar: {contactPhone}</span>
+                                    </a>
+
+                                    <a
+                                        href={`mailto:${contactEmail}?subject=${encodeURIComponent("Cotizar nueva clase")}`}
+                                        className="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-[#1E293B] transition-colors border-t border-gray-800"
+                                        onClick={() => setQuoteMenuOpen(false)}
+                                    >
+                                        <Mail size={16} className="text-[#22c55e]" />
+                                        <span>Correo: {contactEmail}</span>
+                                    </a>
+
+                                    <a
+                                        href={`https://wa.me/${whatsappDigits}?text=${whatsappMessage}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-[#1E293B] transition-colors border-t border-gray-800"
+                                        onClick={() => setQuoteMenuOpen(false)}
+                                    >
+                                        <MessageCircle size={16} className="text-[#25D366]" />
+                                        <span>WhatsApp: {contactWhatsApp}</span>
+                                    </a>
+
+                                    <Link
+                                        to="/student/class"
+                                        className="block px-4 py-3 text-xs font-semibold uppercase tracking-wider text-[#9CA3AF] hover:text-white hover:bg-[#1E293B] border-t border-gray-800 transition-colors"
+                                        onClick={() => setQuoteMenuOpen(false)}
+                                    >
+                                        Ir al catálogo de clases
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
+                    {loading ? (
+                        <div className="min-h-[300px] flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3b82f6]"></div>
+                        </div>
+                    ) : error ? (
+                        <div className="bg-[#121821] border border-red-500/20 rounded-[2rem] p-10 text-center text-red-300">
+                            {error}
+                        </div>
+                    ) : clases.length === 0 ? (
+                        <div className="bg-[#121821] border border-gray-800 rounded-[2rem] p-10 text-center text-[#9CA3AF]">
+                            Aun no tienes clases registradas.
+                        </div>
+                    ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {clases.map((c) => (
                             <div key={c.id} className="bg-[#121821] border border-gray-800 rounded-[2rem] p-6 shadow-xl hover:border-gray-700 transition-all group flex flex-col justify-between">
@@ -134,6 +269,7 @@ export const MyClasses = () => {
                             </div>
                         ))}
                     </div>
+                    )}
                 </div>
 
                 <AnimatePresence>

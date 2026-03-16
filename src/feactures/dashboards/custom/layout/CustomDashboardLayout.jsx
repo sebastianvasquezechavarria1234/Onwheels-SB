@@ -2,74 +2,27 @@
 
 import { CustomSidebar } from "./CustomSidebar"
 import { AdminLayoutContext } from "../../context/AdminLayoutContext"
-import { useNavigate } from "react-router-dom"
-import { LogOut } from "lucide-react"
+import { motion } from "framer-motion"
 
 export const CustomDashboardLayout = ({ children }) => {
-  const navigate = useNavigate()
-
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    navigate("/login")
-  }
-
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <main className="relative flex h-screen w-full overflow-hidden bg-slate-100/50">
       <CustomSidebar />
 
-      <main
-        style={{
-          flex: 1,
-          background: "#f8fafc",
-          overflowY: "auto",
-        }}
-      >
-        <div
-          style={{
-            background: "white",
-            borderBottom: "1px solid #e2e8f0",
-            padding: "1rem 2rem",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "600" }}>Dashboard Personalizado</h1>
-          <button
-            onClick={handleLogout}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.5rem 1rem",
-              background: "#dc2626",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "0.875rem",
-              fontWeight: "600",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#b91c1c"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#dc2626"
-            }}
+      <section className="flex-1 h-full overflow-hidden flex flex-col bg-slate-100/50">
+        <div className="flex-1 overflow-hidden p-3 md:p-5 pt-4 md:pt-5 relative flex flex-col">
+          <motion.section
+            className="flex-1 overflow-auto bg-white rounded-[2rem] p-3 md:p-5 shadow-[0_15px_40px_-12px_rgba(0,0,0,0.12)] border border-white flex flex-col"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <LogOut size={18} />
-            Cerrar sesión
-          </button>
+            <AdminLayoutContext.Provider value={{ showSidebar: false }}>
+              {children}
+            </AdminLayoutContext.Provider>
+          </motion.section>
         </div>
-
-        <div style={{ padding: "2rem" }}>
-          <AdminLayoutContext.Provider value={{ showSidebar: false }}>
-            {children}
-          </AdminLayoutContext.Provider>
-        </div>
-      </main>
-    </div>
+      </section>
+    </main>
   )
 }

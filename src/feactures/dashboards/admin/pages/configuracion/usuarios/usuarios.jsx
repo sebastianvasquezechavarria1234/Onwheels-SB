@@ -35,7 +35,6 @@ export default function Usuarios() {
     nombre_completo: "",
     email: "",
     telefono: "",
-    fecha_nacimiento: "",
     contrasena: "",
     id_rol: "",
 
@@ -153,7 +152,6 @@ export default function Usuarios() {
     if (!formData.documento) errors.documento = "El nro de documento es obligatorio";
     if (!formData.tipo_documento) errors.tipo_documento = "El tipo de documento es obligatorio";
     if (!formData.telefono) errors.telefono = "El teléfono es obligatorio";
-    if (!formData.fecha_nacimiento) errors.fecha_nacimiento = "La fecha de nacimiento es obligatoria";
     if (!formData.id_rol) errors.id_rol = "Debes asignar un rol";
 
     if (modal === "crear" && !formData.contrasena.trim()) {
@@ -177,7 +175,6 @@ export default function Usuarios() {
         nombre_completo: formData.nombre_completo,
         email: formData.email,
         telefono: formData.telefono || null,
-        fecha_nacimiento: formData.fecha_nacimiento || null,
         contrasena: formData.contrasena,
         id_rol: formData.id_rol ? Number(formData.id_rol) : null,
       };
@@ -227,7 +224,6 @@ export default function Usuarios() {
         nombre_completo: formData.nombre_completo,
         email: formData.email,
         telefono: formData.telefono || null,
-        fecha_nacimiento: formData.fecha_nacimiento || null,
         // Solo incluir contraseña si se proporciona
         ...(formData.contrasena ? { contrasena: formData.contrasena } : {}),
         id_rol: formData.id_rol ? Number(formData.id_rol) : null,
@@ -303,7 +299,6 @@ export default function Usuarios() {
         nombre_completo: usuario.nombre_completo ?? "",
         email: usuario.email ?? "",
         telefono: usuario.telefono ?? "",
-        fecha_nacimiento: usuario.fecha_nacimiento ? usuario.fecha_nacimiento.split("T")[0] : "",
         contrasena: "", // No prellenar contraseña al editar
         id_rol: usuario.roles && usuario.roles.length > 0 ? String(usuario.roles[0].id_rol) : "",
         foto_perfil: null,
@@ -316,7 +311,6 @@ export default function Usuarios() {
         nombre_completo: "",
         email: "",
         telefono: "",
-        fecha_nacimiento: "",
         contrasena: "",
         id_rol: "",
         años_experiencia: "",
@@ -337,7 +331,6 @@ export default function Usuarios() {
       nombre_completo: "",
       email: "",
       telefono: "",
-      fecha_nacimiento: "",
       contrasena: "",
       id_rol: "",
       foto_perfil: null,
@@ -775,23 +768,6 @@ export default function Usuarios() {
                                   placeholder="..."
                                 />
                                 {formErrors.telefono && <p className="text-red-400 text-[11px] mt-1">{formErrors.telefono}</p>}
-                              </>
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">F. Nacimiento</label>
-                            {modal === "ver" ? (
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedUsuario?.fecha_nacimiento || "—"}</p>
-                            ) : (
-                              <>
-                                <input
-                                  name="fecha_nacimiento"
-                                  type="date"
-                                  value={formData.fecha_nacimiento}
-                                  onChange={handleChange}
-                                  className={`w-full p-2 border rounded-md outline-none transition ${formErrors.fecha_nacimiento ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-[#040529]"}`}
-                                />
-                                {formErrors.fecha_nacimiento && <p className="text-red-400 text-[11px] mt-1">{formErrors.fecha_nacimiento}</p>}
                               </>
                             )}
                           </div>

@@ -22,7 +22,8 @@ export const CustomHeader = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const totalItems = cart ? cart.reduce((acc, item) => acc + (item.quantity || 1), 0) : 0;
+  const cartItems = Array.isArray(cart) ? cart : (Array.isArray(cart?.items) ? cart.items : []);
+  const totalItems = cartItems.reduce((acc, item) => acc + (item.qty || item.quantity || 1), 0);
 
   const navLinks = [
     { name: "Inicio", path: "/custom/home" },

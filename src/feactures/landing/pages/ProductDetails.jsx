@@ -201,11 +201,7 @@ export const ProductDetailsContent = () => {
         </Link>
 
         <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16">
-<<<<<<< HEAD
-
           {/* Left: Image Gallery */}
-=======
->>>>>>> 1123fce43dff93714b7430bf6a5cbaca05344c3c
           <div className="w-full lg:w-[55%] flex flex-col lg:flex-row-reverse gap-4">
             {/* Main Image */}
             <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[400px] lg:max-w-[400px] mx-auto overflow-hidden shadow-sm relative border border-gray-800/50 flex justify-center items-center">

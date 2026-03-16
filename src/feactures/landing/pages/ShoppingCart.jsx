@@ -183,18 +183,9 @@ export const ShoppingCartContent = () => {
 };
 
 export const ShoppingCart = () => {
-<<<<<<< HEAD
-    return (
-        <Layout>
-            <ShoppingCartContent />
-        </Layout>
-    );
-};
-=======
   return (
     <Layout>
       <ShoppingCartContent />
     </Layout>
   );
 };
->>>>>>> 1123fce43dff93714b7430bf6a5cbaca05344c3c

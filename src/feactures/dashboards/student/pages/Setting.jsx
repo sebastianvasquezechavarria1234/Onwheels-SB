@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { StudentLayout } from "../../../landing/student/layout/StudentLayout";
 import { Mail, Phone, Lock, CheckCircle, User, Shield, Camera, Star, Zap } from "lucide-react";
-
-const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || '';
+import { useAuth } from "../../dinamico/context/AuthContext";
+import api from "../../../../services/api";
 
 export const Setting = () => {
+  const { user: authUser } = useAuth();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -28,41 +29,41 @@ export const Setting = () => {
   const [messagePhase, setMessagePhase] = useState(null);
 
   const getCurrentUserId = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    return user?.id_usuario;
-  };
-  const getCurrentUserToken = () => localStorage.getItem('token');
+    if (authUser?.id_usuario) return authUser.id_usuario;
+    if (authUser?.id) return authUser.id;
 
-  const api = {
+    try {
+      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      return localUser?.id_usuario || localUser?.id || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const userApi = {
     getUsuario: async (id) => {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
-        headers: { Authorization: `Bearer ${getCurrentUserToken()}` }
-      });
-      if (!response.ok) throw new Error('Error al obtener usuario');
-      return response.json();
-    },
-    updateUsuario: async (id, updateData) => {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getCurrentUserToken()}` },
-        body: JSON.stringify(updateData)
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) { data._status = response.status; throw data; }
+      const { data } = await api.get(`/usuarios/${id}`);
       return data;
     },
+    updateUsuario: async (id, updateData) => {
+      try {
+        const { data } = await api.put(`/usuarios/${id}`, updateData);
+        return data;
+      } catch (err) {
+        const errData = err.response?.data || {};
+        errData._status = err.response?.status;
+        throw errData;
+      }
+    },
     verifyCurrentPassword: async (id, currentPassword, signal) => {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${id}/verify-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getCurrentUserToken()}` },
-        body: JSON.stringify({ currentPassword }),
-        signal
-      });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
+      try {
+        const { data } = await api.post(`/usuarios/${id}/verify-password`, { currentPassword }, { signal });
+        return data;
+      } catch (err) {
+        if (err.name === 'CanceledError' || err.name === 'AbortError') throw err;
+        const errData = err.response?.data || {};
         return { valid: false, ...errData };
       }
-      return response.json();
     }
   };
 
@@ -70,15 +71,18 @@ export const Setting = () => {
     const fetchUserData = async () => {
       try {
         const userId = getCurrentUserId();
-        if (!userId) { window.location.href = '/login'; return; }
-        const data = await api.getUsuario(userId);
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
+        const data = await userApi.getUsuario(userId);
         setUserData(data);
-        setEditData({ nombre_completo: data.nombre_completo || "", telefono: data.telefono || "", foto_perfil: null });
+        setEditData({ nombre_completo: data.nombre_completo || data.nombre || "", telefono: data.telefono || "", foto_perfil: null });
       } catch (err) { console.error('Error fetching user', err); }
       finally { setLoading(false); }
     };
     fetchUserData();
-  }, []);
+  }, [authUser]);
 
   const ENTER_DUR = 400, VISIBLE_DUR = 3500, EXIT_DUR = 400;
 
@@ -142,7 +146,11 @@ export const Setting = () => {
         const controller = new AbortController();
         lastAbortController.current = controller;
         const userId = getCurrentUserId();
-        const resp = await api.verifyCurrentPassword(userId, value, controller.signal);
+        if (!userId) {
+          setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: false, message: "Sesion no valida" } }));
+          return;
+        }
+        const resp = await userApi.verifyCurrentPassword(userId, value, controller.signal);
         if (resp?.valid)
           setPasswordValidation(prev => ({ ...prev, currentPassword: { valid: true, message: "Contraseña actual correcta" } }));
         else
@@ -162,15 +170,15 @@ export const Setting = () => {
     setSuccessMessage("");
     try {
       const userId = getCurrentUserId();
+      if (!userId) throw new Error("No se encontró el usuario autenticado");
       const updateData = { nombre_completo: editData.nombre_completo, telefono: editData.telefono };
-      const response = await api.updateUsuario(userId, updateData);
+      const response = await userApi.updateUsuario(userId, updateData);
       
-      // Subir foto si la hay
       if (editData.foto_perfil) {
          const formDataImg = new FormData();
          formDataImg.append("foto_perfil", editData.foto_perfil);
-         const token = getCurrentUserToken();
-         const photoRes = await fetch(`${API_BASE_URL}/usuarios/${userId}/foto`, {
+         const token = localStorage.getItem('token');
+         const photoRes = await fetch(`${import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000/api'}/usuarios/${userId}/foto`, {
            method: "POST",
            headers: { Authorization: `Bearer ${token}` },
            body: formDataImg
@@ -180,15 +188,13 @@ export const Setting = () => {
            throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
          }
          const photoData = await photoRes.json();
-         // Update user in local storage
          const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
          currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
          localStorage.setItem("user", JSON.stringify(currentUserData));
          window.dispatchEvent(new Event("storage"));
       }
 
-      // Volvemos a pedir los datos después de que se grabó la imagen
-      const finalData = await api.getUsuario(userId);
+      const finalData = await userApi.getUsuario(userId);
       setUserData(finalData);
 
       setSuccessMessage("Perfil actualizado correctamente");
@@ -205,6 +211,7 @@ export const Setting = () => {
     setSuccessMessage("");
     try {
       const userId = getCurrentUserId();
+      if (!userId) throw new Error("No se encontró el usuario autenticado");
       if (!passwordData.currentPassword)
         return setPasswordError("Debe ingresar su contraseña actual"), setIsLoading(false);
       if (passwordValidation.newPassword.valid !== true)
@@ -218,7 +225,7 @@ export const Setting = () => {
         currentPassword: passwordData.currentPassword,
         confirmPassword: passwordData.confirmPassword
       };
-      const response = await api.updateUsuario(userId, updateData);
+      const response = await userApi.updateUsuario(userId, updateData);
       setUserData(response.usuario);
       setSuccessMessage(response.mensaje || "Contraseña actualizada correctamente");
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -257,7 +264,7 @@ export const Setting = () => {
     return (
       <StudentLayout>
         <div className="min-h-screen bg-[#0B0F14] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A8A]"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3b82f6]"></div>
         </div>
       </StudentLayout>
     );
@@ -267,9 +274,10 @@ export const Setting = () => {
     <StudentLayout>
       <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px] md:pt-10">
         <div className="max-w-[800px] mx-auto px-4 sm:px-6">
+          {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">
             <div>
-              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
+              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white flex items-center gap-3">
                 <User className="text-[#3b82f6]" size={36} />
                 Mi Perfil
               </h2>
@@ -278,9 +286,11 @@ export const Setting = () => {
           </div>
 
           <div className="bg-[#121821] border border-gray-800 rounded-[2rem] p-8 md:p-12 shadow-xl hover:shadow-[#1E3A8A]/5 hover:border-gray-700 transition-all relative overflow-hidden">
+            {/* Background Decoration */}
             <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#1E3A8A]/10 rounded-full blur-[80px] pointer-events-none"></div>
 
             <div className="flex flex-col md:flex-row gap-10 items-center md:items-start relative z-10">
+              {/* Avatar Section */}
               <div className="flex flex-col items-center">
                 <div className="relative group/avatar cursor-pointer">
                   <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[#1E3A8A] bg-[#0B0F14] flex items-center justify-center shadow-lg shadow-[#1E3A8A]/20">
@@ -294,7 +304,7 @@ export const Setting = () => {
                         <Camera className="text-white" size={32} />
                         <input type="file" className="hidden" accept="image/*" onChange={(e) => {
                            if(e.target.files && e.target.files[0]) {
-                              setEditData(p => ({...p, foto_perfil: e.target.files[0]}));
+                               setEditData(p => ({...p, foto_perfil: e.target.files[0]}));
                            }
                         }} />
                       </label>
@@ -315,22 +325,24 @@ export const Setting = () => {
                 )}
               </div>
 
+              {/* Info Section / Form */}
               <div className="flex-1 text-center md:text-left w-full">
                 <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
-                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black tracking-widest border border-emerald-500/20">
                     <Zap size={10} fill="currentColor" />
                     Cuenta Activa
                   </span>
                 </div>
 
+                {/* EDIT PROFILE VIEW */}
                 {isEditingProfile ? (
                   <div className="flex flex-col gap-4 text-left">
-                    <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2">
+                    <h4 className="text-xl font-black text-white tracking-tight mb-2">
                       Editar Perfil
                     </h4>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Nombre completo</label>
+                      <label className="text-[10px] text-[#9CA3AF] font-bold tracking-wider ml-2">Nombre completo</label>
                       <input
                         type="text"
                         value={editData.nombre_completo}
@@ -340,7 +352,7 @@ export const Setting = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Teléfono</label>
+                      <label className="text-[10px] text-[#9CA3AF] font-bold tracking-wider ml-2">Teléfono</label>
                       <input
                         type="tel"
                         value={editData.telefono}
@@ -358,7 +370,7 @@ export const Setting = () => {
                     <div className="flex gap-3 justify-end mt-4">
                       <button
                         onClick={handleCancelProfile}
-                        className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white flex-1 md:flex-none rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all"
+                        className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white flex-1 md:flex-none rounded-xl font-black tracking-widest text-xs hover:bg-gray-800 transition-all"
                       >
                         Cancelar
                       </button>
@@ -372,13 +384,14 @@ export const Setting = () => {
                     </div>
                   </div>
                 ) : isChangingPassword ? (
+                  /* CHANGE PASSWORD VIEW */
                   <div className="flex flex-col gap-4 text-left">
-                    <h4 className="text-xl font-black text-white uppercase tracking-tight mb-2 flex items-center gap-2">
+                    <h4 className="text-xl font-black text-white tracking-tight mb-2 flex items-center gap-2">
                       <Lock size={20} className="text-[#3b82f6]" /> Cambiar Contraseña
                     </h4>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Contraseña Actual</label>
+                      <label className="text-[10px] text-[#9CA3AF] font-bold tracking-wider ml-2">Contraseña Actual</label>
                       <input
                         type="password"
                         value={passwordData.currentPassword}
@@ -397,7 +410,7 @@ export const Setting = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Nueva Contraseña</label>
+                      <label className="text-[10px] text-[#9CA3AF] font-bold tracking-wider ml-2">Nueva Contraseña</label>
                       <input
                         type="password"
                         value={passwordData.newPassword}
@@ -418,7 +431,7 @@ export const Setting = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2">Confirmar Nueva Contraseña</label>
+                      <label className="text-[10px] text-[#9CA3AF] font-bold tracking-wider ml-2">Confirmar Nueva Contraseña</label>
                       <input
                         type="password"
                         value={passwordData.confirmPassword}
@@ -445,7 +458,7 @@ export const Setting = () => {
                     <div className="flex gap-3 justify-end mt-4">
                       <button
                         onClick={handleCancelPassword}
-                        className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white flex-1 md:flex-none rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center"
+                        className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white flex-1 md:flex-none rounded-xl font-black tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center"
                       >
                         Cancelar
                       </button>
@@ -459,36 +472,37 @@ export const Setting = () => {
                     </div>
                   </div>
                 ) : (
+                  /* DEFAULT DATA VIEW */
                   <>
-                    <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">
-                      {userData.nombre_completo || "Estudiante"}
+                    <h4 className="text-3xl font-black text-white mb-6 tracking-tight">
+                      {userData?.nombre_completo || "Estudiante"}
                     </h4>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
                         <div className="flex items-center gap-2 text-[#9CA3AF]">
                           <Phone size={14} />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
+                          <span className="text-[10px] font-bold tracking-wider">Teléfono</span>
                         </div>
-                        <span className="font-medium text-white pl-5">{userData.telefono || "No especificado"}</span>
+                        <span className="font-medium text-white pl-5">{userData?.telefono || "No especificado"}</span>
                       </div>
 
                       <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
                         <div className="flex items-center gap-2 text-[#9CA3AF]">
                           <Mail size={14} />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">Email</span>
+                          <span className="text-[10px] font-bold tracking-wider">Email</span>
                         </div>
-                        <span className="font-medium text-white pl-5 break-all">{userData.email || "No especificado"}</span>
+                        <span className="font-medium text-white pl-5 break-all">{userData?.email || "No especificado"}</span>
                       </div>
 
                       <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">
                         <div className="flex items-center gap-2 text-[#9CA3AF]">
                           <Shield size={14} />
-                          <span className="text-[10px] font-bold uppercase tracking-wider">Rol de Cuenta</span>
+                          <span className="text-[10px] font-bold tracking-wider">Rol de Cuenta</span>
                         </div>
                         <div className="flex flex-wrap gap-2 pl-5 mt-2">
-                          <span className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-[#1E3A8A]/30">
-                            {userData.rol_nombre || "Estudiante"}
+                          <span className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold tracking-wider border border-[#1E3A8A]/30">
+                            {userData?.rol_nombre || "Estudiante"}
                           </span>
                         </div>
                       </div>
@@ -498,17 +512,18 @@ export const Setting = () => {
               </div>
             </div>
 
+            {/* Actions for default view */}
             {!isEditingProfile && !isChangingPassword && (
               <div className="mt-10 pt-8 border-t border-gray-800 flex flex-col sm:flex-row gap-4 justify-end">
                 <button
                   onClick={() => setIsChangingPassword(true)}
-                  className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+                  className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white rounded-xl font-black tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
                 >
                   <Lock size={16} /> Cambiar Contraseña
                 </button>
                 <button
                   onClick={() => setIsEditingProfile(true)}
-                  className="px-6 py-3 bg-[#1E3A8A] text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 flex items-center justify-center gap-2"
+                  className="px-6 py-3 bg-[#1E3A8A] text-white rounded-xl font-black tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 flex items-center justify-center gap-2"
                 >
                   <User size={16} /> Editar Perfil
                 </button>
@@ -518,6 +533,7 @@ export const Setting = () => {
         </div>
       </section>
 
+      {/* Floating Success Message */}
       {successMessage && messagePhase && (
         <div
           className={`fixed bottom-10 right-10 z-[200] flex items-center gap-3 px-6 py-4 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-2xl shadow-2xl transition-all duration-300 pointer-events-none 
