@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, AlertTriangle, ShoppingBag, ArrowLeft } from "lucide-react";
+import { Check, AlertTriangle, ShoppingBag, ArrowLeft, CheckCircle, Home } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCheckout } from "../../../../hooks/useCheckout";
 
@@ -17,6 +17,7 @@ export const CustomCheckout = () => {
     } = useCheckout();
 
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const showNotification = (message, type = "success") => {
         setNotification({ show: true, message, type });
@@ -29,9 +30,7 @@ export const CustomCheckout = () => {
 
         if (result.success) {
             showNotification("¡Compra realizada exitosamente!", "success");
-            setTimeout(() => {
-                navigate("/custom/dashboard");
-            }, 1500);
+            setIsSuccess(true);
         } else {
             showNotification(result.message, "error");
         }
@@ -64,16 +63,32 @@ export const CustomCheckout = () => {
                     <div className="w-[65%] max-lg:w-full">
                         <div className="mb-6">
                             <button
-                                onClick={() => navigate("/custom/cart")}
+                                onClick={() => navigate(isSuccess ? `/custom/dashboard` : `/custom/cart`)}
                                 className="flex items-center gap-2 text-[#9CA3AF] hover:text-white mb-6 tracking-wider text-xs font-bold transition-colors"
                             >
                                 <ArrowLeft size={16} />
-                                Volver al carrito
+                                {isSuccess ? "Volver al dashboard" : "Volver al carrito"}
                             </button>
-                            <h2 className="text-3xl font-black text-white tracking-tight">Información de envío y pago</h2>
+                            <h2 className="text-3xl font-black text-white tracking-tight">{isSuccess ? "Compra exitosa" : "Información de envío y pago"}</h2>
                         </div>
 
-                        <form onSubmit={onConfirm} className="p-8 bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl">
+                        {isSuccess ? (
+                            <div className="p-8 bg-[#121821] border border-emerald-500/30 rounded-[2rem] shadow-xl text-center flex flex-col items-center justify-center min-h-[400px]">
+                                <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/5">
+                                    <CheckCircle size={48} className="text-emerald-400" />
+                                </div>
+                                <h3 className="text-2xl font-black text-white mb-4">¡Tu pedido está confirmado!</h3>
+                                <p className="text-[#9CA3AF] mb-8 font-medium max-w-sm">Hemos recibido tu solicitud y enviado un correo con los detalles.</p>
+                                <button
+                                    onClick={() => navigate(`/custom/dashboard`)}
+                                    className="flex items-center justify-center gap-2 px-8 py-4 bg-[#1E3A8A] text-white rounded-2xl hover:bg-blue-800 transition-all shadow-xl shadow-[#1E3A8A]/20 font-black tracking-widest text-xs group"
+                                >
+                                    <Home size={18} className="group-hover:-translate-y-0.5 transition-transform" />
+                                    Volver al dashboard
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={onConfirm} className="p-8 bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl">
                             {/* Información de Envío */}
                             <div className="mb-10">
                                 <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
@@ -129,8 +144,8 @@ export const CustomCheckout = () => {
                                 <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
                                     💳 Método de Pago
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {["Efectivo", "Contraentrega", "Tarjeta"].map((metodo) => (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {["Contraentrega", "Transferencia"].map((metodo) => (
                                         <label
                                             key={metodo}
                                             className={`flex items-center justify-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${form.metodo_pago === metodo
@@ -164,6 +179,7 @@ export const CustomCheckout = () => {
                                 {submitting ? "Procesando..." : `Pagar $${cart.total.toLocaleString()}`}
                             </button>
                         </form>
+                        )}
                     </div>
 
                     {/* Resumen del Pedido */}

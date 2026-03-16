@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { LogOut, Menu, ShoppingCart, User, X } from "lucide-react";
+import { Menu, ShoppingCart, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
-import { BtnLink } from "../../components/BtnLink";
 import { UserDropdown } from "../../components/UserDropdown";
 
 const IconWithTooltip = ({ label, children, className = "", onClick }) => {
@@ -107,9 +106,7 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
 export const StudentHeader = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const firstLinkRef = useRef(null);
   const closeButtonRef = useRef(null);
-  const modalRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -165,21 +162,6 @@ export const StudentHeader = () => {
     navigate("/login");
   };
 
-  const overlayVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-  };
-
-  const sheetVariants = {
-    hidden: { y: -20, opacity: 0, scale: 0.99 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      scale: 1,
-      transition: { type: "spring", stiffness: 300, damping: 28 },
-    },
-    exit: { y: -12, opacity: 0, transition: { duration: 0.16 } },
-  };
 
   const items = [
     { title: "Inicio", to: "/student/home" },
@@ -197,15 +179,15 @@ export const StudentHeader = () => {
       >
         <div
           className={`
-            flex items-center justify-between px-3 py-1 rounded-full
+            flex items-center justify-between px-7 py-4 rounded-full
             backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
             ${scrolled
-              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[60%] max-w-[1400px] mx-auto"
-              : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
+              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[85%] lg:w-[80%] max-w-[1400px] mx-auto"
+              : "bg-black/40 border border-white/5 w-full max-w-[1600px]"
             }
           `}
         >
-          <Link to="../student/home" className="flex items-center gap-2">
+          <Link to="/student/home" className="flex items-center gap-2">
             <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
@@ -240,7 +222,7 @@ export const StudentHeader = () => {
             <IconWithTooltip label="Carrito de compras">
               <BtnLinkIcon
                 title=""
-                link="../student/shoppingCart"
+                link="/student/shoppingCart"
                 style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
               >
                 <ShoppingCart size={18} />
@@ -261,89 +243,40 @@ export const StudentHeader = () => {
         </div>
       </motion.header>
 
+      {/* MENÚ MOBILE — pantalla oscura */}
       <AnimatePresence>
         {open && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={overlayVariants}
-              transition={{ duration: 0.18 }}
+          <motion.div
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center"
+          >
+            <button
+              ref={closeButtonRef}
+              type="button"
               onClick={() => setOpen(false)}
-              aria-hidden="true"
+              className="absolute top-8 right-8 text-white p-2 border border-white/20 rounded-full"
+              aria-label="Cerrar menú"
             >
-              <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" />
-            </motion.div>
+              <X size={30} />
+            </button>
 
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center px-4"
-              initial={{ opacity: 0, x: "100%" }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: "100%" }}
-              transition={{ duration: 0.28 }}
-            >
-              <motion.div
-                ref={modalRef}
-                className="relative w-full max-w-[900px] rounded-2xl bg-white/95 text-black shadow-2xl p-6 ring-1 ring-black/6"
-                variants={sheetVariants}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Menú principal"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-primary text-xl">Menú</h3>
-                  <div className="flex items-center gap-2">
-                    <BtnLinkIcon title="Carrito" link="../student/shoppingCart" style="hidden! max-xl:flex! border-1 border-black/10 " styleIcon="bg-white!">
-                      <ShoppingCart color="black" strokeWidth={1.5} size={18} />
-                    </BtnLinkIcon>
-
-                    <button
-                      ref={closeButtonRef}
-                      type="button"
-                      onClick={() => setOpen(false)}
-                      className="w-[35px] h-[35px] cursor-pointer rounded-full flex justify-center items-center border-1 border-black/10  bg-white"
-                      aria-label="Cerrar menú"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                </div>
-
-                <nav>
-                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {items.map((it, idx) => (
-                      <li key={it.to}>
-                        <Link
-                          to={it.to}
-                          onClick={() => setOpen(false)}
-                          ref={idx === 0 ? firstLinkRef : null}
-                          className="text-[18px] font-bold italic py-[8px] block"
-                        >
-                          {it.title}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-
-                <div className="mt-6 flex items-center gap-3 justify-end">
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setOpen(false);
-                    }}
-                    className="bg-[var(--color-blue)] text-white px-4 py-2 rounded-lg text-[14px] hover:bg-blue-700 transition-colors"
-                  >
-                    Cerrar sesión
-                  </button>
-                  <BtnLink link="../student/store#" style="text-[14px]!" title="Tienda" />
-                </div>
-              </motion.div>
-            </motion.div>
-          </>
+            <div className="flex flex-col items-center gap-8">
+              {items.map((it, idx) => (
+                <Link
+                  key={it.to}
+                  to={it.to}
+                  ref={idx === 0 ? firstLinkRef : null}
+                  onClick={() => setOpen(false)}
+                  className="text-3xl font-bold uppercase text-white hover:text-[var(--color-blue)] transition-colors"
+                >
+                  {it.title}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>

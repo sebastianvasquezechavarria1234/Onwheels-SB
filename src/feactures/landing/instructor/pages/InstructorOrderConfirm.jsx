@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { InstructorLayout } from "../layout/InstructorLayout";
 import { CheckCircle, Package, Home, ShoppingBag } from "lucide-react";
@@ -11,15 +11,6 @@ export const InstructorOrderConfirm = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
-  const [countdown, setCountdown] = useState(5);
-
-  useEffect(() => {
-    // Countdown para redirección automática
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
 
   return (
     <InstructorLayout>
@@ -108,14 +99,6 @@ export const InstructorOrderConfirm = () => {
               Ir al inicio
             </button>
           </div>
-
-          {/* Mensaje de redirección */}
-          {countdown > 0 && (
-            <p className="text-sm text-gray-500 mt-6">
-              Serás redirigido a la tienda en {countdown} segundos...
-            </p>
-          )}
-          {countdown === 0 && navigate(getStoreHomePath(user))}
         </motion.div>
       </section>
     </InstructorLayout>

@@ -357,30 +357,9 @@ export const ClassContent = () => {
                   </div>
                 </div>
 
-                <p className={`text-sm mb-12 leading-relaxed font-bold uppercase tracking-tight min-h-[48px] text-zinc-300`}>
-                  {plan.descripcion || "Formación de alto rendimiento impulsada por el sistema SB."}
+                <p className={`text-sm mb-12 leading-relaxed font-bold uppercase tracking-tight min-h-[48px] text-zinc-300 whitespace-pre-line`}>
+                  {plan.descripcion}
                 </p>
-
-                <ul className="space-y-6 mb-16 border-t border-zinc-100/10 pt-8">
-                  {[
-                    `${plan.numero_clases || 4} Sesiones Mensuales`,
-                    "Seguro Deportivo Mensual",
-                    plan.descuento_porcentaje > 0 ? `${plan.descuento_porcentaje}% Descuento Store` : "Certificación de Nivel",
-                    "Pack Welcome Performance SB"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-4 text-[11px] font-black uppercase tracking-widest text-zinc-300">
-                      <div className={`mt-0.5 shrink-0 ${parseFloat(plan.precio) > 100000 ? 'text-red-600' : 'text-[var(--color-blue)]'}`}><Check size={18} strokeWidth={4} /></div>
-                      <span className="leading-tight">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to="/login"
-                  className={`mt-auto w-full py-5 rounded-[2rem] text-center font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 shadow-xl ${parseFloat(plan.precio) > 100000 ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.03] shadow-red-600/20' : 'bg-white text-black hover:bg-[var(--color-blue)] hover:text-white shadow-white/5'}`}
-                >
-                  Adquirir Ahora
-                </Link>
               </div>
             ))}
           </div>
