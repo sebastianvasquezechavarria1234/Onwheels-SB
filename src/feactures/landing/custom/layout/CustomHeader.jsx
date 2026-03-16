@@ -22,25 +22,8 @@ export const CustomHeader = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Helper seguro para obtener la cantidad total de items del carrito
-  const getCartItemCount = (cart) => {
-    if (!cart) return 0;
-    // Si cart ya es un número (itemCount)
-    if (typeof cart === "number") return cart;
-    // Si cart es un array de items
-    if (Array.isArray(cart)) {
-      return cart.reduce((acc, item) => acc + (Number(item.quantity ?? item.qty ?? item.cantidad) || 1), 0);
-    }
-    // Si cart tiene estructura { items: [...] }
-    if (cart && Array.isArray(cart.items)) {
-      if (typeof cart.itemCount === "number") return cart.itemCount;
-      return cart.items.reduce((acc, item) => acc + (Number(item.quantity ?? item.qty ?? item.cantidad) || 1), 0);
-    }
-    // Fallback a propiedad itemCount o 0
-    return Number(cart.itemCount) || 0;
-  };
-
-  const totalItems = getCartItemCount(cart);
+  const cartItems = Array.isArray(cart) ? cart : (Array.isArray(cart?.items) ? cart.items : []);
+  const totalItems = cartItems.reduce((acc, item) => acc + (item.qty || item.quantity || 1), 0);
 
   const navLinks = [
     { name: "Inicio", path: "/custom/home" },

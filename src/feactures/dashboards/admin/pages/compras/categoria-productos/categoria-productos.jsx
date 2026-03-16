@@ -120,9 +120,6 @@ export default function CategoriaProductos() {
     c.nombre_categoria.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.max(1, Math.ceil(filteredCategorias.length / itemsPerPage));
-  const currentItems = filteredCategorias.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
       {/* Header & Stats */}

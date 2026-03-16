@@ -126,8 +126,8 @@ export const MyPurchases = () => {
                                                             ? c.detalles.map(d => d.producto_nombre).join(", ")
                                                             : "Múltiples productos"}
                                                     </span>
-                                                    <span className="text-xs text-[#9CA3AF] block mt-1">
-                                                        Ref: {c.transaccion_id || `VTA-${c.id_venta}`}
+                                                    <span className="text-xs text-[#9CA3AF] block mt-1 font-bold">
+                                                        Pedido #{compras.length - compras.indexOf(c)}
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-6">
@@ -193,8 +193,8 @@ export const MyPurchases = () => {
                                         <p className="font-semibold text-gray-900">{formatDate(selected.fecha)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Referencia / ID</p>
-                                        <p className="font-semibold text-gray-900">{selected.transaccion_id || `VTA-${selected.id_venta}`}</p>
+                                        <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Referencia / Orden</p>
+                                        <p className="font-semibold text-gray-900">Pedido #{compras.length - compras.indexOf(selected)}</p>
                                     </div>
                                     <div>
                                         <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Método de Pago</p>

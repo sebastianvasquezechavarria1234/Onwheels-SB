@@ -21,8 +21,7 @@ const UsersPreinscriptions = () => {
     tipo_preinscripcion: "PROPIA", // Valores: 'PROPIA' | 'TERCERO'
     datos_tercero: {
       nombre_completo: "",
-      email: "",
-      fecha_nacimiento: ""
+      email: ""
     },
     nuevoAcudiente: {
       nombre_acudiente: "",
@@ -254,19 +253,6 @@ const UsersPreinscriptions = () => {
                             onChange={(e) => setFormData(prev => ({
                               ...prev,
                               datos_tercero: { ...prev.datos_tercero, email: e.target.value }
-                            }))}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-zinc-400 mb-2">Fecha Nacimiento:</label>
-                          <input
-                            type="date"
-                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
-                            value={formData.datos_tercero?.fecha_nacimiento || ''}
-                            onChange={(e) => setFormData(prev => ({
-                              ...prev,
-                              datos_tercero: { ...prev.datos_tercero, fecha_nacimiento: e.target.value }
                             }))}
                             required
                           />

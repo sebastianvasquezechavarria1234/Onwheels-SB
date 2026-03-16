@@ -3,20 +3,16 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import {
-  Home,
   Users,
   Shield,
   Package,
   ShoppingCart,
   Calendar,
   MapPin,
-  Award,
   BookOpen,
-  GraduationCap,
   UserCheck,
   FileText,
   CreditCard,
-  Layers,
   LogOut,
   UserPlus,
   ChartBarIncreasing,
@@ -54,12 +50,6 @@ export const CustomSidebar = () => {
   }, [])
 
   const sidebarConfig = [
-    {
-      title: "Dashboard",
-      link: "/custom/dashboard",
-      icon: <Home size={20} />,
-      permission: null,
-    },
     {
       section: "Administración",
       items: [
