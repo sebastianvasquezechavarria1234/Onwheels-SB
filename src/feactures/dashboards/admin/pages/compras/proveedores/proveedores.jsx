@@ -176,7 +176,7 @@ export default function Proveedores() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPaginaActual(1); }}
               placeholder="Buscar por NIT, razón social o contacto..."
-              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm"
+              className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl focus:bg-white focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition-all text-sm text-[#16315f]"
             />
           </div>
         </div>
@@ -184,17 +184,17 @@ export default function Proveedores() {
 
       {/* Table Area */}
       <div className="flex-1 p-8 pt-0 overflow-hidden flex flex-col min-h-0">
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/50 flex flex-col h-full overflow-hidden">
+        <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] flex flex-col h-full overflow-hidden">
           <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full text-left border-separate border-spacing-0">
-              <thead className="bg-slate-50/50 text-slate-400 sticky top-0 z-10">
+            <table className="w-full min-w-[860px] text-left border-separate border-spacing-0">
+              <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-10">
                 <tr>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-slate-800">Proveedor / NIT</th>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100">Contacto Directo</th>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-right">Acciones</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Proveedor / NIT</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Contacto Directo</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan="3" className="p-20 text-center">
@@ -215,14 +215,14 @@ export default function Proveedores() {
                   </tr>
                 ) : (
                   proveedores.map((p) => (
-                    <tr key={p.nit} className="group hover:bg-slate-50/50 transition-all">
-                      <td className="px-8 py-6 font-bold text-slate-800 text-sm">
+                    <tr key={p.nit} className="group hover:bg-[#f8fbff] transition-all">
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm">
                         <div className="flex flex-col">
                            <span>{p.nombre_proveedor}</span>
                            <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-1">NIT: {p.nit || "N/A"}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                              <Mail size={12} className="text-indigo-500" />
@@ -234,11 +234,11 @@ export default function Proveedores() {
                            </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openModal("details", p)} className="p-2.5 rounded-xl bg-white text-slate-400 hover:text-slate-900 shadow-sm border border-slate-100 transition-all hover:scale-110"><Eye size={16} /></button>
-                          <button onClick={() => openModal("edit", p)} className="p-2.5 rounded-xl bg-white text-slate-400 hover:text-slate-900 shadow-sm border border-slate-100 transition-all hover:scale-110"><Pencil size={16} /></button>
-                          <button onClick={() => openModal("delete", p)} className="p-2.5 rounded-xl bg-white text-rose-300 hover:text-rose-500 shadow-sm border border-slate-100 transition-all hover:scale-110"><Trash2 size={16} /></button>
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openModal("details", p)} className="p-2.5 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Eye size={16} /></button>
+                          <button onClick={() => openModal("edit", p)} className="p-2.5 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Pencil size={16} /></button>
+                          <button onClick={() => openModal("delete", p)} className="p-2.5 rounded-xl bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105"><Trash2 size={16} /></button>
                         </div>
                       </td>
                     </tr>
@@ -248,18 +248,18 @@ export default function Proveedores() {
             </table>
           </div>
 
-          <div className="shrink-0 border-t border-gray-100 px-8 py-4 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-500">
-              Mostrando <span className="font-bold text-[#040529]">{proveedores.length}</span> de <span className="font-bold text-[#040529]">{totalItems}</span> registros
+          <div className="shrink-0 border-t border-[#d7e5f8] px-5 py-4 bg-[#fbfdff] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-[#6b84aa]">
+              Mostrando <span className="font-bold text-[#16315f]">{proveedores.length}</span> de <span className="font-bold text-[#16315f]">{totalItems}</span> registros
             </div>
             
             <div className="flex items-center gap-2">
               <button
                 disabled={paginaActual === 1}
                 onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
               >
-                <ChevronLeft size={20} className="text-gray-600" />
+                <ChevronLeft size={20} />
               </button>
               
               <div className="flex items-center gap-1">
@@ -269,8 +269,8 @@ export default function Proveedores() {
                     onClick={() => setPaginaActual(i + 1)}
                     className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
                       paginaActual === i + 1
-                        ? "bg-[#040529] text-white shadow-lg shadow-[#040529]/20"
-                        : "text-gray-400 hover:text-[#040529] hover:bg-white"
+                        ? "bg-[#223a63] text-white shadow-lg shadow-[#223a63]/20"
+                        : "text-[#6b84aa] hover:text-[#16315f] hover:bg-white"
                     }`}
                   >
                     {i + 1}
@@ -281,9 +281,9 @@ export default function Proveedores() {
               <button
                 disabled={paginaActual === totalPaginas}
                 onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
               >
-                <ChevronRight size={20} className="text-gray-600" />
+                <ChevronRight size={20} />
               </button>
             </div>
           </div>

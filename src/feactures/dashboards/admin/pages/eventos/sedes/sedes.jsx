@@ -8,6 +8,7 @@ import {
   updateSede,
   deleteSede,
 } from "../../services/sedesServices";
+import { configUi } from "../../configuracion/configUi";
 
 // Helper para clases condicionales
 function cn(...classes) {
@@ -229,7 +230,7 @@ export default function Sedes() {
 
   return (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <div className={configUi.pageShell}>
         
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
         <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
@@ -258,7 +259,7 @@ export default function Sedes() {
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                             placeholder="Buscar sedes..."
-                            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                          className={configUi.inputWithIcon}
                         />
                          {search && (
                             <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -268,7 +269,7 @@ export default function Sedes() {
                     </div>
                     <button 
                         onClick={() => openModal("add")} 
-                        className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+                      className={configUi.primaryButton}
                     >
                         <Plus className="h-4 w-4" />
                         Nueva Sede
@@ -301,19 +302,19 @@ export default function Sedes() {
 
         {/* --- SECTION 2: TABLE AREA --- */}
         <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-            <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                    <table className="w-full text-left relative">
-                         <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+            <div className={configUi.tableCard}>
+              <div className={configUi.tableScroll}>
+                <table className={configUi.table}>
+                   <thead className={configUi.thead}>
                             <tr>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[25%]">Nombre</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[30%]">Dirección</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Ciudad</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Teléfono</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right w-[15%]">Acciones</th>
+                      <th className={`${configUi.th} rounded-tl-[1.4rem] w-[25%]`}>Nombre</th>
+                      <th className={`${configUi.th} w-[30%]`}>Dirección</th>
+                      <th className={`${configUi.th} w-[15%]`}>Ciudad</th>
+                      <th className={`${configUi.th} w-[15%]`}>Teléfono</th>
+                      <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
                             </tr>
                         </thead>
-                         <tbody className="divide-y divide-gray-100">
+                   <tbody>
                              {loading ? (
                                 <tr><td colSpan="5" className="p-8 text-center text-gray-400 text-sm">Cargando sedes...</td></tr>
                              ) : currentItems.length === 0 ? (
@@ -327,23 +328,23 @@ export default function Sedes() {
                                 </tr>
                              ) : (
                                 currentItems.map((s) => (
-                                    <tr key={s.id_sede} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                                        <td className="px-5 py-4 font-bold text-[#040529] text-sm">{s.nombre_sede}</td>
-                                        <td className="px-5 py-4 text-sm text-gray-600 flex items-center gap-1.5">
+                                    <tr key={s.id_sede} className={configUi.row}>
+                                      <td className={`${configUi.td} font-bold text-[#16315f]`}>{s.nombre_sede}</td>
+                                      <td className={`${configUi.td} text-[#5b7398] flex items-center gap-1.5`}>
                                             <MapPin size={14} className="text-gray-400 shrink-0" />
                                             <span className="truncate">{s.direccion}</span>
                                         </td>
-                                        <td className="px-5 py-4 text-sm text-gray-600">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                      <td className={configUi.td}>
+                                        <span className={configUi.pill}>
                                                 {s.ciudad}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4 text-sm text-gray-600 font-mono">{s.telefono}</td>
-                                         <td className="px-5 py-4 text-right">
+                                      <td className={`${configUi.td} text-[#5b7398] font-mono`}>{s.telefono}</td>
+                                       <td className={`${configUi.td} text-right`}>
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => openModal("details", s)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
-                                                <button onClick={() => openModal("edit", s)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil className="h-4 w-4" /></button>
-                                                <button onClick={() => openModal("delete", s)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                                          <button onClick={() => openModal("details", s)} className={configUi.actionButton} title="Ver"><Eye className="h-4 w-4" /></button>
+                                          <button onClick={() => openModal("edit", s)} className={configUi.actionButton} title="Editar"><Pencil className="h-4 w-4" /></button>
+                                          <button onClick={() => openModal("delete", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 className="h-4 w-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -355,14 +356,14 @@ export default function Sedes() {
 
                 {/* Footer Pagination */}
                  {totalPages > 1 && (
-                    <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                        <p className="text-xs text-gray-500 font-medium">
-                            Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
+                    <div className={configUi.paginationBar}>
+                      <p className="text-xs text-[#6b84aa] font-medium">
+                        Mostrando <span className="font-bold text-[#16315f]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#16315f]">{filteredAndSorted.length}</span> resultados
                         </p>
                         <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
-                            <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className={configUi.paginationButton}><ChevronLeft className="h-4 w-4" /></button>
+                        <span className="text-sm font-bold text-[#16315f] px-2">{currentPage}</span>
+                        <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className={configUi.paginationButton}><ChevronRight className="h-4 w-4" /></button>
                         </div>
                     </div>
                 )}
@@ -382,12 +383,12 @@ export default function Sedes() {
         <AnimatePresence>
             {(modal === "add" || modal === "edit") && (
               <motion.div
-                className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                className={configUi.modalBackdrop}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={closeModal}
               >
                 <motion.div
-                  className="bg-white rounded-2xl shadow-2xl relative overflow-hidden max-w-4xl w-full"
+                  className={`${configUi.modalPanel} max-w-4xl`}
                   initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -408,13 +409,13 @@ export default function Sedes() {
                                 <h3 className="text-xl font-bold text-[#040529]">
                                     {modal === "add" ? "Registrar Sede" : "Editar Sede"}
                                 </h3>
-                                <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                                <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-6 lg:p-8">
                                 <form className="space-y-5">
                                     <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Sede *</label>
+                                        <label className={configUi.fieldLabel}>Nombre Sede *</label>
                                         <input
                                             autoFocus
                                             name="nombre_sede"
@@ -422,13 +423,13 @@ export default function Sedes() {
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             placeholder="Ej: Skatepark La 70"
-                                            className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.nombre_sede ? "border-red-500" : "border-gray-200"}`}
+                                            className={cn(configUi.fieldInput, formErrors.nombre_sede && "border-red-500")}
                                         />
                                         {formErrors.nombre_sede && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.nombre_sede}</p>}
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Dirección *</label>
+                                        <label className={configUi.fieldLabel}>Dirección *</label>
                                         <div className="relative mt-1">
                                             <input
                                                 name="direccion"
@@ -436,7 +437,7 @@ export default function Sedes() {
                                                 onChange={handleChange}
                                                 onBlur={handleBlur}
                                                 placeholder="Ej: Calle 10 #45-20"
-                                                className={`w-full px-3 py-2 pl-9 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.direccion ? "border-red-500" : "border-gray-200"}`}
+                                                className={cn(configUi.fieldInput, "pl-9", formErrors.direccion && "border-red-500")}
                                             />
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                                         </div>
@@ -445,19 +446,19 @@ export default function Sedes() {
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Ciudad *</label>
+                                            <label className={configUi.fieldLabel}>Ciudad *</label>
                                             <input
                                                 name="ciudad"
                                                 value={form.ciudad}
                                                 onChange={handleChange}
                                                 onBlur={handleBlur}
                                                 placeholder="Ej: Medellín"
-                                                className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.ciudad ? "border-red-500" : "border-gray-200"}`}
+                                                className={cn(configUi.fieldInput, formErrors.ciudad && "border-red-500")}
                                             />
                                             {formErrors.ciudad && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.ciudad}</p>}
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono *</label>
+                                            <label className={configUi.fieldLabel}>Teléfono *</label>
                                             <div className="relative mt-1">
                                                 <input
                                                     name="telefono"
@@ -465,7 +466,7 @@ export default function Sedes() {
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
                                                     placeholder="Ej: 3001234567"
-                                                    className={`w-full px-3 py-2 pl-9 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.telefono ? "border-red-500" : "border-gray-200"}`}
+                                                    className={cn(configUi.fieldInput, "pl-9", formErrors.telefono && "border-red-500")}
                                                 />
                                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                                             </div>
@@ -476,9 +477,9 @@ export default function Sedes() {
                             </div>
 
                              {/* Footer Actions */}
-                            <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
-                                <button type="button" onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition shadow-sm">Cancelar</button>
-                                <button type="button" onClick={handleSave} className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10 transition">
+                            <div className={configUi.modalFooter}>
+                              <button type="button" onClick={closeModal} className={configUi.secondaryButton}>Cancelar</button>
+                              <button type="button" onClick={handleSave} className={configUi.primarySoftButton}>
                                     {modal === "add" ? "Guardar Sede" : "Actualizar Sede"}
                                 </button>
                             </div>
@@ -493,12 +494,12 @@ export default function Sedes() {
         <AnimatePresence>
             {modal === "details" && selected && (
               <motion.div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                className={configUi.modalBackdrop}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={closeModal}
               >
                  <motion.div
-                  className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative text-center"
+                  className={`${configUi.modalPanel} max-w-lg p-6 relative text-center`}
                   initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -528,7 +529,7 @@ export default function Sedes() {
                         </div>
                     </div>
                     
-                    <button onClick={closeModal} className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200 transition">
+                    <button onClick={closeModal} className={configUi.secondaryButton}>
                         Cerrar Detalles
                     </button>
                 </motion.div>
@@ -540,12 +541,12 @@ export default function Sedes() {
         <AnimatePresence>
             {modal === "delete" && selected && (
               <motion.div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                className={configUi.modalBackdrop}
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={closeModal}
               >
                 <motion.div
-                  className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative text-center"
+                  className={`${configUi.modalPanel} max-w-sm p-6 relative text-center`}
                   initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -557,8 +558,8 @@ export default function Sedes() {
                     </p>
 
                     <div className="flex justify-center gap-3">
-                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-md">Sí, Eliminar</button>
+                      <button onClick={closeModal} className={configUi.secondaryButton}>Cancelar</button>
+                      <button onClick={handleDelete} className={configUi.dangerButton}>Sí, Eliminar</button>
                     </div>
                 </motion.div>
               </motion.div>

@@ -12,6 +12,7 @@ import {
   updateCategoriaEvento as updateCategoria,
   deleteCategoriaEvento as deleteCategoria,
 } from "../../services/EventCategory";
+import { configUi } from "../../configuracion/configUi";
 
 // Helper para clases condicionales
 function cn(...classes) {
@@ -227,7 +228,7 @@ export default function CategoriaEventos() {
 
   return (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <div className={configUi.pageShell}>
         
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
         <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
@@ -260,7 +261,7 @@ export default function CategoriaEventos() {
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                             placeholder="Buscar categoría..."
-                            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                            className={configUi.inputWithIcon}
                         />
                         {search && (
                             <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -270,7 +271,7 @@ export default function CategoriaEventos() {
                     </div>
                     <button 
                         onClick={() => openModal("crear")} 
-                        className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+                        className={configUi.primaryButton}
                     >
                         <Plus className="h-4 w-4" />
                         Crear Categoría
@@ -302,19 +303,19 @@ export default function CategoriaEventos() {
 
         {/* --- SECTION 2: TABLE AREA --- */}
         <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-            <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
+            <div className={configUi.tableCard}>
                 
                  {/* Table Content */}
-                 <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                    <table className="w-full text-left relative">
-                        <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+                 <div className={configUi.tableScroll}>
+                  <table className={configUi.table}>
+                    <thead className={configUi.thead}>
                             <tr>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Nombre</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Descripción</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                        <th className={`${configUi.th} rounded-tl-[1.4rem]`}>Nombre</th>
+                        <th className={configUi.th}>Descripción</th>
+                        <th className={`${configUi.th} rounded-tr-[1.4rem] text-right`}>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                    <tbody>
                             {loading ? (
                                 <tr><td colSpan="3" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
                             ) : currentItems.length === 0 ? (
@@ -328,8 +329,8 @@ export default function CategoriaEventos() {
                                 </tr>
                             ) : (
                                 currentItems.map((c) => (
-                                    <tr key={c.id_categoria_evento} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                                        <td className="px-5 py-4">
+                                    <tr key={c.id_categoria_evento} className={configUi.row}>
+                                      <td className={configUi.td}>
                                             <div className="flex items-center gap-4">
                                                 <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
                                                     {c.nombre_categoria?.substring(0, 2).toUpperCase()}
@@ -337,14 +338,14 @@ export default function CategoriaEventos() {
                                                 <p className="font-bold text-[#040529] text-sm leading-tight">{c.nombre_categoria}</p>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-4 text-sm text-gray-600 font-medium max-w-[300px] truncate" title={c.descripcion}>
+                                        <td className={`${configUi.td} text-[#5b7398] font-medium max-w-[300px] truncate`} title={c.descripcion}>
                                             {c.descripcion || "—"}
                                         </td>
-                                        <td className="px-5 py-4 text-right">
+                                        <td className={`${configUi.td} text-right`}>
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => openModal("ver", c)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
-                                                <button onClick={() => openModal("editar", c)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pen className="h-4 w-4" /></button>
-                                                <button onClick={() => openModal("eliminar", c)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                                            <button onClick={() => openModal("ver", c)} className={configUi.actionButton} title="Ver"><Eye className="h-4 w-4" /></button>
+                                            <button onClick={() => openModal("editar", c)} className={configUi.actionButton} title="Editar"><Pen className="h-4 w-4" /></button>
+                                            <button onClick={() => openModal("eliminar", c)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 className="h-4 w-4" /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -356,14 +357,14 @@ export default function CategoriaEventos() {
 
                  {/* Footer Pagination */}
                  {totalPages > 1 && (
-                    <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                        <p className="text-xs text-gray-500 font-medium">
-                            Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
+                    <div className={configUi.paginationBar}>
+                      <p className="text-xs text-[#6b84aa] font-medium">
+                        Mostrando <span className="font-bold text-[#16315f]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#16315f]">{filteredAndSorted.length}</span> resultados
                         </p>
                         <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
-                            <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+                        <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className={configUi.paginationButton}><ChevronLeft className="h-4 w-4" /></button>
+                        <span className="text-sm font-bold text-[#16315f] px-2">{currentPage}</span>
+                        <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className={configUi.paginationButton}><ChevronRight className="h-4 w-4" /></button>
                         </div>
                     </div>
                 )}
@@ -382,12 +383,12 @@ export default function CategoriaEventos() {
         <AnimatePresence>
             {modal && (
                 <motion.div 
-                    className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    className={configUi.modalBackdrop}
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     onClick={closeModal}
                 >
                     <motion.div 
-                        className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "eliminar" ? "max-w-sm w-full" : "max-w-2xl w-full"}`}
+                        className={`${configUi.modalPanel} ${modal === "eliminar" ? "max-w-sm" : "max-w-2xl"}`}
                         initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -398,8 +399,8 @@ export default function CategoriaEventos() {
                                 <h3 className="text-lg font-bold text-[#040529] mb-2">Eliminar Categoría</h3>
                                 <p className="text-sm text-gray-500 mb-6">¿Estás seguro? No podrás deshacer esta acción.</p>
                                 <div className="flex justify-center gap-3">
-                                    <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                                    <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Eliminar</button>
+                                    <button onClick={closeModal} className={configUi.secondaryButton}>Cancelar</button>
+                                    <button onClick={handleDelete} className={configUi.dangerButton}>Eliminar</button>
                                 </div>
                             </div>
                          ) : (
@@ -418,7 +419,7 @@ export default function CategoriaEventos() {
                                         <h3 className="text-xl font-bold text-[#040529]">
                                             {modal === "crear" ? "Nueva Categoría" : modal === "editar" ? "Editar Categoría" : "Detalles"}
                                         </h3>
-                                        <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                                        <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
                                     </div>
 
                                     <form className="space-y-5">
@@ -434,7 +435,7 @@ export default function CategoriaEventos() {
                                                     readOnly={modal === "ver"} 
                                                     disabled={modal === "ver"}
                                                     placeholder="Ej: Conferencias"
-                                                    className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.nombre_categoria ? "border-red-500" : "border-gray-200"}`}
+                                                    className={cn(configUi.fieldInput, formErrors.nombre_categoria ? "border-red-500" : "")}
                                                 />
                                             </div>
                                             {formErrors.nombre_categoria && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.nombre_categoria}</p>}
@@ -451,15 +452,15 @@ export default function CategoriaEventos() {
                                                 disabled={modal === "ver"}
                                                 placeholder="Descripción de la categoría"
                                                 rows={4}
-                                                className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] resize-none ${formErrors.descripcion ? "border-red-500" : "border-gray-200"}`}
+                                                className={cn(configUi.fieldTextarea, formErrors.descripcion ? "border-red-500" : "")}
                                             />
                                             {formErrors.descripcion && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.descripcion}</p>}
                                         </div>
 
                                         <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                                            <button type="button" onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50">{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
+                                            <button type="button" onClick={closeModal} className={configUi.secondaryButton}>{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
                                             {modal !== "ver" && (
-                                                <button type="button" onClick={handleSave} className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10">
+                                              <button type="button" onClick={handleSave} className={configUi.primarySoftButton}>
                                                     {modal === "crear" ? "Guardar" : "Actualizar"}
                                                 </button>
                                             )}

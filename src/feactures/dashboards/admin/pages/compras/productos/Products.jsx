@@ -586,7 +586,7 @@ export default function Productos({ renderLayout = true }) {
                 placeholder="Buscar productos..."
                 value={busqueda}
                 onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
-                className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 transition-all text-slate-700 placeholder:text-slate-400"
+                className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] transition-all text-[#16315f] placeholder:text-[#86a0c6]"
               />
             </div>
 
@@ -595,7 +595,7 @@ export default function Productos({ renderLayout = true }) {
               <select
                 value={filtroCategoria}
                 onChange={(e) => { setFiltroCategoria(e.target.value); setPaginaActual(1); }}
-                className="appearance-none bg-white border border-slate-200 text-slate-500 py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 cursor-pointer w-48"
+                className="appearance-none bg-white border border-[#bfd1f4] text-[#16315f] py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] cursor-pointer w-48"
               >
                 <option value="">Todas las categorías</option>
                 {categorias.map(c => (
@@ -627,21 +627,21 @@ export default function Productos({ renderLayout = true }) {
         </div>
         {/* Table Area */}
         <div className="flex-1 px-6 pb-6 overflow-hidden">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] flex flex-col h-full overflow-hidden">
             <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-              <table className="w-full text-left relative border-separate border-spacing-0">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-20 shadow-sm">
+              <table className="w-full min-w-[1080px] text-left relative border-separate border-spacing-0">
+                <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-20 shadow-sm">
                   <tr>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Imagen</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[25%]">Nombre</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[15%]">Categoría</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[20%]">Precios</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Stock</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider w-[10%] text-center">Estado</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-right w-[10%]">Acciones</th>
+                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[10%]">Imagen</th>
+                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[25%]">Nombre</th>
+                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[15%]">Categoría</th>
+                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[20%]">Precios</th>
+                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[10%]">Stock</th>
+                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[10%] text-center">Estado</th>
+                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right w-[10%]">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan="7" className="p-20 text-center">
@@ -669,8 +669,8 @@ export default function Productos({ renderLayout = true }) {
                       const totalStock = pVars.reduce((acc, v) => acc + (v.stock || 0), 0);
 
                       return (
-                        <tr key={p.id_producto} className="group hover:bg-slate-50/80 transition-colors">
-                          <td className="px-6 py-4">
+                        <tr key={p.id_producto} className="group hover:bg-[#f8fbff] transition-colors">
+                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                             <div className="h-14 w-14 shrink-0 bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
                               {p.imagenes && p.imagenes.length > 0 ? (
                                 <img 
@@ -683,18 +683,18 @@ export default function Productos({ renderLayout = true }) {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                             <div className="flex flex-col">
                               <span className="font-bold text-slate-800 text-sm leading-snug">{p.nombre_producto}</span>
                               <span className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-tight">ID: {p.id_producto}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
                               {getCategoriaNombre(p.id_categoria)}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold text-slate-400">$</span>
@@ -712,7 +712,7 @@ export default function Productos({ renderLayout = true }) {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                             <div className="flex flex-col">
                               <span className={`text-sm font-black ${totalStock <= 5 ? 'text-rose-600' : 'text-slate-700'}`}>
                                 {totalStock} <span className="text-[10px] font-bold text-slate-400 ml-1">und.</span>
@@ -720,13 +720,13 @@ export default function Productos({ renderLayout = true }) {
                               {totalStock <= 5 && <span className="text-[10px] font-bold text-rose-400 mt-0.5">Stock bajo</span>}
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-center">
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${p.estado ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
                               <span className={`h-1.5 w-1.5 rounded-full ${p.estado ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                               {p.estado ? 'Activo' : 'Inactivo'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button onClick={() => openViewModal(p)} className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm border border-slate-100" title="Ver"><Eye className="h-4 w-4" /></button>
                               {canManage("productos") && (
@@ -747,22 +747,22 @@ export default function Productos({ renderLayout = true }) {
 
             {/* Footer Pagination */}
             {totalPaginas > 0 && (
-              <div className="border-t border-slate-100 px-6 py-4 bg-white flex items-center justify-between mt-auto">
-                <p className="text-sm font-bold text-slate-500">
-                  Página <span className="text-[#040529]">{paginaActual}</span> de <span className="text-[#040529]">{totalPaginas}</span>
+              <div className="border-t border-[#d7e5f8] px-5 py-4 bg-[#fbfdff] flex items-center justify-between mt-auto">
+                <p className="text-sm font-bold text-[#6b84aa]">
+                  Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginas}</span>
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     disabled={paginaActual === 1}
                     onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#bfd1f4] bg-white text-[#6a85ad] hover:bg-[#f8fbff] hover:text-[#16315f] disabled:opacity-50 transition shadow-sm"
                   >
                     <ChevronLeft size={18} />
                   </button>
                   <button
                     disabled={paginaActual === totalPaginas}
                     onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#bfd1f4] bg-white text-[#6a85ad] hover:bg-[#f8fbff] hover:text-[#16315f] disabled:opacity-50 transition shadow-sm"
                   >
                     <ChevronRight size={18} />
                   </button>

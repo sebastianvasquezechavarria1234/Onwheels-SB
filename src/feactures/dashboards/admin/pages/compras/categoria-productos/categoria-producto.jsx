@@ -179,28 +179,28 @@ export default function CategoriaProductos() {
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#bfd1f4] focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition text-[#16315f]"
                 type="text"
                 placeholder="Buscar categoría (ej: Electrónica)"
               />
             </div>
             <button
               onClick={() => openModal("add")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition transform hover:scale-[1.02]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#223a63] hover:bg-[#16315f] text-white rounded-xl shadow-md transition transform hover:scale-[1.02]"
             >
               <Plus size={18} />
               Añadir Categoría
             </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-700">
-                <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+              <table className="w-full min-w-[760px] text-sm text-left text-[#16315f] border-separate border-spacing-0">
+                <thead className="bg-[#dbeafe] text-[#16315f] uppercase text-[10px]">
                   <tr>
-                    <th className="px-6 py-3 w-1/3">Nombre</th>
-                    <th className="px-6 py-3 w-2/3">Descripción</th>
-                    <th className="px-6 py-3 w-1/6">Acciones</th>
+                    <th className="px-3 py-3 font-black tracking-[0.14em] border-b border-[#9ec1ef] w-1/3">Nombre</th>
+                    <th className="px-3 py-3 font-black tracking-[0.14em] border-b border-[#9ec1ef] w-2/3">Descripción</th>
+                    <th className="px-3 py-3 font-black tracking-[0.14em] border-b border-[#9ec1ef] w-1/6">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -224,18 +224,18 @@ export default function CategoriaProductos() {
                     </tr>
                   ) : (
                     currentItems.map((categoria) => (
-                      <tr key={categoria.id_categoria} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 font-medium">{categoria.nombre_categoria}</td>
-                        <td className="px-6 py-4 text-gray-600 line-clamp-2">
+                      <tr key={categoria.id_categoria} className="hover:bg-[#f8fbff] transition">
+                        <td className="px-3 py-2.5 border-b border-[#d7e5f8] font-medium">{categoria.nombre_categoria}</td>
+                        <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-[#6b84aa] line-clamp-2">
                           {categoria.descripcion || "— Sin descripción —"}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                           <div className="flex gap-2">
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => openModal("details", categoria)}
-                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                              className="p-2 rounded-xl text-[#6a85ad] border border-[#bfd1f4] hover:bg-[#f8fbff] transition"
                               title="Ver detalles"
                             >
                               <Eye size={16} />
@@ -244,7 +244,7 @@ export default function CategoriaProductos() {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => openModal("edit", categoria)}
-                              className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                              className="p-2 rounded-xl text-[#6a85ad] border border-[#bfd1f4] hover:bg-[#f8fbff] transition"
                               title="Editar"
                             >
                               <Pencil size={16} />
@@ -253,7 +253,7 @@ export default function CategoriaProductos() {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => openModal("delete", categoria)}
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                              className="p-2 rounded-xl text-[#d44966] border border-[#f5c4cc] bg-[#fff1f3] hover:bg-[#ffe4e8] transition"
                               title="Eliminar"
                             >
                               <Trash2 size={16} />

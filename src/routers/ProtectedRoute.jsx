@@ -44,7 +44,8 @@ const ProtectedRoute = ({ allowedRoles }) => {
   );
 
   if (!hasValidRole) {
-    return <Navigate to="/" replace />;
+    const redirectTo = (roleSlug && roleSlug !== "store") ? getHomePath(safeUser) : "/";
+    return <Navigate to={redirectTo} replace />;
   }
 
   if (roleSlug !== "store" && !allowedRoleSlugs.includes(roleSlug)) {

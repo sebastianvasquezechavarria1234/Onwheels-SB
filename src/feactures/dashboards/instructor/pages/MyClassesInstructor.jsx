@@ -89,44 +89,57 @@ export const MyClassesInstructor = () => {
 						</div>
 					</div>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 						{clases.map((c, index) => (
-							<div key={c.id_clase || index} className="bg-[#121821] border border-gray-800 rounded-[2rem] p-6 shadow-xl hover:border-gray-700 transition-all group flex flex-col justify-between">
-								<div>
-									<div className="flex justify-between items-start mb-4 border-b border-gray-800 pb-4">
+							<div key={c.id_clase || index} className="bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl hover:border-gray-700 transition-all group flex flex-col md:flex-row overflow-hidden items-stretch">
+								{c.url_imagen && (
+									<div className="h-48 md:h-auto md:w-[240px] shrink-0 w-full relative overflow-hidden bg-gray-900 border-r border-gray-800/50">
+										<img src={c.url_imagen} alt={c.nombre || "Clase"} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                        <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#121821]/80 via-transparent to-transparent"></div>
+									</div>
+								)}
+								<div className="p-6 md:p-8 flex flex-col flex-grow w-full">
+									<div className="flex justify-between items-start mb-6 border-b border-gray-800 pb-4">
 										<div>
-											<h3 className="text-xl font-black uppercase tracking-tight text-white mb-1 group-hover:text-[#3b82f6] transition-colors">{c.nombre}</h3>
-											<p className="text-sm font-medium text-[#9CA3AF]">Estudiantes: <span className="text-white font-bold">{c.cantidadEstudiantes}</span></p>
+											<h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-white mb-2 group-hover:text-[#3b82f6] transition-colors line-clamp-2">{c.nombre || c.descripcion || `Clase en ${c.nombre_sede}`}</h3>
+											<p className="text-xs font-semibold uppercase tracking-widest text-[#9CA3AF]">Estudiantes <span className="text-white italic">{c.cantidadEstudiantes || c.cupo_maximo || 0}</span></p>
 										</div>
-										<span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">
+										<span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 whitespace-nowrap">
 											{c.nivel}
 										</span>
 									</div>
 
-									<div className="space-y-4 mb-6">
-										<div className="flex items-center gap-3 text-[#9CA3AF]">
-											<MapPin size={18} className="text-[#3b82f6]" />
+									<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 flex-grow">
+										<div className="flex items-start gap-3 text-[#9CA3AF]">
+											<div className="bg-gray-800/50 p-2 rounded-lg">
+												<MapPin size={16} className="text-[#3b82f6]" />
+											</div>
 											<div>
-												<p className="text-xs uppercase font-bold tracking-wider">Ubicación</p>
-												<p className="text-sm text-white font-medium">{c.ubicacion} - {c.direccion}</p>
+												<p className="text-[10px] uppercase font-black tracking-widest mb-0.5">Ubicación</p>
+												<p className="text-xs text-white font-bold">{c.ubicacion || c.nombre_sede || "Sin sede"}</p>
 											</div>
 										</div>
-										<div className="flex items-center gap-3 text-[#9CA3AF]">
-											<Clock size={18} className="text-[#3b82f6]" />
+										<div className="flex items-start gap-3 text-[#9CA3AF]">
+											<div className="bg-gray-800/50 p-2 rounded-lg">
+												<Clock size={16} className="text-[#3b82f6]" />
+											</div>
 											<div>
-												<p className="text-xs uppercase font-bold tracking-wider">Horario</p>
-												<p className="text-sm text-white font-medium">{c.dia} • {c.hora}</p>
+												<p className="text-[10px] uppercase font-black tracking-widest mb-0.5">Horario</p>
+												<p className="text-xs text-white font-bold">{c.dia || c.dia_semana || "Por definir"}</p>
+                                                <p className="text-[10px] text-gray-400">{c.hora || `${c.hora_inicio?.slice(0,5)} a ${c.hora_fin?.slice(0,5)}`}</p>
 											</div>
 										</div>
 									</div>
-								</div>
 
-								<button
-									onClick={() => openView(c)}
-									className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl py-3 px-4 font-black uppercase tracking-widest text-xs hover:bg-[#3b82f6]/10 hover:border-[#3b82f6] hover:text-[#3b82f6] transition-all flex items-center justify-center gap-2"
-								>
-									<Eye size={16} /> Ver Detalles Completos
-								</button>
+									<div className="mt-auto pt-4 border-t border-gray-800 flex justify-end">
+										<button
+											onClick={() => openView(c)}
+											className="bg-[#0B0F14] border border-gray-800 text-white rounded-xl py-2.5 px-6 font-black uppercase tracking-widest text-[10px] hover:bg-[#3b82f6]/10 hover:border-[#3b82f6] hover:text-[#3b82f6] transition-all flex items-center justify-center gap-2"
+										>
+											<Eye size={14} /> Ver Detalles
+										</button>
+									</div>
+								</div>
 							</div>
 						))}
 					</div>

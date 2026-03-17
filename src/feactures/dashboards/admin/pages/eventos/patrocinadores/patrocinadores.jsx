@@ -11,6 +11,7 @@ import {
   updatePatrocinador,
   deletePatrocinador,
 } from "../../services/patrocinadoresServices";
+import { configUi } from "../../configuracion/configUi";
 
 // Helper para clases condicionales
 function cn(...classes) {
@@ -308,7 +309,7 @@ export default function Patrocinadores() {
 
   return (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <div className={configUi.pageShell}>
 
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
         <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
@@ -340,7 +341,7 @@ export default function Patrocinadores() {
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   placeholder="Buscar patrocinador..."
-                  className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                  className={configUi.inputWithIcon}
                 />
                 {search && (
                   <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -350,7 +351,7 @@ export default function Patrocinadores() {
               </div>
               <button
                 onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
+                className={configUi.primaryButton}
               >
                 <Plus className="h-4 w-4" />
                 Nuevo Patrocinador
@@ -383,19 +384,19 @@ export default function Patrocinadores() {
 
         {/* --- SECTION 2: TABLE AREA --- */}
         <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+          <div className={configUi.tableCard}>
+            <div className={configUi.tableScroll}>
+              <table className={configUi.table}>
+                <thead className={configUi.thead}>
                   <tr>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Logo</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[25%]">Nombre</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[30%]">Email</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[20%]">Teléfono</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right w-[15%]">Acciones</th>
+                    <th className={`${configUi.th} rounded-tl-[1.4rem] w-[10%]`}>Logo</th>
+                    <th className={`${configUi.th} w-[25%]`}>Nombre</th>
+                    <th className={`${configUi.th} w-[30%]`}>Email</th>
+                    <th className={`${configUi.th} w-[20%]`}>Teléfono</th>
+                    <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody>
                   {loading ? (
                     <tr><td colSpan="5" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
                   ) : currentItems.length === 0 ? (
@@ -409,8 +410,8 @@ export default function Patrocinadores() {
                     </tr>
                   ) : (
                     currentItems.map((p) => (
-                      <tr key={p.id_patrocinador} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-5 py-4">
+                      <tr key={p.id_patrocinador} className={configUi.row}>
+                        <td className={configUi.td}>
                           <div className="h-10 w-10 shrink-0 bg-white border border-gray-100 rounded-lg overflow-hidden flex items-center justify-center p-1 shadow-sm">
                             {p.logo ? (
                               <img src={p.logo} alt="Logo" className="w-full h-full object-contain" />
@@ -419,14 +420,14 @@ export default function Patrocinadores() {
                             )}
                           </div>
                         </td>
-                        <td className="px-5 py-4 font-bold text-[#040529] text-sm">{p.nombre_patrocinador}</td>
-                        <td className="px-5 py-4 text-sm text-gray-600">{p.email}</td>
-                        <td className="px-5 py-4 text-sm text-gray-600">{p.telefono}</td>
-                        <td className="px-5 py-4 text-right">
+                        <td className={`${configUi.td} font-bold text-[#16315f] text-sm`}>{p.nombre_patrocinador}</td>
+                        <td className={`${configUi.td} text-sm text-[#5b7398]`}>{p.email}</td>
+                        <td className={`${configUi.td} text-sm text-[#5b7398]`}>{p.telefono}</td>
+                        <td className={`${configUi.td} text-right`}>
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => openModal("ver", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("editar", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pen className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("eliminar", p)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                            <button onClick={() => openModal("ver", p)} className={configUi.actionButton} title="Ver"><Eye className="h-4 w-4" /></button>
+                            <button onClick={() => openModal("editar", p)} className={configUi.actionButton} title="Editar"><Pen className="h-4 w-4" /></button>
+                            <button onClick={() => openModal("eliminar", p)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 className="h-4 w-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -438,14 +439,14 @@ export default function Patrocinadores() {
 
             {/* Footer Pagination */}
             {totalPages > 1 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">
-                  Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
+              <div className={configUi.paginationBar}>
+                <p className="text-xs text-[#6b84aa] font-medium">
+                  Mostrando <span className="font-bold text-[#16315f]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#16315f]">{filteredAndSorted.length}</span> resultados
                 </p>
                 <div className="flex items-center gap-2">
-                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
-                  <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className={configUi.paginationButton}><ChevronLeft className="h-4 w-4" /></button>
+                  <span className="text-sm font-bold text-[#16315f] px-2">{currentPage}</span>
+                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className={configUi.paginationButton}><ChevronRight className="h-4 w-4" /></button>
                 </div>
               </div>
             )}
@@ -465,12 +466,12 @@ export default function Patrocinadores() {
         <AnimatePresence>
           {(modal === "crear" || modal === "editar" || modal === "ver") && (
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+              className={configUi.modalBackdrop}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-2xl shadow-2xl relative overflow-hidden max-w-2xl w-full"
+                className={`${configUi.modalPanel} max-w-2xl`}
                 initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -484,7 +485,7 @@ export default function Patrocinadores() {
                       </h3>
                       <p className="text-xs text-gray-500 mt-0.5">Complete la información del aliado</p>
                     </div>
-                    <button onClick={closeModal} className="text-gray-400 hover:text-[#040529] transition"><X size={20} /></button>
+                    <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
                   </div>
 
                   <div className="flex-1 p-6 overflow-y-auto">
@@ -616,9 +617,9 @@ export default function Patrocinadores() {
 
                   {/* Footer Modal */}
                   <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-2xl">
-                    <button type="button" onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 transition shadow-sm">{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
+                    <button type="button" onClick={closeModal} className={configUi.secondaryButton}>{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
                     {modal !== "ver" && (
-                      <button type="button" onClick={handleSave} className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10 transition">
+                      <button type="button" onClick={handleSave} className={configUi.primarySoftButton}>
                         {modal === "crear" ? "Guardar" : "Actualizar"}
                       </button>
                     )}
@@ -634,14 +635,14 @@ export default function Patrocinadores() {
         <AnimatePresence>
           {modal === "eliminar" && selected && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+              className={configUi.modalBackdrop}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative text-center"
+                className={`${configUi.modalPanel} max-w-sm p-6 relative text-center`}
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
@@ -655,8 +656,8 @@ export default function Patrocinadores() {
                 </p>
 
                 <div className="flex justify-center gap-3">
-                  <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancelar</button>
-                  <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-md transition">Sí, Eliminar</button>
+                  <button onClick={closeModal} className={configUi.secondaryButton}>Cancelar</button>
+                  <button onClick={handleDelete} className={configUi.dangerButton}>Sí, Eliminar</button>
                 </div>
               </motion.div>
             </motion.div>

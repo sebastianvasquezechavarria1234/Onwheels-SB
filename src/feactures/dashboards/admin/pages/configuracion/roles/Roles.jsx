@@ -11,11 +11,7 @@ import {
   asignarPermisoARol,
   eliminarPermisoDeRol
 } from "../../services/RolesService";
-
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn, configUi, groupPermissionsByModule } from "../configUi";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
@@ -28,6 +24,7 @@ const Roles = () => {
   const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -109,6 +106,7 @@ const Roles = () => {
     setAddForm({ nombre_rol: "", descripcion: "", estado: true });
     setFormErrors({});
     setPermisosAsignados([]);
+    setSubmitting(false);
   };
 
   const handleEditChange = (e) => {
@@ -170,6 +168,7 @@ const Roles = () => {
       return;
     }
     try {
+      setSubmitting(true);
       await updateRole(selected.id_rol, editForm);
       showNotification("Rol actualizado correctamente");
       fetchRoles();
@@ -177,6 +176,8 @@ const Roles = () => {
     } catch (err) {
       const errMsg = err.response?.data?.mensaje || "Error al actualizar el rol";
       showNotification(errMsg, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -185,6 +186,7 @@ const Roles = () => {
       return;
     }
     try {
+      setSubmitting(true);
       await createRole(addForm);
       showNotification("Rol creado correctamente");
       fetchRoles();
@@ -192,6 +194,8 @@ const Roles = () => {
     } catch (err) {
       const errMsg = err.response?.data?.mensaje || "Error al crear el rol";
       showNotification(errMsg, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -228,7 +232,7 @@ const Roles = () => {
 
   const guardarPermisos = async () => {
     try {
-      setLoading(true);
+      setSubmitting(true);
       const actuales = await getPermisosByRol(selected.id_rol);
       const idsActuales = actuales.map(p => p.id_permiso);
 
@@ -245,7 +249,7 @@ const Roles = () => {
     } catch (err) {
       showNotification("Error al actualizar permisos", "error");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -276,25 +280,30 @@ const Roles = () => {
     return true; // Todos los roles
   });
 
+  const groupedPermissions = groupPermissionsByModule(permisosTotales);
+
   return (
     <>
-      <div className="flex flex-col h-full bg-white overflow-hidden p-2 md:p-4">
+      <div className={configUi.pageShell}>
         {/* --- SECTION 1: HEADER & TOOLBAR --- */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-          <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
-            Gestión de Roles
-          </h2>
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Gestión de Roles
+            </h2>
+            <span className={configUi.countBadge}>{totalItems} roles</span>
+          </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div className={configUi.toolbar}>
             {/* Search Bar */}
-            <div className="relative w-full sm:w-[280px]">
+            <div className={configUi.searchWrap}>
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
                 placeholder="Buscar roles..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 transition-all text-slate-700 placeholder:text-slate-400"
+                className={configUi.inputWithIcon}
               />
             </div>
 
@@ -303,7 +312,7 @@ const Roles = () => {
               <select
                 value={filterType}
                 onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-                className="appearance-none bg-white border border-slate-200 text-slate-500 py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 cursor-pointer"
+                className={configUi.select}
               >
                 <option value="Todos los roles">Todos los roles</option>
                 <option value="Activos">Activos</option>
@@ -317,7 +326,7 @@ const Roles = () => {
             {/* Download Button */}
             <button
               onClick={handleDownload}
-              className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
+              className={configUi.iconButton} title="Descargar Reporte"
             >
               <Download size={20} />
             </button>
@@ -325,7 +334,7 @@ const Roles = () => {
             {/* Create Button */}
             <button
               onClick={() => { setModalType("add"); setFormErrors({}); }}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#040529] hover:bg-black text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+              className={`${configUi.primaryButton} whitespace-nowrap`}
             >
               <Plus size={18} />
               Crear Rol
@@ -334,52 +343,52 @@ const Roles = () => {
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-white rounded-2xl border border-slate-100 shadow-sm">
-          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10">
+        <div className={configUi.tableCard}>
+          <div className={configUi.tableScroll}>
+            <table className={configUi.table}>
+              <thead className={configUi.thead}>
                 <tr>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide rounded-tl-xl w-[10%]">ID</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[25%]">Nombre del Rol</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[35%]">Descripción</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-center w-[15%]">Estado</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-right rounded-tr-xl w-[15%]">Acciones</th>
+                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[10%]`}>ID</th>
+                  <th className={`${configUi.th} w-[25%]`}>Nombre del rol</th>
+                  <th className={`${configUi.th} w-[35%]`}>Descripcion</th>
+                  <th className={`${configUi.th} text-center w-[15%]`}>Estado</th>
+                  <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {loading ? (
-                  <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-400 text-sm">Cargando roles...</td></tr>
+                  <tr><td colSpan="5" className={configUi.emptyState}>Cargando roles...</td></tr>
                 ) : currentItems.length === 0 ? (
-                  <tr><td colSpan="5" className="px-6 py-8 text-center text-slate-400 italic">No se encontraron roles.</td></tr>
+                  <tr><td colSpan="5" className={configUi.emptyState}>No se encontraron roles.</td></tr>
                 ) : (
                   currentItems.map((r, i) => {
                     const isOfficial = [3, 9, 10, 12].includes(r.id_rol);
                             return (
-                              <tr key={r.id_rol} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-3 text-sm font-medium text-slate-500">#{r.id_rol}</td>
-                                <td className="px-6 py-3 font-bold text-[#040529] text-base">{r.nombre_rol}</td>
-                                <td className="px-6 py-3 text-sm text-slate-500 truncate max-w-[200px]">{r.descripcion || "—"}</td>
-                                <td className="px-6 py-3">
+                              <tr key={r.id_rol} className={configUi.row}>
+                                <td className={configUi.td}>#{r.id_rol}</td>
+                                <td className={`${configUi.td} font-bold text-[#16315f]`}>{r.nombre_rol}</td>
+                                <td className={`${configUi.td} text-[#5b7398]`}>{r.descripcion || "-"}</td>
+                                <td className={`${configUi.td}`}>
                                   <div className="flex justify-center">
                                     {r.estado ? (
-                                      <span className="px-3 py-1 bg-green-50 text-emerald-600 rounded-full text-xs font-bold flex items-center gap-2 border border-green-100">
+                                      <span className={configUi.successPill}>
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                                         Activo
                                       </span>
                                     ) : (
-                                      <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-bold flex items-center gap-2 border border-rose-100">
+                                      <span className={configUi.dangerPill}>
                                         <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
                                         Inactivo
                                       </span>
                                     )}
                                   </div>
                                 </td>
-                                <td className="px-6 py-3 text-right">
+                                <td className={`${configUi.td} text-right`}>
                                   <div className="flex justify-end gap-2">
                                     <button 
                                       onClick={() => openPermisos(r)} 
                                       disabled={isOfficial}
-                                      className={cn("w-8 h-8 flex items-center justify-center rounded-xl border transition shadow-sm", isOfficial ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed" : "bg-white border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50")} 
+                                      className={cn(configUi.actionButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")} 
                                       title={isOfficial ? "Rol protegido del sistema" : "Permisos"}
                                     >
                                       <Key size={14} />
@@ -387,7 +396,7 @@ const Roles = () => {
                                     <button 
                                       onClick={() => openEdit(r)} 
                                       disabled={isOfficial}
-                                      className={cn("w-8 h-8 flex items-center justify-center rounded-xl border transition shadow-sm", isOfficial ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed" : "bg-white border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50")} 
+                                      className={cn(configUi.actionButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")} 
                                       title={isOfficial ? "Rol protegido del sistema" : "Editar"}
                                     >
                                       <Pencil size={14} />
@@ -395,7 +404,7 @@ const Roles = () => {
                                     <button 
                                       onClick={() => confirmDelete(r)} 
                                       disabled={isOfficial}
-                                      className={cn("w-8 h-8 flex items-center justify-center rounded-xl border transition shadow-sm", isOfficial ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed" : "bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100")} 
+                                      className={cn(configUi.actionDangerButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")} 
                                       title={isOfficial ? "Rol protegido del sistema" : "Eliminar"}
                                     >
                                       <Trash2 size={14} />
@@ -412,22 +421,22 @@ const Roles = () => {
 
           {/* Pagination Footer */}
           {totalPages > 0 && (
-            <div className="border-t border-slate-100 px-6 py-4 bg-white flex items-center justify-between mt-auto">
+            <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
-                Página <span className="text-[#040529]">{currentPage}</span> de <span className="text-[#040529]">{totalPages}</span>
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
               </p>
               <div className="flex items-center gap-2">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                  className={configUi.paginationButton}
                 >
                   <ChevronLeft size={18} />
                 </button>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                  className={configUi.paginationButton}
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -447,71 +456,127 @@ const Roles = () => {
 
       <AnimatePresence>
         {modalType && modalType !== "delete" && (
-          <motion.div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
-              <div className="flex h-[550px]">
-                <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                  <div className="w-24 h-24 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-[#040529]"><ShieldCheck size={40} /></div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Configuración de Seguridad</p>
+          <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+            <motion.div className={`${configUi.modalPanel} ${modalType === "permisos" ? "max-w-5xl" : "max-w-3xl"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+              <div className={modalType === "permisos" ? configUi.modalSplit : configUi.modalSplitCompact}>
+                <div className={configUi.modalSide}>
+                  <div>
+                    <div className={`${configUi.modalSideIcon} mb-5`}><ShieldCheck size={40} /></div>
+                    <p className={configUi.modalEyebrow}>Configuracion de seguridad</p>
+                    <h4 className="mt-3 text-2xl font-black text-[#16315f]">{modalType === "permisos" ? "Permisos" : "Roles"}</h4>
+                    <p className="mt-2 text-sm leading-6 text-[#6b84aa]">Centraliza nombres, descripciones y permisos de cada rol con una distribucion uniforme y clara.</p>
+                  </div>
                 </div>
                 <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-[#040529]">{modalType === "add" ? "Nuevo Rol" : modalType === "edit" ? "Editar Rol" : "Gestión de Permisos"}</h3>
-                    <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
+                  <div className={configUi.modalHeader}>
+                    <div>
+                      <h3 className={configUi.modalTitle}>{modalType === "add" ? "Nuevo rol" : modalType === "edit" ? "Editar rol" : "Gestion de permisos"}</h3>
+                      <p className={configUi.modalSubtitle}>{modalType === "permisos" ? `Define los permisos del rol ${selected?.nombre_rol || ""}.` : "Completa los campos obligatorios del rol."}</p>
+                    </div>
+                    <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200">
+                  <div className={configUi.modalContent}>
                     {modalType === "permisos" ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        {permisosTotales.map(p => (
-                          <label key={p.id_permiso} className={cn("flex items-center justify-between p-3 rounded-xl border transition cursor-pointer", permisosAsignados.includes(p.id_permiso) ? "bg-[#040529]/5 border-[#040529]/20" : "bg-white border-gray-100 hover:bg-gray-50")}>
-                            <span className="text-xs font-bold text-gray-600 uppercase tracking-tight">{p.nombre_permiso}</span>
-                            <input type="checkbox" checked={permisosAsignados.includes(p.id_permiso)} onChange={() => togglePermiso(p.id_permiso)} className="h-4 w-4 rounded border-gray-300 text-[#040529] focus:ring-[#040529]/10" />
-                          </label>
+                      <div className="space-y-4">
+                        {groupedPermissions.map((group) => (
+                          <div key={group.key} className="rounded-[1.5rem] border border-[#d7e5f8] bg-[#fbfdff] p-4">
+                            <div className="mb-3 flex items-center justify-between gap-3">
+                              <div>
+                                <h4 className="text-sm font-black uppercase tracking-[0.14em] text-[#16315f]">{group.label}</h4>
+                                <p className="mt-1 text-xs text-[#6b84aa]">Permisos del mismo modulo agrupados y ordenados.</p>
+                              </div>
+                              <span className={configUi.subtlePill}>{group.items.length} permisos</span>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                              {group.items.map((permission) => {
+                                const isActive = permisosAsignados.includes(permission.id_permiso);
+                                return (
+                                  <button
+                                    key={permission.id_permiso}
+                                    type="button"
+                                    onClick={() => togglePermiso(permission.id_permiso)}
+                                    className={cn(
+                                      "flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-left transition",
+                                      isActive
+                                        ? "border-[#9fbce7] bg-[#edf5ff]"
+                                        : "border-[#d7e5f8] bg-white hover:bg-[#f8fbff]"
+                                    )}
+                                  >
+                                    <div>
+                                      <p className="text-sm font-bold text-[#16315f]">{permission.meta.actionLabel}</p>
+                                      <p className="mt-0.5 text-xs text-[#6b84aa]">{permission.rawName}</p>
+                                    </div>
+                                    <span className={cn(
+                                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                                      isActive ? configUi.toggleTrackOn : configUi.toggleTrackOff
+                                    )}>
+                                      <span className={cn(configUi.toggleThumb, isActive ? "translate-x-6" : "translate-x-1")} />
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     ) : (
                       <form className="space-y-5 font-primary">
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre del Rol</label>
+                        <div className={configUi.fieldGroup}>
+                          <label className={configUi.fieldLabel}>Nombre del rol</label>
                           <input
                             type="text"
                             name="nombre_rol"
                             value={modalType === "add" ? addForm.nombre_rol : editForm.nombre_rol}
                             onChange={modalType === "add" ? handleAddChange : handleEditChange}
                             className={cn(
-                              "w-full mt-1 px-4 py-2 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-[#040529]/10 transition",
+                              configUi.fieldInput,
                               formErrors.nombre_rol ? "border-red-400 bg-red-50" : "border-gray-200"
                             )}
                           />
                           {formErrors.nombre_rol && <p className="text-red-400 text-[11px] mt-1 ml-1">{formErrors.nombre_rol}</p>}
                         </div>
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Descripción</label>
+                        <div className={configUi.fieldGroup}>
+                          <label className={configUi.fieldLabel}>Descripcion</label>
                           <textarea
                             name="descripcion"
                             value={modalType === "add" ? addForm.descripcion : editForm.descripcion}
                             onChange={modalType === "add" ? handleAddChange : handleEditChange}
                             className={cn(
-                              "w-full mt-1 px-4 py-2 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-[#040529]/10 transition h-24 resize-none",
+                              configUi.fieldTextarea,
                               formErrors.descripcion ? "border-red-400 bg-red-50" : "border-gray-200"
                             )}
                           />
                           {formErrors.descripcion && <p className="text-red-500 text-[10px] mt-1 ml-1 font-bold">{formErrors.descripcion}</p>}
                         </div>
                         {modalType === "edit" && (
-                          <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                            <input type="checkbox" name="estado" checked={editForm.estado} onChange={handleEditChange} className="h-4 w-4 text-[#040529] rounded focus:ring-[#040529]" />
-                            <label className="text-sm font-bold text-[#040529]">Rol Activo</label>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleEditChange({ target: { name: "estado", type: "checkbox", checked: !editForm.estado } })}
+                            className="flex w-full items-center justify-between rounded-2xl border border-[#d7e5f8] bg-[#fbfdff] p-4 text-left"
+                          >
+                            <div>
+                              <p className="text-sm font-bold text-[#16315f]">Rol activo</p>
+                              <p className="text-xs text-[#6b84aa]">Controla si el rol puede seguir asignandose.</p>
+                            </div>
+                            <span className={cn(
+                              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                              editForm.estado ? configUi.toggleTrackOn : configUi.toggleTrackOff
+                            )}>
+                              <span className={cn(configUi.toggleThumb, editForm.estado ? "translate-x-6" : "translate-x-1")} />
+                            </span>
+                          </button>
                         )}
                       </form>
                     )}
                   </div>
-                  <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
-                    <button onClick={closeModal} className="px-5 py-2 rounded-xl text-gray-500 hover:text-gray-700 transition font-bold text-xs uppercase tracking-wider">Cerrar</button>
-                    {modalType === "add" && <button onClick={saveAdd} className="px-6 py-2 bg-[#040529] text-white rounded-xl shadow-md font-bold text-xs uppercase tracking-wider">Guardar Rol</button>}
-                    {modalType === "edit" && <button onClick={saveEdit} className="px-6 py-2 bg-[#040529] text-white rounded-xl shadow-md font-bold text-xs uppercase tracking-wider">Actualizar Rol</button>}
-                    {modalType === "permisos" && <button onClick={guardarPermisos} className="px-6 py-2 bg-[#040529] text-white rounded-xl shadow-md font-bold text-xs uppercase tracking-wider flex items-center gap-2"><Save size={14} /> Guardar Permisos</button>}
+                  <div className={configUi.modalFooter}>
+                    <span className="text-sm text-[#6b84aa]">{modalType === "permisos" ? "Activa o desactiva permisos y guarda para aplicar cambios." : "Los campos obligatorios deben estar completos para guardar."}</span>
+                    <div className="flex items-center gap-3">
+                      <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>Cerrar</button>
+                      {modalType === "add" && <button onClick={saveAdd} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Guardando..." : "Guardar rol"}</button>}
+                      {modalType === "edit" && <button onClick={saveEdit} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Actualizando..." : "Actualizar rol"}</button>}
+                      {modalType === "permisos" && <button onClick={guardarPermisos} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span> Guardando...</> : <><Save size={14} /> Guardar permisos</>}</button>}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -521,23 +586,22 @@ const Roles = () => {
         
         {/* Delete Confirmation Modal */}
         {modalType === "delete" && selected && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} onClick={(e) => e.stopPropagation()}>
+          <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+            <motion.div className={`${configUi.modalPanel} max-w-md`} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} onClick={(e) => e.stopPropagation()}>
               <div className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto bg-rose-100 rounded-full flex items-center justify-center mb-4 text-rose-500">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
                   <Trash2 size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-[#040529] mb-2">Eliminar Rol</h3>
-                <p className="text-sm text-gray-500 mb-6 font-medium">
-                  ¿Estás seguro que deseas eliminar el rol <span className="font-bold text-[#040529]">"{selected.nombre_rol}"</span>?
-                  Esta acción no se puede deshacer.
+                <h3 className="mb-2 text-xl font-black text-[#16315f]">Eliminar rol</h3>
+                <p className="mb-6 text-sm leading-6 text-[#6b84aa]">
+                  ¿Estas seguro que deseas eliminar el rol <span className="font-bold text-[#16315f]">&quot;{selected.nombre_rol}&quot;</span>? Esta accion no se puede deshacer.
                 </p>
-                <div className="flex gap-3 justify-center">
-                  <button onClick={closeModal} disabled={loading} className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition min-w-[100px]">
+                <div className="flex justify-center gap-3">
+                  <button onClick={closeModal} disabled={loading} className={`${configUi.secondaryButton} min-w-[110px]`}>
                     Cancelar
                   </button>
-                  <button onClick={handleDelete} disabled={loading} className="px-5 py-2.5 rounded-xl bg-rose-500 text-white font-bold text-sm hover:bg-rose-600 transition shadow-md min-w-[100px] flex justify-center items-center">
-                    {loading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : "Eliminar"}
+                  <button onClick={handleDelete} disabled={loading} className={`${configUi.dangerButton} min-w-[110px]`}>
+                    {loading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span> : "Eliminar"}
                   </button>
                 </div>
               </div>

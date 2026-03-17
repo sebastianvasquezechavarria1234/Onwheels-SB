@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
-  Camera, User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle2, AlertCircle
+  User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle2, AlertCircle,
+  Briefcase, TrendingUp, Download, IdCard
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,14 +10,11 @@ import {
   crearEstudiante,
   actualizarEstadoEstudiante,
   eliminarEstudiante,
-  getDetalleEstudiante,
-  getSugerenciasEstudiantes
+  getDetalleEstudiante
 } from "../../services/estudiantesServices";
+import { configUi } from "../../configuracion/configUi";
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const Students = () => {
   const [estudiantes, setEstudiantes] = useState([]);
@@ -52,10 +50,12 @@ const Students = () => {
   const fetchEstudiantes = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await getEstudiantes();
-      setEstudiantes(data);
+      setEstudiantes(Array.isArray(data) ? data : []);
     } catch (err) {
-      showNotification("Error al cargar estudiantes", "error");
+      setError("Error al cargar estudiantes");
+      showNotification("Error al cargar datos", "error");
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ const Students = () => {
       fetchEstudiantes();
       closeModal();
     } catch (err) {
-      showNotification("No se puede eliminar: el estudiante tiene matrículas activas", "error");
+      showNotification("No se puede eliminar: el estudiante tiene datos asociados", "error");
     }
   };
 
@@ -129,126 +129,127 @@ const Students = () => {
   };
 
   const filtered = estudiantes.filter(s =>
-    s.nombre_completo.toLowerCase().includes(search.toLowerCase()) ||
-    s.documento.includes(search)
+    (s.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
+    (s.documento || "").includes(search)
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const exportCSV = () => {
+    const headers = ["Nombre", "Documento", "Email", "Teléfono", "Nivel", "Estado"];
+    const rows = filtered.map(s => [
+      s.nombre_completo, s.documento, s.email, s.telefono, s.nivel_experiencia, s.estado
+    ].join(","));
+    const blob = new Blob([[headers.join(","), ...rows].join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `estudiantes.csv`;
+    a.click();
+  };
+
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
-      {/* Header & Search Area */}
-      <div className="shrink-0 flex flex-col gap-4 p-4 pb-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-            Clases / Estudiantes
-          </h2>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
-                <span className="text-xs font-bold">{filtered.length} registrados</span>
-              </div>
+    <>
+      <div className={configUi.pageShell}>
+        {/* --- HEADER --- */}
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Comunidad Estudiantil
+            </h2>
+            <span className={configUi.countBadge}>{filtered.length} registrados</span>
+          </div>
+
+          <div className={configUi.toolbar}>
+            <div className={configUi.searchWrap}>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar por nombre o documento..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className={configUi.inputWithIcon}
+              />
             </div>
+
+            <button onClick={exportCSV} className={configUi.iconButton} title="Exportar CSV">
+              <Download size={20} />
+            </button>
+
+            <button onClick={() => openModal("add")} className={configUi.primaryButton}>
+              <Plus size={18} />
+              Registrar Estudiante
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              placeholder="Buscar por nombre o documento..."
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
-            />
-          </div>
-          <button
-            onClick={() => openModal("add")}
-            className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-          >
-            <Plus size={18} />
-            Registrar Estudiante
-          </button>
-        </div>
-      </div>
-
-      {/* Table Area */}
-      <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-        <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-left relative">
-              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+        {/* --- TABLE --- */}
+        <div className={configUi.tableCard}>
+          <div className={configUi.tableScroll}>
+            <table className={configUi.table}>
+              <thead className={configUi.thead}>
                 <tr>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Estudiante</th>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Documento</th>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Contacto</th>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
-                  <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[30%]`}>Estudiante</th>
+                  <th className={`${configUi.th} w-[20%]`}>Identificación</th>
+                  <th className={`${configUi.th} w-[20%]`}>Contacto</th>
+                  <th className={`${configUi.th} text-center w-[15%]`}>Estado</th>
+                   <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {loading ? (
-                  <tr><td colSpan="5" className="p-8 text-center text-gray-400 text-sm italic">Cargando comunidad...</td></tr>
+                  <tr><td colSpan="5" className={configUi.emptyState}>Cargando comunidad...</td></tr>
+                ) : error ? (
+                  <tr><td colSpan="5" className={configUi.emptyState}><div className="text-red-500">{error}</div></td></tr>
                 ) : currentItems.length === 0 ? (
-                  <tr><td colSpan="5" className="p-12 text-center text-gray-400 italic">No se encontraron estudiantes</td></tr>
+                  <tr><td colSpan="5" className={configUi.emptyState}>No se han encontrado registros.</td></tr>
                 ) : (
                   currentItems.map((s) => (
-                    <tr key={s.id_estudiante} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                      <td className="px-5 py-4">
+                    <tr key={s.id_estudiante} className={configUi.row}>
+                      <td className={configUi.td}>
                         <div className="flex items-center gap-3">
-                          <img
-                            src={s.foto_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + s.id_usuario}
-                            alt={s.nombre_completo}
-                            className="h-10 w-10 rounded-xl object-cover ring-2 ring-slate-100 group-hover:ring-white transition"
-                          />
-                          <div>
-                            <p className="font-bold text-[#040529] text-sm leading-tight">{s.nombre_completo}</p>
-                            <p className="text-[10px] text-gray-400 mt-0.5">{s.nivel_experiencia}</p>
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-[#16315f] font-bold text-sm shadow-sm border border-slate-100 overflow-hidden">
+                             {s.foto_url ? (
+                                <img src={s.foto_url} alt={s.nombre_completo} className="h-full w-full object-cover" />
+                             ) : (
+                                <User size={20} />
+                             )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-[#16315f] text-sm leading-tight mb-0.5 truncate">{s.nombre_completo}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{s.nivel_experiencia}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-xs font-bold text-slate-500">{s.documento}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-col text-[10px] text-slate-500">
-                          <span className="flex items-center gap-1"><Phone size={10} /> {s.telefono}</span>
-                          <span className="flex items-center gap-1 truncate max-w-[140px]"><Mail size={10} /> {s.email}</span>
-                        </div>
+                      <td className={configUi.td}>
+                         <div className="flex flex-col">
+                            <span className="text-sm font-medium text-slate-600">{s.documento}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">{s.tipo_documento || "CC"}</span>
+                         </div>
                       </td>
-                      <td className="px-5 py-4 text-center">
+                      <td className={configUi.td}>
+                         <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium text-slate-600 flex items-center gap-1.5"><Phone size={12} className="text-slate-400" /> {s.telefono}</span>
+                            <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1.5"><Mail size={12} className="text-slate-400" /> {s.email}</span>
+                         </div>
+                      </td>
+                      <td className={`${configUi.td} text-center`}>
                         <button
                           onClick={() => handleStatusToggle(s)}
                           className={cn(
-                            "px-3 py-1 rounded-full text-[10px] font-bold border transition-colors shadow-sm",
-                            s.estado === 'Activo' ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                            configUi.pill,
+                            s.estado === 'Activo' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
                           )}
                         >
                           {s.estado}
                         </button>
                       </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className={`${configUi.td} text-right`}>
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openModal("details", s)}
-                            className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
-                            title="Ver Perfil"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => openModal("edit", s)}
-                            className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
-                            title="Editar"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            onClick={() => openModal("delete", s)}
-                            className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <button onClick={() => openModal("details", s)} className={configUi.actionButton} title="Ver Perfil"><Eye size={14} /></button>
+                          <button onClick={() => openModal("edit", s)} className={configUi.actionButton} title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => openModal("delete", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -258,338 +259,435 @@ const Students = () => {
             </table>
           </div>
 
-          <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-            <p className="text-xs text-gray-500 font-medium">
-              Página <span className="font-bold text-[#040529]">{currentPage}</span> de <span className="font-bold text-[#040529]">{totalPages}</span>
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-              >
-                <ChevronLeft className="h-4 w-4 text-gray-600" />
-              </button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-              >
-                <ChevronRight className="h-4 w-4 text-gray-600" />
-              </button>
+          {/* Pagination */}
+          {totalPages > 0 && (
+            <div className={configUi.paginationBar}>
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Notifications */}
+      {/* --- NOTIFICATIONS --- */}
       <AnimatePresence>
         {notification.show && (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 300 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
+            exit={{ opacity: 0, x: 300 }}
+            className={`fixed top-4 right-4 z-[9999] px-4 py-3 rounded-xl shadow-2xl text-white font-bold flex items-center gap-3 border border-white/20 backdrop-blur-md ${notification.type === "success" ? "bg-[#16315f]" : "bg-red-600"}`}
           >
+            {notification.type === "success" ? <TrendingUp size={18} /> : <AlertCircle size={18} />}
             {notification.message}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Modals */}
+      {/* --- MODALES --- */}
       <AnimatePresence>
         {modal && (
           <motion.div
-            className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
+              className={configUi.modalBackdrop}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
           >
             <motion.div
-              className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === 'delete' ? 'max-w-sm w-full' :
-                  modal === 'details' ? 'max-w-4xl w-full' : 'max-w-2xl w-full'
-                }`}
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
+                className={`${configUi.modalPanel} ${modal === 'delete' ? 'max-w-sm' : 'max-w-4xl'}`}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ type: "spring", damping: 20 }}
+                onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#040529] flex items-center gap-2">
-                    {modal === 'add' ? <><Plus size={20} /> Nuevo Estudiante</> :
-                      modal === 'edit' ? <><Pencil size={20} /> Editar Perfil</> :
-                        modal === 'delete' ? <><AlertCircle size={20} /> Confirmar</> :
-                          <><User size={20} /> Perfil de Estudiante</>}
-                  </h3>
-                  <button onClick={closeModal} className="text-gray-400 hover:text-[#040529] p-1 rounded-full hover:bg-gray-100 transition">
-                    <X size={20} />
-                  </button>
+              <div className="flex flex-col">
+                <div className={configUi.modalHeader}>
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16315f] border border-slate-100 shadow-inner">
+                            {modal === 'delete' ? <Trash2 size={24} className="text-red-500" /> : <User size={24} />}
+                        </div>
+                        <div>
+                            <h3 className={configUi.modalTitle}>
+                                {modal === 'add' ? "Registrar Estudiante" :
+                                 modal === 'edit' ? "Editar Perfil" :
+                                 modal === 'delete' ? "Confirmar acción" : "Ficha del Estudiante"}
+                            </h3>
+                            <p className={configUi.modalSubtitle}>
+                                {modal === 'delete' ? "Esta acción es irreversible." : "Gestión integral del perfil y datos académicos."}
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={closeModal} className={configUi.modalClose}>
+                        <X size={20} />
+                    </button>
                 </div>
 
-                {modal === 'delete' ? (
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-6 italic underline decoration-red-100">¿Estás seguro de eliminar a <span className="font-bold text-red-600">{selectedStudent?.nombre_completo}</span>? Esta acción es irreversible.</p>
-                    <div className="flex justify-center gap-3">
-                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">Cancelar</button>
-                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg">Eliminar</button>
-                    </div>
-                  </div>
-                ) : modal === 'details' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[70vh] overflow-y-auto pr-2">
-                    <div className="md:col-span-1 flex flex-col items-center text-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <img
-                        src={details?.foto_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + details?.id_usuario}
-                        className="h-28 w-28 rounded-2xl object-cover mb-4 ring-4 ring-white shadow-md"
-                        alt="Profile"
-                      />
-                      <h4 className="font-bold text-[#040529]">{details?.nombre_completo}</h4>
-                      <p className="text-xs text-slate-400">{details?.email}</p>
-                      <div className="mt-4 pt-4 border-t border-slate-200 w-full text-left space-y-2">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Contacto</p>
-                        <p className="text-sm text-slate-600 flex items-center gap-2"><Phone size={12} /> {details?.telefono}</p>
-                        <p className="text-sm text-slate-600 flex items-center gap-2 font-bold"><Hash size={12} /> {details?.documento} ({details?.tipo_documento})</p>
-                      </div>
-                    </div>
-                    <div className="md:col-span-2 space-y-6">
-                      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2"><Info size={14} className="text-slate-200" /></div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                          <CheckCircle2 size={14} className="text-blue-500" /> Información Deportiva
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div><label className="text-[9px] font-bold text-slate-300 block">NIVEL</label><p className="text-sm font-bold text-blue-600">{details?.nivel_experiencia}</p></div>
-                          <div><label className="text-[9px] font-bold text-slate-300 block">EDAD</label><p className="text-sm font-bold text-[#040529]">{details?.edad} años</p></div>
-                          <div className="col-span-2"><label className="text-[9px] font-bold text-slate-300 block">CONDICIONES MÉDICAS</label><p className="text-sm text-slate-600">{details?.enfermedad || "Ninguna registrada"}</p></div>
+                <div className={configUi.modalContent}>
+                    {modal === 'delete' ? (
+                        <div className="py-4 text-center">
+                            <p className="text-sm leading-6 text-[#6b84aa]">
+                                ¿Estás seguro de eliminar a <span className="font-bold text-[#d44966]">{selectedStudent?.nombre_completo}</span>?
+                            </p>
                         </div>
-                      </div>
+                    ) : modal === 'details' ? (
+                        <div className="flex flex-col lg:flex-row gap-8">
+                             {/* Sidebar Perfil */}
+                             <div className="w-full lg:w-1/3 space-y-4">
+                                <div className="w-full aspect-square bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center overflow-hidden shadow-inner p-6 text-center">
+                                    <div className="h-24 w-24 rounded-full bg-white shadow-xl flex items-center justify-center text-[#16315f] border-4 border-slate-100 mb-4 overflow-hidden">
+                                        {details?.foto_url ? (
+                                            <img src={details.foto_url} className="h-full w-full object-cover" alt="Profile" />
+                                        ) : (
+                                            <User size={48} strokeWidth={1} />
+                                        )}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-[#16315f] text-lg leading-tight truncate w-full">{details?.nombre_completo}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{details?.email}</p>
+                                    </div>
+                                </div>
 
-                      <div className="bg-slate-900 p-4 rounded-2xl text-white shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 opacity-10"><Shield size={40} /></div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Acudiente de Emergencia</h4>
-                        {details?.acudiente_nombre ? (
-                          <div className="grid grid-cols-2 gap-4">
-                            <div><label className="text-[9px] font-bold text-slate-500 block">NOMBRE</label><p className="text-sm font-bold">{details.acudiente_nombre}</p></div>
-                            <div><label className="text-[9px] font-bold text-slate-500 block">PARENTESCO</label><p className="text-sm font-bold text-blue-400">{details.acudiente_parentesco}</p></div>
-                            <div className="col-span-2"><label className="text-[9px] font-bold text-slate-500 block">TELÉFONO</label><p className="text-sm font-bold flex items-center gap-2"><Phone size={12} /> {details.acudiente_telefono}</p></div>
-                          </div>
-                        ) : <p className="text-sm italic text-slate-500">No se registró información de acudiente</p>}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  // Formulario de Registro / Edición
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      {[1, 2, 3].map((s) => (
-                        <div key={s} className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: currentStep >= s ? "100%" : "0%" }}
-                            className="h-full bg-[#040529]"
-                          />
+                                <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/30">
+                                    <p className="text-[10px] text-blue-800 font-bold uppercase tracking-widest mb-3 italic flex items-center gap-2">
+                                        <Hash size={12} /> Contacto
+                                    </p>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span className="text-slate-400 font-medium tracking-tight">Teléfono</span>
+                                            <span className="text-[#16315f] font-bold">{details?.telefono || "—"}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span className="text-slate-400 font-medium tracking-tight">ID ({details?.tipo_documento})</span>
+                                            <span className="text-[#16315f] font-bold">{details?.documento || "—"}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[11px]">
+                                            <span className="text-slate-400 font-medium tracking-tight">Estado</span>
+                                            <span className={cn("px-2 py-0.5 rounded-md font-bold", details?.estado === 'Activo' ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                                                {details?.estado || "—"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                             </div>
+
+                             {/* Info Principal */}
+                             <div className="flex-1 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1 relative overflow-hidden group">
+                                        <div className="absolute top-4 right-4 text-blue-100 transition-transform group-hover:scale-125 duration-500">
+                                            <TrendingUp size={40} strokeWidth={3} />
+                                        </div>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none italic mb-2">Nivel Experiencia</p>
+                                        <p className="text-2xl font-black text-[#16315f]">{details?.nivel_experiencia || "—"}</p>
+                                    </div>
+                                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1 relative overflow-hidden group">
+                                        <div className="absolute top-4 right-4 text-slate-100 transition-transform group-hover:scale-125 duration-500">
+                                            <Calendar size={40} strokeWidth={3} />
+                                        </div>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none italic mb-2">Edad Reportada</p>
+                                        <p className="text-2xl font-black text-[#16315f]">{details?.edad || "—"} <span className="text-xs font-bold text-slate-300">Años</span></p>
+                                    </div>
+                                </div>
+
+                                <div className={configUi.fieldGroup}>
+                                    <label className={configUi.fieldLabel}>Condiciones Médicas</label>
+                                    <div className="p-4 bg-white rounded-2xl border border-slate-200 text-sm text-slate-600 font-medium italic min-h-[60px]">
+                                        {details?.enfermedad || "Ninguna condición registrada."}
+                                    </div>
+                                </div>
+
+                                <div className="p-6 bg-[#16315f] rounded-[2rem] text-white shadow-xl shadow-blue-900/10 relative overflow-hidden">
+                                     <div className="absolute -right-4 -bottom-4 opacity-10">
+                                        <Shield size={120} />
+                                     </div>
+                                     <h4 className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <Shield size={14} /> Acudiente de Emergencia
+                                     </h4>
+                                     {details?.acudiente_nombre ? (
+                                        <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                                            <div className="space-y-0.5"><label className="text-[9px] font-bold text-blue-300 uppercase block">Nombre Completo</label><p className="font-bold text-lg leading-tight">{details.acudiente_nombre}</p></div>
+                                            <div className="space-y-0.5"><label className="text-[9px] font-bold text-blue-300 uppercase block">Parentesco</label><p className="font-bold text-lg text-emerald-400">{details.acudiente_parentesco}</p></div>
+                                            <div className="col-span-2 space-y-0.5"><label className="text-[9px] font-bold text-blue-300 uppercase block">Canal de Contacto</label><p className="font-bold text-lg flex items-center gap-2"><Phone size={16} className="text-emerald-400" /> {details.acudiente_telefono}</p></div>
+                                        </div>
+                                     ) : (
+                                         <p className="text-sm italic text-blue-300 font-medium">No se ha asignado un acudiente para este registro.</p>
+                                     )}
+                                </div>
+                             </div>
                         </div>
-                      ))}
-                    </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Progresión de pasos */}
+                            <div className="flex items-center gap-3 px-4 py-3 bg-slate-50/50 rounded-2xl border border-slate-100/50">
+                                {[
+                                    { step: 1, label: "Contacto" },
+                                    { step: 2, label: "Identidad" },
+                                    { step: 3, label: "Médico" }
+                                ].map((s) => (
+                                    <div key={s.step} className="flex-1 flex items-center gap-2">
+                                        <div className={cn(
+                                            "h-7 w-7 rounded-lg flex items-center justify-center text-xs font-bold transition duration-500",
+                                            currentStep >= s.step ? "bg-[#16315f] text-white shadow-md shadow-blue-500/20" : "bg-slate-200 text-slate-400"
+                                        )}>
+                                            {s.step}
+                                        </div>
+                                        <span className={cn(
+                                            "text-[10px] font-bold uppercase tracking-wider hidden sm:block transition-colors duration-500",
+                                            currentStep >= s.step ? "text-[#16315f]" : "text-slate-300"
+                                        )}>{s.label}</span>
+                                        {s.step < 3 && <div className="flex-1 h-px bg-slate-200" />}
+                                    </div>
+                                ))}
+                            </div>
 
-                    <div className="max-h-[60vh] overflow-y-auto pr-2">
-                      {currentStep === 1 && (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                          <h4 className="text-sm font-bold text-[#040529] border-b pb-2">1. Datos de Contacto</h4>
-                          <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nombre Completo *</label>
-                            <input
-                              type="text"
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
-                              value={formData.nombre_completo}
-                              onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
-                              placeholder="Ej: Juan Pérez"
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Correo Electrónico *</label>
-                              <input
-                                type="email"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="juan@email.com"
-                              />
+                            <div className="min-h-[340px] px-2 overflow-y-auto custom-scrollbar">
+                                {currentStep === 1 && (
+                                    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <p className="text-[10px] font-bold text-[#16315f] uppercase tracking-widest italic border-l-2 border-[#16315f] pl-2 leading-none">Información Básica del Estudiante</p>
+                                        <div className={configUi.fieldGroup}>
+                                            <label className={configUi.fieldLabel}>Nombre Completo *</label>
+                                            <div className="relative">
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    className={`${configUi.fieldInput} !pl-10`}
+                                                    value={formData.nombre_completo}
+                                                    onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
+                                                    placeholder="Ej: Juan Sebastián Pérez"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Email *</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="email"
+                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        value={formData.email}
+                                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                        placeholder="juan@ejemplo.com"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Teléfono *</label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        value={formData.telefono}
+                                                        onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                                                        placeholder="300 000 0000"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {modal === 'add' && (
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Nueva Contraseña *</label>
+                                                <div className="relative">
+                                                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="password"
+                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        value={formData.password}
+                                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                        placeholder="Mínimo 8 caracteres"
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 font-medium mt-1 ml-1 italic">Este será el acceso del estudiante a la plataforma.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {currentStep === 2 && (
+                                    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <p className="text-[10px] font-bold text-[#16315f] uppercase tracking-widest italic border-l-2 border-[#16315f] pl-2 leading-none">Perfil de Alumno</p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Tipo de Documento</label>
+                                                <select
+                                                    className={configUi.fieldSelect}
+                                                    value={formData.tipo_documento}
+                                                    onChange={(e) => setFormData({ ...formData, tipo_documento: e.target.value })}
+                                                >
+                                                    <option value="CC">Cédula de Cdad.</option>
+                                                    <option value="TI">Tarj. Identidad</option>
+                                                    <option value="CE">Cédula Extranjería</option>
+                                                </select>
+                                            </div>
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Documento *</label>
+                                                <div className="relative">
+                                                    <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        value={formData.documento}
+                                                        onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Género</label>
+                                                <select
+                                                    className={configUi.fieldSelect}
+                                                    value={formData.genero}
+                                                    onChange={(e) => setFormData({ ...formData, genero: e.target.value })}
+                                                >
+                                                    <option value="Masculino">Masculino</option>
+                                                    <option value="Femenino">Femenino</option>
+                                                    <option value="Otro">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Años / Edad</label>
+                                                <div className="relative">
+                                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="number"
+                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        value={formData.edad}
+                                                        onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Experiencia</label>
+                                                <select
+                                                    className={configUi.fieldSelect}
+                                                    value={formData.nivel_experiencia}
+                                                    onChange={(e) => setFormData({ ...formData, nivel_experiencia: e.target.value })}
+                                                >
+                                                    <option value="Principiante">Principiante</option>
+                                                    <option value="Intermedio">Intermedio</option>
+                                                    <option value="Avanzado">Avanzado</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {currentStep === 3 && (
+                                    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
+                                         <p className="text-[10px] font-bold text-[#16315f] uppercase tracking-widest italic border-l-2 border-[#16315f] pl-2 leading-none">Seguridad y Salud</p>
+                                         <div className={configUi.fieldGroup}>
+                                            <label className={configUi.fieldLabel}>Acudiente de Emergencia</label>
+                                            <div className="relative">
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    className={`${configUi.fieldInput} !pl-10`}
+                                                    value={formData.acudiente_nombre}
+                                                    onChange={(e) => setFormData({ ...formData, acudiente_nombre: e.target.value })}
+                                                    placeholder="Nombre del contacto..."
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Parentesco</label>
+                                                <select
+                                                    className={configUi.fieldSelect}
+                                                    value={formData.acudiente_parentesco}
+                                                    onChange={(e) => setFormData({ ...formData, acudiente_parentesco: e.target.value })}
+                                                >
+                                                    <option value="Padre/Madre">Padre/Madre</option>
+                                                    <option value="Herman@">Herman@</option>
+                                                    <option value="Tí@">Tí@</option>
+                                                    <option value="Amig@">Amig@</option>
+                                                </select>
+                                            </div>
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Teléfono Acudiente</label>
+                                                <div className="relative">
+                                                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                     <input
+                                                        type="text"
+                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        value={formData.acudiente_telefono}
+                                                        onChange={(e) => setFormData({ ...formData, acudiente_telefono: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className={configUi.fieldGroup}>
+                                            <label className={configUi.fieldLabel}>Historial / Condiciones Médicas</label>
+                                            <textarea
+                                                className={`${configUi.fieldInput} !h-24 resize-none`}
+                                                value={formData.enfermedad}
+                                                onChange={(e) => setFormData({ ...formData, enfermedad: e.target.value })}
+                                                placeholder="Ej: Asma, Alergias, Problemas de rodilla..."
+                                            />
+                                            <p className="text-[9px] text-slate-400 font-bold mt-1 ml-1 flex items-center gap-1.5 uppercase italic tracking-tighter"><Info size={10} /> Esta información es vital para los entrenadores durante las clases.</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Teléfono *</label>
-                              <input
-                                type="text"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
-                                value={formData.telefono}
-                                onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                                placeholder="300 123 4567"
-                              />
-                            </div>
-                          </div>
-                          {modal === 'add' && (
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Contraseña *</label>
-                              <input
-                                type="password"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm focus:ring-4 focus:ring-blue-50"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                placeholder="Min. 8 caracteres"
-                              />
-                            </div>
-                          )}
                         </div>
-                      )}
+                    )}
+                </div>
 
-                      {currentStep === 2 && (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                          <h4 className="text-sm font-bold text-[#040529] border-b pb-2">2. Identificación y Perfil</h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Tipo</label>
-                              <select
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
-                                value={formData.tipo_documento}
-                                onChange={(e) => setFormData({ ...formData, tipo_documento: e.target.value })}
-                              >
-                                <option value="CC">Cédula de Cdad.</option>
-                                <option value="TI">Tarj. Identidad</option>
-                                <option value="CE">Cédula Extranjería</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Documento *</label>
-                              <input
-                                type="text"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
-                                value={formData.documento}
-                                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
-                              />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Género</label>
-                              <select
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
-                                value={formData.genero}
-                                onChange={(e) => setFormData({ ...formData, genero: e.target.value })}
-                              >
-                                <option value="Masculino">Masculino</option>
-                                <option value="Femenino">Femenino</option>
-                                <option value="Otro">Otro</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Edad</label>
-                              <input
-                                type="number"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
-                                value={formData.edad}
-                                onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Experiencia</label>
-                            <select
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
-                              value={formData.nivel_experiencia}
-                              onChange={(e) => setFormData({ ...formData, nivel_experiencia: e.target.value })}
-                            >
-                              <option value="Principiante">Principiante</option>
-                              <option value="Intermedio">Intermedio</option>
-                              <option value="Avanzado">Avanzado</option>
-                            </select>
-                          </div>
-                        </div>
-                      )}
-
-                      {currentStep === 3 && (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                          <h4 className="text-sm font-bold text-[#040529] border-b pb-2">3. Acudiente e Información Médica</h4>
-                          <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nombre Acudiente</label>
-                            <input
-                              type="text"
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
-                              value={formData.acudiente_nombre}
-                              onChange={(e) => setFormData({ ...formData, acudiente_nombre: e.target.value })}
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Teléfono Acudiente</label>
-                              <input
-                                type="text"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm"
-                                value={formData.acudiente_telefono}
-                                onChange={(e) => setFormData({ ...formData, acudiente_telefono: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Parentesco</label>
-                              <select
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm bg-white"
-                                value={formData.acudiente_parentesco}
-                                onChange={(e) => setFormData({ ...formData, acudiente_parentesco: e.target.value })}
-                              >
-                                <option value="Padre/Madre">Padre/Madre</option>
-                                <option value="Herman@">Herman@</option>
-                                <option value="Tí@">Tí@</option>
-                                <option value="Amig@">Amig@</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Condiciones Médicas</label>
-                            <textarea
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none text-sm min-h-[80px] resize-none"
-                              value={formData.enfermedad}
-                              onChange={(e) => setFormData({ ...formData, enfermedad: e.target.value })}
-                              placeholder="Ej: Alergia al polen, Asma..."
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-3 pt-4 border-t">
-                      {currentStep > 1 && (
-                        <button
-                          onClick={() => setCurrentStep(prev => prev - 1)}
-                          className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold transition hover:bg-slate-200"
-                        >
-                          Anterior
+                <div className={configUi.modalFooter}>
+                    <span className="text-[10px] text-slate-400 italic font-medium">
+                        {modal === 'details' ? "Ficha de lectura del expediente." : "Verifica que todos los campos asteriscados (*) estén correctos."}
+                    </span>
+                    <div className="flex items-center gap-3">
+                        <button onClick={closeModal} className={configUi.secondaryButton}>
+                             {modal === 'details' ? "Entendido" : "Cancelar"}
                         </button>
-                      )}
-                      {currentStep < 3 ? (
-                        <button
-                          onClick={() => setCurrentStep(prev => prev + 1)}
-                          className="flex-[2] py-3 bg-[#040529] text-white rounded-xl text-sm font-bold shadow-lg hover:bg-[#040529]/90 transition"
-                        >
-                          Siguiente
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleSave}
-                          className="flex-[2] py-3 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition"
-                        >
-                          {modal === 'add' ? 'Finalizar Registro' : 'Guardar Cambios'}
-                        </button>
-                      )}
+
+                        {(modal === 'add' || modal === 'edit') && (
+                            <div className="flex gap-2">
+                                {currentStep > 1 && (
+                                    <button onClick={() => setCurrentStep(p => p - 1)} className={configUi.secondaryButton}>Atrás</button>
+                                )}
+                                {currentStep < 3 ? (
+                                    <button onClick={() => setCurrentStep(p => p + 1)} className={configUi.primarySoftButton}>Siguiente</button>
+                                ) : (
+                                    <button onClick={handleSave} className={configUi.primarySoftButton}>
+                                        {modal === 'add' ? 'Registrar Miembro' : 'Actualizar Perfil'}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {modal === 'delete' && (
+                             <button onClick={handleDelete} className={configUi.dangerButton}>Confirmar Baja</button>
+                        )}
                     </div>
-                  </div>
-                )}
+                </div>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 };
 
