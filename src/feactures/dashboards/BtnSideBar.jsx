@@ -2,7 +2,17 @@ import React from "react"
 import { Link } from "react-router-dom"
 import { ArrowDown } from "lucide-react"
 
-export const BtnSideBar = ({ title, children, style, styleIcon, link, isCollapsed }) => {
+export const BtnSideBar = ({
+  title,
+  children,
+  style,
+  styleIcon,
+  link,
+  isCollapsed,
+  itemClassName = "",
+  iconClassName = "",
+  textClassName = "",
+}) => {
   const letters = title.split("")
 
   return (
@@ -12,6 +22,7 @@ export const BtnSideBar = ({ title, children, style, styleIcon, link, isCollapse
         ${style}
         group transition-all duration-300 flex items-center rounded-2xl
         ${isCollapsed ? "p-0 justify-center w-12 h-12 mx-auto" : "gap-3 px-3 py-2 hover:bg-slate-50"}
+        ${itemClassName}
         `}
       title={isCollapsed ? title : ""}
     >
@@ -19,6 +30,7 @@ export const BtnSideBar = ({ title, children, style, styleIcon, link, isCollapse
         `${styleIcon} transition-all duration-200 flex justify-center items-center rounded-xl shrink-0
          ${isCollapsed ? "w-11 h-11 bg-white shadow-md border border-slate-50" : "w-10 h-10 bg-slate-50"}
          text-slate-400 group-hover:text-white group-hover:bg-[#040529] group-hover:shadow-sm
+         ${iconClassName}
         `
       }>
         <span className="flex items-center justify-center">
@@ -27,7 +39,7 @@ export const BtnSideBar = ({ title, children, style, styleIcon, link, isCollapse
       </span>
 
       {!isCollapsed && (
-        <p className="text-[17px] md:text-[18px] font-bold tracking-tight text-slate-500 group-hover:text-[#040529] group-hover:translate-x-1 transition-all" style={{ fontFamily: '"Outfit", sans-serif' }}>
+        <p className={`text-[17px] md:text-[18px] font-bold tracking-tight text-slate-500 group-hover:text-[#040529] group-hover:translate-x-1 transition-all ${textClassName}`} style={{ fontFamily: '"Outfit", sans-serif' }}>
           {title}
         </p>
       )}

@@ -18,10 +18,9 @@ import {
   uploadClaseImage
 } from "../../services/clasesService";
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { configUi } from "../../configuracion/configUi";
+
+const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 export const Clases = () => {
   // --- ESTADOS ---
@@ -326,411 +325,496 @@ export const Clases = () => {
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white overflow-hidden">
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-2 p-1 pb-2">
-
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+      <div className={configUi.pageShell}>
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
               Gestión de Clases
             </h2>
-
-            {/* Compact Stats */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
-                  <Hash size={14} className="text-blue-600" />
-                  <span className="text-xs font-bold">{filteredAndSorted.length}</span>
-                </div>
-              </div>
-              <button
-                onClick={exportCSV}
-                className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm"
-                title="Exportar CSV"
-              >
-                <Download size={16} />
-              </button>
-            </div>
+            <span className={configUi.countBadge}>{filteredAndSorted.length} registros</span>
           </div>
 
-          {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-2 bg-slate-50/50 rounded-2xl border border-slate-100 px-3 py-2">
-            {/* Search & Create Group */}
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar clases..."
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
-                />
-              </div>
-              <button
-                onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-4 py-1.5 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-              >
-                <Plus size={18} />
-                Crear Clase
-              </button>
+          <div className={configUi.toolbar}>
+            {/* Search Bar */}
+            <div className={configUi.searchWrap}>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar clases..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className={configUi.inputWithIcon}
+              />
             </div>
 
-            {/* Filters (Larger) */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-              {[
-                { id: "descripcion", label: "Nombre" },
-                { id: "nombre_nivel", label: "Nivel" },
-                { id: "nombre_sede", label: "Sede" },
-                { id: "cupo_maximo", label: "Cupo" },
-              ].map((field) => (
-                <button
-                  key={field.id}
-                  onClick={() => toggleSort(field.id)}
-                  className={cn(
-                    "px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider rounded-xl border transition flex items-center gap-1 shrink-0 select-none",
-                    sortField === field.id
-                      ? "bg-blue-800 text-white border-blue-800 shadow-md"
-                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
-                  )}
-                >
-                  {field.label}
-                  {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
-                </button>
-              ))}
+            {/* Filter Dropdown (Sorted by fields as placeholders for now, matching Admin style) */}
+            <div className="relative hidden md:block">
+              <select
+                value={sortField}
+                onChange={(e) => { setSortField(e.target.value); setCurrentPage(1); }}
+                className={configUi.select}
+              >
+                <option value="descripcion">Nombre</option>
+                <option value="nombre_nivel">Nivel</option>
+                <option value="nombre_sede">Sede</option>
+                <option value="cupo_maximo">Cupo</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+              </div>
             </div>
+
+            {/* Download Button */}
+            <button
+              onClick={exportCSV}
+              className={configUi.iconButton} title="Descargar Reporte"
+            >
+              <Download size={20} />
+            </button>
+
+            {/* Create Button */}
+            <button
+              onClick={() => openModal("crear")}
+              className={`${configUi.primaryButton} whitespace-nowrap`}
+            >
+              <Plus size={18} />
+              Crear Clase
+            </button>
           </div>
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-
-            {/* Table Content */}
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+        <div className={configUi.tableCard}>
+          <div className={configUi.tableScroll}>
+            <table className={configUi.table}>
+              <thead className={configUi.thead}>
+                <tr>
+                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[20%]`}>Clase</th>
+                  <th className={`${configUi.th} text-center w-[15%]`}>Nivel/Sede</th>
+                  <th className={`${configUi.th} w-[15%]`}>Instructores</th>
+                  <th className={`${configUi.th} text-center w-[10%]`}>Cupo</th>
+                  <th className={`${configUi.th} w-[15%]`}>Horario</th>
+                  <th className={`${configUi.th} text-center w-[10%]`}>Estado</th>
+                  <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
                   <tr>
-                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider">Clase</th>
-                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-center">Nivel/Sede</th>
-                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider">Instructores</th>
-                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-center">Cupo</th>
-                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider">Horario</th>
-                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-center">Estado</th>
-                    <th className="px-3 py-3 font-bold text-[10px] uppercase tracking-wider text-right">Acciones</th>
+                    <td colSpan="7" className={configUi.emptyState}>Cargando registros...</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr><td colSpan="7" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan="7" className="p-12 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2 text-red-500">
-                          <AlertCircle className="h-8 w-8 opacity-80" />
-                          <p className="font-medium">{error}</p>
-                          {backendError && (
-                            <p className="text-xs text-red-400 bg-red-50 px-3 py-1 rounded-full">
-                              Intenta iniciar el backend en el puerto 3000
-                            </p>
+                ) : error ? (
+                  <tr>
+                    <td colSpan="7" className={configUi.emptyState}>
+                      <div className="flex flex-col items-center justify-center gap-2 text-red-500">
+                        <AlertCircle className="h-8 w-8 opacity-80" />
+                        <p className="font-medium">{error}</p>
+                        {backendError && (
+                          <p className="text-xs text-red-400 bg-red-50 px-3 py-1 rounded-full italic">
+                            Intenta iniciar el backend en el puerto 3000
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : currentItems.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className={configUi.emptyState}>No se encontraron clases registradas.</td>
+                  </tr>
+                ) : (
+                  currentItems.map((c) => (
+                    <tr key={c.id_clase} className={configUi.row}>
+                      <td className={configUi.td}>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center text-[#16315f] font-bold text-xs uppercase">
+                            {c.url_imagen ? (
+                              <img src={c.url_imagen} alt={c.descripcion} className="h-full w-full object-cover" />
+                            ) : (
+                              c.descripcion?.substring(0, 2) || "CL"
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-[#16315f] text-sm leading-tight mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{c.descripcion}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{c.dia_semana}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={`${configUi.td} text-center`}>
+                        <div className="flex flex-col items-center gap-0">
+                          <span className="text-sm font-semibold text-[#16315f]">{c.nombre_level}</span>
+                          <span className="text-[10px] text-slate-400">{c.nombre_sede}</span>
+                        </div>
+                      </td>
+                      <td className={configUi.td}>
+                        <div className="flex -space-x-2 overflow-hidden py-1">
+                          {c.instructores?.slice(0, 3).map((inst, i) => (
+                            <div key={i} className="h-6 w-6 rounded-full ring-2 ring-white bg-blue-100 flex items-center justify-center text-[9px] text-[#16315f] font-bold shadow-sm" title={inst.nombre_instructor}>
+                              {inst.nombre_instructor.charAt(0)}
+                            </div>
+                          ))}
+                          {(c.instructores?.length || 0) > 3 && (
+                            <div className="h-6 w-6 rounded-full ring-2 ring-white bg-slate-100 flex items-center justify-center text-[9px] text-slate-500 font-bold shadow-sm">
+                              +{(c.instructores?.length || 0) - 3}
+                            </div>
                           )}
                         </div>
                       </td>
-                    </tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="p-12 text-center text-gray-400">
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                          <Hash className="h-8 w-8" />
-                          <p className="text-sm">No se encontraron clases registradas</p>
+                      <td className={`${configUi.td} text-center`}>
+                        <span className="bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-100 italic">
+                          {c.cupo_maximo}
+                        </span>
+                      </td>
+                      <td className={`${configUi.td} text-xs text-slate-500 font-medium`}>
+                        {c.hora_inicio && c.hora_fin ? `${c.hora_inicio.substring(0, 5)} - ${c.hora_fin.substring(0, 5)}` : "—"}
+                      </td>
+                      <td className={`${configUi.td} text-center`}>
+                        <span className={cn(
+                          configUi.pill,
+                          c.estado === "Disponible" ? "bg-emerald-50 text-emerald-600" :
+                            c.estado === "Ocupado" ? "bg-amber-50 text-amber-600" :
+                              "bg-red-50 text-red-600"
+                        )}>
+                          {c.estado}
+                        </span>
+                      </td>
+                      <td className={`${configUi.td} text-right`}>
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openModal("ver", c)} className={configUi.actionButton} title="Ver"><Eye size={14} /></button>
+                          <button onClick={() => openModal("editar", c)} className={configUi.actionButton} title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => openModal("eliminar", c)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
-                  ) : (
-                    currentItems.map((c) => (
-                      <tr key={c.id_clase} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-100 overflow-hidden border border-gray-100 shadow-sm">
-                              {c.url_imagen ? (
-                                <img src={c.url_imagen} alt={c.descripcion} className="h-full w-full object-cover" />
-                              ) : (
-                                <div className="h-full w-full flex items-center justify-center bg-[#040529] text-[#F0E6E6] font-bold text-xs uppercase">
-                                  {c.descripcion?.substring(0, 2) || "CL"}
-                                </div>
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-[#040529] text-sm leading-tight mb-0.5">{c.descripcion}</p>
-                              <p className="text-[10px] text-gray-500 font-medium">{c.dia_semana}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <div className="flex flex-col items-center gap-0">
-                            <span className="text-sm font-semibold text-gray-700">{c.nombre_nivel}</span>
-                            <span className="text-[10px] text-gray-500">{c.nombre_sede}</span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex -space-x-2 overflow-hidden py-1">
-                            {c.instructores?.slice(0, 3).map((inst, i) => (
-                              <div key={i} className="h-6 w-6 rounded-full ring-2 ring-white bg-blue-100 flex items-center justify-center text-[9px] text-blue-900 font-bold shadow-sm" title={inst.nombre_instructor}>
-                                {inst.nombre_instructor.charAt(0)}
-                              </div>
-                            ))}
-                            {(c.instructores?.length || 0) > 3 && (
-                              <div className="h-6 w-6 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-[9px] text-gray-600 font-bold shadow-sm">
-                                +{(c.instructores?.length || 0) - 3}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-xs font-bold border border-gray-200">
-                            {c.cupo_maximo}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-xs text-gray-600 font-medium">
-                          {c.hora_inicio && c.hora_fin ? `${c.hora_inicio.substring(0, 5)} - ${c.hora_fin.substring(0, 5)}` : "—"}
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <span className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm",
-                            c.estado === "Disponible" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                              c.estado === "Ocupado" ? "bg-amber-50 text-amber-600 border-amber-100" :
-                                "bg-red-50 text-red-600 border-red-100"
-                          )}>
-                            {c.estado}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button onClick={() => openModal("ver", c)} className="p-1.5 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye size={14} /></button>
-                            <button onClick={() => openModal("editar", c)} className="p-1.5 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={14} /></button>
-                            <button onClick={() => openModal("eliminar", c)} className="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 size={14} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Footer Pagination */}
-            {totalPages > 1 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">
-                  Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
-                </p>
-                <div className="flex items-center gap-2">
-                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
-                  <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
-                </div>
-              </div>
-            )}
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
 
-        {/* --- NOTIFICATIONS & MODALS (UNCHANGED) --- */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
-              {notification.message}
-            </motion.div>
+          {/* Pagination Footer */}
+          {totalPages > 0 && (
+            <div className={configUi.paginationBar}>
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
+      </div>
 
-        <AnimatePresence>
-          {modal && (
+      {/* Notificación */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 300 }}
+            transition={{ duration: 0.3 }}
+            className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-[#16315f]" : "bg-red-600"}`}
+          >
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modales */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div
+            className={configUi.modalBackdrop}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+          >
             <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={closeModal}
+              className={`${configUi.modalPanel} ${modal === "eliminar" ? "max-w-sm" : "max-w-4xl"}`}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "eliminar" ? "max-w-sm w-full" : "max-w-4xl w-full"}`}
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* --- MODAL CONTENT PRESERVED --- */}
-                {modal === "eliminar" ? (
-                  <div className="p-6 text-center">
-                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={24} /></div>
-                    <h3 className="text-lg font-bold text-[#040529] mb-2">Eliminar Clase</h3>
-                    <p className="text-sm text-gray-500 mb-6">¿Estás seguro? No podrás deshacer esta acción.</p>
-                    <div className="flex justify-center gap-3">
-                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                      <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Eliminar</button>
-                    </div>
+              <div className="flex flex-col">
+                <div className={configUi.modalHeader}>
+                  <div>
+                    <h3 className={configUi.modalTitle}>
+                      {modal === "crear" ? "Nueva Clase" : modal === "editar" ? "Editar Clase" : modal === "ver" ? "Detalles de la Clase" : "Eliminar Clase"}
+                    </h3>
+                    <p className={configUi.modalSubtitle}>
+                      {modal === "crear" || modal === "editar" ? "Gestiona los detalles, horarios e instructores de la clase." : modal === "ver" ? "Información detallada de la clase seleccionada." : "Esta acción no se puede deshacer."}
+                    </p>
                   </div>
-                ) : (
-                  <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
-                    {/* Left Side (Visual) */}
-                    <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                      <div className="w-full aspect-video bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-gray-300 overflow-hidden border border-gray-100">
-                        {formData.url_imagen ? (
-                          <img src={formData.url_imagen} alt="Preview" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="flex flex-col items-center gap-2">
-                             <ImageIcon size={48} strokeWidth={1} />
-                             <span className="text-[10px] font-bold text-gray-400">SIN IMAGEN</span>
-                          </div>
-                        )}
+                  <button onClick={closeModal} className={configUi.modalClose}>
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className={configUi.modalContent}>
+                  {modal === "eliminar" ? (
+                    <div className="py-4 text-center">
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
+                        <Trash2 size={30} />
                       </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Visualización de Clase</p>
+                      <p className="text-sm leading-6 text-[#6b84aa]">
+                        ¿Estás seguro de eliminar la clase <span className="font-bold text-[#d44966]">{selectedClase?.descripcion}</span>?
+                      </p>
                     </div>
-
-                    {/* Right Side (Form) */}
-                    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-[#040529]">
-                          {modal === "crear" ? "Nueva Clase" : modal === "editar" ? "Editar Clase" : "Detalles"}
-                        </h3>
-                        <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
-                      </div>
-
-                      <form className="space-y-5">
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Descripción / Nombre</label>
-                          <input type="text" name="descripcion" value={formData.descripcion} onChange={handleChange} readOnly={modal === "ver"} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]" placeholder="Ej: Yoga Matutino" />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nivel</label>
-                            <select name="id_nivel" value={formData.id_nivel} onChange={handleChange} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20">
-                              <option value="">Seleccionar</option>
-                              {niveles.map(n => <option key={n.id_nivel} value={n.id_nivel}>{n.nombre_nivel}</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Sede</label>
-                            <select name="id_sede" value={formData.id_sede} onChange={handleChange} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20">
-                              <option value="">Seleccionar</option>
-                              {sedes.map(s => <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>)}
-                            </select>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Instructores</label>
-                          <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-200 min-h-[60px]">
-                            <div className="flex flex-wrap gap-2 mb-2">
-                              {formData.instructores.map((inst, idx) => (
-                                <span key={idx} className="bg-white border border-gray-200 text-xs px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
-                                  {instructores.find(i => i.id_instructor == inst.id_instructor)?.nombre_completo}
-                                  {modal !== "ver" && <button type="button" onClick={() => handleEliminarInstructor(idx)} className="text-gray-400 hover:text-red-500"><X size={12} /></button>}
-                                </span>
-                              ))}
+                  ) : (
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      {/* Left: Image Preview & Instructors */}
+                      <div className="w-full lg:w-1/3 space-y-4">
+                        <div className="w-full aspect-video bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center overflow-hidden shadow-inner group relative">
+                          {formData.url_imagen ? (
+                            <img src={formData.url_imagen} alt="Preview" className="w-full h-full object-cover transition duration-500 group-hover:scale-110" />
+                          ) : (
+                            <div className="flex flex-col items-center gap-2 text-slate-300">
+                              <ImageIcon size={48} strokeWidth={1} />
+                              <span className="text-[10px] font-bold uppercase tracking-widest italic">Sin Imagen</span>
                             </div>
-                            {modal !== "ver" && (
-                              <div className="flex gap-2">
-                                <select name="instructorTemporal" value={formData.instructorTemporal} onChange={handleChange} className="flex-1 text-sm bg-white border border-gray-300 rounded-md px-2 py-1 outline-none">
-                                  <option value="">+ Agregar Instructor</option>
-                                  {instructores.filter(i => !formData.instructores.find(fi => fi.id_instructor == i.id_instructor)).map(i => <option key={i.id_instructor} value={i.id_instructor}>{i.nombre_completo}</option>)}
-                                </select>
-                                <button type="button" onClick={handleAgregarInstructor} className="px-3 py-1 bg-[#040529] text-white text-xs font-bold rounded-md">Add</button>
-                              </div>
-                            )}
-                          </div>
+                          )}
+                          {uploading && (
+                             <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                                <TrendingUp className="animate-spin text-[#16315f]" size={24} />
+                             </div>
+                          )}
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Día</label>
-                            <select name="dia_semana" value={formData.dia_semana} onChange={handleChange} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none">
-                              <option value="">Seleccionar</option>
-                              {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(d => <option key={d} value={d}>{d}</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Cupo</label>
-                            <input type="number" name="cupo_maximo" value={formData.cupo_maximo} onChange={handleChange} readOnly={modal === "ver"} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none" placeholder="00" min="1" />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div><label className="text-xs font-bold text-gray-500 uppercase ml-1">Inicio</label><input type="time" name="hora_inicio" value={formData.hora_inicio} onChange={handleChange} readOnly={modal === "ver"} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none" /></div>
-                          <div><label className="text-xs font-bold text-gray-500 uppercase ml-1">Fin</label><input type="time" name="hora_fin" value={formData.hora_fin} onChange={handleChange} readOnly={modal === "ver"} disabled={modal === "ver"} className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none" /></div>
-                        </div>
-
-                        <div className="space-y-3 pt-2">
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1 block">Imagen de la Clase</label>
-                          <div className="flex flex-col gap-3">
-                            <div className="flex gap-2">
-                              <div className="relative flex-1">
-                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        
+                        {modal !== "ver" && (
+                          <div className="space-y-3">
+                            <label className={configUi.fieldLabel}>Imagen de la Clase</label>
+                            <div className="flex flex-col gap-2">
+                              <div className="relative">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                                 <input
                                   type="text"
                                   name="url_imagen"
                                   value={formData.url_imagen}
                                   onChange={handleChange}
-                                  readOnly={modal === "ver"}
-                                  disabled={modal === "ver"}
-                                  className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
-                                  placeholder="Pegar URL de imagen..."
+                                  className={configUi.fieldInput}
+                                  placeholder="URL de imagen..."
                                 />
                               </div>
-                              {modal !== "ver" && (
-                                <div className="relative">
-                                  <input
-                                    type="file"
-                                    id="file-upload"
-                                    className="hidden"
-                                    onChange={handleFileUpload}
-                                    accept="image/*"
-                                    disabled={uploading}
-                                  />
-                                  <label
-                                    htmlFor="file-upload"
-                                    className={cn(
-                                      "flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 cursor-pointer hover:bg-gray-50 transition shadow-sm",
-                                      uploading && "opacity-50 cursor-not-allowed"
-                                    )}
-                                  >
-                                    <Upload size={14} />
-                                    {uploading ? "Subiendo..." : "Subir Archivo"}
-                                  </label>
-                                </div>
-                              )}
+                              <label className="cursor-pointer flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-[#16315f] py-2 rounded-xl transition shadow-sm font-bold text-xs uppercase tracking-wider">
+                                <Upload size={16} />
+                                {uploading ? "Subiendo..." : "Subir Archivo"}
+                                <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" disabled={uploading} />
+                              </label>
                             </div>
-                            {formData.url_imagen && (
-                                <p className="text-[10px] text-gray-400 truncate ml-1">
-                                    URL actual: {formData.url_imagen}
-                                </p>
+                          </div>
+                        )}
+
+                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
+                          <p className="text-[10px] text-blue-800 font-bold uppercase tracking-widest mb-2 italic">Instructores Asignados</p>
+                          <div className="flex flex-wrap gap-2">
+                            {formData.instructores.length === 0 ? (
+                              <p className="text-xs text-blue-400 italic">Ninguno asignado</p>
+                            ) : (
+                              formData.instructores.map((inst, idx) => (
+                                <div key={idx} className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-blue-100 shadow-sm animate-in fade-in zoom-in duration-200">
+                                  <span className="text-xs font-bold text-[#16315f]">
+                                    {instructores.find(i => i.id_instructor == inst.id_instructor)?.nombre_completo || "Instructor"}
+                                  </span>
+                                  {modal !== "ver" && (
+                                    <button type="button" onClick={() => handleEliminarInstructor(idx)} className="text-red-400 hover:text-red-600 transition">
+                                      <X size={12} />
+                                    </button>
+                                  )}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                          {modal !== "ver" && (
+                            <div className="mt-4 flex gap-2">
+                              <select
+                                name="instructorTemporal"
+                                value={formData.instructorTemporal}
+                                onChange={handleChange}
+                                className={`${configUi.fieldSelect} !py-1.5 !text-xs !bg-white`}
+                              >
+                                <option value="">+ Agregar</option>
+                                {instructores.filter(i => !formData.instructores.find(fi => fi.id_instructor == i.id_instructor)).map(i => (
+                                  <option key={i.id_instructor} value={i.id_instructor}>{i.nombre_completo}</option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={handleAgregarInstructor}
+                                className="px-3 bg-[#16315f] text-white rounded-lg text-xs font-bold shadow-md hover:bg-[#16315f]/90 transition"
+                              >
+                                Add
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right: Form Fields */}
+                      <div className="flex-1 space-y-4">
+                        <div className={configUi.fieldGroup}>
+                          <label className={configUi.fieldLabel}>Nombre / Descripción</label>
+                          {modal === "ver" ? (
+                            <div className={configUi.readOnlyField}>{formData.descripcion}</div>
+                          ) : (
+                            <input
+                              type="text"
+                              name="descripcion"
+                              value={formData.descripcion}
+                              onChange={handleChange}
+                              className={configUi.fieldInput}
+                              placeholder="Ej: Yoga para Iniciantes"
+                            />
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Nivel</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{niveles.find(n => n.id_nivel == formData.id_nivel)?.nombre_nivel || "—"}</div>
+                            ) : (
+                              <select name="id_nivel" value={formData.id_nivel} onChange={handleChange} className={configUi.fieldSelect}>
+                                <option value="">Seleccionar</option>
+                                {niveles.map(n => <option key={n.id_nivel} value={n.id_nivel}>{n.nombre_nivel}</option>)}
+                              </select>
+                            )}
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Sede</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{sedes.find(s => s.id_sede == formData.id_sede)?.nombre_sede || "—"}</div>
+                            ) : (
+                              <select name="id_sede" value={formData.id_sede} onChange={handleChange} className={configUi.fieldSelect}>
+                                <option value="">Seleccionar</option>
+                                {sedes.map(s => <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>)}
+                              </select>
                             )}
                           </div>
                         </div>
 
-                        <div className="pt-2">
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-2 block">Estado</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Día</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{formData.dia_semana || "—"}</div>
+                            ) : (
+                              <select name="dia_semana" value={formData.dia_semana} onChange={handleChange} className={configUi.fieldSelect}>
+                                <option value="">Seleccionar</option>
+                                {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(d => (
+                                  <option key={d} value={d}>{d}</option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Cupo Máximo</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{formData.cupo_maximo}</div>
+                            ) : (
+                              <input
+                                type="number"
+                                name="cupo_maximo"
+                                value={formData.cupo_maximo}
+                                onChange={handleChange}
+                                className={configUi.fieldInput}
+                                placeholder="0"
+                                min="1"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Hora Inicio</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{formData.hora_inicio || "—"}</div>
+                            ) : (
+                              <input type="time" name="hora_inicio" value={formData.hora_inicio} onChange={handleChange} className={configUi.fieldInput} />
+                            )}
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Hora Fin</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{formData.hora_fin || "—"}</div>
+                            ) : (
+                              <input type="time" name="hora_fin" value={formData.hora_fin} onChange={handleChange} className={configUi.fieldInput} />
+                            )}
+                          </div>
+                        </div>
+
+                        <div className={configUi.fieldGroup}>
+                          <label className={configUi.fieldLabel}>Estado</label>
                           {modal === "ver" ? (
-                            <span className="px-3 py-1 rounded-md text-sm font-bold bg-gray-100 text-gray-700 border border-gray-200">{formData.estado}</span>
+                            <div className="mt-1">
+                              <span className={cn(configUi.pill, formData.estado === "Disponible" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600")}>
+                                {formData.estado}
+                              </span>
+                            </div>
                           ) : (
-                            <div className="flex bg-gray-100 p-1 rounded-lg w-max">
+                            <div className="flex bg-slate-100 p-1.5 rounded-2xl w-max gap-1">
                               {["Disponible", "Ocupado", "Cancelado"].map(st => (
-                                <button type="button" key={st} onClick={() => setFormData(p => ({ ...p, estado: st }))} className={`px-3 py-1 text-xs font-bold rounded-md transition ${formData.estado === st ? "bg-white text-[#040529] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{st}</button>
+                                <button
+                                  type="button"
+                                  key={st}
+                                  onClick={() => setFormData(p => ({ ...p, estado: st }))}
+                                  className={cn(
+                                    "px-4 py-1.5 text-xs font-bold rounded-xl transition duration-300",
+                                    formData.estado === st ? "bg-white text-[#16315f] shadow-sm" : "text-slate-500 hover:bg-white/50"
+                                  )}
+                                >
+                                  {st}
+                                </button>
                               ))}
                             </div>
                           )}
                         </div>
-
-                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                          <button type="button" onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50">{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
-                          {modal !== "ver" && <button type="button" onClick={modal === "crear" ? handleCreate : handleEdit} className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10">Guardar Cambios</button>}
-                        </div>
-                      </form>
+                      </div>
                     </div>
+                  )}
+                </div>
+
+                <div className={configUi.modalFooter}>
+                  <span className="text-xs text-slate-400 font-medium italic">
+                    {modal === "ver" ? "Visualización de solo lectura." : "Asegúrate de verificar los horarios antes de guardar."}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={closeModal} className={configUi.secondaryButton}>
+                      {modal === "ver" ? "Cerrar" : "Cancelar"}
+                    </button>
+                    {modal === "crear" && (
+                      <button onClick={handleCreate} className={configUi.primarySoftButton}>Crear Clase</button>
+                    )}
+                    {modal === "editar" && (
+                      <button onClick={handleEdit} className={configUi.primarySoftButton}>Actualizar</button>
+                    )}
+                    {modal === "eliminar" && (
+                      <button onClick={handleDelete} className={configUi.dangerButton}>Confirmar</button>
+                    )}
                   </div>
-                )}
-              </motion.div>
+                </div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

@@ -44,12 +44,12 @@ export const ClassContent = () => {
             muted
             loop
             playsInline
-            className="w-full h-full object-cover opacity-60 scale-105"
+            className="w-full h-full object-cover opacity-30 scale-105"
             poster="/bg_hero_landing.jpg"
           >
             <source src="/vd_landing1.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-[1px]"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950/10"></div>
         </div>
 
@@ -180,7 +180,7 @@ export const ClassContent = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {loading ? (
               [1, 2, 3].map((n) => (
                 <div key={n} className="h-72 bg-zinc-100 rounded-[2.5rem] animate-pulse" />
@@ -193,37 +193,53 @@ export const ClassContent = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="group flex flex-col bg-zinc-900 hover:bg-zinc-950 border border-zinc-800/50 hover:border-[var(--color-blue)]/50 rounded-[2.5rem] p-10 transition-all duration-500 relative shadow-2xl hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)]"
+                  className="group flex flex-col md:flex-row bg-zinc-950 border border-zinc-900 hover:border-zinc-800 rounded-[2rem] p-4 transition-all duration-500 relative overflow-hidden shadow-xl hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.5)] gap-6 items-center"
                 >
-                  <div className="flex justify-between items-start mb-12">
-                    <span className="text-[9px] font-black px-4 py-2 bg-zinc-950 rounded-full text-zinc-500 uppercase tracking-widest border border-zinc-800 group-hover:bg-[var(--color-blue)] group-hover:text-white transition-colors">
-                      {clase.nombre_nivel || "Cualquier Nivel"}
-                    </span>
-                    <Clock size={20} className="text-zinc-800 group-hover:text-[var(--color-blue)] transition-colors" />
+                  <div className="w-full md:w-[200px] h-[200px] shrink-0 relative rounded-[1.5rem] overflow-hidden bg-zinc-900">
+                    {clase.url_imagen ? (
+                      <img 
+                        src={clase.url_imagen} 
+                        alt={clase.descripcion || "Imagen de la clase"} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-zinc-800">
+                        <MapPin size={40} />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent"></div>
                   </div>
 
-                  <div className="space-y-4 mb-10">
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tight group-hover:text-[var(--color-blue)] transition-colors leading-tight">
+                  <div className="flex-grow flex flex-col py-4 pr-6 w-full">
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="text-[10px] font-black px-3 py-1 bg-zinc-900 rounded-lg text-[var(--color-blue)] uppercase tracking-widest border border-zinc-800 transition-colors">
+                        {clase.nombre_nivel || "Cualquier Nivel"}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight group-hover:text-zinc-300 transition-colors leading-tight mb-2 line-clamp-2">
                       {clase.descripcion || `Clase en ${clase.nombre_sede}`}
                     </h3>
-                    <div className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
-                      <MapPin size={16} className="text-[var(--color-blue)]" />
+                    
+                    <div className="flex items-center gap-2 text-zinc-500 text-[11px] font-black uppercase tracking-widest mb-6">
+                      <MapPin size={14} className="text-zinc-600" />
                       {clase.nombre_sede}
                     </div>
-                  </div>
 
-                  <div className="mt-auto pt-8 border-t border-zinc-800 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Horario</span>
-                      <span className="text-white text-xs font-black uppercase tracking-tighter flex items-center gap-2">
-                        <Calendar size={14} className="text-[var(--color-blue)]" /> {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Coach</span>
-                      <span className="text-zinc-200 text-xs font-black uppercase tracking-widest block italic underline decoration-[var(--color-blue)] decoration-2 underline-offset-4">
-                        {clase.instructores?.[0]?.nombre_instructor?.split(' ')[0] || "Staff SB"}
-                      </span>
+                    <div className="mt-auto flex items-center justify-between border-t border-zinc-900 pt-4">
+                      <div className="flex flex-col">
+                        <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-1">Horario</span>
+                        <span className="text-zinc-300 text-xs font-black uppercase tracking-tighter flex items-center gap-1.5">
+                          <Clock size={12} className="text-zinc-500" /> 
+                          {clase.dia_semana || clase.dia || "General"} • {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-1">Coach</span>
+                        <span className="text-zinc-400 text-xs font-black uppercase tracking-widest block italic">
+                          {clase.instructores?.[0]?.nombre_instructor?.split(' ')[0] || "Staff SB"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -237,90 +253,6 @@ export const ClassContent = () => {
         </div>
       </section>
 
-      {/* === VISUALS: CREATIVE GALLERY === */}
-      <section className="bg-zinc-950 py-32 border-y border-zinc-900 overflow-hidden">
-        <div className="max-w-[1200px] mx-auto px-6 mb-20 text-center">
-          <span className="text-red-600 text-xs font-black uppercase tracking-[0.6em] mb-4 block">Action Proof</span>
-          <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none mb-8">
-            ESTILO EN <br />
-            <span className="text-[var(--color-blue)]">MOVIMIENTO</span>
-          </h2>
-          <p className="text-zinc-400 font-medium max-w-2xl mx-auto text-sm md:text-lg">
-            No dejes que te lo cuenten. Estas son las vibraciones reales que se viven en cada una de nuestras sedes. Técnica, comunidad y mucha tabla.
-          </p>
-        </div>
-
-        <div className="max-w-[1400px] mx-auto px-6">
-          <div className="grid grid-cols-12 gap-6 h-[700px]">
-            {/* Main Video Box */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="col-span-12 lg:col-span-6 relative rounded-[3rem] overflow-hidden bg-zinc-900 group border border-zinc-800/50"
-            >
-              <video src="/vd_landing1.mp4" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" muted loop playsInline onMouseEnter={e => e.target.play()} onMouseLeave={e => e.target.pause()} />
-              <div className="absolute inset-0 bg-linear-to-t from-zinc-950/80 via-transparent to-transparent pointer-events-none"></div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
-                  <Play size={30} fill="white" className="ml-2" />
-                </div>
-              </div>
-              <div className="absolute bottom-12 left-12 right-12 z-10">
-                <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">Dominio del Park</h4>
-                <p className="text-zinc-400 text-xs font-black uppercase tracking-widest italic">Sesión de Formación Élite / Sede Central</p>
-              </div>
-            </motion.div>
-
-            {/* Right Staggered Column */}
-            <div className="col-span-12 lg:col-span-6 grid grid-cols-2 gap-6 h-full">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="relative rounded-[2.5rem] overflow-hidden bg-zinc-900 group border border-zinc-800/50 shadow-inner"
-              >
-                <video src="/vd_landing2.mp4" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700" muted loop playsInline onMouseEnter={e => e.target.play()} onMouseLeave={e => e.target.pause()} />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors pointer-events-none" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <span className="text-[10px] font-black text-white/50 bg-black/40 px-3 py-1 rounded-full uppercase tracking-widest">Street Focus</span>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="relative rounded-[2.5rem] overflow-hidden bg-zinc-900 group border border-zinc-800/50 shadow-inner"
-              >
-                <video src="/vd_landing3.mp4" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700" muted loop playsInline onMouseEnter={e => e.target.play()} onMouseLeave={e => e.target.pause()} />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <span className="text-[10px] font-black text-white/50 bg-black/40 px-3 py-1 rounded-full uppercase tracking-widest">Bowl Session</span>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="col-span-2 relative h-[320px] rounded-[3rem] overflow-hidden group border border-zinc-800/50"
-              >
-                <img src="/bg_eventosL3.jpg" className="w-full h-full object-cover grayscale-100 brightness-50 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000" alt="Training" />
-                <div className="absolute inset-x-0 bottom-0 p-12 bg-linear-to-t from-zinc-950 to-transparent">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Galería de Progreso</h4>
-                      <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-2">Visita nuestro Instagram para más contenido</p>
-                    </div>
-                    <ArrowUpRight className="text-[var(--color-blue)]" size={32} />
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* === PLANES: REFINED PROPORTIONS (DYNAMIC DATA) === */}
       <section className="py-32 bg-zinc-950 text-white relative border-t border-zinc-900">
@@ -336,30 +268,36 @@ export const ClassContent = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
               [1, 2, 3].map(i => (
-                <div key={i} className="h-[550px] bg-zinc-900 rounded-[3rem] animate-pulse" />
+                <div key={i} className="h-80 bg-zinc-900 rounded-[2rem] animate-pulse" />
               ))
             ) : planes.map((plan) => (
-              <div key={plan.id_plan} className={`flex flex-col group p-12 rounded-[3.5rem] border transition-all duration-700 relative overflow-hidden ${parseFloat(plan.precio) > 100000 ? 'bg-zinc-900 text-white border-[var(--color-blue)]/50 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)] scale-105 z-10' : 'bg-zinc-900/30 text-white border-zinc-900 hover:border-zinc-800'}`}>
-                {parseFloat(plan.precio) > 100000 && <div className="absolute top-0 right-0 py-2 px-12 bg-red-600 text-white text-[9px] font-black uppercase tracking-[0.3em] rotate-45 translate-x-10 translate-y-6">Best Choice</div>}
+              <div key={plan.id_plan} className={`flex flex-col group p-8 rounded-[2rem] border transition-all duration-500 relative overflow-hidden ${parseFloat(plan.precio) > 100000 ? 'bg-gradient-to-br from-zinc-900 to-zinc-950 text-white border-[var(--color-blue)]/50 shadow-xl shadow-[var(--color-blue)]/10 scale-100 md:scale-105 z-10' : 'bg-zinc-950/50 text-white border-zinc-900 hover:bg-zinc-900 hover:border-zinc-800'}`}>
+                {parseFloat(plan.precio) > 100000 && <div className="absolute top-0 right-0 py-1.5 px-10 bg-[var(--color-blue)] text-white text-[9px] font-black uppercase tracking-[0.2em] rotate-45 translate-x-8 translate-y-6 shadow-lg shadow-[var(--color-blue)]/50">Recomendado</div>}
 
-                <div className="mb-12">
+                <div className="mb-8">
                   <div className="flex items-center gap-2 mb-4">
-                    <Users size={16} className={parseFloat(plan.precio) > 100000 ? 'text-red-600' : 'text-[var(--color-blue)]'} />
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Acceso Académico</span>
+                    <Users size={16} className={parseFloat(plan.precio) > 100000 ? 'text-[var(--color-blue)]' : 'text-zinc-600'} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Plan Académico</span>
                   </div>
-                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">{plan.nombre_plan}</h3>
+                  <h3 className="text-2xl font-black uppercase tracking-tighter mb-4">{plan.nombre_plan}</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className={`text-6xl font-black ${parseFloat(plan.precio) > 100000 ? 'text-red-500' : 'text-white'}`}>${parseInt(plan.precio).toLocaleString()}</span>
-                    <span className="text-xs font-black opacity-30 uppercase tracking-widest ml-2">/ mensual</span>
+                    <span className={`text-4xl lg:text-5xl font-black ${parseFloat(plan.precio) > 100000 ? 'text-[var(--color-blue)]' : 'text-white'}`}>${parseInt(plan.precio).toLocaleString()}</span>
+                    <span className="text-[10px] font-black tracking-widest text-zinc-500 ml-1">/ MES</span>
                   </div>
                 </div>
 
-                <p className={`text-sm mb-12 leading-relaxed font-bold uppercase tracking-tight min-h-[48px] text-zinc-300 whitespace-pre-line`}>
-                  {plan.descripcion}
-                </p>
+                <div className="flex-grow">
+                  <p className="text-xs leading-relaxed font-semibold uppercase tracking-tight text-zinc-400 whitespace-pre-line">
+                    {plan.descripcion}
+                  </p>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-zinc-900 w-full flex justify-end">
+                   <ArrowUpRight size={24} className={parseFloat(plan.precio) > 100000 ? 'text-[var(--color-blue)]' : 'text-zinc-600 group-hover:text-white transition-colors'} />
+                </div>
               </div>
             ))}
           </div>

@@ -42,9 +42,6 @@ export const AuthProvider = ({ children }) => {
         if (storedUser) {
             try {
                 parsedStoredUser = JSON.parse(storedUser);
-                if (!user) {
-                    setUser(parsedStoredUser);
-                }
             } catch (e) {
                 console.error("Error parsing user from storage", e);
                 localStorage.removeItem("user");
@@ -62,12 +59,14 @@ export const AuthProvider = ({ children }) => {
             syncUserState(mergedUser);
             return mergedUser;
         } catch (error) {
-            if (!storedUser) {
+            if (parsedStoredUser) {
+                syncUserState(parsedStoredUser);
+            } else {
                 syncUserState(null);
             }
             return parsedStoredUser;
         }
-    }, [syncUserState, user]);
+    }, [syncUserState]);
 
     useEffect(() => {
         let mounted = true;
@@ -107,8 +106,16 @@ export const AuthProvider = ({ children }) => {
         window.addEventListener("authChanged", handleAuthChanged);
         window.addEventListener("storage", handleStorage);
 
+        // Poll every 30 seconds to detect role changes (e.g. admin enrolls user as student)
+        const pollInterval = setInterval(() => {
+            if (localStorage.getItem("token")) {
+                refreshUser();
+            }
+        }, 30000);
+
         return () => {
             mounted = false;
+            clearInterval(pollInterval);
             document.removeEventListener("visibilitychange", handleVisibility);
             window.removeEventListener("focus", handleFocus);
             window.removeEventListener("authChanged", handleAuthChanged);

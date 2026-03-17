@@ -109,7 +109,7 @@ const Compras = () => {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPaginaActual(1); }}
               placeholder="Buscar por ID o proveedor..."
-              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm"
+              className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl focus:bg-white focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition-all text-sm text-[#16315f]"
             />
           </div>
           
@@ -118,7 +118,7 @@ const Compras = () => {
             <select
               value={proveedorFilter}
               onChange={(e) => { setProveedorFilter(e.target.value); setPaginaActual(1); }}
-              className="w-full pl-11 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm appearance-none cursor-pointer font-medium text-gray-600"
+              className="w-full pl-11 pr-10 py-2.5 bg-white border border-[#bfd1f4] rounded-xl focus:bg-white focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition-all text-sm appearance-none cursor-pointer font-medium text-[#16315f]"
             >
               <option value="">Todos los proveedores</option>
               {proveedores.map((p, idx) => (
@@ -133,19 +133,19 @@ const Compras = () => {
 
       {/* Table Area */}
       <div className="flex-1 p-8 pt-0 overflow-hidden flex flex-col min-h-0">
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/50 flex flex-col h-full overflow-hidden">
+        <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] flex flex-col h-full overflow-hidden">
           <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full text-left border-separate border-spacing-0">
-              <thead className="bg-slate-50/50 text-slate-400 sticky top-0 z-10">
+            <table className="w-full min-w-[940px] text-left border-separate border-spacing-0">
+              <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-10">
                 <tr>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-slate-800">Orden / Fecha</th>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100">Origen Comercial</th>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-center">Detalle Galería</th>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100">Inversión Total</th>
-                  <th className="px-8 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-right">Ficha</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Orden / Fecha</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Origen Comercial</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-center">Detalle Galería</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Inversión Total</th>
+                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right">Ficha</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan="5" className="p-20 text-center">
@@ -166,8 +166,8 @@ const Compras = () => {
                   </tr>
                 ) : (
                   displayItems.map((c, idx) => (
-                    <tr key={c.id_compra || `comp-${idx}`} className="group hover:bg-slate-50/50 transition-all">
-                      <td className="px-8 py-6">
+                    <tr key={c.id_compra || `comp-${idx}`} className="group hover:bg-[#f8fbff] transition-all">
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                         <div className="flex flex-col">
                            <div className="flex items-center gap-2 text-sm font-black text-slate-800">
                              <span className="p-1 bg-slate-100 rounded text-slate-400"><ShoppingCart size={12} /></span>
@@ -176,24 +176,24 @@ const Compras = () => {
                            <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1 leading-none">{new Date(c.fecha_compra).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
                         <div className="flex flex-col">
                            <span className="text-sm font-bold text-slate-800 leading-tight">{c.nombre_empresa || c.nombre_proveedor || "—"}</span>
                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter mt-1 leading-none">{c.nombre_contacto || "Sin contacto directo"}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-center">
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-center">
                         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500">
                           {c.items?.length || 0} items registrados
                         </span>
                       </td>
-                      <td className="px-8 py-6 font-black text-slate-800 text-sm tabular-nums">
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] font-black text-[#16315f] text-sm tabular-nums">
                         ${Number(c.total_compra).toLocaleString('es-CO')}
                       </td>
-                      <td className="px-8 py-6 text-right">
+                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-right">
                         <Link
                           to={`${basePath}/compras/detalle/${c.id_compra}`}
-                          className="p-3 rounded-2xl bg-white text-slate-400 hover:text-slate-900 shadow-sm border border-slate-100 transition-all hover:scale-110 inline-flex group-hover:shadow-md"
+                          className="p-2.5 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105 inline-flex"
                         >
                           <Eye size={18} />
                         </Link>
@@ -205,18 +205,18 @@ const Compras = () => {
             </table>
           </div>
 
-          <div className="shrink-0 border-t border-gray-100 px-8 py-4 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-500">
-              Mostrando <span className="font-bold text-[#040529]">{displayItems.length}</span> de <span className="font-bold text-[#040529]">{totalItems}</span> registros
+          <div className="shrink-0 border-t border-[#d7e5f8] px-5 py-4 bg-[#fbfdff] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-[#6b84aa]">
+              Mostrando <span className="font-bold text-[#16315f]">{displayItems.length}</span> de <span className="font-bold text-[#16315f]">{totalItems}</span> registros
             </div>
             
             <div className="flex items-center gap-2">
               <button
                 disabled={paginaActual === 1}
                 onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
               >
-                <ChevronLeft size={20} className="text-gray-600" />
+                <ChevronLeft size={20} />
               </button>
               
               <div className="flex items-center gap-1">
@@ -226,8 +226,8 @@ const Compras = () => {
                     onClick={() => setPaginaActual(i + 1)}
                     className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
                       paginaActual === i + 1
-                        ? "bg-[#040529] text-white shadow-lg shadow-[#040529]/20"
-                        : "text-gray-400 hover:text-[#040529] hover:bg-white"
+                        ? "bg-[#223a63] text-white shadow-lg shadow-[#223a63]/20"
+                        : "text-[#6b84aa] hover:text-[#16315f] hover:bg-white"
                     }`}
                   >
                     {i + 1}
@@ -238,9 +238,9 @@ const Compras = () => {
               <button
                 disabled={paginaActual === totalPaginas}
                 onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                className="p-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
               >
-                <ChevronRight size={20} className="text-gray-600" />
+                <ChevronRight size={20} />
               </button>
             </div>
           </div>

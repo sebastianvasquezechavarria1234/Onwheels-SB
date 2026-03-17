@@ -14,11 +14,7 @@ import {
 } from "../../services/usuariosServices";
 import { getRoles } from "../../services/RolesService";
 import { canManage } from "../../../../../../utils/permissions";
-
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn, configUi } from "../configUi";
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -28,6 +24,8 @@ export default function Usuarios() {
 
   const [modal, setModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
   const [selectedUsuario, setSelectedUsuario] = useState(null);
+  const [formStep, setFormStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Campos base (USUARIOS)
     documento: "",
@@ -161,6 +159,27 @@ export default function Usuarios() {
     }
 
     setFormErrors(errors);
+    if (Object.keys(errors).some((key) => ["tipo_documento", "documento", "nombre_completo", "email", "telefono"].includes(key))) {
+      setFormStep(1);
+    } else if (Object.keys(errors).length > 0) {
+      setFormStep(2);
+    }
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateStepOne = () => {
+    const errors = {};
+    if (!formData.tipo_documento) errors.tipo_documento = "El tipo de documento es obligatorio";
+    if (!formData.documento) errors.documento = "El nro de documento es obligatorio";
+    if (!formData.nombre_completo.trim()) errors.nombre_completo = "El nombre completo es obligatorio";
+    if (!formData.email.trim()) {
+      errors.email = "El correo electrónico es obligatorio";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "El formato del correo es inválido";
+    }
+    if (!formData.telefono) errors.telefono = "El teléfono es obligatorio";
+
+    setFormErrors((prev) => ({ ...prev, ...errors }));
     return Object.keys(errors).length === 0;
   };
 
@@ -169,6 +188,7 @@ export default function Usuarios() {
       return;
     }
     try {
+      setSubmitting(true);
       const payload = {
         documento: formData.documento || null,
         tipo_documento: formData.tipo_documento || null,
@@ -208,6 +228,8 @@ export default function Usuarios() {
       console.error("Error creando usuario:", err);
       const errorMessage = err.response?.data?.mensaje || "Error creando usuario";
       showNotification(errorMessage, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -216,6 +238,7 @@ export default function Usuarios() {
       return;
     }
     try {
+      setSubmitting(true);
       if (!selectedUsuario) return;
 
       const payload = {
@@ -268,11 +291,14 @@ export default function Usuarios() {
       console.error("Error editando usuario:", err);
       const errorMessage = err.response?.data?.mensaje || "Error editando usuario";
       showNotification(errorMessage, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
     try {
+      setSubmitting(true);
       if (!selectedUsuario) return;
       await deleteUsuario(selectedUsuario.id_usuario);
       await fetchData();
@@ -284,6 +310,8 @@ export default function Usuarios() {
       const errorMessage = err.response?.data?.mensaje || "Error eliminando usuario";
       showNotification(errorMessage, "error");
       closeModal(); // Cerrar modal después del error
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -291,6 +319,7 @@ export default function Usuarios() {
     setModal(type);
     setSelectedUsuario(usuario);
     setFormErrors({});
+    setFormStep(1);
 
     if (usuario && type === "editar") {
       setFormData({
@@ -325,6 +354,8 @@ export default function Usuarios() {
   const closeModal = () => {
     setModal(null);
     setSelectedUsuario(null);
+    setFormStep(1);
+    setSubmitting(false);
     setFormData({
       documento: "",
       tipo_documento: "",
@@ -373,23 +404,26 @@ export default function Usuarios() {
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white overflow-hidden font-primary p-2 md:p-4">
+      <div className={`${configUi.pageShell} font-primary`}>
         {/* --- SECTION 1: HEADER & TOOLBAR --- */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-          <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
-            Gestión de Usuarios
-          </h2>
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Gestión de Usuarios
+            </h2>
+            <span className={configUi.countBadge}>{totalItems} usuarios</span>
+          </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div className={configUi.toolbar}>
             {/* Search Bar */}
-            <div className="relative w-full sm:w-[280px]">
+            <div className={configUi.searchWrap}>
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
                 placeholder="Buscar usuarios..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 transition-all text-slate-700 placeholder:text-slate-400"
+                className={configUi.inputWithIcon}
               />
             </div>
 
@@ -398,7 +432,7 @@ export default function Usuarios() {
               <select
                 value={filterType}
                 onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-                className="appearance-none bg-white border border-slate-200 text-slate-500 py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 cursor-pointer"
+                className={configUi.select}
               >
                 <option value="Todos los usuarios">Todos los usuarios</option>
                 <option value="Clientes">Clientes</option>
@@ -412,7 +446,7 @@ export default function Usuarios() {
             {/* Download Button */}
             <button
               onClick={handleDownload}
-              className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
+              className={configUi.iconButton} title="Descargar Reporte"
             >
               <Download size={20} />
             </button>
@@ -420,7 +454,7 @@ export default function Usuarios() {
             {canManage("usuarios") && (
               <button
                 onClick={() => openModal("crear")}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#040529] hover:bg-black text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                className={`${configUi.primaryButton} whitespace-nowrap`}
               >
                 <Plus size={18} />
                 Registrar Usuario
@@ -430,27 +464,27 @@ export default function Usuarios() {
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-white rounded-2xl border border-slate-100 shadow-sm">
+        <div className={configUi.tableCard}>
           {/* Table Content */}
-          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10">
+          <div className={configUi.tableScroll}>
+            <table className={configUi.table}>
+              <thead className={configUi.thead}>
                 <tr>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide rounded-tl-xl w-[10%]">ID</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[30%]">Usuario</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[25%]">Contacto</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-center w-[15%]">Rol</th>
-                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-right rounded-tr-xl w-[20%]">Acciones</th>
+                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[10%]`}>ID</th>
+                  <th className={`${configUi.th} w-[30%]`}>Usuario</th>
+                  <th className={`${configUi.th} w-[25%]`}>Contacto</th>
+                  <th className={`${configUi.th} text-center w-[15%]`}>Rol</th>
+                  <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[20%]`}>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400 text-sm">Cargando usuarios...</td>
+                    <td colSpan="5" className={configUi.emptyState}>Cargando usuarios...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center">
+                    <td colSpan="5" className={configUi.emptyState}>
                       <div className="flex flex-col items-center justify-center gap-2 text-red-500">
                         <AlertCircle className="h-8 w-8 opacity-80" />
                         <p className="font-medium">{error}</p>
@@ -459,26 +493,26 @@ export default function Usuarios() {
                   </tr>
                 ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400 italic">No se encontraron usuarios.</td>
+                    <td colSpan="5" className={configUi.emptyState}>No se encontraron usuarios.</td>
                   </tr>
                 ) : (
                   currentItems.map((u, i) => (
-                    <tr key={u.id_usuario} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-3">
+                    <tr key={u.id_usuario} className={configUi.row}>
+                      <td className={configUi.td}>
                         <span className="text-sm font-medium text-slate-500">#{u.id_usuario}</span>
                       </td>
-                      <td className="px-6 py-3">
+                      <td className={configUi.td}>
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#040529] to-[#040529]/80 text-[#F0E6E6] shadow-sm">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#223a63] text-[#eff6ff] shadow-sm">
                             <User size={18} />
                           </div>
                           <div>
-                            <p className="font-bold text-[#040529] text-sm leading-tight">{u.nombre_completo}</p>
+                            <p className="text-sm font-bold leading-tight text-[#16315f]">{u.nombre_completo}</p>
                             <p className="text-xs text-slate-500 font-medium truncate max-w-[180px]">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3">
+                      <td className={configUi.td}>
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2 text-slate-600">
                             <Mail size={14} className="shrink-0 text-slate-400" />
@@ -492,18 +526,18 @@ export default function Usuarios() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                      <td className={`${configUi.td} text-center`}>
+                        <div className={configUi.pill}>
                           {getRolNombres(u.roles)}
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-right">
+                      <td className={`${configUi.td} text-right`}>
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => openModal("ver", u)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Ver detalles"><Eye size={14} /></button>
+                          <button onClick={() => openModal("ver", u)} className={configUi.actionButton} title="Ver detalles"><Eye size={14} /></button>
                           {canManage("usuarios") && (
                             <>
-                              <button onClick={() => openModal("editar", u)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Editar"><Pencil size={14} /></button>
-                              <button onClick={() => openModal("eliminar", u)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 transition shadow-sm" title="Eliminar"><Trash2 size={14} /></button>
+                              <button onClick={() => openModal("editar", u)} className={configUi.actionButton} title="Editar"><Pencil size={14} /></button>
+                              <button onClick={() => openModal("eliminar", u)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
                             </>
                           )}
                         </div>
@@ -517,22 +551,22 @@ export default function Usuarios() {
 
           {/* Footer Pagination */}
           {totalPages > 0 && (
-            <div className="border-t border-slate-100 px-6 py-4 bg-white flex items-center justify-between mt-auto">
+            <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
-                Página <span className="text-[#040529]">{currentPage}</span> de <span className="text-[#040529]">{totalPages}</span>
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
               </p>
               <div className="flex items-center gap-2">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                  className={configUi.paginationButton}
                 >
                   <ChevronLeft size={18} />
                 </button>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                  className={configUi.paginationButton}
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -562,268 +596,333 @@ export default function Usuarios() {
       <AnimatePresence>
         {modal && (
           <motion.div
-            className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/15 backdrop-blur-sm"
+            className={configUi.modalBackdrop}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeModal}
           >
             <motion.div
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden"
+              className={`${configUi.modalPanel} max-w-5xl`}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: "spring", damping: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex h-[600px] overflow-hidden">
+              <div className={configUi.modalSplit}>
                 {/* Left Side (Visual) */}
-                <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                  <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                    <User size={48} strokeWidth={1.5} />
+                <div className={configUi.modalSide}>
+                  <div>
+                    <div className={`${configUi.modalSideIcon} mb-5`}>
+                      <User size={40} strokeWidth={1.7} />
+                    </div>
+                    <p className={configUi.modalEyebrow}>
+                      {modal === "crear" ? "Alta de acceso" : modal === "editar" ? "Edicion de perfil" : modal === "ver" ? "Informacion de usuario" : "Control de seguridad"}
+                    </p>
+                    <h4 className="mt-3 text-2xl font-black text-[#16315f]">
+                      {modal === "crear" ? "Nuevo usuario" : modal === "editar" ? "Actualizar usuario" : modal === "ver" ? "Perfil" : "Eliminar"}
+                    </h4>
+                    <p className="mt-2 text-sm leading-6 text-[#6b84aa]">
+                      {modal === "crear" || modal === "editar"
+                        ? "Organiza la informacion personal primero y luego define acceso, rol y foto de perfil."
+                        : modal === "ver"
+                          ? "Consulta la informacion principal del usuario con una vista compacta y clara."
+                          : "Confirma la eliminacion solo si estas seguro de retirar el acceso del usuario."}
+                    </p>
                   </div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">
-                    {modal === "crear" ? "Nuevo Sistema" : modal === "editar" ? "Gestión de Acceso" : modal === "ver" ? "Perfil de Usuario" : "Seguridad"}
-                  </p>
+                  {(modal === "crear" || modal === "editar") && (
+                    <div className="rounded-[1.5rem] border border-[#d7e5f8] bg-white p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6b84aa]">Flujo</p>
+                      <div className="mt-3 flex items-center gap-3 text-sm text-[#5d7498]">
+                        <span className={configUi.stepBadge}>1</span>
+                        <span>Datos personales</span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-3 text-sm text-[#5d7498]">
+                        <span className={configUi.stepBadge}>2</span>
+                        <span>Acceso y permisos</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Side (Form/Content) */}
                 <div className="flex-1 flex flex-col min-w-0">
                   {/* Header */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h3 className="text-lg font-bold text-[#040529]">
-                      {modal === "crear" ? "Registrar Nuevo Usuario" : modal === "editar" ? "Actualizar Datos" : modal === "ver" ? "Detalles del Perfil" : "Confirmar Eliminación"}
-                    </h3>
-                    <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]">
+                  <div className={configUi.modalHeader}>
+                    <div>
+                      <h3 className={configUi.modalTitle}>
+                        {modal === "crear" ? "Registrar nuevo usuario" : modal === "editar" ? "Actualizar datos" : modal === "ver" ? "Detalles del perfil" : "Confirmar eliminacion"}
+                      </h3>
+                      <p className={configUi.modalSubtitle}>
+                        {modal === "crear" || modal === "editar"
+                          ? formStep === 1
+                            ? "Paso 1 de 2: informacion personal y contacto."
+                            : "Paso 2 de 2: acceso, foto y rol asignado."
+                          : modal === "ver"
+                            ? "Vista consolidada del usuario seleccionado."
+                            : "Esta accion no se puede deshacer."}
+                      </p>
+                    </div>
+                    <button onClick={closeModal} className={configUi.modalClose}>
                       <X size={20} />
                     </button>
                   </div>
 
                   {/* Scrollable Content */}
-                  <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-200">
+                  <div className={configUi.modalContent}>
                     {modal === "eliminar" ? (
-                      <div className="text-center py-4">
-                        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="py-6 text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
                           <Trash2 size={32} />
                         </div>
-                        <h3 className="text-lg font-bold text-[#040529] mb-2">¿Eliminar este usuario?</h3>
-                        <p className="text-sm text-gray-500 mb-6 px-4">
-                          Esta acción no se puede deshacer. El usuario <span className="font-bold text-red-600">{selectedUsuario?.nombre_completo}</span> perderá el acceso al sistema.
+                        <h3 className="mb-2 text-xl font-black text-[#16315f]">Eliminar este usuario</h3>
+                        <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-[#6b84aa]">
+                          Esta accion no se puede deshacer. El usuario <span className="font-bold text-[#d44966]">{selectedUsuario?.nombre_completo}</span> perdera el acceso al sistema.
                         </p>
-                        <div className="flex gap-3 px-4">
-                          <button onClick={closeModal} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition font-bold text-sm">Cancelar</button>
-                          <button onClick={handleDelete} className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white hover:bg-red-700 transition font-bold text-sm shadow-md">Eliminar</button>
+                        <div className="mx-auto flex max-w-md gap-3">
+                          <button onClick={closeModal} disabled={submitting} className={`${configUi.secondaryButton} flex-1`}>Cancelar</button>
+                          <button onClick={handleDelete} disabled={submitting} className={`${configUi.dangerButton} flex-1`}>{submitting ? "Eliminando..." : "Eliminar"}</button>
+                        </div>
+                      </div>
+                    ) : modal === "ver" ? (
+                      <div className="space-y-5">
+                        <div className={`${configUi.formSection} flex items-center gap-4`}>
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#bfd1f4] bg-white">
+                            {selectedUsuario?.foto_perfil ? (
+                              <img src={selectedUsuario.foto_perfil} alt="perfil" className="h-full w-full object-cover" />
+                            ) : (
+                              <User size={24} className="text-[#86a0c6]" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-lg font-black text-[#16315f]">{selectedUsuario?.nombre_completo}</p>
+                            <p className="text-sm text-[#6b84aa]">{selectedUsuario?.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Tipo de documento</label>
+                            <p className={configUi.readOnlyField}>{selectedUsuario?.tipo_documento || "-"}</p>
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Numero de documento</label>
+                            <p className={configUi.readOnlyField}>{selectedUsuario?.documento || "-"}</p>
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Nombre completo</label>
+                            <p className={configUi.readOnlyField}>{selectedUsuario?.nombre_completo || "-"}</p>
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Correo electronico</label>
+                            <p className={configUi.readOnlyField}>{selectedUsuario?.email || "-"}</p>
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Telefono</label>
+                            <p className={configUi.readOnlyField}>{selectedUsuario?.telefono || "-"}</p>
+                          </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Rol asignado</label>
+                            <p className={configUi.readOnlyField}>{getRolNombres(selectedUsuario?.roles)}</p>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <form className="space-y-4 font-primary">
-                        
-                        {/* INICIO: SECCIÓN SUBIR FOTO */}
-                        <div className="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
-                          {modal === "ver" ? (
-                             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#040529] shadow-sm bg-white flex items-center justify-center shrink-0">
-                               {selectedUsuario?.foto_perfil ? (
-                                  <img src={selectedUsuario.foto_perfil} alt="perfil" className="w-full h-full object-cover" />
-                               ) : (
-                                  <User size={24} className="text-gray-400" />
-                               )}
-                             </div>
-                          ) : (
-                            <div className="relative group cursor-pointer">
-                              <label htmlFor="foto_perfil_upload" className="block cursor-pointer">
-                                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-dashed border-gray-300 hover:border-[#040529] bg-white flex items-center justify-center shrink-0 relative transition-colors shadow-sm">
-                                  {formData.foto_perfil ? (
-                                    <img src={URL.createObjectURL(formData.foto_perfil)} alt="Preview" className="w-full h-full object-cover" />
-                                  ) : formData.foto_perfil_url ? (
-                                    <img src={formData.foto_perfil_url} alt="Current" className="w-full h-full object-cover" />
-                                  ) : (
-                                    <User size={24} className="text-gray-300 group-hover:text-[#040529] transition-colors" />
-                                  )}
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <Plus size={20} className="text-white" />
-                                  </div>
-                                </div>
-                                <input
-                                  type="file"
-                                  id="foto_perfil_upload"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    if(e.target.files && e.target.files[0]) {
-                                      setFormData(p => ({...p, foto_perfil: e.target.files[0]}));
-                                    }
-                                  }}
-                                />
-                              </label>
+                      <form className="space-y-5 font-primary">
+                        <div className="flex items-center justify-between rounded-[1.5rem] border border-[#d7e5f8] bg-[#fbfdff] px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className={cn(configUi.stepBadge, formStep === 1 && "border-[#7da7e8] bg-[#dbeafe]")}>1</span>
+                            <div>
+                              <p className="text-sm font-bold text-[#16315f]">Datos personales</p>
+                              <p className="text-xs text-[#6b84aa]">Identidad y contacto</p>
                             </div>
-                          )}
-                          
-                          <div className="flex-1">
-                            <h4 className="text-sm font-bold text-[#040529]">Foto de Perfil</h4>
-                            <p className="text-xs text-gray-500">Sube una imagen cuadrada para mejorar la visualización. (JPG, PNG, WEBP max 5MB).</p>
-                            {modal !== "ver" && (
-                              <label htmlFor="foto_perfil_upload" className="inline-block cursor-pointer mt-1 text-xs font-bold text-[#040529] hover:underline">
-                                Seleccionar archivo...
-                              </label>
-                            )}
                           </div>
-                        </div>
-                        {/* FIN: SECCIÓN SUBIR FOTO */}
-                        
-                        {/* Secciones de formulario */}
-                        <div className="grid grid-cols-2 gap-4 mt-2">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Tipo Doc.</label>
-                            {modal === "ver" ? (
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedUsuario?.tipo_documento || "—"}</p>
-                            ) : (
-                              <>
-                                <input
-                                  name="tipo_documento"
-                                  value={formData.tipo_documento}
-                                  onChange={handleChange}
-                                  className={cn(
-                                    "w-full mt-1 px-4 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-[#040529]/10 outline-none transition",
-                                    formErrors.tipo_documento ? "border-red-400 bg-red-50" : "border-gray-200"
-                                  )}
-                                  placeholder="CC, CE..."
-                                />
-                                {formErrors.tipo_documento && <p className="text-red-500 text-[10px] mt-1 ml-1">{formErrors.tipo_documento}</p>}
-                              </>
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nro. Documento</label>
-                            {modal === "ver" ? (
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedUsuario?.documento || "—"}</p>
-                            ) : (
-                              <>
-                                <input
-                                  name="documento"
-                                  value={formData.documento}
-                                  onChange={handleChange}
-                                  className={cn(
-                                    "w-full mt-1 px-4 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-[#040529]/10 outline-none transition",
-                                    formErrors.documento ? "border-red-400 bg-red-50" : "border-gray-200"
-                                  )}
-                                  placeholder="..."
-                                />
-                                {formErrors.documento && <p className="text-red-500 text-[10px] mt-1 ml-1">{formErrors.documento}</p>}
-                              </>
-                            )}
+                          <div className="flex items-center gap-3">
+                            <span className={cn(configUi.stepBadge, formStep === 2 && "border-[#7da7e8] bg-[#dbeafe]")}>2</span>
+                            <div>
+                              <p className="text-sm font-bold text-[#16315f]">Acceso</p>
+                              <p className="text-xs text-[#6b84aa]">Rol, foto y seguridad</p>
+                            </div>
                           </div>
                         </div>
 
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Completo</label>
-                          {modal === "ver" ? (
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529] font-bold">{selectedUsuario?.nombre_completo}</p>
-                          ) : (
-                            <>
-                              <input
-                                name="nombre_completo"
-                                value={formData.nombre_completo}
+                        {formStep === 1 && (
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className={configUi.fieldGroup}>
+                              <label className={configUi.fieldLabel}>Tipo de documento</label>
+                              <select
+                                name="tipo_documento"
+                                value={formData.tipo_documento}
                                 onChange={handleChange}
-                                className={`w-full p-2 border rounded-md outline-none transition ${formErrors.nombre_completo ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-[#040529]"}`}
+                                className={cn(configUi.fieldSelect, formErrors.tipo_documento && "border-red-400 bg-red-50")}
+                              >
+                                <option value="">Selecciona tipo</option>
+                                <option value="CC">CC</option>
+                                <option value="CE">CE</option>
+                                <option value="TI">TI</option>
+                                <option value="PP">PP</option>
+                                <option value="NIT">NIT</option>
+                              </select>
+                              {formErrors.tipo_documento && <p className="pl-1 text-[11px] text-red-500">{formErrors.tipo_documento}</p>}
+                            </div>
+                            <div className={configUi.fieldGroup}>
+                              <label className={configUi.fieldLabel}>Numero de documento</label>
+                              <input
+                                name="documento"
+                                value={formData.documento}
+                                onChange={handleChange}
+                                className={cn(configUi.fieldInput, formErrors.documento && "border-red-400 bg-red-50")}
+                                placeholder="Ingresa el documento"
                               />
-                              {formErrors.nombre_completo && <p className="text-red-400 text-[11px] mt-1">{formErrors.nombre_completo}</p>}
-                            </>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Correo Electrónico</label>
-                          {modal === "ver" ? (
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedUsuario?.email}</p>
-                          ) : (
-                            <>
+                              {formErrors.documento && <p className="pl-1 text-[11px] text-red-500">{formErrors.documento}</p>}
+                            </div>
+                            <div className="md:col-span-2">
+                              <div className={configUi.fieldGroup}>
+                                <label className={configUi.fieldLabel}>Nombre completo</label>
+                                <input
+                                  name="nombre_completo"
+                                  value={formData.nombre_completo}
+                                  onChange={handleChange}
+                                  className={cn(configUi.fieldInput, formErrors.nombre_completo && "border-red-400 bg-red-50")}
+                                  placeholder="Nombre y apellidos"
+                                />
+                                {formErrors.nombre_completo && <p className="pl-1 text-[11px] text-red-500">{formErrors.nombre_completo}</p>}
+                              </div>
+                            </div>
+                            <div className={configUi.fieldGroup}>
+                              <label className={configUi.fieldLabel}>Correo electronico</label>
                               <input
                                 name="email"
                                 type="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className={`w-full p-2 border rounded-md outline-none transition ${formErrors.email ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-[#040529]"}`}
+                                className={cn(configUi.fieldInput, formErrors.email && "border-red-400 bg-red-50")}
                                 placeholder="correo@ejemplo.com"
                               />
-                              {formErrors.email && <p className="text-red-400 text-[11px] mt-1">{formErrors.email}</p>}
-                            </>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
-                            {modal === "ver" ? (
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedUsuario?.telefono || "—"}</p>
-                            ) : (
-                              <>
-                                <input
-                                  name="telefono"
-                                  value={formData.telefono}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(/[^0-9+\s-]/g, '');
-                                    handleChange({ ...e, target: { ...e.target, value: val } });
-                                  }}
-                                  className={`w-full p-2 border rounded-md outline-none transition ${formErrors.telefono ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-[#040529]"}`}
-                                  placeholder="..."
-                                />
-                                {formErrors.telefono && <p className="text-red-400 text-[11px] mt-1">{formErrors.telefono}</p>}
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {modal !== "ver" && (
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">
-                              {modal === "crear" ? "Contraseña" : "Contraseña (opcional)"}
-                            </label>
-                            <input
-                              name="contrasena"
-                              type="password"
-                              value={formData.contrasena}
-                              onChange={handleChange}
-                              className={`w-full p-2 border rounded-md outline-none transition ${formErrors.contrasena ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-[#040529]"}`}
-                              placeholder={modal === "crear" ? "******" : "Dejar vacío para mantener"}
-                            />
-                            {formErrors.contrasena && <p className="text-red-400 text-[11px] mt-1">{formErrors.contrasena}</p>}
+                              {formErrors.email && <p className="pl-1 text-[11px] text-red-500">{formErrors.email}</p>}
+                            </div>
+                            <div className={configUi.fieldGroup}>
+                              <label className={configUi.fieldLabel}>Telefono</label>
+                              <input
+                                name="telefono"
+                                value={formData.telefono}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9+\s-]/g, "");
+                                  setFormData((prev) => ({ ...prev, telefono: val }));
+                                  if (formErrors.telefono) {
+                                    setFormErrors((prev) => {
+                                      const next = { ...prev };
+                                      delete next.telefono;
+                                      return next;
+                                    });
+                                  }
+                                }}
+                                className={cn(configUi.fieldInput, formErrors.telefono && "border-red-400 bg-red-50")}
+                                placeholder="3001234567"
+                              />
+                              {formErrors.telefono && <p className="pl-1 text-[11px] text-red-500">{formErrors.telefono}</p>}
+                            </div>
                           </div>
                         )}
 
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Rol Asignado</label>
-                          {modal === "ver" ? (
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529] font-bold">
-                              {getRolNombres(selectedUsuario?.roles)}
-                            </p>
-                          ) : (
-                            <>
-                              <select
-                                name="id_rol"
-                                value={formData.id_rol}
-                                onChange={handleChange}
-                                className={`w-full p-2 border rounded-md outline-none transition ${formErrors.id_rol ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-[#040529]"}`}
-                              >
-                                <option value="">Sin asignar</option>
-                                {roles.map((r) => (
-                                  <option key={r.id_rol} value={r.id_rol}>
-                                    {r.nombre_rol}
-                                  </option>
-                                ))}
-                              </select>
-                              {formErrors.id_rol && <p className="text-red-400 text-[11px] mt-1">{formErrors.id_rol}</p>}
-                            </>
-                          )}
-                        </div>
+                        {formStep === 2 && (
+                          <div className="space-y-4">
+                            <div className={`${configUi.formSection} flex items-center gap-4`}>
+                              <div className="relative shrink-0">
+                                <label htmlFor="foto_perfil_upload" className="group block cursor-pointer">
+                                  <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-[#bfd1f4] bg-white transition group-hover:border-[#7da7e8]">
+                                    {formData.foto_perfil ? (
+                                      <img src={URL.createObjectURL(formData.foto_perfil)} alt="Preview" className="h-full w-full object-cover" />
+                                    ) : formData.foto_perfil_url ? (
+                                      <img src={formData.foto_perfil_url} alt="Current" className="h-full w-full object-cover" />
+                                    ) : (
+                                      <User size={28} className="text-[#86a0c6]" />
+                                    )}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-[#16315f]/45 opacity-0 transition group-hover:opacity-100">
+                                      <Plus size={18} className="text-white" />
+                                    </div>
+                                  </div>
+                                  <input
+                                    type="file"
+                                    id="foto_perfil_upload"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        setFormData((prev) => ({ ...prev, foto_perfil: e.target.files[0] }));
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-bold text-[#16315f]">Foto de perfil</h4>
+                                <p className="mt-1 text-sm leading-6 text-[#6b84aa]">Sube una imagen cuadrada. Formatos recomendados: JPG, PNG o WEBP.</p>
+                                <label htmlFor="foto_perfil_upload" className="mt-2 inline-block cursor-pointer text-sm font-bold text-[#1d4f91] hover:underline">
+                                  Seleccionar archivo
+                                </label>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div className={configUi.fieldGroup}>
+                                <label className={configUi.fieldLabel}>{modal === "crear" ? "Contrasena" : "Contrasena opcional"}</label>
+                                <input
+                                  name="contrasena"
+                                  type="password"
+                                  value={formData.contrasena}
+                                  onChange={handleChange}
+                                  className={cn(configUi.fieldInput, formErrors.contrasena && "border-red-400 bg-red-50")}
+                                  placeholder={modal === "crear" ? "Minimo 6 caracteres" : "Dejar vacio para mantener"}
+                                />
+                                {formErrors.contrasena && <p className="pl-1 text-[11px] text-red-500">{formErrors.contrasena}</p>}
+                              </div>
+                              <div className={configUi.fieldGroup}>
+                                <label className={configUi.fieldLabel}>Rol asignado</label>
+                                <select
+                                  name="id_rol"
+                                  value={formData.id_rol}
+                                  onChange={handleChange}
+                                  className={cn(configUi.fieldSelect, formErrors.id_rol && "border-red-400 bg-red-50")}
+                                >
+                                  <option value="">Seleccionar rol</option>
+                                  {roles.map((r) => (
+                                    <option key={r.id_rol} value={r.id_rol}>
+                                      {r.nombre_rol}
+                                    </option>
+                                  ))}
+                                </select>
+                                {formErrors.id_rol && <p className="pl-1 text-[11px] text-red-500">{formErrors.id_rol}</p>}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </form>
                     )}
                   </div>
 
                   {/* Footer Buttons */}
-                  <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
-                    <button onClick={closeModal} className="px-5 py-2 rounded-xl text-gray-500 hover:text-gray-700 transition font-bold text-xs uppercase tracking-wider">Cerrar</button>
-                    {modal === "crear" && <button onClick={handleCreate} className="px-6 py-2 bg-[#040529] text-white rounded-xl shadow-md hover:shadow-lg transition font-bold text-xs uppercase tracking-wider">Guardar Usuario</button>}
-                    {modal === "editar" && <button onClick={handleEdit} className="px-6 py-2 bg-[#040529] text-white rounded-xl shadow-md hover:shadow-lg transition font-bold text-xs uppercase tracking-wider">Actualizar Datos</button>}
+                  <div className={configUi.modalFooter}>
+                    <div>
+                      {(modal === "crear" || modal === "editar") && (
+                        <span className="text-sm text-[#6b84aa]">{formStep === 1 ? "Completa los datos basicos para continuar." : "Revisa rol, foto y seguridad antes de guardar."}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {(modal === "crear" || modal === "editar") && formStep === 2 && (
+                        <button onClick={() => setFormStep(1)} disabled={submitting} className={configUi.secondaryButton}>Volver</button>
+                      )}
+                      <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
+                      {modal === "crear" && formStep === 1 && (
+                        <button onClick={() => { if (validateStepOne()) setFormStep(2); }} disabled={submitting} className={configUi.primarySoftButton}>Continuar</button>
+                      )}
+                      {modal === "editar" && formStep === 1 && (
+                        <button onClick={() => { if (validateStepOne()) setFormStep(2); }} disabled={submitting} className={configUi.primarySoftButton}>Continuar</button>
+                      )}
+                      {modal === "crear" && formStep === 2 && <button onClick={handleCreate} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Guardando..." : "Guardar usuario"}</button>}
+                      {modal === "editar" && formStep === 2 && <button onClick={handleEdit} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Actualizando..." : "Actualizar datos"}</button>}
+                    </div>
                   </div>
                 </div>
               </div>

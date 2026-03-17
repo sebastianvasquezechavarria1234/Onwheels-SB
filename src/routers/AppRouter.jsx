@@ -142,9 +142,14 @@ import { CustomLayoutWrapper } from "../feactures/dashboards/custom/layout/Custo
 const AppRouter = () => {
   const location = useLocation()
 
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const navigate = useNavigate()
   const prevRoleSlugRef = useRef(null)
+
+  // Refresh auth on every route change to detect role updates (e.g. admin enrolls user as student)
+  useEffect(() => {
+    refreshUser()
+  }, [location.pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Redirect user when their role changes (e.g. cliente → estudiante after admin enrolls them)
   useEffect(() => {

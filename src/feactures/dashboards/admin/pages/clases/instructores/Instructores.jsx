@@ -4,7 +4,8 @@ import {
   Eye, Plus, Search, Pencil, Trash2, X, User,
   ChevronLeft, ChevronRight, Hash, TrendingUp,
   SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
-  Briefcase
+  Briefcase,
+  IdCard
 } from "lucide-react";
 import {
   getInstructores,
@@ -13,18 +14,16 @@ import {
   deleteInstructor,
   getUsuariosNoInstructores
 } from "../../services/instructoresServices";
+import { configUi } from "../../configuracion/configUi";
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 export const Instructores = () => {
   const [instructores, setInstructores] = useState([]);
   const [usuariosDisponibles, setUsuariosDisponibles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modal, setModal] = useState(null);
+  const [modal, setModal] = useState(null); // Ver, crear, editar, eliminar
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [formData, setFormData] = useState({
     id_usuario: "",
@@ -72,7 +71,7 @@ export const Instructores = () => {
       setUsuariosDisponibles(Array.isArray(usuariosData) ? usuariosData : []);
     } catch (err) {
       console.error("Error cargando datos:", err);
-      setError("Error al cargar los datos.");
+      setError("Error al cargar los datos de instructores.");
       showNotification("Error al cargar datos", "error");
     } finally {
       setLoading(false);
@@ -81,7 +80,6 @@ export const Instructores = () => {
 
   useEffect(() => {
     fetchInstructores();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sorted and filtered data
@@ -94,8 +92,7 @@ export const Instructores = () => {
       result = result.filter(i =>
         (i.nombre_completo || "").toLowerCase().includes(q) ||
         (i.email || "").toLowerCase().includes(q) ||
-        (i.especialidad || "").toLowerCase().includes(q) ||
-        (i.estado ? "activo" : "inactivo").includes(q)
+        (i.especialidad || "").toLowerCase().includes(q)
       );
     }
 
@@ -131,38 +128,6 @@ export const Instructores = () => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
-  // Toggle sort
-  const toggleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  // Export CSV
-  const exportCSV = () => {
-    try {
-      const headers = ["ID", "Nombre", "Email", "Especialidad", "Experiencia", "Estado"];
-      const rows = filteredAndSorted.map(i =>
-        [i.id_instructor, i.nombre_completo, i.email, i.especialidad || "", i.anios_experiencia || "", i.estado ? "Activo" : "Inactivo"].join(",")
-      );
-      const csv = [headers.join(","), ...rows].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `instructores_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showNotification("Exportación exitosa");
-    } catch (err) {
-      console.error("Error exportando CSV:", err);
-      showNotification("Error al exportar datos", "error");
-    }
-  };
-
   // Validar formulario
   const validateForm = () => {
     const errors = {};
@@ -171,10 +136,8 @@ export const Instructores = () => {
       errors.id_usuario = "El usuario es obligatorio";
     }
 
-    if (formData.anios_experiencia === "" || formData.anios_experiencia === null || formData.anios_experiencia === undefined) {
-      errors.anios_experiencia = "Los años de experiencia son obligatorios";
-    } else if (isNaN(parseInt(formData.anios_experiencia)) || parseInt(formData.anios_experiencia) < 0) {
-      errors.anios_experiencia = "Los años de experiencia deben ser un número positivo";
+    if (formData.anios_experiencia === "" || isNaN(parseInt(formData.anios_experiencia))) {
+      errors.anios_experiencia = "Años de experiencia requeridos (min 0)";
     }
 
     if (!formData.especialidad.trim()) {
@@ -189,8 +152,6 @@ export const Instructores = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Limpiar error específico al cambiar
     if (formErrors[name]) {
       setFormErrors(prev => {
         const newErrors = { ...prev };
@@ -200,87 +161,61 @@ export const Instructores = () => {
     }
   };
 
-  // Crear instructor
+  // CRUD Actions
   const handleCreate = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     try {
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
-        anios_experiencia: formData.anios_experiencia ? parseInt(formData.anios_experiencia) : null,
+        anios_experiencia: parseInt(formData.anios_experiencia),
         especialidad: formData.especialidad.trim()
       };
-
       await createInstructor(payload);
       await fetchInstructores();
       closeModal();
-      showNotification("Instructor creado con éxito");
+      showNotification("Instructor registrado con éxito");
     } catch (err) {
-      console.error("Error creando instructor:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error creando instructor";
-      showNotification(errorMessage, "error");
+      showNotification(err.response?.data?.mensaje || "Error al crear", "error");
     }
   };
 
-  // Editar instructor
   const handleEdit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     try {
-      if (!selectedInstructor) return;
-
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
-        anios_experiencia: formData.anios_experiencia ? parseInt(formData.anios_experiencia) : null,
+        anios_experiencia: parseInt(formData.anios_experiencia),
         especialidad: formData.especialidad.trim()
       };
-
       await updateInstructor(selectedInstructor.id_instructor, payload);
       await fetchInstructores();
       closeModal();
       showNotification("Instructor actualizado con éxito");
     } catch (err) {
-      console.error("Error editando instructor:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error editando instructor";
-      showNotification(errorMessage, "error");
+      showNotification(err.response?.data?.mensaje || "Error al actualizar", "error");
     }
   };
 
-  // Desactivar instructor
   const handleDelete = async () => {
     try {
-      if (!selectedInstructor) return;
       await deleteInstructor(selectedInstructor.id_instructor);
       await fetchInstructores();
       closeModal();
       showNotification("Instructor desactivado con éxito");
     } catch (err) {
-      console.error("Error desactivando instructor:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error desactivando instructor";
-      showNotification(errorMessage, "error");
+      showNotification(err.response?.data?.mensaje || "Error al desactivar", "error");
     }
   };
 
-  // Abrir modal
   const openModal = (type, instructor = null) => {
     setModal(type);
     setSelectedInstructor(instructor);
-    setFormErrors({});
-
     if (type === "crear") {
-      setFormData({
-        id_usuario: "",
-        anios_experiencia: "",
-        especialidad: ""
-      });
+      setFormData({ id_usuario: "", anios_experiencia: "", especialidad: "" });
     } else if (instructor) {
       setFormData({
         id_usuario: instructor.id_usuario.toString(),
-        anios_experiencia: instructor.anios_experiencia ? instructor.anios_experiencia.toString() : "",
+        anios_experiencia: instructor.anios_experiencia?.toString() || "0",
         especialidad: instructor.especialidad || ""
       });
     }
@@ -289,467 +224,387 @@ export const Instructores = () => {
   const closeModal = () => {
     setModal(null);
     setSelectedInstructor(null);
-    setFormData({
-      id_usuario: "",
-      anios_experiencia: "",
-      especialidad: ""
-    });
     setFormErrors({});
+  };
+
+  const exportCSV = () => {
+    const headers = ["Nombre", "Email", "Documento", "Especialidad", "Experiencia", "Estado"];
+    const rows = filteredAndSorted.map(i => [
+      i.nombre_completo, i.email, i.documento || "N/A", i.especialidad, i.anios_experiencia, i.estado ? "Activo" : "Inactivo"
+    ].join(","));
+    const blob = new Blob([[headers.join(","), ...rows].join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `instructores_onwheels.csv`;
+    a.click();
   };
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white overflow-hidden">
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
-
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-              Gestión de Instructores
+      <div className={configUi.pageShell}>
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Instructores
             </h2>
-
-            {/* Compact Stats */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 border-r pr-4 border-slate-100">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 shadow-sm">
-                  <Hash size={14} className="text-blue-600" />
-                  <span className="text-xs font-bold">{filteredAndSorted.length}</span>
-                </div>
-              </div>
-              <button
-                onClick={exportCSV}
-                className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm"
-                title="Exportar CSV"
-              >
-                <Download size={16} />
-              </button>
-            </div>
+            <span className={configUi.countBadge}>{filteredAndSorted.length} miembros</span>
           </div>
 
-          {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
-            {/* Search & Create Group */}
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar instructor..."
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
-                />
-              </div>
-              <button
-                onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-              >
-                <Plus size={18} />
-                Registrar Instructor
-              </button>
+          <div className={configUi.toolbar}>
+            <div className={configUi.searchWrap}>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, email o especialidad..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className={configUi.inputWithIcon}
+              />
             </div>
 
-            {/* Filters (Larger) */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-              {[
-                { id: "nombre_completo", label: "Nombre" },
-                { id: "email", label: "Email" },
-                { id: "especialidad", label: "Especialidad" },
-                { id: "anios_experiencia", label: "Experiencia" },
-              ].map((field) => (
-                <button
-                  key={field.id}
-                  onClick={() => toggleSort(field.id)}
-                  className={cn(
-                    "px-4 py-2 text-[10px] uppercase font-bold tracking-wider rounded-xl border transition flex items-center gap-1.5 shrink-0 select-none",
-                    sortField === field.id
-                      ? "bg-blue-800 text-white border-blue-800 shadow-md"
-                      : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
-                  )}
-                >
-                  {field.label}
-                  {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={exportCSV}
+              className={configUi.iconButton}
+              title="Exportar CSV"
+            >
+              <Download size={20} />
+            </button>
+
+            <button
+              onClick={() => openModal("crear")}
+              className={`${configUi.primaryButton} whitespace-nowrap`}
+            >
+              <Plus size={18} />
+              Registrar Instructor
+            </button>
           </div>
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-            {/* Table Content */}
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+        <div className={configUi.tableCard}>
+          <div className={configUi.tableScroll}>
+            <table className={configUi.table}>
+              <thead className={configUi.thead}>
+                <tr>
+                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[30%]`}>Instructor</th>
+                  <th className={`${configUi.th} w-[25%]`}>Contacto</th>
+                  <th className={`${configUi.th} w-[20%]`}>Especialidad</th>
+                  <th className={`${configUi.th} text-center w-[10%]`}>Exp.</th>
+                  <th className={`${configUi.th} text-center w-[10%]`}>Estado</th>
+                  <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[5%]`}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
                   <tr>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Instructor</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Email</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Especialidad</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Experiencia</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                    <td colSpan="6" className={configUi.emptyState}>Cargando instructores...</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="6" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td>
-                    </tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan="6" className="p-12 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2 text-red-500">
-                          <AlertCircle className="h-8 w-8 opacity-80" />
-                          <p className="font-medium">{error}</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="p-12 text-center text-gray-400">
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
-                            <path d="M18 20a6 6 0 0 0-12 0"></path>
-                            <circle cx="12" cy="10" r="4"></circle>
-                            <circle cx="12" cy="12" r="10"></circle>
-                          </svg>
-                          <p className="text-sm">No se encontraron instructores registrados</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    currentItems.map((i) => (
-                      <tr key={i.id_instructor} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
-                              {i.nombre_completo?.substring(0, 2).toUpperCase() || "IN"}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-[#040529] text-sm leading-tight">{i.nombre_completo}</p>
-                              <p className="text-xs text-gray-500 font-medium">{i.documento || "—"}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4">
-                          <p className="text-sm text-gray-600">{i.email}</p>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className="text-sm text-gray-600">{i.especialidad || "—"}</span>
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <span className="text-sm text-gray-600">
-                            {i.anios_experiencia ? `${i.anios_experiencia} años` : "—"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <span className={cn(
-                            "text-xs font-bold px-3 py-1 rounded-full border shadow-sm",
-                            i.estado
-                              ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                              : "bg-red-50 text-red-600 border-red-100"
-                          )}>
-                            {i.estado ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => openModal("ver", i)}
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
-                              title="Ver"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => openModal("editar", i)}
-                              className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100"
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => openModal("eliminar", i)}
-                              className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
-                              title="Desactivar"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Footer Pagination */}
-            {filteredAndSorted.length > 0 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">
-                  Mostrando <span className="font-bold text-[#040529]">{currentItems.length}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-                  >
-                    <ChevronLeft className="h-4 w-4 text-gray-600" />
-                  </button>
-                  <span className="text-sm font-bold text-[#040529] px-2">
-                    {currentPage}
-                  </span>
-                  <button
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-                  >
-                    <ChevronRight className="h-4 w-4 text-gray-600" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* --- NOTIFICATIONS & MODALS --- */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}
-            >
-              {notification.message}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {modal && (
-            <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "eliminar" ? "max-w-sm w-full" : "max-w-5xl w-full"}`}
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* --- MODAL CONTENT --- */}
-                {modal === "eliminar" ? (
-                  <div className="p-6 text-center">
-                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Trash2 size={24} />
-                    </div>
-                    <h3 className="text-lg font-bold text-[#040529] mb-2">Desactivar Instructor</h3>
-                    <p className="text-sm text-gray-500 mb-6">
-                      ¿Estás seguro de desactivar a{" "}
-                      <span className="font-bold text-red-600">{selectedInstructor?.nombre_completo}</span>?
-                      <br />
-                      <span className="text-xs">El instructor no podrá iniciar sesión.</span>
-                    </p>
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={closeModal}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleDelete}
-                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-                      >
-                        Desactivar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col lg:flex-row h-[550px]">
-                    {/* Left Side (Visual) */}
-                    <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                      <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                        <Briefcase size={48} strokeWidth={1.5} />
+                ) : error ? (
+                  <tr>
+                    <td colSpan="6" className={configUi.emptyState}>
+                      <div className="text-red-500 flex flex-col items-center gap-2">
+                        <AlertCircle size={40} className="opacity-50" />
+                        <p className="font-bold">{error}</p>
                       </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        {modal === "crear" ? "Registro de Instructor" : modal === "editar" ? "Edición de Instructor" : "Detalles del Instructor"}
+                    </td>
+                  </tr>
+                ) : currentItems.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className={configUi.emptyState}>No se han encontrado instructores.</td>
+                  </tr>
+                ) : (
+                  currentItems.map((inst) => (
+                    <tr key={inst.id_instructor} className={configUi.row}>
+                      <td className={configUi.td}>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-[#16315f] font-bold text-sm shadow-sm border border-slate-100">
+                            {inst.nombre_completo?.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-[#16315f] text-sm leading-tight mb-0.5 truncate">{inst.nombre_completo}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">ID: {inst.id_instructor}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={configUi.td}>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-600">{inst.email}</span>
+                          <span className="text-[10px] text-slate-400 font-bold tracking-wider">{inst.documento || "Sin Documento"}</span>
+                        </div>
+                      </td>
+                      <td className={configUi.td}>
+                        <span className="text-sm text-slate-600 font-medium">{inst.especialidad || "General"}</span>
+                      </td>
+                      <td className={`${configUi.td} text-center`}>
+                        <span className="bg-slate-50 text-slate-600 px-2 py-0.5 rounded-lg text-xs font-bold border border-slate-100 italic">
+                          {inst.anios_experiencia}a
+                        </span>
+                      </td>
+                      <td className={`${configUi.td} text-center`}>
+                        <span className={cn(
+                          configUi.pill,
+                          inst.estado ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                        )}>
+                          {inst.estado ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td className={`${configUi.td} text-right`}>
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openModal("ver", inst)} className={configUi.actionButton} title="Ver"><Eye size={14} /></button>
+                          <button onClick={() => openModal("editar", inst)} className={configUi.actionButton} title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => openModal("eliminar", inst)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          {totalPages > 0 && (
+            <div className={configUi.paginationBar}>
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* --- NOTIFICATIONS --- */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 300 }}
+            transition={{ duration: 0.3 }}
+            className={`fixed top-4 right-4 z-[9999] px-4 py-3 rounded-xl shadow-2xl text-white font-bold flex items-center gap-3 border border-white/20 backdrop-blur-md ${notification.type === "success" ? "bg-[#16315f]" : "bg-red-600"}`}
+          >
+            {notification.type === "success" ? <TrendingUp size={18} /> : <AlertCircle size={18} />}
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- MODALES --- */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div
+            className={configUi.modalBackdrop}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+          >
+            <motion.div
+              className={`${configUi.modalPanel} ${modal === "eliminar" ? "max-w-sm" : "max-w-4xl"}`}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col">
+                <div className={configUi.modalHeader}>
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-[#16315f] border border-slate-100 shadow-inner">
+                      {modal === "eliminar" ? <Trash2 size={24} className="text-red-500" /> : <Briefcase size={24} />}
+                    </div>
+                    <div>
+                      <h3 className={configUi.modalTitle}>
+                        {modal === "crear" ? "Registrar Instructor" : modal === "editar" ? "Editar Perfil" : modal === "ver" ? "Ficha Técnica" : "Confirmar acción"}
+                      </h3>
+                      <p className={configUi.modalSubtitle}>
+                        {modal === "eliminar" ? "Esta acción desactivará al instructor del sistema." : "Gestiona las capacidades y especialidad del miembro."}
                       </p>
                     </div>
+                  </div>
+                  <button onClick={closeModal} className={configUi.modalClose}>
+                    <X size={20} />
+                  </button>
+                </div>
 
-                    {/* Right Side (Form) */}
-                    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-[#040529]">
-                          {modal === "crear"
-                            ? "Registrar Nuevo Instructor"
-                            : modal === "editar"
-                              ? "Editar Instructor"
-                              : "Detalles del Instructor"}
-                        </h3>
-                        <button
-                          onClick={closeModal}
-                          className="text-gray-400 hover:text-[#040529]"
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
-
-                      {modal === "ver" && selectedInstructor && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Completo</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedInstructor.nombre_completo}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedInstructor.email}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Documento</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedInstructor.documento || "—"}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedInstructor.telefono || "—"}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Especialidad</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedInstructor.especialidad || "—"}</p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Años de Experiencia</label>
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">
-                                {selectedInstructor.anios_experiencia ? `${selectedInstructor.anios_experiencia} años` : "—"}
-                              </p>
-                            </div>
-                            <div>
-                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Estado</label>
-                              <p className={cn(
-                                "mt-1 px-3 py-2 rounded-lg text-sm font-bold border",
-                                selectedInstructor.estado
-                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                  : "bg-red-50 text-red-600 border-red-100"
-                              )}>
-                                {selectedInstructor.estado ? "Activo" : "Inactivo"}
-                              </p>
-                            </div>
+                <div className={configUi.modalContent}>
+                  {modal === "eliminar" ? (
+                    <div className="py-4 text-center">
+                      <p className="text-sm leading-6 text-[#6b84aa]">
+                        ¿Estás seguro de desactivar al instructor <span className="font-bold text-[#d44966]">{selectedInstructor?.nombre_completo}</span>?
+                        No podrá ser asignado a nuevas clases.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      {/* Left Sidebar (Profile Info) */}
+                      <div className="w-full lg:w-1/3 space-y-4">
+                        <div className="w-full aspect-square bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center overflow-hidden shadow-inner p-6 text-center">
+                          <div className="h-24 w-24 rounded-full bg-white shadow-xl flex items-center justify-center text-[#16315f] border-4 border-slate-100 mb-4 transition duration-500 hover:rotate-6">
+                            <User size={48} strokeWidth={1} />
                           </div>
+                          {modal === "crear" ? (
+                            <div className="space-y-1">
+                              <p className="font-bold text-[#16315f] text-lg leading-tight italic">Nuevo</p>
+                              <p className="text-xs text-slate-400 font-medium">Asignación de usuario</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <p className="font-bold text-[#16315f] text-lg leading-tight truncate w-full">{selectedInstructor?.nombre_completo}</p>
+                              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{selectedInstructor?.email}</p>
+                            </div>
+                          )}
+                        </div>
 
-                          <div className="flex justify-end pt-6">
-                            <button
-                              onClick={closeModal}
-                              className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
-                            >
-                              Cerrar
-                            </button>
+                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/30">
+                          <p className="text-[10px] text-blue-800 font-bold uppercase tracking-widest mb-3 italic flex items-center gap-2">
+                            <Hash size={12} /> Datos de Sistema
+                          </p>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center text-[11px]">
+                              <span className="text-slate-400 font-medium">Documento</span>
+                              <span className="text-[#16315f] font-bold">{selectedInstructor?.documento || "—"}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[11px]">
+                              <span className="text-slate-400 font-medium">Teléfono</span>
+                              <span className="text-[#16315f] font-bold">{selectedInstructor?.telefono || "—"}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[11px]">
+                              <span className="text-slate-400 font-medium">Estado</span>
+                              <span className={cn("px-2 py-0.5 rounded-md font-bold", selectedInstructor?.estado ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")}>
+                                {selectedInstructor?.estado ? "Activo" : "Inactivo"}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      )}
+                      </div>
 
-                      {(modal === "crear" || modal === "editar") && (
-                        <form className="space-y-5">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Usuario *</label>
-                            <div className="relative mt-1">
-                              <select
-                                name="id_usuario"
-                                value={formData.id_usuario}
-                                onChange={handleChange}
-                                className={cn(
-                                  "w-full px-3 py-2 bg-gray-50 border-1! border-gray-200! rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                  formErrors.id_usuario ? "border-red-400 bg-red-50" : "border-gray-200"
-                                )}
-                              >
-                                <option value="">Seleccionar usuario</option>
-                                {usuariosDisponibles.map(usuario => (
-                                  <option key={usuario.id_usuario} value={usuario.id_usuario}>
-                                    {usuario.nombre_completo} ({usuario.email})
-                                  </option>
-                                ))}
-                              </select>
-                              {formErrors.id_usuario && (
-                                <p className="mt-1 text-red-400 text-[11px]">{formErrors.id_usuario}</p>
-                              )}
-                            </div>
+                      {/* Right Side (Form Fields) */}
+                      <div className="flex-1 space-y-6">
+                        {modal !== "ver" && (
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Vincular Usuario a Perfil de Instructor</label>
+                            {modal === "editar" ? (
+                                <div className={configUi.readOnlyField}>
+                                    {selectedInstructor?.nombre_completo} ({selectedInstructor?.email})
+                                </div>
+                            ) : (
+                                <div className="relative">
+                                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                  <select
+                                    name="id_usuario"
+                                    value={formData.id_usuario}
+                                    onChange={handleChange}
+                                    className={`${configUi.fieldSelect} !pl-10`}
+                                  >
+                                    <option value="">Seleccione un usuario disponible...</option>
+                                    {usuariosDisponibles.map(u => (
+                                      <option key={u.id_usuario} value={u.id_usuario}>{u.nombre_completo} - {u.email}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                            )}
+                            {formErrors.id_usuario && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.id_usuario}</p>}
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Especialidad Principal</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{formData.especialidad || "—"}</div>
+                            ) : (
+                              <div className="relative">
+                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input
+                                  type="text"
+                                  name="especialidad"
+                                  value={formData.especialidad}
+                                  onChange={handleChange}
+                                  className={`${configUi.fieldInput} !pl-10`}
+                                  placeholder="Ej: Freestyle Slide, Bowl..."
+                                />
+                              </div>
+                            )}
+                            {formErrors.especialidad && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.especialidad}</p>}
                           </div>
 
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Especialidad *</label>
-                            <div className="relative mt-1">
-                              <input
-                                type="text"
-                                name="especialidad"
-                                value={formData.especialidad}
-                                onChange={handleChange}
-                                className={cn(
-                                  "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                  formErrors.especialidad ? "border-red-400 bg-red-50" : "border-gray-200"
-                                )}
-                                placeholder="Ej: Skate vertical, Freestyle"
-                              />
-                              {formErrors.especialidad && (
-                                <p className="mt-1 text-red-400 text-[11px]">{formErrors.especialidad}</p>
-                              )}
-                            </div>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Años de Experiencia</label>
+                            {modal === "ver" ? (
+                              <div className={configUi.readOnlyField}>{formData.anios_experiencia} años</div>
+                            ) : (
+                              <div className="relative">
+                                <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input
+                                  type="number"
+                                  name="anios_experiencia"
+                                  value={formData.anios_experiencia}
+                                  onChange={handleChange}
+                                  className={`${configUi.fieldInput} !pl-10`}
+                                  placeholder="0"
+                                  min="0"
+                                />
+                              </div>
+                            )}
+                            {formErrors.anios_experiencia && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.anios_experiencia}</p>}
                           </div>
+                        </div>
 
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Años de Experiencia</label>
-                            <div className="relative mt-1">
-                              <input
-                                type="number"
-                                name="anios_experiencia"
-                                value={formData.anios_experiencia}
-                                onChange={handleChange}
-                                className={cn(
-                                  "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529]",
-                                  formErrors.anios_experiencia ? "border-red-400 bg-red-50" : "border-gray-200"
-                                )}
-                                placeholder="Ej: 5"
-                                min="0"
-                              />
-                              {formErrors.anios_experiencia && (
-                                <p className="mt-1 text-red-400 text-[11px]">{formErrors.anios_experiencia}</p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                            <button
-                              type="button"
-                              onClick={closeModal}
-                              className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"
-                            >
-                              Cancelar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={modal === "crear" ? handleCreate : handleEdit}
-                              className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10"
-                            >
-                              {modal === "crear" ? "Registrar Instructor" : "Guardar Cambios"}
-                            </button>
-                          </div>
-                        </form>
-                      )}
+                        {modal === "ver" && (
+                             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-center space-y-2 opacity-60">
+                                 <TrendingUp size={32} className="text-[#16315f]" />
+                                 <p className="text-xs font-bold text-[#16315f] uppercase tracking-tighter">Historial y Desempeño</p>
+                                 <p className="text-[10px] text-slate-400 italic">Módulo de estadísticas proximamente disponible para el perfil del instructor.</p>
+                             </div>
+                        )}
+                      </div>
                     </div>
+                  )}
+                </div>
+
+                <div className={configUi.modalFooter}>
+                  <span className="text-[10px] text-slate-400 italic font-medium">
+                    {modal === "ver" ? "Ficha de lectura del personal." : "Esta información define el perfil profesional del instructor."}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={closeModal} className={configUi.secondaryButton}>
+                      {modal === "ver" ? "Entendido" : "Cancelar"}
+                    </button>
+                    {modal === "crear" && (
+                      <button onClick={handleCreate} className={configUi.primarySoftButton}>Dar de Alta</button>
+                    )}
+                    {modal === "editar" && (
+                      <button onClick={handleEdit} className={configUi.primarySoftButton}>Guardar Perfil</button>
+                    )}
+                    {modal === "eliminar" && (
+                      <button onClick={handleDelete} className={configUi.dangerButton}>Confirmar Baja</button>
+                    )}
                   </div>
-                )}
-              </motion.div>
+                </div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
