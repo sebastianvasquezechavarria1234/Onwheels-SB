@@ -9,7 +9,11 @@ import { getHomePath } from "../utils/roleHelpers";
  * If not authenticated, it renders the landing page (children).
  */
 const RootRedirect = ({ children }) => {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, loading } = useAuth();
+
+    if (loading) {
+        return null;
+    }
 
     if (isAuthenticated && user) {
         return <Navigate to={getHomePath(user)} replace />;

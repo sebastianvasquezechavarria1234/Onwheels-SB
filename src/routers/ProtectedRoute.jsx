@@ -1,20 +1,37 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { getUserRoleSlug } from "../utils/roleHelpers";
+import { useAuth } from "../feactures/dashboards/dinamico/context/AuthContext";
+import { getHomePath, getUserRoleSlug } from "../utils/roleHelpers";
 
 const ProtectedRoute = ({ allowedRoles }) => {
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const { user, loading } = useAuth();
   const location = useLocation();
+
+  if (loading) {
+    return null;
+  }
 
   // Si no hay token, redirigir a login
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const userRoles = Array.isArray(user.roles) 
-    ? user.roles.map(r => (typeof r === 'string' ? r : r.nombre_rol).trim().toLowerCase()) 
-    : [user.rol?.trim().toLowerCase()].filter(Boolean);
-  const roleSlug = getUserRoleSlug(user);
+  const safeUser = user || {};
+  const userRoles = Array.isArray(safeUser.roles) 
+    ? safeUser.roles.map(r => (typeof r === 'string' ? r : r.nombre_rol).trim().toLowerCase()) 
+    : [safeUser.rol?.trim().toLowerCase()].filter(Boolean);
+  const roleSlug = getUserRoleSlug(safeUser);
+  const roleSlugMap = {
+    administrador: "admin",
+    admin: "admin",
+    estudiante: "student",
+    student: "student",
+    instructor: "instructor",
+    cliente: "users",
+    users: "users",
+    custom: "custom",
+  };
+  const allowedRoleSlugs = allowedRoles.map((allowedRole) => roleSlugMap[allowedRole.toLowerCase()] || allowedRole.toLowerCase());
 
   // Si no se especifican roles permitidos o el array está vacío, denegar acceso por seguridad
   if (!allowedRoles || allowedRoles.length === 0) {
@@ -28,6 +45,10 @@ const ProtectedRoute = ({ allowedRoles }) => {
 
   if (!hasValidRole) {
     return <Navigate to="/" replace />;
+  }
+
+  if (roleSlug !== "store" && !allowedRoleSlugs.includes(roleSlug)) {
+    return <Navigate to={getHomePath(safeUser)} replace />;
   }
 
   return <Outlet />;

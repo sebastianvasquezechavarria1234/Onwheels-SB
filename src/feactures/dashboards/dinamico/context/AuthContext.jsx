@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import api from "../../../../services/api";
 
 const AuthContext = createContext();
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -18,75 +18,107 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    /**
-     * Fetches fresh roles/permisos from the server and updates localStorage + state.
-     * Called on app startup to reflect role changes (e.g. cliente → estudiante)
-     * that happened server-side without requiring the user to log out.
-     */
-    const refreshUser = useCallback(async () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        try {
-            const res = await axios.get(`${API_BASE}/api/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            const freshData = res.data; // { id_usuario, email, roles, permisos }
-
-            // Merge fresh server data with existing user display fields (nombre, etc.)
-            const storedUser = localStorage.getItem("user");
-            const existingUser = storedUser ? JSON.parse(storedUser) : {};
-
-            const updatedUser = {
-                ...existingUser,
-                id_usuario: freshData.id_usuario,
-                email: freshData.email,
-                roles: freshData.roles,
-                permisos: freshData.permisos,
-            };
-
-            localStorage.setItem("user", JSON.stringify(updatedUser));
-            setUser(updatedUser);
-        } catch (err) {
-            // Token may be invalid/expired — clear session silently
-            if (err?.response?.status === 401) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setUser(null);
-            }
-            // Other errors: keep current state, don't log out
+    const syncUserState = useCallback((userData) => {
+        if (userData) {
+            localStorage.setItem("user", JSON.stringify(userData));
+            setUser(userData);
+            return;
         }
+
+        localStorage.removeItem("user");
+        setUser(null);
     }, []);
 
-    useEffect(() => {
+    const refreshUser = useCallback(async () => {
         const token = localStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
+        let parsedStoredUser = null;
 
-        // Hydrate from localStorage first (instant)
-        if (token && storedUser) {
+        if (!token) {
+            syncUserState(null);
+            return null;
+        }
+
+        if (storedUser) {
             try {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
+                parsedStoredUser = JSON.parse(storedUser);
+                if (!user) {
+                    setUser(parsedStoredUser);
+                }
             } catch (e) {
                 console.error("Error parsing user from storage", e);
-                localStorage.removeItem("token");
                 localStorage.removeItem("user");
             }
         }
 
-        setLoading(false);
-
-        // Then silently refresh from server to sync any role changes
-        if (token) {
-            refreshUser();
+        try {
+            const { data } = await api.get("/auth/me");
+            const mergedUser = {
+                ...(parsedStoredUser || {}),
+                ...(data || {}),
+                roles: data?.roles || parsedStoredUser?.roles || [],
+                permisos: data?.permisos || parsedStoredUser?.permisos || [],
+            };
+            syncUserState(mergedUser);
+            return mergedUser;
+        } catch (error) {
+            if (!storedUser) {
+                syncUserState(null);
+            }
+            return parsedStoredUser;
         }
+    }, [syncUserState, user]);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const bootstrapAuth = async () => {
+            try {
+                await refreshUser();
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+
+        bootstrapAuth();
+
+        const handleVisibility = () => {
+            if (document.visibilityState === "visible") {
+                refreshUser();
+            }
+        };
+
+        const handleFocus = () => {
+            refreshUser();
+        };
+
+        const handleAuthChanged = () => {
+            refreshUser();
+        };
+
+        const handleStorage = (event) => {
+            if (event.key === "token" || event.key === "user") {
+                refreshUser();
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibility);
+        window.addEventListener("focus", handleFocus);
+        window.addEventListener("authChanged", handleAuthChanged);
+        window.addEventListener("storage", handleStorage);
+
+        return () => {
+            mounted = false;
+            document.removeEventListener("visibilitychange", handleVisibility);
+            window.removeEventListener("focus", handleFocus);
+            window.removeEventListener("authChanged", handleAuthChanged);
+            window.removeEventListener("storage", handleStorage);
+        };
     }, [refreshUser]);
 
     const login = (token, userData) => {
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
+        syncUserState(userData);
 
         // Dispatch simple event for standard reload listeners
         window.dispatchEvent(new Event("authChanged"));
@@ -97,8 +129,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setUser(null);
+        syncUserState(null);
         window.location.href = "/login";
     };
 
@@ -107,7 +138,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, refreshUser, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, hasPermission, isAuthenticated: !!user }}>
             {children}
         </AuthContext.Provider>
     );
