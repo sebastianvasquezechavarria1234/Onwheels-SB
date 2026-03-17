@@ -1,38 +1,28 @@
 "use client"
 
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext"
 import { CustomHeader } from "./CustomHeader"
 import { Footer } from "../../layout/Footer"
-import { useEffect, useState } from "react"
 
 export const CustomLayout = ({ children }) => {
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
-    }
-  }, [])
+  const { user } = useAuth()
+  const userName = user?.nombre || ""
 
   return (
-    <>
+    <main className="min-h-screen flex flex-col">
       <CustomHeader />
-      {user && (
-        <div
-          style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            padding: "1rem",
-            textAlign: "center",
-            color: "white",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "1.1rem" }}>
-            Bienvenido, <strong>{user.name || "Usuario"}</strong>
+
+      <div className="flex-grow">{children}</div>
+
+      <Footer />
+
+      {userName && (
+        <div className="fixed bottom-4 right-4 bg-white backdrop-blur-[16px] rounded-full p-[4px_18px] ">
+          <p className="text-gray-800 font-bold!">
+            Bienvenido: <span className="italic">{userName}</span>
           </p>
         </div>
       )}
-      <main>{children}</main>
-      <Footer />
-    </>
+    </main>
   )
 }

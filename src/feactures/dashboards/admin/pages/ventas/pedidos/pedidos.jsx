@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import {
   Pen,
@@ -57,6 +57,8 @@ function cn(...classes) { return classes.filter(Boolean).join(" "); }
 
 function Pedidos() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
   const [ventas, setVentas] = useState([]);
   const [usuarios, setUsuarios] = useState([]); // todos los usuarios (posibles clientes)
   const [clientes, setClientes] = useState([]); // solo quienes tienen perfil cliente
@@ -66,11 +68,14 @@ function Pedidos() {
   const [modal, setModal] = useState(null); // 'crear','editar','ver','eliminar','status','selectProducto','reviewProducts'
   const [parentModal, setParentModal] = useState(null);
   const [modalCancel, setModalCancel] = useState(null);
+  const [cancelJustificacion, setCancelJustificacion] = useState("");
+  const [statusFormEstado, setStatusFormEstado] = useState("");
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [form, setForm] = useState({
     id_cliente: "",
     fecha_venta: "",
     estado: "Pendiente",
+    metodo_pago: "contraentrega",
     items: [],
   });
   const [searchTerm, setSearchTerm] = useState("");
@@ -174,7 +179,7 @@ function Pedidos() {
       return;
     } else if (type === "ver" && venta) {
       // Navegar a la vista de detalle en lugar de abrir modal
-      navigate(`/admin/pedidos/detalle/${venta.id_venta}`);
+      navigate(`${basePath}/pedidos/detalle/${venta.id_venta}`);
       return;
     }
 
@@ -187,6 +192,7 @@ function Pedidos() {
         id_cliente: "",
         fecha_venta: new Date().toISOString().split("T")[0],
         estado: "Pendiente",
+        metodo_pago: "contraentrega",
         items: [],
       });
       setHistorialCliente([]);
@@ -197,6 +203,7 @@ function Pedidos() {
           id_cliente: ventaCompleta.id_cliente,
           fecha_venta: ventaCompleta.fecha_venta?.split?.("T")[0] || "",
           estado: ventaCompleta.estado || "Pendiente",
+          metodo_pago: ventaCompleta.metodo_pago || "contraentrega",
           items: ventaCompleta.items ? JSON.parse(JSON.stringify(ventaCompleta.items)) : [],
         });
         loadHistorial(ventaCompleta.id_cliente);
@@ -337,9 +344,20 @@ function Pedidos() {
   const handleStatusUpdate = async (estado) => {
     if (!selectedVenta) return;
     try {
-      await updatePedidoStatus(selectedVenta.id_venta, { estado });
+      if (estado === "Cancelada") {
+        if (!cancelJustificacion || !cancelJustificacion.trim()) {
+          showNotification("Por favor, ingrese una justificación para la cancelación", "error");
+          return;
+        }
+        // Use the cancel endpoint with justification
+        await cancelPedido(selectedVenta.id_venta, { motivo_cancelacion: cancelJustificacion || 'Sin justificación proporcionada' });
+      } else {
+        await updatePedidoStatus(selectedVenta.id_venta, { estado });
+      }
       await fetchData();
       showNotification("Estado actualizado", "success");
+      setCancelJustificacion("");
+      setStatusFormEstado("");
       closeModal();
     } catch (err) {
       showNotification(err?.response?.data?.mensaje || "Error al actualizar estado", "error");
@@ -547,12 +565,12 @@ function Pedidos() {
                   <ShoppingBag size={14} className="text-blue-600" />
                   <span className="text-xs font-bold">{filteredVentas.length}</span>
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-green-50 text-green-700 border border-green-100 shadow-sm">
+                {/* <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-green-50 text-green-700 border border-green-100 shadow-sm">
                   <TrendingUp size={14} className="text-green-600" />
                   <span className="text-xs font-bold">
                     ${filteredVentas.reduce((acc, v) => acc + (v.total || 0), 0).toLocaleString()}
                   </span>
-                </div>
+                </div> */}
               </div>
               <button className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm" title="Exportar CSV">
                 <Download size={16} />
@@ -592,7 +610,7 @@ function Pedidos() {
               </div>
 
               <button
-                onClick={() => navigate("/admin/pedidos/crear")}
+                onClick={() => navigate(`${basePath}/pedidos/crear`)}
                 className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
               >
                 <Plus size={18} />
@@ -685,11 +703,13 @@ function Pedidos() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => navigate(`/admin/pedidos/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
+                            <button onClick={() => navigate(`${basePath}/pedidos/detalle/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
                             {v.estado === "Pendiente" && (
-                              <button onClick={() => navigate(`/admin/pedidos/editar/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={16} /></button>
+                              <button onClick={() => navigate(`${basePath}/pedidos/editar/${v.id_venta}`)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={16} /></button>
                             )}
-                            <button onClick={() => openModal("status", v)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Actualizar estado"><Package size={16} /></button>
+                            {v.estado !== "Cancelada" && (
+                              <button onClick={() => { setStatusFormEstado(v.estado); setCancelJustificacion(""); openModal("status", v); }} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Actualizar estado"><Package size={16} /></button>
+                            )}
                             <button onClick={() => openModal("eliminar", v)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 size={16} /></button>
                           </div>
                         </td>
@@ -1214,7 +1234,7 @@ function Pedidos() {
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex h-[360px]">
+              <div className="flex" style={{ minHeight: statusFormEstado === 'Cancelada' ? '460px' : '360px' }}>
                 <div className="w-1/3 bg-gray-50 flex flex-col items-center justify-center border-r border-gray-100 p-6 text-gray-400">
                   <div className="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4">
                     <BoxIcon size={40} strokeWidth={1.5} />
@@ -1230,23 +1250,45 @@ function Pedidos() {
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        const formData = new FormData(e.target);
-                        handleStatusUpdate(formData.get("estado"));
+                        handleStatusUpdate(statusFormEstado);
                       }}
                       className="space-y-4"
                     >
                       <div>
                         <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nuevo Estado</label>
-                        <select name="estado" defaultValue={selectedVenta.estado} className="w-full mt-1 px-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none appearance-none bg-white transition cursor-pointer">
+                        <select
+                          name="estado"
+                          value={statusFormEstado}
+                          onChange={(e) => {
+                            setStatusFormEstado(e.target.value);
+                            if (e.target.value !== 'Cancelada') setCancelJustificacion('');
+                          }}
+                          className="w-full mt-1 px-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none appearance-none bg-white transition cursor-pointer"
+                        >
                           <option value="Pendiente">Pendiente</option>
                           <option value="Procesada">Procesada</option>
                           <option value="Entregada">Entregada</option>
                           <option value="Cancelada">Cancelada</option>
                         </select>
                       </div>
+                      {statusFormEstado === 'Cancelada' && (
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Justificación de cancelación *</label>
+                          <textarea
+                            value={cancelJustificacion}
+                            onChange={(e) => setCancelJustificacion(e.target.value)}
+                            placeholder="Ingrese la razón de la cancelación..."
+                            rows={3}
+                            className="w-full mt-1 px-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-red-200 outline-none transition resize-none"
+                            required
+                          />
+                        </div>
+                      )}
                       <div className="px-0 py-4 pt-8 flex gap-3">
                         <button type="button" onClick={closeModal} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition font-bold text-xs uppercase tracking-wider">Cerrar</button>
-                        <button type="submit" className="flex-1 px-4 py-2 rounded-xl bg-[#040529] text-white hover:bg-[#040529]/90 transition font-bold text-xs uppercase tracking-wider shadow-md">Actualizar</button>
+                        <button type="submit" className={cn("flex-1 px-4 py-2 rounded-xl text-white transition font-bold text-xs uppercase tracking-wider shadow-md", statusFormEstado === 'Cancelada' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#040529] hover:bg-[#040529]/90')}>
+                          {statusFormEstado === 'Cancelada' ? 'Confirmar Cancelación' : 'Actualizar'}
+                        </button>
                       </div>
                     </form>
                   </div>

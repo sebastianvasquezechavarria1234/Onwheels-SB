@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 import { Search, Plus, Trash2, ArrowLeft, X, Save, CheckCircle, Package, User, DollarSign, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +21,8 @@ import { getClientes } from "../../services/clientesServices";
 export default function VentaEditar() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const isEditing = Boolean(id);
 
     // Estados Globales
@@ -39,8 +41,8 @@ export default function VentaEditar() {
         direccion: "",
         telefono: "",
         fecha_venta: new Date().toISOString().split("T")[0],
-        metodo_pago: "Efectivo",
-        estado: "Pendiente",
+        metodo_pago: "transferencia",
+        estado: "Entregada",
         items: [],
     });
 
@@ -345,7 +347,7 @@ export default function VentaEditar() {
                 showNotification("Venta creada exitosamente", "success");
             }
             // Navegar atrás tras éxito
-            setTimeout(() => navigate("/admin/ventas"), 1000);
+            setTimeout(() => navigate(`${basePath}/ventas`), 1000);
         } catch (err) {
             console.error(err);
             showNotification(err?.response?.data?.mensaje || "Error al guardar venta", "error");
@@ -366,7 +368,7 @@ export default function VentaEditar() {
                 {/* Header Page */}
                 <div className="bg-white shadow-sm border-b px-6 py-4 flex items-center justify-between sticky top-0 z-10">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate("/admin/ventas")} className="p-2 hover:bg-gray-100 rounded-full transition">
+                        <button onClick={() => navigate(`${basePath}/ventas`)} className="p-2 hover:bg-gray-100 rounded-full transition">
                             <ArrowLeft size={20} className="text-gray-600" />
                         </button>
                         <div>
@@ -379,7 +381,7 @@ export default function VentaEditar() {
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={() => navigate("/admin/ventas")}
+                            onClick={() => navigate(`${basePath}/ventas`)}
                             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                         >
                             Cancelar
@@ -450,11 +452,10 @@ export default function VentaEditar() {
                                     <select
                                         value={form.metodo_pago}
                                         onChange={e => setForm({ ...form, metodo_pago: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none transition focus:ring-2 focus:ring-blue-500"
                                     >
-                                        <option value="Efectivo">Efectivo</option>
-                                        <option value="Tarjeta">Tarjeta</option>
-                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="efectivo">Efectivo</option>
                                     </select>
                                 </div>
                             </div>

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingCart, User, LogOut } from "lucide-react";
+import { Menu, X, ShoppingCart } from "lucide-react";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
+import { UserDropdown } from "../../components/UserDropdown";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
+import { getHomePath, getStoreHomePath, getCartPath, getPreinscriptionPath, getUserRoleSlug } from "../../../../utils/roleHelpers";
 
 /* ================================
    TOOLTIP ANIMADO (EXACTO AL ORIGINAL)
@@ -107,29 +110,27 @@ const IconWithTooltip = ({ label, children, className = "" }) => {
    CORRECCIÓN: evitar salto al scrollear
 ================================ */
 export const UsersHeader = () => {
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const roleSlug = getUserRoleSlug(user);
+  const classesPath = roleSlug === "student" || roleSlug === "instructor" ? `/${roleSlug}/training` : "/users/training";
+  const eventsPath = roleSlug === "student" ? "/student/events" : roleSlug === "instructor" ? "/instructor/events" : "/users/events";
 
-  // Scroll detection
+  // Scroll detection ...
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
-
   const navLinks = [
-    { title: "Inicio", path: "/users/home" },
-    { title: "Pre-inscripciones", path: "/users/preinscriptions" },
-    { title: "Tienda", path: "/users/store" },
-    { title: "Clases", path: "/users/training" },
-    { title: "Eventos", path: "/users/events" },
+    { title: "Inicio", path: getHomePath(user) },
+    { title: "Pre-inscripciones", path: getPreinscriptionPath(user) },
+    { title: "Tienda", path: getStoreHomePath(user) },
+    { title: "Clases", path: classesPath },
+    { title: "Eventos", path: eventsPath },
   ];
 
   return (
@@ -143,15 +144,14 @@ export const UsersHeader = () => {
           className={`
             flex items-center justify-between px-3 py-1 rounded-full
             backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
-            ${
-              scrolled
-                ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[80%] max-w-[1400px] mx-auto"
-                : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
+            ${scrolled
+              ? "bg-black/80 border border-white/10 shadow-2xl w-[95%] md:w-[80%] lg:w-[80%] max-w-[1400px] mx-auto"
+              : "bg-black/40 border border-white/5 w-full max-w-[1400px]"
             }
           `}
         >
           {/* LOGO */}
-          <Link to="/users/home" className="flex items-center gap-2">
+          <Link to={getHomePath(user)} className="flex items-center gap-2">
             <div className="w-[50px] h-[50px] bg-white rounded-full overflow-hidden border-2 border-[var(--color-blue)]">
               <img
                 src="/logo.png"
@@ -159,30 +159,30 @@ export const UsersHeader = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="font-bold text-lg uppercase tracking-tighter text-white">
+            <span className="font-bold text-lg tracking-tighter text-white whitespace-nowrap">
               Performance SB
             </span>
           </Link>
 
-          {/* NAV DESKTOP */}
+          {/* NAV DESKTOP ... */}
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className="group relative text-xs font-bold uppercase tracking-widest text-white/90"
+                className="group relative text-xs font-bold tracking-widest text-white/90"
               >
                 {link.title}
 
                 <span
                   className="
-      absolute left-0 top-[110%]
-      block h-[1px] w-full
-      bg-white
-      opacity-0
-      transition-opacity duration-300
-      group-hover:opacity-100
-    "
+                    absolute left-0 top-[110%]
+                    block h-[1px] w-full
+                    bg-white
+                    opacity-0
+                    transition-opacity duration-300
+                    group-hover:opacity-100
+                  "
                 />
               </Link>
             ))}
@@ -193,13 +193,11 @@ export const UsersHeader = () => {
             <IconWithTooltip label="Carrito de compras">
               <BtnLinkIcon
                 title=""
-                link="/users/shoppingCart"
+                link={getCartPath(user)}
                 style="bg-transparent
-                     
                       text-white
                       gap-[0px]!
                       p-[1px_1px_1px_1px]! 
-                      
                       rounded-full
                       overflow-hidden"
               >
@@ -207,32 +205,7 @@ export const UsersHeader = () => {
               </BtnLinkIcon>
             </IconWithTooltip>
 
-            <IconWithTooltip label="Mi cuenta">
-              <BtnLinkIcon
-                title=""
-                link="/users/setting"
-                style="bg-transparent
-                     
-                      text-white
-                      gap-[0px]!
-                      p-[1px_1px_1px_1px]! 
-                      
-                      rounded-full
-                      overflow-hidden"
-              >
-                <User size={18} />
-              </BtnLinkIcon>
-            </IconWithTooltip>
-
-            <IconWithTooltip label="Cerrar sesión">
-              <button
-                onClick={handleLogout}
-                className="w-[60px] cursor-pointer h-[60px] bg-red-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
-                aria-label="Cerrar sesión"
-              >
-                <LogOut size={16} color="white" />
-              </button>
-            </IconWithTooltip>
+            <UserDropdown isScrolled={scrolled} />
 
             <button
               onClick={() => setIsOpen(true)}
@@ -269,7 +242,7 @@ export const UsersHeader = () => {
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className="text-3xl font-bold uppercase text-white hover:text-[var(--color-blue)]"
+                  className="text-3xl font-bold text-white hover:text-[var(--color-blue)]"
                 >
                   {link.title}
                 </Link>

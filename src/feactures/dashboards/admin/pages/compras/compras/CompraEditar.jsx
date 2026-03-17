@@ -1,777 +1,374 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-
-import { Search, Plus, Trash2, ArrowLeft, X, Save, AlertTriangle, CheckCircle, Package } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+    ArrowLeft, Save, Plus, Trash2, Search, ShoppingBag,
+    Package, Calendar, Info, CheckCircle2, XCircle,
+    ChevronRight, Archive, Image as ImageIcon
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-    getCompraById,
-    createCompra,
-    updateCompra,
-    getProveedores,
-} from "../../services/comprasService";
-import {
-    getProductos,
-    getColores,
-    getTallas,
-    getVariantes,
-} from "../../services/productosServices";
-import { getCategorias } from "../../services/categoriasService";
+import comprasService from "../../services/comprasService";
+import ProductSelectorView from "./ProductSelectorView";
 
-export default function CompraEditar() {
+// Helper para clases condicionales
+function cn(...classes) {
+    return classes.filter(Boolean).join(" ");
+}
+
+const CompraEditar = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const isEditing = Boolean(id);
+    const location = useLocation();
+    const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
+    const isEditing = !!id;
 
-    // Estados Globales
+    // Si se intenta editar, redirigir al listado
+    useEffect(() => {
+        if (isEditing) {
+            navigate(`${basePath}/compras`, { replace: true });
+        }
+    }, [isEditing, navigate]);
+
     const [loading, setLoading] = useState(true);
-    const [proveedores, setProveedores] = useState([]);
-    const [productos, setProductos] = useState([]); // con variantes nested
-    const [colores, setColores] = useState([]);
-    const [tallas, setTallas] = useState([]);
-    const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+    const [saving, setSaving] = useState(false);
 
-    // Formulario Compra
-    const [form, setForm] = useState({
-        nit: "", // nit_proveedor
-        fecha_compra: new Date().toISOString().split("T")[0],
-        fecha_aproximada_entrega: "",
-        estado: "Pendiente",
-        items: [],
+    // Estado principal de la compra (sin estado)
+    const [purchase, setPurchase] = useState({
+        nit_proveedor: "",
+        fecha_compra: new Date().toISOString().split('T')[0],
+        total_compra: 0
     });
 
-    // Estados de Modales Internos
-    const [modal, setModal] = useState(null); // 'selectProducto'
-    const [selectedProducts, setSelectedProducts] = useState({});
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [items, setItems] = useState([]);
+    const [proveedores, setProveedores] = useState([]);
+    const [allProducts, setAllProducts] = useState([]);
 
-    // Helpers Notificación
-    const showNotification = useCallback((message, type = "success") => {
+    // Vista de selección de productos
+    const [showProductSelector, setShowProductSelector] = useState(false);
+    const [productSearch, setProductSearch] = useState("");
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [selectedVariant, setSelectedVariant] = useState(null);
+    const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
+
+    const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+
+    const showNotification = (message, type = "success") => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
+    };
+
+    useEffect(() => {
+        fetchInitialData();
     }, []);
 
-    // Combinar productos para selección
-    const combinarProductosConVariantes = (productosList = [], variantesList = []) => {
-        const productoMap = new Map();
-        productosList.forEach((p) => productoMap.set(p.id_producto, { ...p, variantes: [] }));
-        variantesList.forEach((v) => {
-            const producto = productoMap.get(v.id_producto);
-            if (producto) {
-                producto.variantes.push({
-                    id_variante: v.id_variante,
-                    id_color: v.id_color,
-                    id_talla: v.id_talla,
-                    stock: v.stock,
-                    nombre_color: v.nombre_color,
-                    nombre_talla: v.nombre_talla,
-                    codigo_hex: v.codigo_hex,
-                });
-            }
-        });
-        return Array.from(productoMap.values());
-    };
-
-    // Carga Inicial
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const [provs, prods, vars, cats, cols, tls] = await Promise.all([
-                    getProveedores(),
-                    getProductos(),
-                    getVariantes(),
-                    getCategorias(),
-                    getColores(),
-                    getTallas(),
-                ]);
-
-                setProveedores(provs || []);
-                // setCategorias(cats || []); // Not needed now clearly unless creating new prod inside modal (which is implicit)
-                setColores(cols || []);
-                setTallas(tls || []);
-                setProductos(combinarProductosConVariantes(prods || [], vars || []));
-
-                // Si es edición, cargar la compra
-                if (isEditing) {
-                    const compra = await getCompraById(id);
-                    setForm({
-                        nit: compra.nit_proveedor || compra.nit, // handle inconsistent response safely
-                        fecha_compra: compra.fecha_compra?.split("T")[0],
-                        fecha_aproximada_entrega: compra.fecha_aproximada_entrega?.split("T")[0] || "",
-                        estado: compra.estado,
-                        items: compra.items?.map(it => ({
-                            ...it,
-                            qty: it.cantidad,
-                            price: it.precio_unitario,
-                            nombre_producto: it.nombre_producto,
-                            nombre_color: it.nombre_color,
-                            nombre_talla: it.nombre_talla
-                        })) || [],
-                    });
-                }
-            } catch (err) {
-                console.error("Error data:", err);
-                showNotification("Error cargando datos: " + (err.message || ""), "error");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [id, isEditing, showNotification, navigate]);
-
-    // Manejadores Formulario Principal
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
-    };
-
-    const updateItemField = (idx, field, value) => {
-        const updated = [...form.items];
-        updated[idx][field] = value;
-
-        // REGLA: Si cambia el precio, actualizar TODOS los variantes del mismo producto
-        if (field === 'price') {
-            const currentItem = updated[idx];
-            const targetId = currentItem.id_producto;
-            const targetName = currentItem.nombre_producto; // Fallback para nuevos productos sin ID aún
-
-            updated.forEach((item, i) => {
-                if (i !== idx) {
-                    // Coincidir por ID (si existe) o Nombre (si es nuevo)
-                    const sameProduct = (targetId && item.id_producto === targetId) ||
-                        (!targetId && item.nombre_producto === targetName);
-
-                    if (sameProduct) {
-                        item.price = value;
-                    }
-                }
-            });
+    const fetchInitialData = async () => {
+        try {
+            setLoading(true);
+            const [provRes, prodRes] = await Promise.all([
+                comprasService.getProveedores(),
+                comprasService.getProductos({ limit: 1000 }) // Load all for selector
+            ]);
+            setProveedores(Array.isArray(provRes) ? provRes : []);
+            setAllProducts(Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : []);
+        } catch (err) {
+            showNotification("Error al cargar datos", "error");
+        } finally {
+            setLoading(false);
         }
+    };
 
-        setForm(prev => ({ ...prev, items: updated }));
+    const calculateTotal = (currentItems) => {
+        return currentItems.reduce((acc, item) => acc + (parseFloat(item.subtotal) || 0), 0);
     };
 
     const removeItem = (idx) => {
-        const updated = form.items.filter((_, i) => i !== idx);
-        setForm(prev => ({ ...prev, items: updated }));
+        const newItems = items.filter((_, i) => i !== idx);
+        setItems(newItems);
+        setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
     };
 
-    // ==========================================
-    // Lógica Modal Selección / Creación Producto
-    // ==========================================
-
-    const openSelectModal = () => {
-        setModal('selectProducto');
-    };
-
-    const closeModals = () => {
-        setModal(null);
-        setSelectedProducts({});
-        setSearchTerm("");
-    };
-
-    // 1. Manejo Nuevo Variant Manual
-    const handleProductSelectManual = (productId, checked) => {
-        if (checked) {
-            setSelectedProducts((prev) => ({
-                ...prev,
-                [productId]: { ...prev[productId], manualVariantes: [{ id_variante: null, id_color: "", id_talla: "", qty: 1, price: 0 }] },
-            }));
-        } else {
-            // Remove only manual variants? Or uncheck product entirely?
-            // Simplest: Uncheck product clears manual entry intention.
-            setSelectedProducts(prev => {
-                const copy = { ...prev };
-                delete copy[productId];
-                return copy;
-            });
+    const handleSave = async () => {
+        if (!purchase.nit_proveedor) {
+            showNotification("Selecciona un proveedor", "error");
+            return;
         }
-    };
+        if (items.length === 0) {
+            showNotification("Añade al menos un producto", "error");
+            return;
+        }
 
-    const addManualVariantLine = (productId) => {
-        setSelectedProducts(prev => {
-            const prod = prev[productId] || { manualVariantes: [] };
-            return {
-                ...prev,
-                [productId]: {
-                    ...prod,
-                    manualVariantes: [...(prod.manualVariantes || []), { id_variante: null, id_color: "", id_talla: "", qty: 1, price: 0 }]
-                }
-            };
-        });
-    };
-
-    const updateManualVariant = (productId, idx, field, value) => {
-        setSelectedProducts(prev => {
-            const prod = prev[productId];
-            const vars = [...prod.manualVariantes];
-            vars[idx] = { ...vars[idx], [field]: value };
-            return { ...prev, [productId]: { ...prod, manualVariantes: vars } };
-        });
-    };
-
-
-    // 2. Manejo Variante Existente (Quick Add)
-    const toggleExistingVariant = (product, variant) => {
-        // Check if already selected
-        const isSelected = selectedProducts[product.id_producto]?.existingVariantes?.some(v => v.id_variante === variant.id_variante);
-
-        setSelectedProducts(prev => {
-            const prodData = prev[product.id_producto] || { manualVariantes: [], existingVariantes: [] };
-            let newExisting = prodData.existingVariantes || [];
-
-            if (isSelected) {
-                newExisting = newExisting.filter(v => v.id_variante !== variant.id_variante);
-            } else {
-                newExisting.push({
-                    ...variant,
-                    qty: 1,
-                    price: product.precio_compra || 0
-                });
-            }
-
-            if (newExisting.length === 0 && prodData.manualVariantes.length === 0) {
-                const { [product.id_producto]: _, ...rest } = prev;
-                return rest;
-            }
-
-            return {
-                ...prev,
-                [product.id_producto]: { ...prodData, existingVariantes: newExisting }
-            };
-        });
-    };
-
-    const updateExistingVariantQty = (productId, variantId, field, value) => {
-        setSelectedProducts(prev => {
-            const prodData = prev[productId];
-            const newExisting = prodData.existingVariantes.map(v =>
-                v.id_variante === variantId ? { ...v, [field]: value } : v
-            );
-            return {
-                ...prev,
-                [productId]: { ...prodData, existingVariantes: newExisting }
-            };
-        });
-    };
-
-    const confirmSelection = () => {
-        const newItems = [];
-        Object.entries(selectedProducts).forEach(([pId, data]) => {
-            const product = productos.find(p => p.id_producto === Number(pId));
-            if (!product) return;
-
-            // A. Existentes
-            if (data.existingVariantes) {
-                data.existingVariantes.forEach(v => {
-                    newItems.push({
-                        id_producto: product.id_producto,
-                        nombre_producto: product.nombre_producto,
-                        id_color: Number(v.id_color),
-                        nombre_color: v.nombre_color,
-                        id_talla: Number(v.id_talla),
-                        nombre_talla: v.nombre_talla,
-                        qty: Number(v.qty),
-                        price: Number(v.price),
-                        id_variante: v.id_variante, // Explicit ID
-                    });
-                });
-            }
-
-            // B. Manuales (Nuevos o no encontrados visualmente)
-            if (data.manualVariantes) {
-                data.manualVariantes.forEach(v => {
-                    if (!v.id_color || !v.id_talla) return;
-
-                    const colorObj = colores.find(c => Number(c.id_color) === Number(v.id_color));
-                    const tallaObj = tallas.find(t => Number(t.id_talla) === Number(v.id_talla));
-
-                    newItems.push({
-                        id_producto: product.id_producto,
-                        nombre_producto: product.nombre_producto,
-                        id_color: Number(v.id_color),
-                        nombre_color: colorObj?.nombre_color || "—",
-                        id_talla: Number(v.id_talla),
-                        nombre_talla: tallaObj?.nombre_talla || "—",
-                        qty: Number(v.qty),
-                        price: Number(v.price),
-                        id_variante: null // Backend will find or create
-                    });
-                });
-            }
-        });
-
-        // Merge
-        setForm(prev => {
-            const merged = [...prev.items];
-            newItems.forEach(newItem => {
-                // Check duplicate exact items to merge quantities?
-                // Simplified logic: Just push all. User can edit details. 
-                // Or better: merge if same Product/Color/Size
-                const exists = merged.findIndex(i =>
-                    i.id_producto === newItem.id_producto &&
-                    i.id_color === newItem.id_color &&
-                    i.id_talla === newItem.id_talla
-                );
-                if (exists >= 0) {
-                    // Update only if price matches? Or just qty.
-                    merged[exists].qty += newItem.qty;
-                } else {
-                    merged.push(newItem);
-                }
-            });
-            return { ...prev, items: merged };
-        });
-        closeModals();
-    };
-
-    // ==========================================
-    // Guardar Compra Principal
-    // ==========================================
-    const handleSaveCompra = async () => {
-        if (isSubmitting) return;
-        setIsSubmitting(true);
+        setSaving(true);
         try {
-            if (!form.nit) throw new Error("Seleccione un proveedor");
-            if (form.items.length === 0) throw new Error("Agregue al menos un producto");
-
-            const total = form.items.reduce((sum, i) => sum + (Number(i.qty) * Number(i.price)), 0);
-
-            const payload = {
-                nit_proveedor: form.nit,
-                fecha_compra: form.fecha_compra,
-                fecha_aproximada_entrega: form.fecha_aproximada_entrega || null,
-                estado: form.estado,
-                total_compra: total,
-                items: form.items.map(i => ({
-                    id_producto: i.id_producto,
-                    nombre_producto: i.nombre_producto,
-                    id_color: i.id_color,
-                    id_talla: i.id_talla,
-                    cantidad: Number(i.qty),
-                    precio_unitario: Number(i.price),
-                    descripcion: ""
-                }))
-            };
-
-            if (isEditing) {
-                await updateCompra(id, payload);
-                showNotification("Compra actualizada correctamente", "success");
-            } else {
-                await createCompra(payload);
-                showNotification("Compra creada correctamente", "success");
-            }
-            navigate("/admin/compras");
+            const payload = { ...purchase, items };
+            await comprasService.createCompra(payload);
+            showNotification("Compra registrada con éxito — Stock actualizado");
+            setTimeout(() => navigate(`${basePath}/compras`), 1500);
         } catch (err) {
-            console.error("Error save compra:", err);
-            showNotification(err.message || "Error al guardar compra", "error");
+            showNotification(err?.response?.data?.mensaje || "Error al guardar la orden", "error");
         } finally {
-            setIsSubmitting(false);
+            setSaving(false);
         }
     };
 
-    const isLocked = form.estado === 'Recibida';
-    if (loading) return <div className="p-10 text-center">Cargando...</div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center h-screen bg-slate-50 gap-4">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Iniciando gestor...</p>
+        </div>
+    );
+    
+    if (isEditing) return null;
 
     return (
-        <>
-            <div className="p-6 bg-gray-50 min-h-screen">
-                {/* Header (Igual que antes...) */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => navigate("/admin/compras")} className="p-2 bg-white rounded-full border hover:bg-gray-100">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <h1 className="text-2xl font-bold text-gray-800">
-                            {isEditing ? `Editar Compra #${id}` : "Nueva Compra"}
-                        </h1>
-                    </div>
-                    {isLocked && (
-                        <div className="flex items-center gap-2 bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-bold">
-                            <AlertTriangle size={18} />
-                            Compra Recibida - Edición Bloqueada
-                        </div>
-                    )}
-                </div>
-
-                <AnimatePresence>
-                    {notification.show && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className={`fixed top-4 center z-50 px-6 py-3 rounded-lg text-white shadow-lg ${notification.type === 'error' ? 'bg-red-600' : 'bg-green-600'
-                                }`}
-                        >
-                            {notification.message}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Formulario (Igual...) */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-                            <h3 className="font-bold text-gray-700 border-b pb-2">Información General</h3>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                                <select
-                                    name="nit"
-                                    value={form.nit}
-                                    onChange={handleInputChange}
-                                    disabled={isLocked}
-                                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+        <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
+            <AnimatePresence mode="wait">
+                {showProductSelector ? (
+                    <ProductSelectorView
+                        key="selector"
+                        onClose={() => setShowProductSelector(false)}
+                        allProducts={allProducts}
+                        onAdd={(data) => {
+                            const { product, variant, cantidad, precio_unitario } = data;
+                            const newItem = {
+                                id_producto: product.id_producto,
+                                id_variante: variant.id_variante || variant.id_producto_variante,
+                                id_color: variant.id_color,
+                                id_talla: variant.id_talla,
+                                nombre_producto: product.nombre_producto,
+                                nombre_variante: `${variant.nombre_color || variant.color || ''} ${variant.nombre_talla || variant.talla || ''}`.trim(),
+                                cantidad: cantidad,
+                                precio_unitario: precio_unitario,
+                                subtotal: cantidad * precio_unitario,
+                                imagen: product.imagen || product.url_imagen || (product.imagenes && product.imagenes[0]?.url_imagen) || null
+                            };
+                            const newItems = [...items, newItem];
+                            setItems(newItems);
+                            setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
+                            showNotification("Producto añadido a la lista");
+                        }}
+                    />
+                ) : (
+                    <motion.div 
+                        key="form"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="flex flex-col h-full overflow-hidden"
+                    >
+                        {/* Header Sticky */}
+                        <header className="shrink-0 bg-white border-b border-slate-100 px-10 py-6 flex items-center justify-between z-20">
+                            <div className="flex items-center gap-6">
+                                <button
+                                    onClick={() => navigate(`${basePath}/compras`)}
+                                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95 border border-slate-100"
                                 >
-                                    <option value="">Seleccione Proveedor</option>
-                                    {proveedores.map(p => (
-                                        <option key={p.nit || p.NIT_proveedor} value={p.nit || p.NIT_proveedor}>
-                                            {p.nombre_proveedor}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
+                                    <ArrowLeft size={20} strokeWidth={2.5} />
+                                </button>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Compra</label>
-                                    <input
-                                        type="date"
-                                        name="fecha_compra"
-                                        value={form.fecha_compra}
-                                        onChange={handleInputChange}
-                                        disabled={isLocked}
-                                        className="w-full p-2 border rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Entrega</label>
-                                    <input
-                                        type="date"
-                                        name="fecha_aproximada_entrega"
-                                        value={form.fecha_aproximada_entrega}
-                                        onChange={handleInputChange}
-                                        disabled={isLocked}
-                                        className="w-full p-2 border rounded-lg"
-                                    />
+                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase leading-none">
+                                        Crear Abastecimiento
+                                    </h2>
+                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1.5 leading-none italic">Formulario de Orden de Compra</p>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                                {isEditing && isLocked ? (
-                                    <input type="text" value="Recibida" disabled className="w-full p-2 bg-gray-100 border rounded-lg" />
-                                ) : (
-                                    <select
-                                        name="estado"
-                                        value={form.estado}
-                                        onChange={handleInputChange}
-                                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                            <div className="flex items-center gap-4">
+                                <div className="hidden sm:flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Sincronización de Stock Activa</span>
+                                </div>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving || items.length === 0}
+                                    className="flex items-center gap-3 px-8 py-3.5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95"
+                                >
+                                    <Save size={16} strokeWidth={3} />
+                                    <span>{saving ? "Procesando..." : "Registrar Entrada"}</span>
+                                </button>
+                            </div>
+                        </header>
+
+                        {/* Main Content Scrollable */}
+                        <main className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+                                {/* Left: Info Sidebar */}
+                                <div className="lg:col-span-4 space-y-8">
+                                    {/* Info Section */}
+                                    <section className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200/50 border border-slate-100 space-y-8 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full translate-x-12 -translate-y-12" />
+                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-3 relative z-10">
+                                            <Info size={16} className="text-indigo-500" /> Cabecera de Orden
+                                        </h3>
+
+                                        <div className="space-y-6 relative z-10">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Proveedor Autorizado *</label>
+                                                <select
+                                                    value={purchase.nit_proveedor}
+                                                    onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100 outline-none transition-all appearance-none cursor-pointer uppercase tracking-tight"
+                                                >
+                                                    <option value="">Seleccionar del Registro...</option>
+                                                    {proveedores.map(p => (
+                                                        <option key={p.nit || p.id_proveedor} value={p.nit || p.id_proveedor}>
+                                                            {p.nombre_empresa || p.nombre_proveedor}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Transacción</label>
+                                                <input
+                                                    type="date"
+                                                    value={purchase.fecha_compra}
+                                                    onChange={(e) => setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }))}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100 outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Product Selector Trigger */}
+                                    <button 
+                                        onClick={() => setShowProductSelector(true)}
+                                        className="w-full group bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl shadow-slate-300 text-white space-y-6 relative overflow-hidden text-left hover:scale-[1.02] transition-all active:scale-95"
                                     >
-                                        <option value="Pendiente">Pendiente</option>
-                                        <option value="En tránsito">En tránsito</option>
-                                        <option value="Recibida">Recibida (Finalizar)</option>
-                                        <option value="Cancelada">Cancelada</option>
-                                    </select>
-                                )}
-                                {form.estado === 'Recibida' && !isLocked && (
-                                    <p className="text-xs text-orange-600 mt-1 font-medium">
-                                        ⚠️ AL FINALIZAR, se sumará el stock.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => navigate("/admin/compras")}
-                                className="flex-1 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancelar
-                            </button>
-                            {!isLocked && (
-                                <button
-                                    onClick={handleSaveCompra}
-                                    disabled={isSubmitting}
-                                    className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center justify-center gap-2"
-                                >
-                                    <Save size={18} />
-                                    {isSubmitting ? "Guardando..." : "Guardar Compra"}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Tabla Items */}
-                    <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border flex flex-col h-full">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-gray-700">Productos ({form.items.length})</h3>
-                            {!isLocked && (
-                                <button
-                                    onClick={openSelectModal}
-                                    className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 flex items-center gap-2"
-                                >
-                                    <Plus size={16} /> Agregar Producto
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="flex-1 overflow-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-50 text-gray-600 font-medium">
-                                    <tr>
-                                        <th className="p-3 rounded-l-lg">Producto</th>
-                                        <th className="p-3">Info</th>
-                                        <th className="p-3 text-center">Cant</th>
-                                        <th className="p-3 text-center">Costo Unit.</th>
-                                        <th className="p-3 text-right">Subtotal</th>
-                                        <th className="p-3 rounded-r-lg"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {form.items.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-gray-50">
-                                            <td className="p-3 font-medium">{item.nombre_producto}</td>
-                                            <td className="p-3 text-gray-500 text-xs">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: item.codigo_hex || 'transparent' }}></span>
-                                                    {item.nombre_color} / {item.nombre_talla}
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-center">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={item.qty}
-                                                    onChange={(e) => updateItemField(idx, 'qty', e.target.value)}
-                                                    disabled={isLocked}
-                                                    className="w-16 p-1 border rounded text-center"
-                                                />
-                                            </td>
-                                            <td className="p-3 text-center">
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={item.price}
-                                                    onChange={(e) => updateItemField(idx, 'price', e.target.value)}
-                                                    disabled={isLocked}
-                                                    className="w-20 p-1 border rounded text-center"
-                                                />
-                                            </td>
-                                            <td className="p-3 text-right font-bold">
-                                                ${(item.qty * item.price).toLocaleString()}
-                                            </td>
-                                            <td className="p-3 text-right">
-                                                {!isLocked && (
-                                                    <button onClick={() => removeItem(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {form.items.length === 0 && (
-                                        <tr>
-                                            <td colSpan="6" className="p-8 text-center text-gray-400 italic">
-                                                No hay productos agregados.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                            <span className="font-medium text-gray-600">Total Compra Estimado</span>
-                            <span className="text-2xl font-bold text-gray-800">
-                                ${form.items.reduce((s, i) => s + (i.qty * i.price), 0).toLocaleString()}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Modal Mejorado */}
-            <AnimatePresence>
-                {modal === 'selectProducto' && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden"
-                        >
-                            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-                                <div>
-                                    <h2 className="text-lg font-bold text-gray-800">Seleccionar Productos</h2>
-                                    <p className="text-xs text-gray-500">Seleccione variantes existentes o cree nuevas combinaciones.</p>
+                                        <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-125 transition-transform"><ShoppingBag size={120} /></div>
+                                        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
+                                           <Package size={28} className="text-indigo-400" />
+                                        </div>
+                                        <div className="space-y-2 relative z-10">
+                                            <h3 className="text-2xl font-black uppercase tracking-tight leading-tight">
+                                                Añadir Productos
+                                            </h3>
+                                            <p className="text-[10px] font-medium text-slate-400 leading-relaxed uppercase tracking-widest">
+                                                Explorar el catálogo para definir variantes, cantidades y costos
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] pt-4">
+                                           Abrir Catálogo <ChevronRight size={14} />
+                                        </div>
+                                    </button>
                                 </div>
-                                <button onClick={closeModals}><X size={20} className="text-gray-500" /></button>
-                            </div>
 
-                            <div className="p-4 border-b bg-white">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre de producto..."
-                                        value={searchTerm}
-                                        onChange={e => setSearchTerm(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
-                            </div>
+                                {/* Right: Items List Table */}
+                                <div className="lg:col-span-8 flex flex-col min-h-[500px]">
+                                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/50 flex flex-col h-full overflow-hidden">
+                                        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+                                            <div className="space-y-1">
+                                               <h3 className="text-sm font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-3">
+                                                   <Archive size={16} className="text-indigo-500" /> Detalle de Adquisición
+                                               </h3>
+                                               <p className="text-[10px] text-slate-400 font-medium">Items listos para ingresar al inventario</p>
+                                            </div>
+                                            <span className="px-5 py-2 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 shadow-sm">
+                                                {items.length} productos
+                                            </span>
+                                        </div>
 
-                            <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
-                                {productos
-                                    .filter(p => p.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .slice(0, 50)
-                                    .map(p => {
-                                        const isProdSelected = !!selectedProducts[p.id_producto];
-                                        return (
-                                            <div key={p.id_producto} className={`bg-white border rounded-xl shadow-sm transition-all overflow-hidden ${isProdSelected ? 'ring-1 ring-blue-500' : ''}`}>
-                                                <div className="p-4 flex items-start gap-4">
-                                                    <div className={`p-3 rounded-lg ${isProdSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
-                                                        <Package size={24} />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h4 className="font-bold text-gray-800 text-lg">{p.nombre_producto}</h4>
-                                                        <p className="text-sm text-gray-500 mb-3">{p.descripcion || "Sin descripción"}</p>
-
-                                                        {/* Sección Variantes Existentes */}
-                                                        {p.variantes.length > 0 && (
-                                                            <div className="mb-4">
-                                                                <h5 className="text-xs font-bold text-gray-400 uppercase mb-2">Variantes Existentes (Click para agregar)</h5>
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {p.variantes.map(v => {
-                                                                        const isSelected = selectedProducts[p.id_producto]?.existingVariantes?.some(ev => ev.id_variante === v.id_variante);
-                                                                        return (
-                                                                            <button
-                                                                                key={v.id_variante}
-                                                                                onClick={() => toggleExistingVariant(p, v)}
-                                                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors ${isSelected
-                                                                                    ? 'bg-blue-600 text-white border-blue-600'
-                                                                                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
-                                                                                    }`}
-                                                                            >
-                                                                                <span className="w-2 h-2 rounded-full bg-white border" style={{ backgroundColor: isSelected ? 'white' : v.codigo_hex }}></span>
-                                                                                <span>{v.nombre_color} / {v.nombre_talla}</span>
-                                                                                {isSelected && <CheckCircle size={14} />}
-                                                                            </button>
-                                                                        )
-                                                                    })}
-                                                                </div>
-                                                                {/* Campos Cantidad para seleccionados */}
-                                                                {selectedProducts[p.id_producto]?.existingVariantes?.length > 0 && (
-                                                                    <div className="mt-3 bg-blue-50 p-3 rounded-lg space-y-2">
-                                                                        {selectedProducts[p.id_producto].existingVariantes.map(ev => (
-                                                                            <div key={ev.id_variante} className="flex justify-between items-center text-sm">
-                                                                                <span className="font-medium text-blue-900">{ev.nombre_color} - {ev.nombre_talla}</span>
-                                                                                <div className="flex items-center gap-2">
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        className="w-16 p-1 rounded border text-center text-xs"
-                                                                                        placeholder="Cant"
-                                                                                        value={ev.qty}
-                                                                                        onChange={(e) => updateExistingVariantQty(p.id_producto, ev.id_variante, 'qty', e.target.value)}
-                                                                                    />
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        className="w-20 p-1 rounded border text-center text-xs"
-                                                                                        placeholder="Precio"
-                                                                                        value={ev.price}
-                                                                                        onChange={(e) => updateExistingVariantQty(p.id_producto, ev.id_variante, 'price', e.target.value)}
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
+                                        <div className="flex-1 overflow-auto custom-scrollbar">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead className="bg-slate-50/50 text-slate-400 sticky top-0 z-10">
+                                                    <tr>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100">Item / Variante</th>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-center">Cant.</th>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-right">Inversión Un.</th>
+                                                        <th className="px-10 py-5 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 text-right">Neto</th>
+                                                        <th className="px-10 py-5 border-b border-slate-100"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {items.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={5} className="p-32 text-center">
+                                                                <div className="flex flex-col items-center gap-6 opacity-30">
+                                                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center border-4 border-dashed border-slate-200">
+                                                                       <ShoppingBag size={32} className="text-slate-300" />
                                                                     </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {/* Sección Nueva Variante Manual */}
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    id={`manual-${p.id_producto}`}
-                                                                    checked={!!(selectedProducts[p.id_producto]?.manualVariantes?.length > 0)}
-                                                                    onChange={(e) => e.target.checked ? addManualVariantLine(p.id_producto) : handleProductSelectManual(p.id_producto, false)}
-                                                                    className="w-4 h-4 text-blue-600 rounded"
-                                                                />
-                                                                <label htmlFor={`manual-${p.id_producto}`} className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                                                                    Crear nueva variante (Color/Talla personalizada)
-                                                                </label>
-                                                            </div>
-
-                                                            {selectedProducts[p.id_producto]?.manualVariantes?.length > 0 && (
-                                                                <div className="pl-6 space-y-2">
-                                                                    {selectedProducts[p.id_producto].manualVariantes.map((mv, idx) => (
-                                                                        <div key={idx} className="flex gap-2 items-center flex-wrap">
-                                                                            <select
-                                                                                value={mv.id_color}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'id_color', e.target.value)}
-                                                                                className="p-1.5 border rounded text-sm w-32"
-                                                                            >
-                                                                                <option value="">Color...</option>
-                                                                                {colores.map(c => <option key={c.id_color} value={c.id_color}>{c.nombre_color}</option>)}
-                                                                            </select>
-                                                                            <select
-                                                                                value={mv.id_talla}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'id_talla', e.target.value)}
-                                                                                className="p-1.5 border rounded text-sm w-24"
-                                                                            >
-                                                                                <option value="">Talla...</option>
-                                                                                {tallas.map(t => <option key={t.id_talla} value={t.id_talla}>{t.nombre_talla}</option>)}
-                                                                            </select>
-                                                                            <input
-                                                                                type="number"
-                                                                                placeholder="Cant"
-                                                                                value={mv.qty}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'qty', e.target.value)}
-                                                                                className="w-16 p-1.5 border rounded text-sm"
-                                                                            />
-                                                                            <input
-                                                                                type="number"
-                                                                                placeholder="Precio"
-                                                                                value={mv.price}
-                                                                                onChange={e => updateManualVariant(p.id_producto, idx, 'price', e.target.value)}
-                                                                                className="w-20 p-1.5 border rounded text-sm"
-                                                                            />
-                                                                            {idx === (selectedProducts[p.id_producto].manualVariantes.length - 1) && (
-                                                                                <button onClick={() => addManualVariantLine(p.id_producto)} className="text-blue-600 text-xs font-bold px-2 py-1 bg-blue-50 rounded hover:bg-blue-100">+ Otro</button>
-                                                                            )}
-                                                                        </div>
-                                                                    ))}
+                                                                    <div className="space-y-2">
+                                                                       <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Canasta Vacía</p>
+                                                                       <p className="text-[10px] italic font-medium max-w-[180px] mx-auto leading-relaxed">Añade productos desde el panel izquierdo para comenzar la orden</p>
+                                                                    </div>
                                                                 </div>
-                                                            )}
-                                                        </div>
+                                                            </td>
+                                                        </tr>
+                                                    ) : (
+                                                        items.map((item, idx) => (
+                                                            <tr key={idx} className="group hover:bg-slate-50/50 transition-all">
+                                                                <td className="px-10 py-6">
+                                                                    <div className="flex flex-col gap-0.5">
+                                                                       <span className="font-bold text-slate-800 text-sm leading-tight">{item.nombre_producto}</span>
+                                                                       <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{item.nombre_variante}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-10 py-6 text-center">
+                                                                    <span className="bg-slate-100 text-slate-800 px-4 py-1.5 rounded-xl font-black text-xs tabular-nums border border-slate-200/50 italic">{item.cantidad}</span>
+                                                                </td>
+                                                                <td className="px-10 py-6 text-right font-bold text-slate-400 text-sm tabular-nums">
+                                                                    ${Number(item.precio_unitario).toLocaleString('es-CO')}
+                                                                </td>
+                                                                <td className="px-10 py-6 text-right font-black text-slate-800 text-sm tabular-nums">
+                                                                    ${Number(item.subtotal).toLocaleString('es-CO')}
+                                                                </td>
+                                                                <td className="px-10 py-6 text-right">
+                                                                    <button
+                                                                        onClick={() => removeItem(idx)}
+                                                                        className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all active:scale-90"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                                                    </div>
+                                        {/* Footer Totals */}
+                                        <div className="shrink-0 p-10 bg-slate-900 text-white relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -translate-x-12 -translate-y-12" />
+                                            <div className="flex flex-col items-end gap-2 relative z-10">
+                                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] opacity-80 mb-2">Resumen de Liquidación</p>
+                                                <div className="flex items-center gap-10 opacity-40 text-[11px] font-black uppercase tracking-widest">
+                                                    <span>Base de Items</span>
+                                                    <span className="tabular-nums">${Number(purchase.total_compra).toLocaleString('es-CO')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-10 mt-2">
+                                                    <span className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40">Gran Total</span>
+                                                    <span className="text-4xl font-black tracking-tighter tabular-nums">${Number(purchase.total_compra).toLocaleString('es-CO')}</span>
                                                 </div>
                                             </div>
-                                        )
-                                    })}
-
-                                {productos.length === 0 && <div className="text-center py-10 text-gray-400">No hay productos disponibles.</div>}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-
-                            <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
-                                <button onClick={closeModals} className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">Cancelar</button>
-                                <button
-                                    onClick={confirmSelection}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm"
-                                >
-                                    Confirmar Selección
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
+                        </main>
+                    </motion.div>
                 )}
             </AnimatePresence>
-        </>
+
+            {/* Notifications */}
+            <AnimatePresence>
+                {notification.show && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }} 
+                        animate={{ opacity: 1, y: 0, scale: 1 }} 
+                        exit={{ opacity: 0, scale: 0.9 }} 
+                        className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-8 py-4 rounded-3xl shadow-2xl text-[11px] font-black uppercase tracking-[0.2em] border backdrop-blur-md flex items-center gap-3 ${
+                        notification.type === "success" 
+                            ? "bg-slate-900/90 text-white border-slate-700" 
+                            : "bg-rose-500/90 text-white border-rose-400"
+                        }`}
+                    >
+                        <div className={`w-2 h-2 rounded-full animate-pulse ${notification.type === "success" ? "bg-emerald-400" : "bg-white"}`} />
+                        {notification.message}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
-}
+};
+
+export default CompraEditar;

@@ -35,7 +35,6 @@ export default function Usuarios() {
     nombre_completo: "",
     email: "",
     telefono: "",
-    fecha_nacimiento: "",
     contrasena: "",
     id_rol: "",
 
@@ -43,11 +42,16 @@ export default function Usuarios() {
     años_experiencia: "",
     estado_estudiante: true,
     estado_instructor: true,
+    foto_perfil: null, // Guardaremos el File seleccionado temporalmente
+    foto_perfil_url: "", // Guardaremos la URL actual para previsualizar
   });
   const [search, setSearch] = useState("");
   const [formErrors, setFormErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+  const [filterType, setFilterType] = useState("Todos los usuarios");
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -71,8 +75,22 @@ export default function Usuarios() {
     try {
       setLoading(true);
       setError(null);
-      const [dataUsuarios, dataRoles] = await Promise.all([getUsuarios(), getRoles()]);
-      setUsuarios(Array.isArray(dataUsuarios) ? dataUsuarios : []);
+      const [resUsuarios, dataRoles] = await Promise.all([
+        getUsuarios({ page: currentPage, limit: itemsPerPage, search }),
+        getRoles()
+      ]);
+
+      if (resUsuarios && resUsuarios.data) {
+        setUsuarios(resUsuarios.data);
+        setTotalPages(resUsuarios.totalPages || 1);
+        setTotalItems(resUsuarios.total || 0);
+      } else {
+        setUsuarios(Array.isArray(resUsuarios) ? resUsuarios : []);
+        setTotalPages(1);
+        setTotalItems(Array.isArray(resUsuarios) ? resUsuarios.length : 0);
+      }
+
+      // getRoles sin params devuelve array directo
       setRoles(Array.isArray(dataRoles) ? dataRoles : []);
     } catch (err) {
       console.error("Error cargando datos:", err);
@@ -84,9 +102,12 @@ export default function Usuarios() {
   };
 
   useEffect(() => {
-    fetchData();
+    const delayDebounceFn = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentPage, search]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -131,7 +152,6 @@ export default function Usuarios() {
     if (!formData.documento) errors.documento = "El nro de documento es obligatorio";
     if (!formData.tipo_documento) errors.tipo_documento = "El tipo de documento es obligatorio";
     if (!formData.telefono) errors.telefono = "El teléfono es obligatorio";
-    if (!formData.fecha_nacimiento) errors.fecha_nacimiento = "La fecha de nacimiento es obligatoria";
     if (!formData.id_rol) errors.id_rol = "Debes asignar un rol";
 
     if (modal === "crear" && !formData.contrasena.trim()) {
@@ -155,12 +175,32 @@ export default function Usuarios() {
         nombre_completo: formData.nombre_completo,
         email: formData.email,
         telefono: formData.telefono || null,
-        fecha_nacimiento: formData.fecha_nacimiento || null,
         contrasena: formData.contrasena,
         id_rol: formData.id_rol ? Number(formData.id_rol) : null,
       };
 
-      await createUsuario(payload);
+      const newUserRes = await createUsuario(payload);
+      
+      // Si el usuario seleccionó una foto, la subimos
+      if (formData.foto_perfil && newUserRes?.usuario?.id_usuario) {
+        const formDataImg = new FormData();
+        formDataImg.append("foto_perfil", formData.foto_perfil);
+        const token = localStorage.getItem("token");
+        const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:3000";
+        const photoRes = await fetch(`${API_URL}/api/usuarios/${newUserRes.usuario.id_usuario}/foto`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          body: formDataImg
+        });
+        
+        if (!photoRes.ok) {
+           const errData = await photoRes.json();
+           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
+        }
+      }
+
       await fetchData();
       closeModal();
       showNotification("Usuario creado con éxito");
@@ -184,13 +224,43 @@ export default function Usuarios() {
         nombre_completo: formData.nombre_completo,
         email: formData.email,
         telefono: formData.telefono || null,
-        fecha_nacimiento: formData.fecha_nacimiento || null,
         // Solo incluir contraseña si se proporciona
         ...(formData.contrasena ? { contrasena: formData.contrasena } : {}),
         id_rol: formData.id_rol ? Number(formData.id_rol) : null,
       };
 
       await updateUsuario(selectedUsuario.id_usuario, payload);
+
+      // Si el usuario seleccionó una foto, la subimos
+      if (formData.foto_perfil) {
+        const formDataImg = new FormData();
+        formDataImg.append("foto_perfil", formData.foto_perfil);
+        const token = localStorage.getItem("token");
+        
+        const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:3000";
+        const photoRes = await fetch(`${API_URL}/api/usuarios/${selectedUsuario.id_usuario}/foto`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          body: formDataImg
+        });
+
+        if (!photoRes.ok) {
+           const errData = await photoRes.json();
+           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
+        }
+        
+        // Actualizamos localstorage si nos estamos editando a nosotros mismos
+        const photoData = await photoRes.json();
+        const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
+        if(String(currentUserData.id_usuario) === String(selectedUsuario.id_usuario)){
+          currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
+          localStorage.setItem("user", JSON.stringify(currentUserData));
+          window.dispatchEvent(new Event("storage")); 
+        }
+      }
+
       await fetchData();
       closeModal();
       showNotification("Usuario actualizado con éxito");
@@ -210,8 +280,10 @@ export default function Usuarios() {
       showNotification("Usuario eliminado con éxito");
     } catch (err) {
       console.error("Error eliminando usuario:", err);
+      // Mostrar el error exacto del backend
       const errorMessage = err.response?.data?.mensaje || "Error eliminando usuario";
       showNotification(errorMessage, "error");
+      closeModal(); // Cerrar modal después del error
     }
   };
 
@@ -227,9 +299,10 @@ export default function Usuarios() {
         nombre_completo: usuario.nombre_completo ?? "",
         email: usuario.email ?? "",
         telefono: usuario.telefono ?? "",
-        fecha_nacimiento: usuario.fecha_nacimiento ? usuario.fecha_nacimiento.split("T")[0] : "",
         contrasena: "", // No prellenar contraseña al editar
         id_rol: usuario.roles && usuario.roles.length > 0 ? String(usuario.roles[0].id_rol) : "",
+        foto_perfil: null,
+        foto_perfil_url: usuario.foto_perfil || "",
       });
     } else if (!usuario) {
       setFormData({
@@ -238,12 +311,13 @@ export default function Usuarios() {
         nombre_completo: "",
         email: "",
         telefono: "",
-        fecha_nacimiento: "",
         contrasena: "",
         id_rol: "",
         años_experiencia: "",
         estado_estudiante: true,
         estado_instructor: true,
+        foto_perfil: null,
+        foto_perfil_url: "",
       });
     }
   };
@@ -257,202 +331,214 @@ export default function Usuarios() {
       nombre_completo: "",
       email: "",
       telefono: "",
-      fecha_nacimiento: "",
       contrasena: "",
       id_rol: "",
+      foto_perfil: null,
+      foto_perfil_url: "",
     });
   };
 
-  // Filtrado por búsqueda
-  const usuariosFiltrados = usuarios.filter((u) =>
-    (u.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
-    (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
-    String(u.documento || "").includes(search)
-  );
+  const handleDownload = () => {
+    if (!usuarios || usuarios.length === 0) return;
+    const header = ["ID", "Nombre Completo", "Email", "Telefono", "Roles"];
+    const csvData = currentItems.map(u => [
+      u.id_usuario,
+      `"${u.nombre_completo}"`,
+      u.email,
+      u.telefono || "",
+      `"${getRolNombres(u.roles)}"`
+    ].join(","));
 
-  // Paginación derivada
-  const totalPages = Math.max(1, Math.ceil(usuariosFiltrados.length / itemsPerPage));
-  const currentItems = usuariosFiltrados.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+    const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...csvData].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "usuarios_report_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
+  const currentItems = usuarios.filter(u => {
+    if (filterType === "Clientes") {
+      const isClient = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("cliente") || r.nombre_rol?.toLowerCase().includes("estudiante"));
+      return isClient;
+    }
+    if (filterType === "Instructores") {
+      const isInstr = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("instructor"));
+      return isInstr;
+    }
+    return true; // Todos los usuarios
+  });
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white overflow-hidden font-primary">
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                Gestión de Usuarios
-              </h2>
+      <div className="flex flex-col h-full bg-white overflow-hidden font-primary p-2 md:p-4">
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+          <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Gestión de Usuarios
+          </h2>
 
-              {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-slate-400 bg-slate-50">
-                  <Hash className="h-3 w-3" />
-                  <span className="text-xs font-bold">{usuariosFiltrados.length}</span>
-                </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Search Bar */}
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar usuarios..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 transition-all text-slate-700 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Filter Dropdown */}
+            <div className="relative hidden md:block">
+              <select
+                value={filterType}
+                onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+                className="appearance-none bg-white border border-slate-200 text-slate-500 py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 cursor-pointer"
+              >
+                <option value="Todos los usuarios">Todos los usuarios</option>
+                <option value="Clientes">Clientes</option>
+                <option value="Instructores">Instructores</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button className="p-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-blue-800 hover:bg-white transition shadow-sm" title="Exportar CSV">
-                <Download size={16} />
+            {/* Download Button */}
+            <button
+              onClick={handleDownload}
+              className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
+            >
+              <Download size={20} />
+            </button>
+
+            {canManage("usuarios") && (
+              <button
+                onClick={() => openModal("crear")}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#040529] hover:bg-black text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+              >
+                <Plus size={18} />
+                Registrar Usuario
               </button>
-            </div>
-          </div>
-
-          {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
-            {/* Search & Create Group */}
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar usuario..."
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              {canManage("usuarios") && (
-                <button
-                  onClick={() => openModal("crear")}
-                  className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-                >
-                  <Plus className="h-4 w-4" />
-                  Nuevo Usuario
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-            {/* Table Content */}
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          {/* Table Content */}
+          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10">
+                <tr>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide rounded-tl-xl w-[10%]">ID</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[30%]">Usuario</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[25%]">Contacto</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-center w-[15%]">Rol</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-right rounded-tr-xl w-[20%]">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
                   <tr>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">Usuario</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider">Contacto</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-center">Rol</th>
-                    <th className="px-6 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400 text-sm">Cargando usuarios...</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-400 text-sm">Cargando usuarios...</td>
-                    </tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2 text-red-500">
-                          <AlertCircle className="h-8 w-8 opacity-80" />
-                          <p className="font-medium">{error}</p>
+                ) : error ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 text-red-500">
+                        <AlertCircle className="h-8 w-8 opacity-80" />
+                        <p className="font-medium">{error}</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : currentItems.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400 italic">No se encontraron usuarios.</td>
+                  </tr>
+                ) : (
+                  currentItems.map((u, i) => (
+                    <tr key={u.id_usuario} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-3">
+                        <span className="text-sm font-medium text-slate-500">#{u.id_usuario}</span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#040529] to-[#040529]/80 text-[#F0E6E6] shadow-sm">
+                            <User size={18} />
+                          </div>
+                          <div>
+                            <p className="font-bold text-[#040529] text-sm leading-tight">{u.nombre_completo}</p>
+                            <p className="text-xs text-slate-500 font-medium truncate max-w-[180px]">{u.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <Mail size={14} className="shrink-0 text-slate-400" />
+                            <span className="text-sm">{u.email}</span>
+                          </div>
+                              {u.telefono && (
+                            <div className="flex items-center gap-2 text-slate-500">
+                              <Phone size={14} className="shrink-0 text-slate-400" />
+                              <span className="text-xs font-medium">{u.telefono}</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-center">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                          {getRolNombres(u.roles)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openModal("ver", u)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Ver detalles"><Eye size={14} /></button>
+                          {canManage("usuarios") && (
+                            <>
+                              <button onClick={() => openModal("editar", u)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Editar"><Pencil size={14} /></button>
+                              <button onClick={() => openModal("eliminar", u)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 transition shadow-sm" title="Eliminar"><Trash2 size={14} /></button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-400 italic">No se encontraron usuarios.</td>
-                    </tr>
-                  ) : (
-                    currentItems.map((u) => (
-                      <tr key={u.id_usuario} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <span className="text-xs font-bold text-gray-400">#{u.id_usuario}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] shadow-sm">
-                              <User size={18} />
-                            </div>
-                            <div>
-                              <p className="font-bold text-[#040529] text-sm leading-tight">{u.nombre_completo}</p>
-                              <p className="text-[11px] text-gray-400 font-medium truncate max-w-[150px]">{u.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-1.5 text-gray-600">
-                              <Mail size={12} className="shrink-0" />
-                              <span className="text-xs">{u.email}</span>
-                            </div>
-                            {u.telefono && (
-                              <div className="flex items-center gap-1.5 text-gray-400">
-                                <Phone size={12} className="shrink-0" />
-                                <span className="text-[11px]">{u.telefono}</span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
-                            {getRolNombres(u.roles)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => openModal("ver", u)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalles"><Eye size={16} /></button>
-                            {canManage("usuarios") && (
-                              <>
-                                <button onClick={() => openModal("editar", u)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Editar"><Pencil size={16} /></button>
-                                <button onClick={() => openModal("eliminar", u)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar"><Trash2 size={16} /></button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Footer Pagination */}
-            {totalPages > 1 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">
-                  Mostrando <span className="font-bold text-[#040529]">{currentItems.length}</span> de <span className="font-bold text-[#040529]">{usuariosFiltrados.length}</span> resultados
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-                  >
-                    <ChevronLeft className="h-4 w-4 text-gray-600" />
-                  </button>
-                  <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                  <button
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
-                  >
-                    <ChevronRight className="h-4 w-4 text-gray-600" />
-                  </button>
-                </div>
-              </div>
-            )}
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
+
+          {/* Footer Pagination */}
+          {totalPages > 0 && (
+            <div className="border-t border-slate-100 px-6 py-4 bg-white flex items-center justify-between mt-auto">
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#040529]">{currentPage}</span> de <span className="text-[#040529]">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -531,8 +617,61 @@ export default function Usuarios() {
                       </div>
                     ) : (
                       <form className="space-y-4 font-primary">
+                        
+                        {/* INICIO: SECCIÓN SUBIR FOTO */}
+                        <div className="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
+                          {modal === "ver" ? (
+                             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#040529] shadow-sm bg-white flex items-center justify-center shrink-0">
+                               {selectedUsuario?.foto_perfil ? (
+                                  <img src={selectedUsuario.foto_perfil} alt="perfil" className="w-full h-full object-cover" />
+                               ) : (
+                                  <User size={24} className="text-gray-400" />
+                               )}
+                             </div>
+                          ) : (
+                            <div className="relative group cursor-pointer">
+                              <label htmlFor="foto_perfil_upload" className="block cursor-pointer">
+                                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-dashed border-gray-300 hover:border-[#040529] bg-white flex items-center justify-center shrink-0 relative transition-colors shadow-sm">
+                                  {formData.foto_perfil ? (
+                                    <img src={URL.createObjectURL(formData.foto_perfil)} alt="Preview" className="w-full h-full object-cover" />
+                                  ) : formData.foto_perfil_url ? (
+                                    <img src={formData.foto_perfil_url} alt="Current" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User size={24} className="text-gray-300 group-hover:text-[#040529] transition-colors" />
+                                  )}
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <Plus size={20} className="text-white" />
+                                  </div>
+                                </div>
+                                <input
+                                  type="file"
+                                  id="foto_perfil_upload"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    if(e.target.files && e.target.files[0]) {
+                                      setFormData(p => ({...p, foto_perfil: e.target.files[0]}));
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          )}
+                          
+                          <div className="flex-1">
+                            <h4 className="text-sm font-bold text-[#040529]">Foto de Perfil</h4>
+                            <p className="text-xs text-gray-500">Sube una imagen cuadrada para mejorar la visualización. (JPG, PNG, WEBP max 5MB).</p>
+                            {modal !== "ver" && (
+                              <label htmlFor="foto_perfil_upload" className="inline-block cursor-pointer mt-1 text-xs font-bold text-[#040529] hover:underline">
+                                Seleccionar archivo...
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                        {/* FIN: SECCIÓN SUBIR FOTO */}
+                        
                         {/* Secciones de formulario */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 mt-2">
                           <div>
                             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Tipo Doc.</label>
                             {modal === "ver" ? (
@@ -629,23 +768,6 @@ export default function Usuarios() {
                                   placeholder="..."
                                 />
                                 {formErrors.telefono && <p className="text-red-400 text-[11px] mt-1">{formErrors.telefono}</p>}
-                              </>
-                            )}
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">F. Nacimiento</label>
-                            {modal === "ver" ? (
-                              <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedUsuario?.fecha_nacimiento || "—"}</p>
-                            ) : (
-                              <>
-                                <input
-                                  name="fecha_nacimiento"
-                                  type="date"
-                                  value={formData.fecha_nacimiento}
-                                  onChange={handleChange}
-                                  className={`w-full p-2 border rounded-md outline-none transition ${formErrors.fecha_nacimiento ? "border-red-400 bg-red-50" : "border-gray-300 focus:border-[#040529]"}`}
-                                />
-                                {formErrors.fecha_nacimiento && <p className="text-red-400 text-[11px] mt-1">{formErrors.fecha_nacimiento}</p>}
                               </>
                             )}
                           </div>

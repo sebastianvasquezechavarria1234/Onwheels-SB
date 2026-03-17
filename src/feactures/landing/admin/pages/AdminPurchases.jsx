@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react"
 import { AdminLayout } from "../layout/AdminLayout"
-import { Package, Calendar, DollarSign, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, ShoppingBag } from "lucide-react"
+import { Package, Calendar, DollarSign, CheckCircle, Clock, XCircle, ChevronRight, ShoppingBag, Shirt } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext"
+import { getStoreHomePath } from "../../../../utils/roleHelpers"
 import api from "../../../../services/api"
 
 export const AdminPurchases = () => {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [purchases, setPurchases] = useState([])
   const [loading, setLoading] = useState(true)
-  const [expandedRows, setExpandedRows] = useState({})
 
   useEffect(() => {
     fetchPurchases()
@@ -16,7 +20,7 @@ export const AdminPurchases = () => {
 
   const fetchPurchases = async () => {
     try {
-      const response = await api.get("/ventas/mis-compras") // Endpoint nuevo
+      const response = await api.get("/ventas/mis-compras")
       setPurchases(response.data)
     } catch (error) {
       console.error("Error fetching purchases:", error)
@@ -25,200 +29,107 @@ export const AdminPurchases = () => {
     }
   }
 
-  const toggleRow = (id) => {
-    setExpandedRows(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }))
-  }
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("es-CO", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }).format(date);
+  };
 
-  const getStatusIcon = (estado) => {
-    switch (estado?.toLowerCase()) {
-      case "entregado":
-      case "completado":
-        return <CheckCircle className="text-green-600" size={20} />
-      case "pendiente":
-        return <Clock className="text-yellow-600" size={20} />
-      case "enviado":
-      case "en camino":
-        return <Package className="text-blue-600" size={20} />
-      case "cancelado":
-        return <XCircle className="text-red-600" size={20} />
-      default:
-        return <Clock className="text-gray-600" size={20} />
-    }
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="min-h-screen bg-[#0B0F14] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A8A]"></div>
+        </div>
+      </AdminLayout>
+    )
   }
-
-  const getStatusBadge = (estado) => {
-    const status = estado?.toLowerCase() || ""
-    if (status === "entregado" || status === "completado") return "bg-green-100 text-green-700"
-    if (status === "pendiente") return "bg-yellow-100 text-yellow-700"
-    if (status === "en camino" || status === "enviado") return "bg-blue-100 text-blue-700"
-    if (status === "cancelado") return "bg-red-100 text-red-700"
-    return "bg-gray-100 text-gray-700"
-  }
-
-  // Calcular totales para stats
-  const totalCompras = purchases.length
-  const totalGastado = purchases
-    .filter(p => p.estado?.toLowerCase() !== 'cancelado')
-    .reduce((sum, p) => sum + Number(p.total), 0)
-  const completadas = purchases
-    .filter(p => p.estado?.toLowerCase() === 'entregado' || p.estado?.toLowerCase() === 'completado').length
 
   return (
     <AdminLayout>
-      <section className="p-[30px] relative w-[100%] pt-[150px]">
-        <div className="max-w-[1400px] mx-auto">
-          <h2 className="font-primary mb-4 text-2xl font-bold text-gray-800">Mis Compras Personales</h2>
-          <p className="text-gray-600 mb-8">Historial completo de tus pedidos y estado actual</p>
-
-          {/* Estadísticas rápidas */}
-          <div className="grid grid-cols-3 gap-[20px] mb-8 max-lg:grid-cols-1">
-            <div className="p-[20px] bg-white border border-blue-100 rounded-2xl shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-[50px] h-[50px] bg-blue-50 rounded-full flex items-center justify-center">
-                  <Package className="text-blue-600" size={24} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">Total Pedidos</p>
-                  <h4 className="font-primary text-blue-700 text-2xl">{totalCompras}</h4>
-                </div>
-              </div>
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 pb-6 border-b border-gray-800">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white flex items-center gap-3">
+                <ShoppingBag className="text-[#3b82f6]" size={36} />
+                Mis Compras
+              </h2>
+              <p className="text-[#9CA3AF] mt-2 font-medium">Historial de tus pedidos y estado de envíos</p>
             </div>
 
-            <div className="p-[20px] bg-white border border-green-100 rounded-2xl shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-[50px] h-[50px] bg-green-50 rounded-full flex items-center justify-center">
-                  <DollarSign className="text-green-600" size={24} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">Total Invertido</p>
-                  <h4 className="font-primary text-green-700 text-2xl">${totalGastado.toLocaleString()}</h4>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-[20px] bg-white border border-purple-100 rounded-2xl shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-[50px] h-[50px] bg-purple-50 rounded-full flex items-center justify-center">
-                  <CheckCircle className="text-purple-600" size={24} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">Entregados</p>
-                  <h4 className="font-primary text-purple-700 text-2xl">{completadas}</h4>
-                </div>
-              </div>
-            </div>
+            <Link
+              to={getStoreHomePath(user)}
+              className="flex items-center gap-2 bg-[#1E3A8A] text-white px-6 py-3 rounded-xl font-black tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 group"
+            >
+              <Shirt size={16} className="group-hover:-translate-y-0.5 transition-transform" />
+              Ir a la tienda
+            </Link>
           </div>
 
-          {/* Tabla de compras */}
-          {loading ? (
-            <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
-              <p className="mt-4 text-gray-500">Cargando tu historial...</p>
-            </div>
-          ) : purchases.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
-              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShoppingBag className="text-gray-300" size={40} />
+          {purchases.length === 0 ? (
+            <div className="bg-[#121821] border border-gray-800 rounded-[2rem] p-16 text-center shadow-xl flex flex-col items-center">
+              <div className="w-24 h-24 bg-[#0B0F14] rounded-full flex items-center justify-center mb-6 border border-gray-800">
+                <Package size={48} className="text-gray-600" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900">No tienes compras registradas</h3>
-              <p className="text-gray-500 mt-1">¡Explora la tienda y realiza tu primer pedido!</p>
+              <h3 className="text-2xl font-black mb-3">No tienes compras aún</h3>
+              <p className="text-[#9CA3AF] mb-8 max-w-md">¡Explora nuestra tienda y descubre los mejores productos para ti!</p>
+              <Link
+                to={getStoreHomePath(user)}
+                className="bg-white text-black px-8 py-4 rounded-xl font-black tracking-widest text-sm hover:bg-gray-200 transition-all"
+              >
+                Empezar a comprar
+              </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {purchases.map((purchase) => (
-                <div key={purchase.id_venta} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
-                  {/* Cabecera de la tarjeta / Fila principal */}
-                  <div
-                    className="p-6 cursor-pointer flex items-center flex-wrap gap-4 justify-between"
-                    onClick={() => toggleRow(purchase.id_venta)}
-                  >
-                    <div className="flex items-center gap-4 min-w-[200px]">
-                      <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
-                        <ShoppingBag size={24} />
+            <div className="grid grid-cols-1 gap-6">
+              {purchases.map((c) => (
+                <article
+                  key={c.id_venta}
+                  className="bg-[#121821] border border-gray-800 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-gray-700 hover:shadow-xl transition-all cursor-pointer group"
+                  onClick={() => navigate(`/admin/myPurchases/${c.id_venta}`)}
+                >
+                  <div className="flex items-center gap-6 md:w-1/3">
+                    <div className="w-16 h-16 bg-[#0B0F14] rounded-xl flex items-center justify-center border border-gray-800 flex-shrink-0 group-hover:border-[#1E3A8A]/50 transition-colors">
+                      <Package size={28} className="text-[#3b82f6]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Orden #{purchases.length - purchases.indexOf(c)}</p>
+                      <div className="flex items-center gap-2 text-white font-medium">
+                        <Calendar size={14} className="text-gray-500" />
+                        <span>{formatDate(c.fecha_venta)}</span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Pedido #{purchase.id_venta}</p>
-                        <p className="font-semibold text-gray-900 flex items-center gap-2">
-                          {new Date(purchase.fecha_venta).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-500">Total</span>
-                      <span className="font-bold text-gray-900">${Number(purchase.total).toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-500">Método de Pago</span>
-                      <span className="font-medium text-gray-700 capitalize">{purchase.metodo_pago}</span>
-                    </div>
-
-                    <div className="min-w-[140px]">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getStatusBadge(purchase.estado)}`}>
-                        {getStatusIcon(purchase.estado)}
-                        {purchase.estado}
-                      </span>
-                    </div>
-
-                    <div className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${expandedRows[purchase.id_venta] ? 'rotate-180' : ''}`}>
-                      <ChevronDown className="text-gray-400" size={20} />
                     </div>
                   </div>
 
-                  {/* Detalles expandibles */}
-                  {expandedRows[purchase.id_venta] && (
-                    <div className="border-t border-gray-100 bg-gray-50/50 p-6 animate-in slide-in-from-top-2 duration-200">
-                      <h5 className="text-sm font-semibold text-gray-700 mb-4 px-2">Detalle de productos</h5>
-                      <div className="space-y-3">
-                        {purchase.items?.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100">
-                            <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                {item.imagen ? (
-                                  <img src={item.imagen} alt={item.nombre_producto} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                    <Package size={24} />
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <h6 className="font-medium text-gray-900">{item.nombre_producto}</h6>
-                                <p className="text-sm text-gray-500">
-                                  {item.nombre_color && `Color: ${item.nombre_color}`}
-                                  {item.nombre_color && item.nombre_talla && " | "}
-                                  {item.nombre_talla && `Talla: ${item.nombre_talla}`}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">Precio unitario: ${Number(item.precio_unitario).toLocaleString()}</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <span className="block text-sm font-medium text-gray-900">x{item.cantidad}</span>
-                              <span className="block font-semibold text-emerald-600 mt-1">
-                                ${(item.cantidad * item.precio_unitario).toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                        {(!purchase.items || purchase.items.length === 0) && (
-                          <p className="text-sm text-gray-500 italic p-2">Sin detalles de productos disponibles.</p>
-                        )}
-                      </div>
+                  <div className="flex flex-col md:items-center md:w-1/4">
+                    <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Total</p>
+                    <p className="text-xl font-black text-emerald-400">${Number(c.total).toLocaleString()}</p>
+                  </div>
 
-                      {purchase.direccion_envio && (
-                        <div className="mt-6 pt-4 border-t border-gray-100">
-                          <p className="text-sm text-gray-600">
-                            <span className="font-semibold text-gray-800">Dirección de envío:</span> {purchase.direccion_envio}
-                          </p>
-                        </div>
-                      )}
+                  <div className="flex flex-col md:items-center md:w-1/4">
+                    <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-2">Estado</p>
+                    <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-black tracking-wider border
+                      ${c.estado === "Entregada" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                        c.estado === "Pendiente" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                          c.estado === "Cancelada" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                            "bg-blue-500/10 text-blue-400 border-blue-500/20"}`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                      {c.estado}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-end md:w-20">
+                    <div className="w-10 h-10 rounded-full bg-[#0B0F14] border border-gray-800 flex items-center justify-center group-hover:bg-[#1E3A8A] group-hover:border-[#1E3A8A] transition-all">
+                      <ChevronRight size={20} className="text-gray-400 group-hover:text-white transition-colors" />
                     </div>
-                  )}
-                </div>
+                  </div>
+                </article>
               ))}
             </div>
           )}

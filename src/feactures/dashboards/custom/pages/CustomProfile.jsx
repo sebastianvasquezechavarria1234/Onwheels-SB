@@ -1,98 +1,171 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { CustomProfileLayout } from "../layout/CustomProfileLayout"
+import { CustomLayout } from "../../../landing/custom/layout/CustomLayout"
+import { useEffect, useState } from "react"
+import { Phone, Mail, Shield, User, Camera, Star, Zap } from "lucide-react"
 
 export const CustomProfile = () => {
-  const [userData, setUserData] = useState(null)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    // Obtener datos del usuario desde localStorage
-    const user = JSON.parse(localStorage.getItem("user") || "{}")
-    setUserData(user)
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
   }, [])
 
-  if (!userData) {
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !user?.id_usuario) return
+    
+    try {
+      const formDataImg = new FormData()
+      formDataImg.append("foto_perfil", file)
+      const token = localStorage.getItem("token")
+      
+      // Intentar usar VITE_REACT_APP_API_URL o VITE_API_URL
+      const apiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000'
+      const photoRes = await fetch(`${apiUrl}/api/usuarios/${user.id_usuario}/foto`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formDataImg
+      })
+      
+      if (!photoRes.ok) {
+        const errData = await photoRes.json()
+        throw new Error(errData.mensaje || "Error al subir la imagen")
+      }
+      
+      const photoData = await photoRes.json()
+      // Update local storage and state
+      const updatedUser = { ...user, foto_perfil: photoData.foto_perfil || photoData.secure_url }
+      localStorage.setItem("user", JSON.stringify(updatedUser))
+      setUser(updatedUser)
+      window.dispatchEvent(new Event("storage"))
+      alert("Foto de perfil actualizada correctamente")
+    } catch (err) {
+      alert(err.message || "Error al subir la imagen")
+    }
+  }
+
+  if (!user) {
     return (
-      <CustomProfileLayout>
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Cargando...</p>
+      <CustomLayout>
+        <div className="min-h-screen bg-[#0B0F14] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A8A]"></div>
         </div>
-      </CustomProfileLayout>
+      </CustomLayout>
     )
   }
 
   return (
-    <CustomProfileLayout>
-      <section className="flex flex-col gap-4 items-center justify-center">
-        <h2 className="title-section text-2xl font-bold text-gray-800">Mi perfil</h2>
-
-        <picture className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-          {userData.imagen ? (
-            <img src={userData.imagen || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-          )}
-        </picture>
-
-        <div className="flex flex-col gap-4 w-full max-w-md">
-          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium self-start">
-            Activo
-          </span>
-
-          <h4 className="text-xl font-semibold text-gray-800">
-            {userData.nombre} {userData.apellido}
-          </h4>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-gray-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-              <span>{userData.telefono || "No especificado"}</span>
+    <CustomLayout>
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px] md:pt-10">
+        <div className="max-w-[800px] mx-auto px-4 sm:px-6">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
+                <User className="text-[#3b82f6]" size={36} />
+                Mi Perfil
+              </h2>
+              <p className="text-[#9CA3AF] mt-2 font-medium">Gestiona tu información personal y configuración</p>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2 text-gray-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <span>{userData.email}</span>
-            </div>
+          <div className="bg-[#121821] border border-gray-800 rounded-[2rem] p-8 md:p-12 shadow-xl hover:shadow-[#1E3A8A]/5 hover:border-gray-700 transition-all group relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#1E3A8A]/10 rounded-full blur-[80px] group-hover:bg-[#1E3A8A]/20 transition-all pointer-events-none"></div>
 
-            {userData.roles && userData.roles.length > 0 && (
-              <div className="flex items-start gap-2 text-gray-600">
-                <svg className="w-5 h-5 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-                <div className="flex flex-wrap gap-2">
-                  {userData.roles.map((role, index) => (
-                    <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm">
-                      {role}
-                    </span>
-                  ))}
+            <div className="flex flex-col md:flex-row gap-10 items-center md:items-start relative z-10">
+
+              {/* Avatar Section */}
+              <div className="flex flex-col items-center">
+                <div className="relative group/avatar cursor-pointer">
+                  <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/20 bg-[#0B0F14] flex items-center justify-center">
+                    <img
+                      src={user?.foto_perfil || "/placeholder.svg?height=144&width=144"}
+                      alt="Avatar"
+                      className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all"
+                    />
+                    <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer">
+                      <Camera className="text-white" size={32} />
+                      <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
+                    </label>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-full border-4 border-[#121821] flex items-center justify-center shadow-md">
+                    <Star size={16} fill="currentColor" />
+                  </div>
+                </div>
+                <span className="mt-4 text-xs font-bold text-[#3b82f6] uppercase tracking-wider">
+                  Haz clic para cambiar tu foto
+                </span>
+              </div>
+
+              {/* Info Section */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                    <Zap size={10} fill="currentColor" />
+                    Cuenta Activa
+                  </span>
+                </div>
+
+                <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">
+                  {user.nombre_completo || user.name || "Usuario"}
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-[#9CA3AF]">
+                      <Phone size={14} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
+                    </div>
+                    <span className="font-medium text-white pl-5">{user.phone || "No especificado"}</span>
+                  </div>
+
+                  <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-[#9CA3AF]">
+                      <Mail size={14} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Email</span>
+                    </div>
+                    <span className="font-medium text-white pl-5 break-all">{user.email || "No especificado"}</span>
+                  </div>
+
+                  <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">
+                    <div className="flex items-center gap-2 text-[#9CA3AF]">
+                      <Shield size={14} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Roles Asignados</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pl-5 mt-2">
+                      {user.roles && user.roles.length > 0 ? (
+                        user.roles.map(role => (
+                          <span key={role} className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-[#1E3A8A]/30">
+                            {role}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm font-medium text-white">Sin roles</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* Actions */}
+            <div className="mt-10 pt-8 border-t border-gray-800 flex flex-col sm:flex-row gap-4 justify-end">
+              <button className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center gap-2">
+                Cambiar Contraseña
+              </button>
+              <button className="px-6 py-3 bg-[#1E3A8A] text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 flex items-center justify-center gap-2">
+                Editar Perfil
+              </button>
+            </div>
+
           </div>
         </div>
       </section>
-    </CustomProfileLayout>
+    </CustomLayout>
   )
 }

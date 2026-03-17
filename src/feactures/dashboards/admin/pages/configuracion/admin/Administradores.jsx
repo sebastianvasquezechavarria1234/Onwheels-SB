@@ -1,7 +1,7 @@
 // src/features/dashboards/admin/pages/Administradores.jsx
 import React, { useEffect, useState, useCallback } from "react";
 
-import { Eye, Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Download, SlidersHorizontal } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getAdministradores,
@@ -26,7 +26,10 @@ export const Administradores = () => {
   const [search, setSearch] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+  const [filterType, setFilterType] = useState("Todos los admins");
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
@@ -38,11 +41,19 @@ export const Administradores = () => {
     try {
       setLoading(true);
       setError(null);
-      const [adminsData, usuariosData] = await Promise.all([
-        getAdministradores(),
-        getUsuariosSoloConRolCliente() // ✅ Llamada actualizada
+      const [adminsRes, usuariosData] = await Promise.all([
+        getAdministradores({ page: currentPage, limit: itemsPerPage, search }),
+        getUsuariosSoloConRolCliente()
       ]);
-      setAdministradores(Array.isArray(adminsData) ? adminsData : []);
+      if (adminsRes && adminsRes.data) {
+        setAdministradores(adminsRes.data);
+        setTotalPages(adminsRes.totalPages || 1);
+        setTotalItems(adminsRes.total || 0);
+      } else {
+        setAdministradores(Array.isArray(adminsRes) ? adminsRes : []);
+        setTotalPages(1);
+        setTotalItems(Array.isArray(adminsRes) ? adminsRes.length : 0);
+      }
       setUsuariosDisponibles(Array.isArray(usuariosData) ? usuariosData : []);
     } catch (err) {
       console.error("Error cargando administradores:", err);
@@ -51,10 +62,13 @@ export const Administradores = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, itemsPerPage, search]);
 
   useEffect(() => {
-    fetchAdministradores();
+    const delayDebounceFn = setTimeout(() => {
+      fetchAdministradores();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
   }, [fetchAdministradores]);
 
   const handleChange = (e) => {
@@ -116,8 +130,10 @@ export const Administradores = () => {
       showNotification("Administrador eliminado con éxito");
     } catch (err) {
       console.error("Error eliminando administrador:", err);
+      // Mostrar el error exacto del backend
       const errorMessage = err.response?.data?.mensaje || "Error eliminando administrador";
       showNotification(errorMessage, "error");
+      closeModal(); // Cerrar modal después de error
     }
   };
 
@@ -150,79 +166,106 @@ export const Administradores = () => {
     });
   };
 
-  const administradoresFiltrados = administradores.filter((a) =>
-    (a.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
-    (a.email || "").toLowerCase().includes(search.toLowerCase()) ||
-    (a.tipo_admin || "").toLowerCase().includes(search.toLowerCase()) ||
-    (a.area || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const handleDownload = () => {
+    if (!administradores || administradores.length === 0) return;
+    const header = ["Nombre Completo", "Email", "Tipo Admin", "Area"];
+    const csvData = currentItems.map(a => [
+      `"${a.nombre_completo}"`,
+      a.email,
+      a.tipo_admin || "General",
+      a.area || ""
+    ].join(","));
 
-  const totalPages = Math.max(1, Math.ceil(administradoresFiltrados.length / itemsPerPage));
-  const currentItems = administradoresFiltrados.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+    const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...csvData].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "administradores_report_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+  const currentItems = administradores.filter(a => {
+    if (filterType === "Superadmin") return a.tipo_admin?.toLowerCase() === "superadmin";
+    if (filterType === "Soporte") return a.tipo_admin?.toLowerCase() === "soporte";
+    return true; // Todos los admins
+  });
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white overflow-hidden">
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-4 p-2 pb-4">
+      <div className="flex flex-col h-full bg-white overflow-hidden p-2 md:p-4">
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+          <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Admin y Personal
+          </h2>
 
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-extrabold text-[#0F172A] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-              Usuarios / Administradores
-            </h2>
-          </div>
-
-          {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-50/50 rounded-2xl border border-slate-100 px-4 py-3">
-            {/* Search & Create Group */}
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar administradores..."
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-300 outline-none transition bg-white"
-                />
-              </div>
-              <button
-                onClick={() => openModal("crear")}
-                className="flex items-center gap-2 px-5 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-              >
-                <Plus size={18} />
-                Registrar Administrador
-              </button>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Search Bar */}
+            <div className="relative w-full sm:w-[280px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar administradores..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 transition-all text-slate-700 placeholder:text-slate-400"
+              />
             </div>
+
+            {/* Filter Dropdown */}
+            <div className="relative hidden md:block">
+              <select
+                value={filterType}
+                onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+                className="appearance-none bg-white border border-slate-200 text-slate-500 py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#040529]/10 cursor-pointer"
+              >
+                <option value="Todos los admins">Todos los admins</option>
+                <option value="Superadmin">Superadmin</option>
+                <option value="Soporte">Soporte</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
+              </div>
+            </div>
+
+            {/* Download Button */}
+            <button
+              onClick={handleDownload}
+              className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
+            >
+              <Download size={20} />
+            </button>
+
+            {/* Create Button */}
+            <button
+              onClick={() => openModal("crear")}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#040529] hover:bg-black text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+            >
+              <Plus size={18} />
+              Registrar Admin
+            </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-700">
-              <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+        {/* --- SECTION 2: TABLE AREA --- */}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10">
                 <tr>
-                  <th className="px-6 py-3 w-[20%]">Nombre</th>
-                  <th className="px-6 py-3 w-[20%]">Email</th>
-                  <th className="px-6 py-3 w-[15%]">Tipo</th>
-                  <th className="px-6 py-3 w-[15%]">Área</th>
-                  <th className="px-6 py-3 w-[20%]">Acciones</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide rounded-tl-xl w-[20%]">Nombre</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[25%]">Email</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[20%]">Tipo</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide w-[20%]">Área</th>
+                  <th className="px-6 py-4 font-bold text-sm tracking-wide text-right rounded-tr-xl w-[15%]">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                      Cargando administradores...
-                    </td>
+                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400 text-sm">Cargando administradores...</td>
                   </tr>
                 ) : error ? (
                   <tr>
@@ -232,46 +275,42 @@ export const Administradores = () => {
                   </tr>
                 ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500 italic">
-                      No se encontraron administradores.
-                    </td>
+                    <td colSpan="5" className="px-6 py-8 text-center text-slate-400 italic">No se encontraron administradores.</td>
                   </tr>
                 ) : (
-                  currentItems.map((a) => (
-                    <tr key={a.id_admin} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 font-medium">{a.nombre_completo}</td>
-                      <td className="px-6 py-4 text-gray-600">{a.email}</td>
-                      <td className="px-6 py-4 text-gray-600">{a.tipo_admin || "—"}</td>
-                      <td className="px-6 py-4 text-gray-600">{a.area || "—"}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                  currentItems.map((a, i) => (
+                    <tr key={a.id_admin} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-3 font-bold text-[#040529] text-base">{a.nombre_completo}</td>
+                      <td className="px-6 py-3 text-sm text-slate-500">{a.email}</td>
+                      <td className="px-6 py-3 text-sm text-slate-500">
+                        <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold border border-slate-200 whitespace-nowrap">
+                          {a.tipo_admin || "General"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-sm text-slate-500">{a.area || "—"}</td>
+                      <td className="px-6 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
                             onClick={() => openModal("ver", a)}
-                            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm"
                             title="Ver detalles"
                           >
-                            <Eye size={16} />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            <Eye size={14} />
+                          </button>
+                          <button
                             onClick={() => openModal("editar", a)}
-                            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition"
+                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm"
                             title="Editar"
                           >
-                            <Pencil size={16} />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            <Pencil size={14} />
+                          </button>
+                          <button
                             onClick={() => openModal("eliminar", a)}
-                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 transition shadow-sm"
                             title="Eliminar"
                           >
-                            <Trash2 size={16} />
-                          </motion.button>
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -280,35 +319,32 @@ export const Administradores = () => {
               </tbody>
             </table>
           </div>
-        </div>
 
-        {administradoresFiltrados.length > 0 && (
-          <div className="flex justify-center items-center gap-2 mt-6 py-4">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className={`px-4 py-2 rounded-lg ${currentPage === 1
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-gray-600">
-              Página <span className="font-semibold text-blue-700">{currentPage}</span> de {totalPages}
-            </span>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className={`px-4 py-2 rounded-lg ${currentPage === totalPages
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                }`}
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
+          {/* Pagination Footer */}
+          {totalPages > 0 && (
+            <div className="border-t border-slate-100 px-6 py-4 bg-white flex items-center justify-between mt-auto">
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#040529]">{currentPage}</span> de <span className="text-[#040529]">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-[#040529] disabled:opacity-50 transition shadow-sm"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Notificación */}
@@ -543,7 +579,7 @@ export const Administradores = () => {
             </motion.div>
           </motion.div>
         )}
-        </AnimatePresence>
+      </AnimatePresence>
     </>
   );
 };

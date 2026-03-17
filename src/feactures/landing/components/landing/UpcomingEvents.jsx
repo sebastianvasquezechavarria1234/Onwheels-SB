@@ -15,14 +15,8 @@ export const UpcomingEvents = () => {
         setError(null);
 
         const data = await getEventosFuturos();
-
-        let allEvents = [];
-
-        if (Array.isArray(data)) {
-          allEvents = data;
-        } else if (data?.eventos && Array.isArray(data.eventos)) {
-          allEvents = data.eventos;
-        }
+        // getEventosFuturos ya normaliza la respuesta a un array
+        const allEvents = Array.isArray(data) ? data : [];
 
         const now = new Date();
 
@@ -30,7 +24,6 @@ export const UpcomingEvents = () => {
           .filter((e) => {
             const rawDate = e?.fecha_evento || e?.fecha;
             if (!rawDate) return false;
-
             const eventDate = new Date(rawDate);
             return !isNaN(eventDate) && eventDate >= now;
           })
@@ -43,14 +36,7 @@ export const UpcomingEvents = () => {
         setEvents(futureEvents.slice(0, 3));
       } catch (err) {
         console.error("Error fetching events:", err);
-
-        // Si es 401 simplemente dejamos la lista vacía
-        if (err.response?.status === 401) {
-          setError("No autorizado para ver eventos.");
-        } else {
-          setError("No se pudieron cargar los eventos.");
-        }
-
+        // No mostramos error para no afectar la landing si la API no responde
         setEvents([]);
       } finally {
         setLoading(false);
@@ -65,11 +51,11 @@ export const UpcomingEvents = () => {
       <div className="max-w-[1000px] mx-auto px-6">
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
-            Próximos <span className="text-zinc-600">Eventos</span>
+            Próximos <span className="text-zinc-500">Eventos</span>
           </h2>
           <Link
             to="/events"
-            className="text-xs font-bold text-(--color-blue) uppercase tracking-wider hover:underline"
+            className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wider hover:underline"
           >
             Ver Calendario
           </Link>
@@ -83,10 +69,6 @@ export const UpcomingEvents = () => {
                 className="h-24 bg-zinc-900 rounded-xl animate-pulse"
               />
             ))
-          ) : error ? (
-            <div className="text-red-500 text-sm bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-              {error}
-            </div>
           ) : events.length === 0 ? (
             <div className="text-gray-500 text-sm bg-zinc-900 p-4 rounded-xl border border-zinc-800">
               No hay eventos próximos.
@@ -105,9 +87,18 @@ export const UpcomingEvents = () => {
               return (
                 <div
                   key={index}
-                  className="flex items-center bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 rounded-xl p-4 transition-all hover:border-(--color-blue) hover:shadow-lg group"
+                  className="flex items-center bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 rounded-xl p-4 transition-all hover:border-[var(--color-blue)] hover:shadow-lg group"
                 >
-                  <div className="flex flex-col items-center justify-center w-14 h-14 bg-zinc-800 rounded-lg group-hover:bg-(--color-blue) transition-colors shrink-0 mr-6">
+                  {/* Event Thumbnail */}
+                  <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 mr-6 bg-zinc-800 border border-zinc-700">
+                    <img
+                      src={event?.imagen || "/bg_eventosL.jpg"}
+                      alt={event?.nombre_evento}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center w-14 h-14 bg-zinc-800 rounded-lg group-hover:bg-[var(--color-blue)] transition-colors shrink-0 mr-6">
                     <span className="text-xl font-bold text-white leading-none">
                       {day}
                     </span>
@@ -117,9 +108,9 @@ export const UpcomingEvents = () => {
                   </div>
 
                   <div className="flex-1 min-w-0 pr-4">
-                    <h3 className="text-lg font-bold text-white mb-1 truncate group-hover:text-(--color-blue) transition-colors">
-                      {event?.descripcion ||
-                        event?.nombre_evento ||
+                    <h3 className="text-lg font-bold text-white mb-1 truncate group-hover:text-[var(--color-blue)] transition-colors">
+                      {event?.nombre_evento ||
+                        event?.descripcion ||
                         "Evento General"}
                     </h3>
                     <div className="flex items-center gap-4 text-gray-500 text-xs text-nowrap">

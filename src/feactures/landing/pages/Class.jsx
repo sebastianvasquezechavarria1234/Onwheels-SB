@@ -166,14 +166,14 @@ export const ClassContent = () => {
         </div>
       </section>
 
-      {/* === SESSIONS: CALENDAR GRID === */}
-      <section className="py-32 bg-zinc-950 border-t border-zinc-900 relative">
+      {/* === SESSIONS: CALENDAR GRID (LIGHT THEME) === */}
+      <section className="py-32 bg-white relative">
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="flex flex-col items-center text-center mb-24 max-w-3xl mx-auto space-y-6">
             <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-[0.4em]">Optimiza tu Tiempo</span>
-            <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none">
+            <h2 className="text-5xl md:text-8xl font-black text-zinc-950 uppercase tracking-tighter leading-none">
               SESIONES DE <br />
-              <span className="text-zinc-800 italic">ENTRENAMIENTO</span>
+              <span className="text-zinc-100 italic">ENTRENAMIENTO</span>
             </h2>
             <p className="text-zinc-500 text-sm md:text-lg font-medium leading-relaxed">
               Consulta nuestra disponibilidad en tiempo real. Grupos reducidos para garantizar una atención personalizada por cada instructor élite.
@@ -183,7 +183,7 @@ export const ClassContent = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {loading ? (
               [1, 2, 3].map((n) => (
-                <div key={n} className="h-72 bg-zinc-900/50 rounded-[2.5rem] animate-pulse" />
+                <div key={n} className="h-72 bg-zinc-100 rounded-[2.5rem] animate-pulse" />
               ))
             ) : clases.length > 0 ? (
               clases.map((clase, i) => (
@@ -193,10 +193,10 @@ export const ClassContent = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="group flex flex-col bg-zinc-900/30 hover:bg-zinc-900 border border-zinc-800/50 hover:border-[var(--color-blue)]/30 rounded-[2.5rem] p-10 transition-all duration-500 relative"
+                  className="group flex flex-col bg-zinc-900 hover:bg-zinc-950 border border-zinc-800/50 hover:border-[var(--color-blue)]/50 rounded-[2.5rem] p-10 transition-all duration-500 relative shadow-2xl hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.4)]"
                 >
                   <div className="flex justify-between items-start mb-12">
-                    <span className="text-[9px] font-black px-4 py-2 bg-zinc-950 rounded-full text-zinc-400 uppercase tracking-widest border border-zinc-800 group-hover:bg-[var(--color-blue)] group-hover:text-white transition-colors">
+                    <span className="text-[9px] font-black px-4 py-2 bg-zinc-950 rounded-full text-zinc-500 uppercase tracking-widest border border-zinc-800 group-hover:bg-[var(--color-blue)] group-hover:text-white transition-colors">
                       {clase.nombre_nivel || "Cualquier Nivel"}
                     </span>
                     <Clock size={20} className="text-zinc-800 group-hover:text-[var(--color-blue)] transition-colors" />
@@ -206,22 +206,22 @@ export const ClassContent = () => {
                     <h3 className="text-2xl font-black text-white uppercase tracking-tight group-hover:text-[var(--color-blue)] transition-colors leading-tight">
                       {clase.descripcion || `Clase en ${clase.nombre_sede}`}
                     </h3>
-                    <div className="flex items-center gap-3 text-zinc-500 text-[10px] font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-3 text-zinc-400 text-[10px] font-black uppercase tracking-widest">
                       <MapPin size={16} className="text-[var(--color-blue)]" />
                       {clase.nombre_sede}
                     </div>
                   </div>
 
-                  <div className="mt-auto pt-8 border-t border-zinc-800/50 flex items-center justify-between">
+                  <div className="mt-auto pt-8 border-t border-zinc-800 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-zinc-700 text-[9px] font-black uppercase tracking-widest mb-1">Horario</span>
+                      <span className="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Horario</span>
                       <span className="text-white text-xs font-black uppercase tracking-tighter flex items-center gap-2">
-                        <Calendar size={14} className="text-zinc-600" /> {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
+                        <Calendar size={14} className="text-[var(--color-blue)]" /> {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-zinc-700 text-[9px] font-black uppercase tracking-widest mb-1">Coach</span>
-                      <span className="text-zinc-400 text-xs font-black uppercase tracking-widest block italic underline decoration-[var(--color-blue)] decoration-2 underline-offset-4">
+                      <span className="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Coach</span>
+                      <span className="text-zinc-200 text-xs font-black uppercase tracking-widest block italic underline decoration-[var(--color-blue)] decoration-2 underline-offset-4">
                         {clase.instructores?.[0]?.nombre_instructor?.split(' ')[0] || "Staff SB"}
                       </span>
                     </div>
@@ -229,7 +229,7 @@ export const ClassContent = () => {
                 </motion.div>
               ))
             ) : (
-              <div className="col-span-full py-24 text-center text-zinc-800 font-black uppercase tracking-[0.5em] border-2 border-dashed border-zinc-900 rounded-[3rem]">
+              <div className="col-span-full py-24 text-center text-zinc-300 font-black uppercase tracking-[0.5em] border-2 border-dashed border-zinc-100 rounded-[3rem]">
                 Cargando itinerarios...
               </div>
             )}
@@ -245,7 +245,7 @@ export const ClassContent = () => {
             ESTILO EN <br />
             <span className="text-[var(--color-blue)]">MOVIMIENTO</span>
           </h2>
-          <p className="text-zinc-500 font-medium max-w-2xl mx-auto text-sm md:text-lg">
+          <p className="text-zinc-400 font-medium max-w-2xl mx-auto text-sm md:text-lg">
             No dejes que te lo cuenten. Estas son las vibraciones reales que se viven en cada una de nuestras sedes. Técnica, comunidad y mucha tabla.
           </p>
         </div>
@@ -357,30 +357,9 @@ export const ClassContent = () => {
                   </div>
                 </div>
 
-                <p className={`text-sm mb-12 leading-relaxed font-bold uppercase tracking-tight min-h-[48px] text-zinc-500`}>
-                  {plan.descripcion || "Formación de alto rendimiento impulsada por el sistema SB."}
+                <p className={`text-sm mb-12 leading-relaxed font-bold uppercase tracking-tight min-h-[48px] text-zinc-300 whitespace-pre-line`}>
+                  {plan.descripcion}
                 </p>
-
-                <ul className="space-y-6 mb-16 border-t border-zinc-100/10 pt-8">
-                  {[
-                    `${plan.numero_clases || 4} Sesiones Mensuales`,
-                    "Seguro Deportivo Mensual",
-                    plan.descuento_porcentaje > 0 ? `${plan.descuento_porcentaje}% Descuento Store` : "Certificación de Nivel",
-                    "Pack Welcome Performance SB"
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-4 text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                      <div className={`mt-0.5 shrink-0 ${parseFloat(plan.precio) > 100000 ? 'text-red-600' : 'text-[var(--color-blue)]'}`}><Check size={18} strokeWidth={4} /></div>
-                      <span className="leading-tight">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to="/login"
-                  className={`mt-auto w-full py-5 rounded-[2rem] text-center font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 shadow-xl ${parseFloat(plan.precio) > 100000 ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.03] shadow-red-600/20' : 'bg-white text-black hover:bg-[var(--color-blue)] hover:text-white shadow-white/5'}`}
-                >
-                  Adquirir Ahora
-                </Link>
               </div>
             ))}
           </div>

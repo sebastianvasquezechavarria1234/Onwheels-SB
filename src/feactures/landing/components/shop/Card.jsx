@@ -27,10 +27,17 @@ export const Card = ({ product }) => {
 
   const {
     nombre_producto,
-    precio_venta,
+    precio,
+    descuento_producto,
     variantes,
     imagenes
   } = product;
+
+  const hasDiscount = Number(descuento_producto) > 0;
+  const discountAmount = Number(descuento_producto) || 0;
+  const precioFinal = hasDiscount
+    ? Number(precio) * (1 - discountAmount / 100)
+    : Number(precio);
 
   // Formateador de precios
   const formatPrice = (val) => {
@@ -112,7 +119,12 @@ export const Card = ({ product }) => {
     }
 
     try {
-      addToCart(product, selectedVariant, 1);
+      const productToAdd = { 
+        ...product, 
+        precio_venta: precioFinal,
+        imagen: imgSrcMain
+      };
+      addToCart(productToAdd, selectedVariant, 1);
 
       // RICH SUCCESS TOAST - Enhanced Visibility
       toast.custom(
@@ -273,10 +285,19 @@ export const Card = ({ product }) => {
           </AnimatePresence>
 
           {/* Badge */}
-          {!showSelector && variantes?.length > 0 && (
-            <span className="absolute top-2 right-2 px-2 py-1 bg-[#0F172A]/80 backdrop-blur-md text-[10px] font-bold uppercase tracking-wide rounded-md shadow-lg text-white border border-slate-700">
-              {variantes.length > 1 ? `+${variantes.length}` : '1'} opc
-            </span>
+          {!showSelector && (
+            <div className="absolute top-2 right-2 flex flex-col gap-2 items-end">
+              {hasDiscount && (
+                <span className="px-3 py-1.5 bg-red-600 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-xl text-white border border-red-500 flex flex-col items-center gap-0.5 animate-pulse">
+                  <span>-{discountAmount}% OFF</span>
+                  <span className="opacity-80 text-[8px] font-bold border-t border-white/20 pt-0.5 mt-0.5">
+                    Era {formatPrice(precio)}
+                  </span>
+                </span>
+              )}
+
+              {/* Options badge removed per user request */}
+            </div>
           )}
         </div>
 
@@ -294,7 +315,14 @@ export const Card = ({ product }) => {
           <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-800">
             <div className="flex flex-col">
               <span className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-wider">Precio</span>
-              <span className="font-bold text-white text-lg">{formatPrice(precio_venta)}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-white text-lg">{formatPrice(precioFinal)}</span>
+                {hasDiscount && (
+                  <span className="text-xs text-gray-500 line-through font-medium">
+                    {formatPrice(precio)}
+                  </span>
+                )}
+              </div>
             </div>
 
             <button

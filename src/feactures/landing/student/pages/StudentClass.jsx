@@ -1,12 +1,13 @@
-import { ClassContent } from "../../pages/Class"
+import React from "react";
 import { StudentLayout } from "../layout/StudentLayout";
+import { ClassContent } from "../../pages/Class";
 
-export const StudentClass = () => {
+const StudentClass = () => {
   return (
     <StudentLayout>
       <ClassContent />
     </StudentLayout>
-  )
-}
+  );
+};
 
-export default StudentClass
+export default StudentClass;

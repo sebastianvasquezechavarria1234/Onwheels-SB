@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 import { getPedidoById } from "../../services/pedidosService";
 import { ArrowLeft, User, Calendar, DollarSign, Package, Printer, FileText } from "lucide-react";
@@ -7,6 +7,8 @@ import { ArrowLeft, User, Calendar, DollarSign, Package, Printer, FileText } fro
 export default function PedidoDetalle() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const [venta, setVenta] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -35,7 +37,7 @@ export default function PedidoDetalle() {
                 <div className="flex flex-col items-center justify-center h-screen bg-gray-50 gap-4">
                     <div className="text-xl font-semibold text-red-500">{error || "Venta no encontrada"}</div>
                     <button
-                        onClick={() => navigate("/admin/pedidos")}
+                        onClick={() => navigate(`${basePath}/pedidos`)}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                     >
                         <ArrowLeft size={20} />
@@ -74,7 +76,7 @@ export default function PedidoDetalle() {
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-8">
                     <button
-                        onClick={() => navigate("/admin/pedidos")}
+                        onClick={() => navigate(`${basePath}/pedidos`)}
                         className="p-2 bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition shadow-sm"
                     >
                         <ArrowLeft size={24} className="text-gray-600" />

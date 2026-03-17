@@ -14,9 +14,11 @@ const Preinscriptions = () => {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Datos del formulario (solo campos de ESTUDIANTES)
+    // Datos del formulario (campos de ESTUDIANTES)
     const [formData, setFormData] = useState({
-        enfermedad: "",
+        nombre_completo: "",
+        genero: "",
+        tipo_preinscripcion: "TERCERO",
         nivel_experiencia: "",
         edad: "",
         id_acudiente: null,
@@ -35,7 +37,6 @@ const Preinscriptions = () => {
             try {
                 const token = localStorage.getItem("token");
                 if (!token) {
-                    setError("Debes iniciar sesión para preinscribirte");
                     setLoading(false);
                     return;
                 }
@@ -46,7 +47,6 @@ const Preinscriptions = () => {
                 setLoading(false);
             } catch (err) {
                 console.error("Error cargando usuario:", err);
-                setError("Error al cargar tus datos. Por favor inicia sesión.");
                 setLoading(false);
             }
         };
@@ -58,10 +58,12 @@ const Preinscriptions = () => {
         e.preventDefault();
 
         try {
-            // Validaciones
+            // Validar datos básicos para invitados
             if (!currentUser) {
-                setError("Debes estar logueado para preinscribirte");
-                return;
+                if (!formData.nombre_completo || !formData.email) {
+                    toast.error("Por favor complete los datos obligatorios del tercero (Nombre y Email)");
+                    return;
+                }
             }
 
             if (!formData.nivel_experiencia) {
@@ -76,12 +78,21 @@ const Preinscriptions = () => {
 
             // Preparar payload para el backend
             const payload = {
-                id_usuario: currentUser.id_usuario,
+                // Si es invitado, usamos la lógica de TERCERO pero sin id_usuario de origen (el backend creará el registro)
+                // O mejor aún, si el backend está diseñado para recibir nombre/email directamente
+                ...(currentUser ? { id_usuario: currentUser.id_usuario } : {
+                    tipo_preinscripcion: 'TERCERO_INVITADO', // Flag para identificar que es un invitado
+                    datos_tercero: {
+                        nombre_completo: formData.nombre_completo,
+                        email: formData.email,
+                        genero: formData.genero
+                    }
+                }),
                 enfermedad: hasEnfermedad === "si" ? formData.enfermedad : "No aplica",
                 nivel_experiencia: formData.nivel_experiencia,
                 edad: parseInt(formData.edad),
-                id_acudiente: formData.id_acudiente, // null si no aplica o es mayor de edad
-                nuevoAcudiente: isMinor ? formData.nuevoAcudiente : null // Enviamos acudiente solo si es menor
+                id_acudiente: formData.id_acudiente,
+                nuevoAcudiente: isMinor ? formData.nuevoAcudiente : null
             };
 
             // Guardar en el estado para confirmación (mezclamos con lo existente para no perder datos de UI)
@@ -109,57 +120,40 @@ const Preinscriptions = () => {
     if (loading) {
         return (
             <Layout>
-                <div className="min-h-screen flex items-center justify-center">
+                <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                        <p className="mt-4 text-gray-600">Cargando tus datos...</p>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-blue)] mx-auto"></div>
+                        <p className="mt-4 text-zinc-400">Cargando tus datos...</p>
                     </div>
                 </div>
             </Layout>
         );
     }
 
-    if (error) {
-        return (
-            <Layout>
-                <div className="min-h-screen flex items-center justify-center">
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
-                        <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
-                        <p className="text-red-600">{error}</p>
-                        <button
-                            onClick={() => window.location.href = "/login"}
-                            className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                        >
-                            Iniciar sesión
-                        </button>
-                    </div>
-                </div>
-            </Layout>
-        );
-    }
+// Eliminamos el return de error mandatorio para permitir modo invitado
 
     return (
         <Layout>
             {/* Contenedor principal con padding superior para no pegarse al navbar */}
-            <div className="py-10 px-4 sm:px-6 lg:px-8 pt-24">
+            <div className="py-10 px-4 sm:px-6 lg:px-8 pt-36 bg-zinc-950 min-h-screen">
                 {/* Contenedor de las dos mitades */}
                 <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
                     {/* Mitad Izquierda: Imagen / Branding */}
-                    <div className="lg:w-1/2 bg-blue-50 rounded-xl p-6 flex flex-col items-center justify-center">
+                    <div className="lg:w-1/2 bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-6 flex flex-col items-center justify-center">
                         <div className="text-center mb-6">
-                            <h3 className="text-2xl font-bold text-gray-900">¡Bienvenido a Performace-SB!</h3>
-                            <p className="text-gray-600 mt-2">Tu camino hacia el aprendizaje comienza aquí.</p>
+                            <h3 className="text-2xl font-bold text-white">¡Bienvenido a Performace-SB!</h3>
+                            <p className="text-zinc-400 mt-2">Tu camino hacia el aprendizaje comienza aquí.</p>
                             {currentUser && (
-                                <div className="mt-4 p-3 bg-white rounded-lg shadow">
-                                    <p className="text-sm font-medium text-gray-700">
-                                        Preinscribiendo como: <span className="text-blue-600">{currentUser.nombre_completo}</span>
+                                <div className="mt-4 p-3 bg-zinc-800/50 border border-zinc-700 rounded-xl">
+                                    <p className="text-sm font-medium text-zinc-300">
+                                        Preinscribiendo como: <span className="text-[var(--color-blue)] font-bold">{currentUser.nombre_completo}</span>
                                     </p>
-                                    <p className="text-xs text-gray-500">{currentUser.email}</p>
+                                    <p className="text-xs text-zinc-500">{currentUser.email}</p>
                                 </div>
                             )}
                         </div>
                         {/* Aquí puedes poner una imagen de tu marca o un icono */}
-                        <div className="w-full h-64 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                        <div className="w-full h-64 bg-gradient-to-br from-[var(--color-blue)] to-cyan-900 rounded-2xl flex items-center justify-center border border-zinc-700">
                             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" className="text-white">
                                 <path d="M12 2L2 7l10 5 10-5M2 12v5c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-5M2 17v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2M12 11v9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
@@ -169,24 +163,68 @@ const Preinscriptions = () => {
                     {/* Mitad Derecha: Formulario */}
                     <div className="lg:w-1/2">
                         {!showConfirm && !showFinal ? (
-                            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-                                <h2 className="text-center text-3xl font-bold text-gray-900 mb-6">
+                            <div className="bg-zinc-900/40 rounded-[2rem] border border-zinc-800 p-8 backdrop-blur-xl">
+                                <h2 className="text-center text-3xl font-bold text-white mb-6">
                                     Preinscripción
                                 </h2>
 
                                 <form onSubmit={handleSubmit}>
+                                    {/* SECCIÓN DATOS BÁSICOS (Solo invitados) */}
+                                    {!currentUser && (
+                                        <div className="mb-8 p-6 bg-zinc-800/30 rounded-2xl border border-zinc-700">
+                                            <h3 className="text-lg font-semibold text-white mb-4">Tus Datos Personales</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Nombre Completo:</label>
+                                                    <input
+                                                        type="text"
+                                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
+                                                        value={formData.nombre_completo}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, nombre_completo: e.target.value }))}
+                                                        placeholder="Juan Pérez"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Email:</label>
+                                                    <input
+                                                        type="email"
+                                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
+                                                        value={formData.email}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                                        placeholder="juan@ejemplo.com"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Género <span className="text-gray-400 capitalize normal-case text-[10px]">(Opcional)</span></label>
+                                                    <select
+                                                        value={formData.genero}
+                                                        onChange={(e) => setFormData(prev => ({ ...prev, genero: e.target.value }))}
+                                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition [&>option]:bg-zinc-800 [&>option]:text-white"
+                                                    >
+                                                        <option value="">Seleccionar</option>
+                                                        <option value="Masculino">Masculino</option>
+                                                        <option value="Femenino">Femenino</option>
+                                                        <option value="Otro">Otro</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Grid de dos columnas para los campos */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                         {/* Campo: Nivel de experiencia */}
                                         <div>
                                             <label
-                                                className="block text-sm font-medium text-gray-700 mb-2"
+                                                className="block text-sm font-medium text-zinc-400 mb-2"
                                                 htmlFor="nivel_experiencia"
                                             >
                                                 Nivel de experiencia:
                                             </label>
                                             <select
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition [&>option]:bg-zinc-800 [&>option]:text-white"
                                                 id="nivel_experiencia"
                                                 value={formData.nivel_experiencia}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, nivel_experiencia: e.target.value }))}
@@ -202,13 +240,13 @@ const Preinscriptions = () => {
                                         {/* Campo: Edad */}
                                         <div>
                                             <label
-                                                className="block text-sm font-medium text-gray-700 mb-2"
+                                                className="block text-sm font-medium text-zinc-400 mb-2"
                                                 htmlFor="edad"
                                             >
                                                 Edad:
                                             </label>
                                             <input
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
                                                 id="edad"
                                                 type="number"
                                                 min="1"
@@ -225,11 +263,11 @@ const Preinscriptions = () => {
 
                                     {/* Sección: Enfermedad */}
                                     <div className="mb-6">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-zinc-400 mb-2">
                                             ¿Tienes alguna enfermedad o condición médica?
                                         </label>
                                         <select
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition [&>option]:bg-zinc-800 [&>option]:text-white"
                                             value={hasEnfermedad}
                                             onChange={(e) => setHasEnfermedad(e.target.value)}
                                             required
@@ -242,13 +280,13 @@ const Preinscriptions = () => {
                                     {hasEnfermedad === "si" && (
                                         <div className="mb-6">
                                             <label
-                                                className="block text-sm font-medium text-gray-700 mb-2"
+                                                className="block text-sm font-medium text-zinc-400 mb-2"
                                                 htmlFor="enfermedad"
                                             >
                                                 Enfermedad o condición médica:
                                             </label>
                                             <textarea
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
                                                 id="enfermedad"
                                                 value={formData.enfermedad}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, enfermedad: e.target.value }))}
@@ -261,20 +299,20 @@ const Preinscriptions = () => {
 
                                     {/* Sección: Acudiente (solo si es menor de edad) */}
                                     {isMinor && (
-                                        <div className="mt-8 p-6 rounded-xl border-t-4 border-yellow-500 bg-yellow-50">
-                                            <h3 className="text-lg font-semibold text-yellow-800 mb-4 text-center">
+                                        <div className="mt-8 p-6 rounded-2xl border border-amber-500/20 bg-amber-500/5">
+                                            <h3 className="text-lg font-semibold text-amber-400 mb-4 text-center">
                                                 ⚠️ Información del Acudiente
                                             </h3>
                                             <div className="space-y-4">
                                                 <div>
                                                     <label
-                                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                                        className="block text-sm font-medium text-zinc-400 mb-2"
                                                         htmlFor="nombre_acudiente"
                                                     >
                                                         Nombre del acudiente:
                                                     </label>
                                                     <input
-                                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
                                                         id="nombre_acudiente"
                                                         type="text"
                                                         value={formData.nuevoAcudiente.nombre_acudiente}
@@ -292,13 +330,13 @@ const Preinscriptions = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
                                                         <label
-                                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                                            className="block text-sm font-medium text-zinc-400 mb-2"
                                                             htmlFor="telefono"
                                                         >
                                                             Teléfono:
                                                         </label>
                                                         <input
-                                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
                                                             id="telefono"
                                                             type="text"
                                                             value={formData.nuevoAcudiente.telefono}
@@ -315,13 +353,13 @@ const Preinscriptions = () => {
 
                                                     <div>
                                                         <label
-                                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                                            className="block text-sm font-medium text-zinc-400 mb-2"
                                                             htmlFor="email"
                                                         >
                                                             Email:
                                                         </label>
                                                         <input
-                                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
                                                             id="email"
                                                             type="email"
                                                             value={formData.nuevoAcudiente.email}
@@ -339,13 +377,13 @@ const Preinscriptions = () => {
 
                                                 <div>
                                                     <label
-                                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                                        className="block text-sm font-medium text-zinc-400 mb-2"
                                                         htmlFor="relacion"
                                                     >
                                                         Relación con el estudiante:
                                                     </label>
                                                     <select
-                                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition [&>option]:bg-zinc-800 [&>option]:text-white"
                                                         id="relacion"
                                                         value={formData.nuevoAcudiente.relacion}
                                                         onChange={(e) => setFormData(prev => ({
@@ -372,7 +410,7 @@ const Preinscriptions = () => {
                                     <div className="flex justify-end mt-8">
                                         <button
                                             type="submit"
-                                            className="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-200 transform hover:scale-105"
+                                            className="bg-white text-black font-bold py-3 px-8 rounded-full shadow-md transition duration-200 transform hover:scale-105 hover:bg-[var(--color-blue)] hover:text-white uppercase tracking-wider text-sm"
                                         >
                                             Siguiente
                                         </button>
@@ -381,37 +419,41 @@ const Preinscriptions = () => {
                             </div>
                         ) : showConfirm ? (
                             // Modal de confirmación
-                            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+                            <div className="bg-zinc-900/40 rounded-[2rem] border border-zinc-800 p-8 backdrop-blur-xl">
                                 <div className="flex flex-col items-center mb-6">
-                                    <h2 className="text-center text-2xl font-bold text-gray-900 mb-2">
+                                    <h2 className="text-center text-2xl font-bold text-white mb-2">
                                         Confirma tus datos
                                     </h2>
-                                    <p className="text-center text-gray-500">
+                                    <p className="text-center text-zinc-400">
                                         Revisa que toda la información esté correcta antes de continuar.
                                     </p>
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div className="bg-white rounded-xl p-5 shadow border border-gray-100">
-                                        <h3 className="text-base font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-2">
+                                    <div className="bg-zinc-950/50 rounded-2xl p-5 border border-zinc-800/50">
+                                        <h3 className="text-base font-semibold text-[var(--color-blue)] mb-3 border-b border-zinc-800 pb-2 text-white">
                                             Datos del estudiante
                                         </h3>
                                         <div className="grid grid-cols-1 gap-3 text-sm">
-                                            <div className="flex justify-between py-2 border-b border-gray-100">
-                                                <span className="text-gray-600">Nombre:</span>
-                                                <span className="font-medium text-gray-900">{currentUser?.nombre_completo}</span>
+                                            <div className="flex justify-between py-2 border-b border-zinc-800/30">
+                                                <span className="text-zinc-500">Nombre:</span>
+                                                <span className="font-medium text-white">
+                                                    {currentUser
+                                                        ? (currentUser.nombre_completo || currentUser.nombre || "Usuario")
+                                                        : formData.nombre_completo}
+                                                </span>
                                             </div>
-                                            <div className="flex justify-between py-2 border-b border-gray-100">
-                                                <span className="text-gray-600">Nivel de experiencia:</span>
-                                                <span className="font-medium text-gray-900">{formData.nivel_experiencia}</span>
+                                            <div className="flex justify-between py-2 border-b border-zinc-800/30">
+                                                <span className="text-zinc-500">Nivel de experiencia:</span>
+                                                <span className="font-medium text-white">{formData.nivel_experiencia}</span>
                                             </div>
-                                            <div className="flex justify-between py-2 border-b border-gray-100">
-                                                <span className="text-gray-600">Edad:</span>
-                                                <span className="font-medium text-gray-900">{formData.edad}</span>
+                                            <div className="flex justify-between py-2 border-b border-zinc-800/30">
+                                                <span className="text-zinc-500">Edad:</span>
+                                                <span className="font-medium text-white">{formData.edad}</span>
                                             </div>
                                             <div className="flex justify-between py-2">
-                                                <span className="text-gray-600">Enfermedad:</span>
-                                                <span className="font-medium text-gray-900">
+                                                <span className="text-zinc-500">Enfermedad:</span>
+                                                <span className="font-medium text-white">
                                                     {hasEnfermedad === "si" ? formData.enfermedad : "No aplica"}
                                                 </span>
                                             </div>
@@ -419,26 +461,26 @@ const Preinscriptions = () => {
                                     </div>
 
                                     {isMinor && formData.nuevoAcudiente.nombre_acudiente && (
-                                        <div className="bg-white rounded-xl p-5 shadow border border-gray-100">
-                                            <h3 className="text-base font-semibold text-blue-700 mb-3 border-b border-blue-100 pb-2">
+                                        <div className="bg-zinc-950/50 rounded-2xl p-5 border border-zinc-800/50">
+                                            <h3 className="text-base font-semibold text-amber-400 mb-3 border-b border-zinc-800 pb-2">
                                                 Datos del acudiente
                                             </h3>
                                             <div className="grid grid-cols-1 gap-3 text-sm">
-                                                <div className="flex justify-between py-2 border-b border-gray-100">
-                                                    <span className="text-gray-600">Nombre:</span>
-                                                    <span className="font-medium text-gray-900">{formData.nuevoAcudiente.nombre_acudiente}</span>
+                                                <div className="flex justify-between py-2 border-b border-zinc-800/30">
+                                                    <span className="text-zinc-500">Nombre:</span>
+                                                    <span className="font-medium text-white">{formData.nuevoAcudiente.nombre_acudiente}</span>
                                                 </div>
-                                                <div className="flex justify-between py-2 border-b border-gray-100">
-                                                    <span className="text-gray-600">Teléfono:</span>
-                                                    <span className="font-medium text-gray-900">{formData.nuevoAcudiente.telefono}</span>
+                                                <div className="flex justify-between py-2 border-b border-zinc-800/30">
+                                                    <span className="text-zinc-500">Teléfono:</span>
+                                                    <span className="font-medium text-white">{formData.nuevoAcudiente.telefono}</span>
                                                 </div>
-                                                <div className="flex justify-between py-2 border-b border-gray-100">
-                                                    <span className="text-gray-600">Email:</span>
-                                                    <span className="font-medium text-gray-900">{formData.nuevoAcudiente.email}</span>
+                                                <div className="flex justify-between py-2 border-b border-zinc-800/30">
+                                                    <span className="text-zinc-500">Email:</span>
+                                                    <span className="font-medium text-white">{formData.nuevoAcudiente.email}</span>
                                                 </div>
                                                 <div className="flex justify-between py-2">
-                                                    <span className="text-gray-600">Relación:</span>
-                                                    <span className="font-medium text-gray-900">{formData.nuevoAcudiente.relacion}</span>
+                                                    <span className="text-zinc-500">Relación:</span>
+                                                    <span className="font-medium text-white">{formData.nuevoAcudiente.relacion}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -448,14 +490,14 @@ const Preinscriptions = () => {
                                 <div className="flex justify-between w-full mt-8 space-x-4">
                                     <button
                                         type="button"
-                                        className="flex-1 bg-white border border-red-600 text-red-600 font-semibold py-3 px-4 rounded-lg shadow hover:bg-red-50 transition"
+                                        className="flex-1 border border-zinc-600 text-zinc-400 font-bold py-3 px-4 rounded-full hover:border-zinc-400 hover:text-white transition-all"
                                         onClick={() => setShowConfirm(false)}
                                     >
                                         Atrás
                                     </button>
                                     <button
                                         type="button"
-                                        className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-4 rounded-lg shadow transition"
+                                        className="flex-1 bg-white text-black font-bold py-3 px-4 rounded-full hover:bg-[var(--color-blue)] hover:text-white transition-all uppercase tracking-wider text-sm"
                                         onClick={handleConfirm}
                                     >
                                         Confirmar
@@ -464,25 +506,25 @@ const Preinscriptions = () => {
                             </div>
                         ) : (
                             // Éxito
-                            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+                            <div className="bg-zinc-900/40 rounded-[2rem] border border-zinc-800 p-8 backdrop-blur-xl">
                                 <div className="flex flex-col items-center mb-6">
-                                    <div className="bg-green-100 rounded-full p-4 mb-4">
+                                    <div className="bg-green-500/10 rounded-full p-4 mb-4 border border-green-500/20">
                                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
                                             <circle cx="12" cy="12" r="12" fill="#22c55e" opacity="0.15" />
                                             <path d="M7 13l3 3 7-7" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                                         </svg>
                                     </div>
-                                    <h2 className="text-center text-2xl font-bold text-gray-900 mb-2">
+                                    <h2 className="text-center text-2xl font-bold text-white mb-2">
                                         Preinscripción recibida
                                     </h2>
-                                    <p className="text-center text-gray-500">
+                                    <p className="text-center text-zinc-400">
                                         Hemos recibido tu solicitud de preinscripción.<br />
                                         Nuestro equipo revisará tu información y te contactará pronto.
                                     </p>
                                 </div>
                                 <div className="flex justify-center mt-8">
                                     <button
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg shadow transition"
+                                        className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-[var(--color-blue)] hover:text-white transition-all uppercase tracking-wider text-sm"
                                         onClick={() => window.location.href = "/"}
                                     >
                                         Volver al inicio

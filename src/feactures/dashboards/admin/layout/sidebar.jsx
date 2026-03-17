@@ -29,173 +29,171 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-64 h-screen bg-white shadow-md flex flex-col p-4">
+    <div className="w-64 h-screen bg-[#08152a] text-slate-200 shadow-xl flex flex-col p-4 font-['Outfit',_sans-serif]">
       {/* Contenedor con espacio entre módulos */}
       <div className="flex flex-col space-y-4">
         {/* Dashboard */}
-        <div className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-100 cursor-pointer">
-          <LayoutDashboard size={20} />
-          <span>Dashboard</span>
+        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0f3b82] hover:bg-opacity-20 cursor-pointer transition">
+          <LayoutDashboard size={20} className="text-[#9fc5ff]" />
+          <span className="font-black text-sm text-white">Dashboard</span>
         </div>
 
-        {/* Configuración */}
+        {/* Compras: primero datos maestros, luego productos y compras */}
         <div>
           <div
-            className="flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100 rounded-md"
-            onClick={() => toggleModule("config")}
-          >
-            <div className="flex items-center gap-3">
-              <Shield size={20} />
-              <span>Configuración</span>
-            </div>
-          </div>
-          {openModule === "config" && (
-            <div className="ml-8 mt-2 space-y-3">
-              <div className="flex items-center gap-2 cursor-pointer hover:text-blue-600">
-                <Users size={18} />
-                <span>Usuarios</span>
-              </div>
-              <div className="flex items-center gap-2 cursor-pointer hover:text-blue-600">
-                <Shield size={18} />
-                <span>Roles</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Compras */}
-        <div>
-          <div
-            className="flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100 rounded-md"
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#0f3b82] hover:bg-opacity-10 rounded-lg transition"
             onClick={() => toggleModule("compras")}
           >
             <div className="flex items-center gap-3">
-              <Package size={20} />
-              <span>Compras</span>
+              <Package size={20} className="text-slate-300" />
+              <span className="font-bold text-sm">Compras</span>
             </div>
           </div>
           {openModule === "compras" && (
-            <div className="ml-8 mt-2 space-y-3">
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Tag size={18} />
-                <span>Categorías productos</span>
+            <div className="ml-6 mt-2 space-y-3">
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Tag size={16} className="text-slate-400" />
+                <span className="text-sm">Categorías productos</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Truck size={18} />
-                <span>Proveedores</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Truck size={16} className="text-slate-400" />
+                <span className="text-sm">Proveedores</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Package size={18} />
-                <span>  <BtnLink link="productos" title="Productos" /></span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Package size={16} className="text-slate-400" />
+                <span className="text-sm"><BtnLink link="productos" title="Productos" /></span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <CreditCard size={18} />
-                <span>Compras</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <CreditCard size={16} className="text-slate-400" />
+                <span className="text-sm">Compras</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Eventos */}
+        {/* Eventos: datos maestros antes del CRUD */}
         <div>
           <div
-            className="flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100 rounded-md"
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#0f3b82] hover:bg-opacity-10 rounded-lg transition"
             onClick={() => toggleModule("eventos")}
           >
             <div className="flex items-center gap-3">
-              <Calendar size={20} />
-              <span>Eventos</span>
+              <Calendar size={20} className="text-slate-300" />
+              <span className="font-bold text-sm">Eventos</span>
             </div>
           </div>
           {openModule === "eventos" && (
-            <div className="ml-8 mt-2 space-y-3">
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Layers size={18} />
-                <span>Categorías eventos</span>
+            <div className="ml-6 mt-2 space-y-3">
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Layers size={16} className="text-slate-400" />
+                <span className="text-sm">Categorías eventos</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Handshake size={18} />
-                <span>Patrocinadores</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Handshake size={16} className="text-slate-400" />
+                <span className="text-sm">Patrocinadores</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <MapPin size={18} />
-                <span>Sedes</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <MapPin size={16} className="text-slate-400" />
+                <span className="text-sm">Sedes</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Calendar size={18} />
-                <span>Eventos</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Calendar size={16} className="text-slate-400" />
+                <span className="text-sm">Eventos</span>
               </div>
             </div>
-
           )}
         </div>
 
-        {/* Clases */}
+        {/* Clases: maestros primero (niveles/planes), luego clases y gestión de alumnos */}
         <div>
           <div
-            className="flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100 rounded-md"
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#0f3b82] hover:bg-opacity-10 rounded-lg transition"
             onClick={() => toggleModule("clases")}
           >
             <div className="flex items-center gap-3">
-              <GraduationCap size={20} />
-              <span>Clases</span>
+              <GraduationCap size={20} className="text-slate-300" />
+              <span className="font-bold text-sm">Clases</span>
             </div>
           </div>
           {openModule === "clases" && (
-            <div className="ml-8 mt-2 space-y-3">
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <ClipboardList size={18} />
-                <span>Niveles de clases</span>
+            <div className="ml-6 mt-2 space-y-3">
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <ClipboardList size={16} className="text-slate-400" />
+                <span className="text-sm">Niveles de clases</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <BookOpen size={18} />
-                <span>Clases</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <BookOpen size={16} className="text-slate-400" />
+                <span className="text-sm">Planes</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <User size={18} />
-                <span>Instructores</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <BookOpen size={16} className="text-slate-400" />
+                <span className="text-sm">Clases</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Users size={18} />
-
-                <span> <BtnLink link="estudiantes" title="etudiantes" /></span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <User size={16} className="text-slate-400" />
+                <span className="text-sm">Instructores</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <FilePlus size={18} />
-                <span>Preinscripciones</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Users size={16} className="text-slate-400" />
+                <span className="text-sm"><BtnLink link="estudiantes" title="Estudiantes" /></span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <ClipboardList size={18} />
-                <span>Planes</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <FilePlus size={16} className="text-slate-400" />
+                <span className="text-sm">Preinscripciones</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <CreditCard size={18} />
-                <span>Matrículas</span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <CreditCard size={16} className="text-slate-400" />
+                <span className="text-sm">Matrículas</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Ventas */}
+        {/* Ventas: pedidos / ventas */} 
         <div>
           <div
-            className="flex items-center justify-between p-2 cursor-pointer hover:bg-gray-100 rounded-md"
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#0f3b82] hover:bg-opacity-10 rounded-lg transition"
             onClick={() => toggleModule("ventas")}
           >
             <div className="flex items-center gap-3">
-              <ShoppingCart size={20} />
-              <span>Ventas</span>
+              <ShoppingCart size={20} className="text-slate-300" />
+              <span className="font-bold text-sm">Ventas</span>
             </div>
           </div>
           {openModule === "ventas" && (
-            <div className="ml-8 mt-2 space-y-3">
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <ShoppingCart size={18} />
-                <span><BtnLink link="pedidos" title="Pedidos" /></span>
+            <div className="ml-6 mt-2 space-y-3">
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <ShoppingCart size={16} className="text-slate-400" />
+                <span className="text-sm"><BtnLink link="pedidos" title="Pedidos" /></span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <ShoppingCart size={18} />
-                <span><BtnLink link="ventas" title="Ventas" /></span>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <ShoppingCart size={16} className="text-slate-400" />
+                <span className="text-sm"><BtnLink link="ventas" title="Ventas" /></span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Configuración (al final) */} 
+        <div>
+          <div
+            className="flex items-center justify-between p-3 cursor-pointer hover:bg-[#0f3b82] hover:bg-opacity-10 rounded-lg transition"
+            onClick={() => toggleModule("config")}
+          >
+            <div className="flex items-center gap-3">
+              <Shield size={20} className="text-slate-300" />
+              <span className="font-bold text-sm">Configuración</span>
+            </div>
+          </div>
+          {openModule === "config" && (
+            <div className="ml-6 mt-2 space-y-3">
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Users size={16} className="text-slate-400" />
+                <span className="text-sm">Usuarios</span>
+              </div>
+              <div className="flex items-center gap-2 hover:text-[#9fc5ff] transition">
+                <Shield size={16} className="text-slate-400" />
+                <span className="text-sm">Roles</span>
               </div>
             </div>
           )}
@@ -203,13 +201,15 @@ const Sidebar = () => {
       </div>
 
       {/* Cerrar sesión */}
-      <div className="mt-auto pt-4">
-        <button className="flex items-center  mb-15 gap-2 w-full p-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800">
-          <LogOut size={20} />
-          <span>Cerrar sesión</span>
+      <div className="mt-auto pt-6">
+        <button className="flex items-center gap-3 w-full p-3 bg-transparent border border-slate-700 text-slate-200 rounded-xl hover:bg-[#09243d] transition">
+          <LogOut size={18} />
+          <span className="font-bold text-sm">Cerrar sesión</span>
         </button>
       </div>
     </div>
   );
 };
+
+export default Sidebar;
 

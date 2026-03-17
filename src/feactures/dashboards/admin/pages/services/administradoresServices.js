@@ -3,8 +3,8 @@ import api from "../../../../../services/api";
 
 const API_URL = "/administradores";
 
-export const getAdministradores = async () => {
-  const response = await api.get(API_URL);
+export const getAdministradores = async (params = {}) => {
+  const response = await api.get(API_URL, { params });
   return response.data;
 };
 

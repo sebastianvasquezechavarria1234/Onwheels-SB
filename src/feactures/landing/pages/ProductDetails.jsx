@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, Navigate } from "react-router-dom";
 import { Layout } from "../layout/Layout";
+import { AdminLayout } from "../admin/layout/AdminLayout";
+import { StudentLayout } from "../student/layout/StudentLayout";
+import { InstructorLayout } from "../instructor/layout/InstructorLayout";
+import { UsersLayout } from "../users/layout/UsersLayout";
+import { CustomLayout } from "../custom/layout/CustomLayout";
 import { CreditCard, ShoppingCart, ArrowLeft, Check, AlertTriangle, ShoppingBag, Plus, Minus } from "lucide-react";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { useCart } from "../../../context/CartContext";
 import { useToast } from "../../../context/ToastContext";
-import { getStoreHomePath, getCheckoutPath } from "../../../utils/roleHelpers";
+import { getStoreHomePath, getCheckoutPath, getProductDetailPath, getCartPath, getUserRoleSlug } from "../../../utils/roleHelpers";
 import { LoginRequiredModal } from "../components/LoginRequiredModal";
+import api from "../../../services/api";
 
 export const ProductDetailsContent = () => {
   const { id } = useParams();
@@ -28,11 +34,8 @@ export const ProductDetailsContent = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/productos/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProduct(data);
-        }
+        const response = await api.get(`/productos/${id}`);
+        setProduct(response.data);
       } catch (error) {
         console.error("Error fetching product details:", error);
       } finally {
@@ -60,7 +63,7 @@ export const ProductDetailsContent = () => {
     );
   }
 
-  const API_URL = "http://localhost:3000";
+  const API_URL = import.meta.env.VITE_REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
   const {
     nombre_producto,
@@ -69,16 +72,16 @@ export const ProductDetailsContent = () => {
     descuento,
     imagen_producto,
     imagenes,
-    variantes = []
+    variantes = [],
   } = product;
 
   const getImageUrl = (url) => {
     if (!url) return "/bg_hero_shop.jpg";
-    if (url.startsWith('http') || url.startsWith('data:image')) return url;
+    if (url.startsWith("http") || url.startsWith("data:image")) return url;
     return `${API_URL}${url}`;
   };
 
-  const validImages = (imagenes || []).filter(img => img && img.url_imagen).map(img => getImageUrl(img.url_imagen));
+  const validImages = (imagenes || []).filter((img) => img && img.url_imagen).map((img) => getImageUrl(img.url_imagen));
   const mainImage = validImages.length > 0 ? validImages[0] : getImageUrl(imagen_producto);
   const allImages = validImages.length > 0 ? validImages : [mainImage];
 
@@ -89,7 +92,7 @@ export const ProductDetailsContent = () => {
 
   const uniqueColors = [];
   const colorMap = new Map();
-  variantes.forEach(v => {
+  variantes.forEach((v) => {
     if (v.id_color && !colorMap.has(v.id_color)) {
       colorMap.set(v.id_color, true);
       uniqueColors.push({ id: v.id_color, name: v.nombre_color, hex: v.color_hex });
@@ -99,15 +102,13 @@ export const ProductDetailsContent = () => {
   let availableSizes = [];
   if (selectedColor) {
     availableSizes = variantes
-      .filter(v => v.id_color === selectedColor.id && v.stock > 0)
-      .map(v => ({ id: v.id_talla, name: v.nombre_talla, stock: v.stock, id_variante: v.id_variante }));
+      .filter((v) => v.id_color === selectedColor.id && v.stock > 0)
+      .map((v) => ({ id: v.id_talla, name: v.nombre_talla, stock: v.stock, id_variante: v.id_variante }));
   }
 
   const currentVariant = selectedColor && selectedSize
-    ? variantes.find(v => v.id_color === selectedColor.id && v.id_talla === selectedSize.id)
+    ? variantes.find((v) => v.id_color === selectedColor.id && v.id_talla === selectedSize.id)
     : null;
-
-  const maxStock = currentVariant ? currentVariant.stock : 0;
 
   const handleAddToCart = () => {
     if (variantes.length > 0) {
@@ -135,7 +136,7 @@ export const ProductDetailsContent = () => {
       toast.custom(
         <div className="p-5 font-primary bg-[#121821] rounded-xl shadow-2xl border border-gray-800 max-w-sm">
           <div className="flex items-center gap-2 mb-3 text-emerald-500 text-sm font-bold uppercase tracking-wide">
-            <Check size={16} strokeWidth={3} /> Artículo agregado
+            <Check size={16} strokeWidth={3} /> Articulo agregado
           </div>
           <div className="flex gap-4 mb-4">
             <img src={mainImage} alt={nombre_producto} className="w-16 h-16 rounded-lg object-cover bg-[#0B0F14]" />
@@ -145,7 +146,7 @@ export const ProductDetailsContent = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <Link to="/shoppingCart" className="block w-full text-center py-2.5 rounded-xl border border-gray-700 text-[#9CA3AF] font-bold text-xs hover:border-gray-500 hover:text-white transition-all uppercase tracking-wide">
+            <Link to={getCartPath(user)} className="block w-full text-center py-2.5 rounded-xl border border-gray-700 text-[#9CA3AF] font-bold text-xs hover:border-gray-500 hover:text-white transition-all uppercase tracking-wide">
               Ver carrito
             </Link>
             <button
@@ -167,7 +168,8 @@ export const ProductDetailsContent = () => {
 
   const handleBuyNow = () => {
     if (!user || Object.keys(user).length === 0 || !localStorage.getItem("token")) {
-      toast.error("Debes iniciar sesión para comprar este producto");
+      setShowLoginModal(true);
+      toast.error("Debes iniciar sesion para comprar este producto");
       return;
     }
 
@@ -191,7 +193,6 @@ export const ProductDetailsContent = () => {
   return (
     <div className="bg-[#0B0F14] min-h-screen text-white pb-24">
       <section className="pt-[120px] lg:pt-[140px] max-w-[1200px] mx-auto p-4 md:p-8">
-
         <Link to={backLink} className="inline-flex items-center gap-2 text-[#9CA3AF] hover:text-white mb-8 transition-colors group">
           <div className="w-8 h-8 rounded-full bg-[#121821] flex items-center justify-center group-hover:bg-gray-800 transition-colors">
             <ArrowLeft size={16} />
@@ -200,26 +201,24 @@ export const ProductDetailsContent = () => {
         </Link>
 
         <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16">
-
-          {/* Left: Image Gallery (Actually Right physically due to design, but logic is left) */}
+          {/* Left: Image Gallery */}
           <div className="w-full lg:w-[55%] flex flex-col lg:flex-row-reverse gap-4">
             {/* Main Image */}
-            <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[700px] overflow-hidden shadow-sm relative border border-gray-800/50">
+            <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[400px] lg:max-w-[400px] mx-auto overflow-hidden shadow-sm relative border border-gray-800/50 flex justify-center items-center">
               <img
                 src={allImages[selectedImageIndex]}
                 alt={nombre_producto}
-                className="w-full h-full object-cover transition-opacity duration-500"
+                className="w-full h-full object-contain p-4 transition-opacity duration-500"
               />
             </div>
 
-            {/* Thumbnails Sidebar / Bottom */}
             {allImages.length > 1 && (
               <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-y-auto pb-4 lg:pb-0 custom-scrollbar w-full lg:w-24 shrink-0">
                 {allImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
-                    className={`relative w-20 h-24 lg:w-full lg:h-32 rounded-2xl overflow-hidden shrink-0 border border-transparent transition-all ${selectedImageIndex === idx ? 'opacity-100 shadow-xl shadow-[#1E3A8A]/20 ring-2 ring-[#1E3A8A]' : 'opacity-50 hover:opacity-100 hover:border-gray-700'}`}
+                    className={`relative w-20 h-24 lg:w-full lg:h-32 rounded-2xl overflow-hidden shrink-0 border border-transparent transition-all ${selectedImageIndex === idx ? "opacity-100 shadow-xl shadow-[#1E3A8A]/20 ring-2 ring-[#1E3A8A]" : "opacity-50 hover:opacity-100 hover:border-gray-700"}`}
                   >
                     <img src={img} alt={`${nombre_producto} ${idx}`} className="w-full h-full object-cover" />
                   </button>
@@ -228,7 +227,6 @@ export const ProductDetailsContent = () => {
             )}
           </div>
 
-          {/* Right: Info */}
           <div className="w-full lg:w-[45%] flex flex-col justify-center">
             <div className="mb-4">
               <h1 className="font-primary text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4 tracking-tight">
@@ -261,18 +259,18 @@ export const ProductDetailsContent = () => {
               {descripcion}
             </p>
 
-            {/* Color Selector */}
+            {/* Selectors */}
             {uniqueColors.length > 0 && (
               <div className="mb-8">
                 <span className="block text-xs font-bold text-[#9CA3AF] uppercase tracking-widest mb-4">Seleccionar Color</span>
                 <div className="flex flex-wrap gap-3">
-                  {uniqueColors.map(c => (
+                  {uniqueColors.map((c) => (
                     <button
                       key={c.id}
                       onClick={() => { setSelectedColor(c); setSelectedSize(null); setQty(1); }}
                       className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ring-offset-4 ring-offset-[#0B0F14] border border-gray-700/50
-                                        ${selectedColor?.id === c.id ? 'ring-2 ring-[#1E3A8A] scale-110 shadow-lg shadow-[#1E3A8A]/20' : 'hover:scale-110'}
-                                    `}
+                        ${selectedColor?.id === c.id ? 'ring-2 ring-[#1E3A8A] scale-110 shadow-lg shadow-[#1E3A8A]/20' : 'hover:scale-110'}
+                      `}
                       style={{ backgroundColor: c.hex || '#000' }}
                       title={c.name}
                     >
@@ -283,7 +281,6 @@ export const ProductDetailsContent = () => {
               </div>
             )}
 
-            {/* Size Selector */}
             {uniqueColors.length > 0 && (
               <div className="mb-8 transition-opacity duration-300">
                 <div className="flex justify-between items-center mb-4">
@@ -294,40 +291,40 @@ export const ProductDetailsContent = () => {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {selectedColor ? (
-                    availableSizes.map(s => (
+                    availableSizes.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setSelectedSize(s)}
                         disabled={s.stock === 0}
                         className={`min-w-[4rem] h-12 px-5 rounded-xl border flex items-center justify-center text-sm font-bold transition-all duration-300
-                                            ${selectedSize?.id === s.id
+                          ${selectedSize?.id === s.id
                             ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/30 scale-105'
                             : 'bg-[#121821] text-[#9CA3AF] border-gray-800 hover:border-gray-500 hover:text-white'}
-                                            ${s.stock === 0 ? 'opacity-30 cursor-not-allowed bg-black decoration-slice line-through' : ''}
-                                        `}
+                          ${s.stock === 0 ? 'opacity-30 cursor-not-allowed bg-black decoration-slice line-through' : ''}
+                        `}
                       >
                         {s.name}
                       </button>
                     ))
                   ) : (
-                    <div className="text-gray-600 text-sm font-medium bg-[#121821] px-4 py-3 rounded-xl border border-gray-800/80">Esperando selección de color...</div>
+                    <div className="text-gray-600 text-sm font-medium bg-[#121821] px-4 py-3 rounded-xl border border-gray-800/80">Esperando seleccion de color...</div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Quantity */}
             <div className="mb-10">
               <span className="block text-xs font-bold text-[#9CA3AF] uppercase tracking-widest mb-4">Cantidad</span>
               <div className="flex items-center gap-5">
                 <div className="flex items-center bg-[#0B0F14] rounded-xl p-1 w-fit border border-gray-800 shadow-inner">
                   <button
-                    onClick={() => setQty(q => Math.max(1, q - 1))}
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
                     className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-[#121821] hover:text-[#1E3A8A] text-[#9CA3AF] transition-colors"
                   >
                     <Minus size={18} />
                   </button>
                   <span className="w-12 text-center font-bold text-white text-lg">{qty}</span>
+
                   <button
                     onClick={() => setQty(q => q + 1)}
                     disabled={currentVariant && qty >= currentVariant.stock}
@@ -337,14 +334,13 @@ export const ProductDetailsContent = () => {
                   </button>
                 </div>
                 {currentVariant && (
-                  <span className={`text-sm font-medium ${currentVariant.stock < 5 ? 'text-amber-500' : 'text-[#9CA3AF]'}`}>
+                  <span className={`text-sm font-medium ${currentVariant.stock < 5 ? "text-amber-500" : "text-[#9CA3AF]"}`}>
                     {currentVariant.stock} disponibles
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mt-auto">
               <button
                 onClick={handleAddToCart}
@@ -361,7 +357,6 @@ export const ProductDetailsContent = () => {
                 COMPRAR AHORA
               </button>
             </div>
-
           </div>
         </div>
 
@@ -371,7 +366,14 @@ export const ProductDetailsContent = () => {
   );
 };
 
-export const ProductDetails = () => {
+export const PublicProductDetail = () => {
+  const { user } = useAuth();
+  const { id } = useParams();
+
+  if (user && Object.keys(user).length > 0) {
+    return <Navigate to={getProductDetailPath(user, id)} replace />;
+  }
+
   return (
     <Layout>
       <ProductDetailsContent />
@@ -379,4 +381,32 @@ export const ProductDetails = () => {
   );
 };
 
-export default ProductDetails;
+export const AdminProductDetail = () => (
+  <AdminLayout>
+    <ProductDetailsContent />
+  </AdminLayout>
+);
+
+export const StudentProductDetail = () => (
+  <StudentLayout>
+    <ProductDetailsContent />
+  </StudentLayout>
+);
+
+export const InstructorProductDetail = () => (
+  <InstructorLayout>
+    <ProductDetailsContent />
+  </InstructorLayout>
+);
+
+export const UserProductDetail = () => (
+  <UsersLayout>
+    <ProductDetailsContent />
+  </UsersLayout>
+);
+
+export const CustomProductDetail = () => (
+  <CustomLayout>
+    <ProductDetailsContent />
+  </CustomLayout>
+);

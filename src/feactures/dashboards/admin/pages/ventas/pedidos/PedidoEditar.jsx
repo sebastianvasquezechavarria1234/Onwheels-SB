@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 import { Search, Plus, Trash2, ArrowLeft, X, Save, CheckCircle, Package, User, DollarSign, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,8 @@ import { getClientes } from "../../services/clientesServices";
 export default function PedidoEditar() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const isEditing = Boolean(id);
 
     // Estados Globales
@@ -40,7 +42,7 @@ export default function PedidoEditar() {
         direccion: "",
         telefono: "",
         fecha_venta: new Date().toISOString().split("T")[0],
-        metodo_pago: "Efectivo",
+        metodo_pago: "contraentrega",
         estado: "Pendiente",
         items: [],
     });
@@ -341,11 +343,11 @@ export default function PedidoEditar() {
             if (isEditing) {
                 await updatePedido(id, payload);
                 showNotification("Pedido actualizado", "success");
-                setTimeout(() => navigate("/admin/pedidos"), 1500);
+                setTimeout(() => navigate(`${basePath}/pedidos`), 1500);
             } else {
                 await createPedido(payload);
                 showNotification("Pedido registrado", "success");
-                setTimeout(() => navigate("/admin/pedidos"), 1500);
+                setTimeout(() => navigate(`${basePath}/pedidos`), 1500);
             }
         } catch (err) {
             console.error(err);
@@ -367,7 +369,7 @@ export default function PedidoEditar() {
                 {/* Header Page */}
                 <div className="bg-white shadow-sm border-b px-6 py-4 flex items-center justify-between sticky top-0 z-10">
                     <div className="flex items-center gap-4">
-                        <button type="button" onClick={() => navigate("/admin/pedidos")} className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 hover:text-gray-900 transition flex items-center gap-2">
+                        <button type="button" onClick={() => navigate(`${basePath}/pedidos`)} className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 hover:text-gray-900 transition flex items-center gap-2">
                             <ArrowLeft size={20} className="text-gray-600" />
                         </button>
                         <div>
@@ -380,7 +382,7 @@ export default function PedidoEditar() {
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={() => navigate("/admin/pedidos")}
+                            onClick={() => navigate(`${basePath}/pedidos`)}
                             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                         >
                             Cancelar
@@ -451,11 +453,10 @@ export default function PedidoEditar() {
                                     <select
                                         value={form.metodo_pago}
                                         onChange={e => setForm({ ...form, metodo_pago: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none bg-gray-50 cursor-not-allowed"
+                                        disabled
                                     >
-                                        <option value="Efectivo">Efectivo</option>
-                                        <option value="Tarjeta">Tarjeta</option>
-                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="contraentrega">Contraentrega</option>
                                     </select>
                                 </div>
                             </div>

@@ -3,8 +3,8 @@ import api from "../../../../../services/api";
 const ENDPOINT = "/categoria-productos";
 
 // ✅ Obtener todas las categorías
-export const getCategorias = async () => {
-  const res = await api.get(ENDPOINT);
+export const getCategorias = async (params = {}) => {
+  const res = await api.get(ENDPOINT, { params });
   return res.data;
 };
 

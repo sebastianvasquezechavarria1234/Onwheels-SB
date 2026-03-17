@@ -2,14 +2,12 @@ import api from "../../../../../services/api";
 
 const ENDPOINT = "/proveedores";
 
-export const getProveedores = async (req, res) => {
+export const getProveedores = async (params = {}) => {
   try {
-    const { data } = await api.get(ENDPOINT);
-    if (res) res.json(data);
+    const { data } = await api.get(ENDPOINT, { params });
     return data;
   } catch (err) {
     console.error("❌ Error al obtener proveedores:", err);
-    if (res) res.status(500).json({ mensaje: "Error al obtener proveedores" });
     throw err;
   }
 };

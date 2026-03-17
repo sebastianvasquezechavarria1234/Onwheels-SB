@@ -140,7 +140,7 @@ const Register = () => {
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-(--color-blue)">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
+            <span className="font-bold text-xl tracking-tighter text-white drop-shadow-md whitespace-nowrap">
               Performance SB
             </span>
           </Link>

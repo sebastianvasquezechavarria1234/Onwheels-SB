@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../../services/api";
-import { getRoleHomePath } from "../../../utils/roleUtils";
+import { getHomePath as getRoleHomePath } from "../../../utils/roleHelpers";
+import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { ArrowLeft } from "lucide-react";
 
 const Login = () => {
@@ -11,6 +12,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,10 +35,10 @@ const Login = () => {
         contrasena: password,
       });
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      // Use context login instead of manual localStorage
+      login(response.data.token, response.data.user);
 
-      const homePath = getRoleHomePath();
+      const homePath = getRoleHomePath(response.data.user);
       navigate(homePath, { replace: true });
     } catch (err: any) {
       console.error("Login error:", err);
@@ -64,7 +66,7 @@ const Login = () => {
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-(--color-blue)">
               <img src="/logo.png" alt="logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-xl uppercase tracking-tighter text-white drop-shadow-md">
+            <span className="font-bold text-xl tracking-tighter text-white drop-shadow-md whitespace-nowrap">
               Performance SB
             </span>
           </Link>
@@ -108,7 +110,7 @@ const Login = () => {
 
           <div className="space-y-2">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-gray">Iniciar Sesión</h2>
-            <p className="text-gray-400 text-base">Accede a tu cuenta Performance Sb</p>
+            <p className="text-gray-400 text-base">Accede a tu cuenta Performance SB</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 mt-6">
