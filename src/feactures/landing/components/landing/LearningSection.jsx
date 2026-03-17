@@ -3,8 +3,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
+import { useAuth } from '../../../dashboards/dinamico/context/AuthContext';
+import { getPreinscriptionPath } from '../../../../utils/roleHelpers';
 
 export const LearningSection = () => {
+    const { user } = useAuth();
     return (
         <section className="relative w-full py-24 flex items-center justify-center overflow-hidden bg-zinc-950 border-t border-zinc-900">
 
@@ -41,7 +44,7 @@ export const LearningSection = () => {
                     </p>
 
                     <div className="flex gap-4">
-                        <Link to="/preinscriptions" className="flex items-center gap-2 text-white font-bold text-sm hover:text-[var(--color-blue)] transition-colors uppercase tracking-wide">
+                        <Link to={getPreinscriptionPath(user)} className="flex items-center gap-2 text-white font-bold text-sm hover:text-[var(--color-blue)] transition-colors uppercase tracking-wide">
                             Inscribirse <ArrowUpRight size={16} />
                         </Link>
                     </div>

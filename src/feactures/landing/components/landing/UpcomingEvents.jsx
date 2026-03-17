@@ -2,8 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getEventosFuturos } from "../../../../services/eventoServices";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 
 export const UpcomingEvents = () => {
+  const { user } = useAuth();
+  const roleSlug = user ? (user.roles?.includes('administrador') ? 'admin' : (user.roles?.includes('estudiante') ? 'student' : (user.roles?.includes('instructor') ? 'instructor' : (user.roles?.includes('cliente') ? 'users' : 'custom')))) : 'store';
+  const eventsPath = roleSlug === 'store' ? "/events" : `/${roleSlug}/events`;
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,7 +58,7 @@ export const UpcomingEvents = () => {
             Próximos <span className="text-zinc-500">Eventos</span>
           </h2>
           <Link
-            to="/events"
+            to={eventsPath}
             className="text-xs font-bold text-[var(--color-blue)] uppercase tracking-wider hover:underline"
           >
             Ver Calendario
@@ -129,7 +133,7 @@ export const UpcomingEvents = () => {
                   </div>
 
                   <Link
-                    to="/events"
+                    to={eventsPath}
                     className="w-10 h-10 rounded-full border border-zinc-700 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors shrink-0"
                   >
                     <ArrowRight size={16} />

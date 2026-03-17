@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react"
 import ProtectedRoute from "./ProtectedRoute"
 import { AdminLayoutWrapper } from "./AdminLayoutWrapper"
 import RootRedirect from "./RootRedirect"
+import AutoRedirect from "./AutoRedirect"
 import { useAuth } from "../feactures/dashboards/dinamico/context/AuthContext"
 import { getUserRoleSlug, getHomePath } from "../utils/roleHelpers"
 
@@ -101,6 +102,7 @@ import { UsersSetting } from "../feactures/dashboards/users/pages/UsersSetting";
 import { UsersMyPurchases } from "../feactures/dashboards/users/pages/UsersMyPurchases";
 import UsersPurchaseDetail from "../feactures/dashboards/users/pages/UsersPurchaseDetail";
 import UsersPreinscriptions from "../feactures/landing/users/pages/UsersPreinscriptions";
+import StudentPreinscriptions from "../feactures/landing/student/pages/StudentPreinscriptions";
 import EnviarCorreosMasivos from "../feactures/dashboards/admin/pages/eventos/correos/CorreosMasivos";
 
 
@@ -193,13 +195,13 @@ const AppRouter = () => {
 
 
         <Route index element={<RootRedirect>{withAnimation(Home)}</RootRedirect>} />
-        <Route path="store" element={withAnimation(Store)} />
-        <Route path="events" element={withAnimation(Events)} />
-        <Route path="training" element={withAnimation(Class)} />
-        <Route path="preinscriptions" element={withAnimation(PreinscriptionsLanding)} />
-        <Route path="about" element={withAnimation(About)} />
-        <Route path="store/product/:id" element={withAnimation(PublicProductDetail)} />
-        <Route path="shoppingCart" element={withAnimation(ShoppingCart)} />
+        <Route path="store" element={<AutoRedirect>{withAnimation(Store)}</AutoRedirect>} />
+        <Route path="events" element={<AutoRedirect>{withAnimation(Events)}</AutoRedirect>} />
+        <Route path="training" element={<AutoRedirect>{withAnimation(Class)}</AutoRedirect>} />
+        <Route path="preinscriptions" element={<AutoRedirect>{withAnimation(PreinscriptionsLanding)}</AutoRedirect>} />
+        <Route path="about" element={<AutoRedirect>{withAnimation(About)}</AutoRedirect>} />
+        <Route path="store/product/:id" element={<AutoRedirect>{withAnimation(PublicProductDetail)}</AutoRedirect>} />
+        <Route path="shoppingCart" element={<AutoRedirect>{withAnimation(ShoppingCart)}</AutoRedirect>} />
 
         {/* Auth */}
         <Route path="login" element={<Login />} />
@@ -270,6 +272,7 @@ const AppRouter = () => {
           <Route path="student/store" element={<StudentStore />} />
           <Route path="student/training" element={<StudentClass />} />
           <Route path="student/abaut" element={<StudentAbout />} />
+          <Route path="student/preinscriptions" element={<StudentPreinscriptions />} />
           <Route path="student/shoppingCart" element={<StudentShoppingCart />} />
           <Route path="student/checkout" element={<StudentCheckout />} />
           <Route path="student/orderConfirm" element={<StudentOrderConfirm />} />

@@ -6,6 +6,7 @@ import { Menu, X, ShoppingCart, User } from "lucide-react";
 import { BtnLinkIcon } from "../components/BtnLinkIcon";
 import { UserDropdown } from "../components/UserDropdown";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
+import { getPreinscriptionPath, getHomePath, getCartPath } from "../../../utils/roleHelpers";
 
 export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -47,7 +48,7 @@ export const Header = () => {
           `}
         >
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to={getHomePath(user)} className="flex items-center gap-3 group">
             <div className={`
               overflow-hidden transition-all duration-500 border-2 border-[var(--color-blue)]
               ${scrolled ? "w-8 h-8 rounded-full" : "w-10 h-10 rounded-full"}
@@ -77,7 +78,7 @@ export const Header = () => {
           <div className="flex items-center gap-3">
             <BtnLinkIcon
               title="Carrito"
-              link="/shoppingCart"
+              link={getCartPath(user)}
               style={`transition-all duration-300 hover:text-[var(--color-blue)] text-white ${scrolled ? 'p-1.5' : 'p-2'}`}
               icon={<ShoppingCart size={scrolled ? 18 : 20} />}
             >
@@ -139,7 +140,7 @@ export const Header = () => {
                 </Link>
               ))}
               <Link
-                to="/preinscriptions"
+                to={getPreinscriptionPath(user)}
                 onClick={() => setIsOpen(false)}
                 className="mt-8 px-10 py-4 bg-[var(--color-blue)] rounded-full text-white text-xl font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(var(--color-blue-rgb),0.5)] hover:shadow-[0_0_40px_rgba(var(--color-blue-rgb),0.7)] transition-all"
               >

@@ -2,8 +2,27 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Facebook, Youtube, Twitter, Mail, Phone, Instagram, MapPin } from "lucide-react";
+import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
+import { getHomePath, getStoreHomePath, getPreinscriptionPath } from "../../../utils/roleHelpers";
 
 export const Footer = () => {
+    const { user } = useAuth();
+    const homePath = getHomePath(user);
+    const storePath = getStoreHomePath(user);
+    const joinPath = getPreinscriptionPath(user);
+    const roleSlug = user ? (Array.isArray(user.roles) ? user.roles[0] : user.rol) : null;
+    
+    // Dynamic about path (respecting the abaut/about variations in router)
+    const aboutPath = user && (user.roles?.includes('estudiante') || user.roles?.includes('cliente')) 
+        ? `/${user.roles?.includes('estudiante') ? 'student' : 'users'}/abaut` 
+        : (user ? `/${user.roles ? (user.roles.includes('administrador') ? 'admin' : (user.roles.includes('instructor') ? 'instructor' : 'custom')) : 'custom'}/about` : "/about");
+
+    // Dynamic training path
+    const trainingPath = user ? `/${user.roles?.includes('administrador') ? 'admin' : (user.roles?.includes('estudiante') ? 'student' : (user.roles?.includes('instructor') ? 'instructor' : (user.roles?.includes('cliente') ? 'users' : 'custom')))}/training` : "/training";
+    
+    // Dynamic events path
+    const eventsPath = user ? `/${user.roles?.includes('administrador') ? 'admin' : (user.roles?.includes('estudiante') ? 'student' : (user.roles?.includes('instructor') ? 'instructor' : (user.roles?.includes('cliente') ? 'users' : 'custom')))}/events` : "/events";
+
     return (
         <footer className="relative bg-black pt-16 pb-8 overflow-hidden">
             {/* Glass Overlay Effect */}
@@ -36,17 +55,17 @@ export const Footer = () => {
                 <div>
                     <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Mapa</h4>
                     <ul className="space-y-2 text-xs text-gray-400">
-                        <li><Link to="/" className="hover:text-white transition-colors">Inicio</Link></li>
-                        <li><Link to="/store" className="hover:text-white transition-colors">Tienda</Link></li>
-                        <li><Link to="/events" className="hover:text-white transition-colors">Eventos</Link></li>
-                        <li><Link to="/training" className="hover:text-white transition-colors">Academia</Link></li>
+                        <li><Link to={homePath} className="hover:text-white transition-colors">Inicio</Link></li>
+                        <li><Link to={storePath} className="hover:text-white transition-colors">Tienda</Link></li>
+                        <li><Link to={eventsPath} className="hover:text-white transition-colors">Eventos</Link></li>
+                        <li><Link to={trainingPath} className="hover:text-white transition-colors">Academia</Link></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Legal</h4>
                     <ul className="space-y-2 text-xs text-gray-400">
-                        <li><Link to="/about" className="hover:text-white transition-colors">Nosotros</Link></li>
+                        <li><Link to={aboutPath} className="hover:text-white transition-colors">Nosotros</Link></li>
                         <li><a href="#" className="hover:text-white transition-colors">Privacidad</a></li>
                         <li><a href="#" className="hover:text-white transition-colors">Términos</a></li>
                     </ul>

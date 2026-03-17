@@ -148,6 +148,7 @@ export const getPreinscriptionPath = (user) => {
     const roleSlug = getUserRoleSlug(user);
     if (roleSlug === 'store') return '/register'; // Guests must register before pre-inscribing
     if (roleSlug === 'users') return '/users/preinscriptions';
+    if (roleSlug === 'student') return '/student/preinscriptions';
     if (roleSlug === 'admin') return '/admin/preRegistrations';
     if (roleSlug === 'custom') return '/custom/preinscripciones';
     return `/${roleSlug}/home`; // Fallback for roles that might not need this (student/instructor)

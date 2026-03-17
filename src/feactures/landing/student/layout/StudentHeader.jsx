@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { UserDropdown } from "../../components/UserDropdown";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
+import { getPreinscriptionPath } from "../../../../utils/roleHelpers";
 
 const IconWithTooltip = ({ label, children, className = "", onClick }) => {
   const [hover, setHover] = useState(false);
@@ -108,6 +110,7 @@ export const StudentHeader = () => {
   const [scrolled, setScrolled] = useState(false);
   const closeButtonRef = useRef(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -169,6 +172,7 @@ export const StudentHeader = () => {
     { title: "Formacion", to: "/student/training" },
     { title: "Eventos", to: "/student/events" },
     { title: "Sobre nosotros", to: "/student/abaut" },
+    { title: "Unirme", to: getPreinscriptionPath(user) },
   ];
 
   return (

@@ -30,7 +30,6 @@ export const CustomHeader = () => {
     { name: "Tienda", path: "/custom/store" },
     { name: "Eventos", path: "/custom/events" },
     { name: "Nosotros", path: "/custom/about" },
-    { name: "Clases", path: "/custom/training" },
   ];
 
   return (

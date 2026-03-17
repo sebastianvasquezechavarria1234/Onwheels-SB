@@ -1,22 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useAuth } from '../../../dashboards/dinamico/context/AuthContext';
 import Footer from "../../layout/Footer";
 import { StudentHeader } from "./StudentHeader";
 
 export const StudentLayout = ({ children }) => {
-  const [userName, setUserName] = useState('');
-
-  useEffect(() => {
-    // Obtener el usuario del localStorage
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        setUserName(user.nombre || 'Estudiante');
-      } catch (error) {
-        console.error('Error parsing user ', error);
-      }
-    }
-  }, []);
+  const { user } = useAuth();
+  const userName = user?.nombre || 'Estudiante';
 
   return (
     <main className="min-h-screen flex flex-col">
