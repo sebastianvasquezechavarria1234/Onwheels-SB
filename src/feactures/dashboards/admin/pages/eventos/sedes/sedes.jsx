@@ -572,5 +572,7 @@ export default function Sedes() {
             )}
           </AnimatePresence>
         </div>
-        );
+      </div>
+    </>
+  );
 }

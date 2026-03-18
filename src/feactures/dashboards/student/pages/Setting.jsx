@@ -10,7 +10,7 @@ export const Setting = () => {
   const [loading, setLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [editData, setEditData] = useState({ nombre_completo: "", telefono: "", foto_perfil: null });
+  const [editData, setEditData] = useState({ nombre_completo: "", telefono: "", fecha_nacimiento: "", foto_perfil: null });
   const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [passwordValidation, setPasswordValidation] = useState({
     currentPassword: { valid: null, message: "" },
@@ -77,7 +77,12 @@ export const Setting = () => {
         }
         const data = await userApi.getUsuario(userId);
         setUserData(data);
-        setEditData({ nombre_completo: data.nombre_completo || data.nombre || "", telefono: data.telefono || "", foto_perfil: null });
+        setEditData({ 
+          nombre_completo: data.nombre_completo || data.nombre || "", 
+          telefono: data.telefono || "", 
+          fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : "",
+          foto_perfil: null 
+        });
       } catch (err) { console.error('Error fetching user', err); }
       finally { setLoading(false); }
     };
@@ -171,7 +176,11 @@ export const Setting = () => {
     try {
       const userId = getCurrentUserId();
       if (!userId) throw new Error("No se encontró el usuario autenticado");
-      const updateData = { nombre_completo: editData.nombre_completo, telefono: editData.telefono };
+      const updateData = { 
+        nombre: editData.nombre_completo, 
+        telefono: editData.telefono,
+        fecha_nacimiento: editData.fecha_nacimiento
+      };
       const response = await userApi.updateUsuario(userId, updateData);
       
       if (editData.foto_perfil) {
@@ -243,7 +252,12 @@ export const Setting = () => {
 
   const handleCancelProfile = () => {
     setIsEditingProfile(false);
-    setEditData({ nombre_completo: userData.nombre_completo || "", telefono: userData.telefono || "", foto_perfil: null });
+    setEditData({ 
+      nombre_completo: userData.nombre_completo || "", 
+      telefono: userData.telefono || "", 
+      fecha_nacimiento: userData.fecha_nacimiento ? userData.fecha_nacimiento.split('T')[0] : "",
+      foto_perfil: null 
+    });
     setPasswordError("");
     setSuccessMessage("");
   };
@@ -358,6 +372,16 @@ export const Setting = () => {
                         value={editData.telefono}
                         onChange={(e) => setEditData({ ...editData, telefono: e.target.value })}
                         className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors"
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] text-[#9CA3AF] font-bold tracking-wider ml-2">Fecha de Nacimiento</label>
+                      <input
+                        type="date"
+                        value={editData.fecha_nacimiento}
+                        onChange={(e) => setEditData({ ...editData, fecha_nacimiento: e.target.value })}
+                        className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors [color-scheme:dark]"
                       />
                     </div>
 
@@ -493,6 +517,18 @@ export const Setting = () => {
                           <span className="text-[10px] font-bold tracking-wider">Email</span>
                         </div>
                         <span className="font-medium text-white pl-5 break-all">{userData?.email || "No especificado"}</span>
+                      </div>
+
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <Zap size={14} />
+                          <span className="text-[10px] font-bold tracking-wider">Fecha de Nacimiento</span>
+                        </div>
+                        <span className="font-medium text-white pl-5">
+                          {userData?.fecha_nacimiento 
+                            ? new Date(userData.fecha_nacimiento).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
+                            : "No especificada"}
+                        </span>
                       </div>
 
                       <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">

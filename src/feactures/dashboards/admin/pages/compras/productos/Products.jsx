@@ -18,7 +18,7 @@ import {
 import { getCategorias } from "../../services/categoriasService";
 import { canManage } from "../../../../../../utils/permissions";
 
-import { configUi } from "../../../configUi";
+import { configUi } from "../../configuracion/configUi";
 
 
 // Helper para clases condicionales

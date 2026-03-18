@@ -221,7 +221,7 @@ export default function VentaEditar() {
     }
 
     return (
-        <div className={cn(configUi.pageShell, "pb-24")}>
+        <div className={cn(configUi.pageShell, "!overflow-y-auto pb-24")}>
             <AnimatePresence mode="wait">
                 {showProductSelector ? (
                     <ProductSelectorView

@@ -172,7 +172,7 @@ export const StudentHeader = () => {
     { title: "Formacion", to: "/student/training" },
     { title: "Eventos", to: "/student/events" },
     { title: "Sobre nosotros", to: "/student/abaut" },
-    { title: "Unirme", to: getPreinscriptionPath(user) },
+    { title: "Pre-inscribirse", to: getPreinscriptionPath(user) },
   ];
 
   return (

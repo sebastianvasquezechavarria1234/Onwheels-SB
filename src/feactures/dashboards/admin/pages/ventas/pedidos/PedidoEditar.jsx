@@ -212,7 +212,7 @@ export default function PedidoEditar() {
     }
 
     return (
-        <div className={cn(configUi.pageShell, "pb-24")}>
+        <div className={cn(configUi.pageShell, "!overflow-y-auto pb-24")}>
             {/* 1. STICKY HEADER ACTIONS */}
                         <AnimatePresence mode="wait">
                 {showProductSelector ? (

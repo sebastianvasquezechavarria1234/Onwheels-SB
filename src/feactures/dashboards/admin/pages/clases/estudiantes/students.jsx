@@ -10,7 +10,9 @@ import {
   crearEstudiante,
   actualizarEstadoEstudiante,
   eliminarEstudiante,
-  getDetalleEstudiante
+  getDetalleEstudiante,
+  actualizarEstudiante,
+  getUsuariosActivos
 } from "../../services/estudiantesServices";
 import { configUi } from "../../configuracion/configUi";
 
@@ -18,6 +20,7 @@ const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const Students = () => {
   const [estudiantes, setEstudiantes] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -52,7 +55,9 @@ const Students = () => {
       setLoading(true);
       setError(null);
       const data = await getEstudiantes();
+      const usersData = await getUsuariosActivos();
       setEstudiantes(Array.isArray(data) ? data : []);
+      setUsuarios(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       setError("Error al cargar estudiantes");
       showNotification("Error al cargar datos", "error");
@@ -78,10 +83,29 @@ const Students = () => {
     } else if (type === 'add') {
       setCurrentStep(1);
       setFormData({
+        id_usuario: "",
         nombre_completo: "", email: "", telefono: "", password: "",
         documento: "", tipo_documento: "CC", genero: "Masculino",
         enfermedad: "Ninguna", nivel_experiencia: "Principiante", edad: "",
         acudiente_nombre: "", acudiente_telefono: "", acudiente_parentesco: "Padre/Madre"
+      });
+    } else if (type === 'edit' && student) {
+      setCurrentStep(1);
+      setFormData({
+        id_usuario: student.id_usuario || "",
+        nombre_completo: student.nombre_completo || "", 
+        email: student.email || "", 
+        telefono: student.telefono || "", 
+        password: "", 
+        documento: student.documento || "", 
+        tipo_documento: student.tipo_documento || "CC", 
+        genero: student.genero || "Masculino",
+        enfermedad: student.enfermedad || "Ninguna", 
+        nivel_experiencia: student.nivel_experiencia || "Principiante", 
+        edad: student.edad || "",
+        acudiente_nombre: student.nombre_acudiente || "", 
+        acudiente_telefono: student.telefono_acudiente || "", 
+        acudiente_parentesco: student.acudiente_parentesco || "Padre/Madre"
       });
     }
   };
@@ -96,8 +120,12 @@ const Students = () => {
   const handleSave = async () => {
     try {
       if (modal === 'add') {
+        if (!formData.id_usuario) throw new Error("Debes seleccionar un usuario para vincular al estudiante");
         await crearEstudiante(formData);
         showNotification("Estudiante registrado con éxito");
+      } else if (modal === 'edit') {
+        await actualizarEstudiante(selectedStudent.id_estudiante, formData);
+        showNotification("Estudiante actualizado correctamente");
       }
       fetchEstudiantes();
       closeModal();
@@ -506,18 +534,36 @@ const Students = () => {
                                         </div>
                                         {modal === 'add' && (
                                             <div className={configUi.fieldGroup}>
-                                                <label className={configUi.fieldLabel}>Nueva Contraseña *</label>
-                                                <div className="relative">
-                                                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                    <input
-                                                        type="password"
-                                                        className={`${configUi.fieldInput} !pl-10`}
-                                                        value={formData.password}
-                                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                        placeholder="Mínimo 8 caracteres"
-                                                    />
-                                                </div>
-                                                <p className="text-[10px] text-slate-400 font-medium mt-1 ml-1 italic">Este será el acceso del estudiante a la plataforma.</p>
+                                                <label className={configUi.fieldLabel}>Vincular Usuario (Cuenta base) *</label>
+                                                <select
+                                                    className={configUi.fieldSelect}
+                                                    value={formData.id_usuario || ""}
+                                                    onChange={(e) => {
+                                                        const uId = e.target.value;
+                                                        const usr = usuarios.find(u => u.id_usuario.toString() === uId);
+                                                        if (usr) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                id_usuario: uId,
+                                                                nombre_completo: usr.nombre_completo || "",
+                                                                email: usr.email || "",
+                                                                telefono: usr.telefono || "",
+                                                                documento: usr.documento || "",
+                                                                tipo_documento: usr.tipo_documento || "CC"
+                                                            });
+                                                        } else {
+                                                            setFormData({ ...formData, id_usuario: "" });
+                                                        }
+                                                    }}
+                                                >
+                                                    <option value="">-- Selecciona el usuario --</option>
+                                                    {usuarios.map(u => (
+                                                        <option key={u.id_usuario} value={u.id_usuario}>
+                                                            {u.nombre_completo} ({u.documento || u.email})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[10px] text-slate-400 font-medium mt-1 ml-1 italic">Requerido. Los campos base se autocompletarán.</p>
                                             </div>
                                         )}
                                     </div>

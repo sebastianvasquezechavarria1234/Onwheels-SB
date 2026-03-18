@@ -5,9 +5,10 @@ import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { User, Users, Check } from "lucide-react";
 
 const calculateAge = (birthDate) => {
-  if (!birthDate) return 0;
+  if (!birthDate) return null;
   const today = new Date();
   const birth = new Date(birthDate);
+  if (isNaN(birth.getTime())) return null;
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
@@ -17,15 +18,26 @@ const calculateAge = (birthDate) => {
 };
 
 const StudentPreinscriptions = () => {
-  const { user } = useAuth();
-  const isUserMinor = calculateAge(user?.fecha_nacimiento) < 18;
+  const { user, loading: authLoading } = useAuth();
+  const userAge = calculateAge(user?.fecha_nacimiento);
+  const isUserMinor = userAge !== null && userAge < 18;
+  const isMissingBirthDate = userAge === null;
+  const canRegisterThirdParty = !isUserMinor && !isMissingBirthDate;
+  
+  console.log("DEBUG - Student View:", { 
+    user, 
+    fecha_nacimiento: user?.fecha_nacimiento, 
+    age: userAge,
+    isUserMinor,
+    canRegisterThirdParty
+  });
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [showFinal, setShowFinal] = useState(false);
   const [hasEnfermedad, setHasEnfermedad] = useState("no");
-  const [loading, setLoading] = useState(false); // Changed to false as we use context user
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userBirthDate, setUserBirthDate] = useState("");
 
   const [formData, setFormData] = useState({
     enfermedad: "",
@@ -49,7 +61,33 @@ const StudentPreinscriptions = () => {
     }
   });
 
-  const isMinor = formData.edad !== "" && Number(formData.edad) < 18;
+  const isMinor = formData.tipo_preinscripcion === 'PROPIA' 
+    ? isUserMinor 
+    : (formData.edad !== "" && Number(formData.edad) < 18);
+ 
+   useEffect(() => {
+     // Si es un tercero menor de edad y el usuario actual es mayor, auto-llenar acudiente
+     if (formData.tipo_preinscripcion === 'TERCERO' && isMinor && user && canRegisterThirdParty) {
+       setFormData(prev => {
+         // Evitar bucles infinitos comparando si ya están llenos
+         const userNombre = user.nombre_completo || user.nombre || "";
+         if (prev.nuevoAcudiente.nombre_acudiente === userNombre &&
+             prev.nuevoAcudiente.telefono === (user.telefono || "") &&
+             prev.nuevoAcudiente.email === user.email) {
+           return prev;
+         }
+         return {
+           ...prev,
+           nuevoAcudiente: {
+             ...prev.nuevoAcudiente,
+             nombre_acudiente: userNombre,
+             telefono: user.telefono || "",
+             email: user.email || ""
+           }
+         };
+       });
+     }
+   }, [formData.tipo_preinscripcion, isMinor, user, canRegisterThirdParty]);
 
   // We use the user from context, no need for redundant fetch
 
@@ -64,7 +102,7 @@ const StudentPreinscriptions = () => {
         setError("Debes seleccionar tu nivel de experiencia");
         return;
       }
-      const edadNum = parseInt(formData.edad);
+      const edadNum = formData.tipo_preinscripcion === 'PROPIA' ? userAge : parseInt(formData.edad);
       if (!edadNum || edadNum < 1) {
         setError("Debes ingresar una edad válida");
         return;
@@ -98,7 +136,7 @@ const StudentPreinscriptions = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const edadNum = parseInt(formData.edad);
+      const edadNum = formData.tipo_preinscripcion === 'PROPIA' ? userAge : parseInt(formData.edad);
       const payload = {
         id_usuario: user.id_usuario,
         enfermedad: hasEnfermedad === "si" ? formData.enfermedad : "No aplica",
@@ -113,6 +151,14 @@ const StudentPreinscriptions = () => {
           nuevoAcudiente: formData.nuevoAcudiente
         })
       };
+
+      // Si falta la fecha de nacimiento del usuario logueado, la actualizamos primero
+      if (!user.fecha_nacimiento && userBirthDate) {
+        await api.put(`/usuarios/${user.id_usuario}`, {
+           nombre: user.nombre_completo || user.nombre,
+           fecha_nacimiento: userBirthDate
+        });
+      }
 
       const response = await api.post("/preinscripciones", payload);
 
@@ -137,7 +183,7 @@ const StudentPreinscriptions = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return (
       <StudentLayout>
         <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -164,7 +210,7 @@ const StudentPreinscriptions = () => {
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
           <div className="lg:w-1/2 bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-6 flex flex-col items-center justify-center">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white">¡Bienvenido a Performace-SB!</h3>
+              <h3 className="text-2xl font-bold text-white">¡Bienvenido a Performance-SB!</h3>
               <p className="text-zinc-400 mt-2">Tu camino hacia el aprendizaje comienza aquí.</p>
             </div>
             <div className="w-full h-64 bg-linear-to-br from-[var(--color-blue)] to-cyan-900 rounded-2xl flex items-center justify-center border border-zinc-700">
@@ -172,12 +218,33 @@ const StudentPreinscriptions = () => {
                 <path d="M12 2L2 7l10 5 10-5M2 12v5c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-5M2 17v2c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-2M12 11v9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
+
+            <div className="mt-8 p-6 bg-zinc-900/60 border border-zinc-800 rounded-2xl">
+              <div className="flex items-start gap-4">
+                <div className="p-2 bg-[var(--color-blue)]/10 rounded-lg">
+                  <Check size={18} className="text-[var(--color-blue)]" />
+                </div>
+                <div>
+                  <h4 className="text-white font-bold mb-1">Información importante</h4>
+                  <p className="text-sm text-zinc-400 leading-relaxed">
+                    Si ya te preinscribiste anteriormente, no puedes volver a realizar la preinscripción. Nuestro equipo procesará tu solicitud una sola vez.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="lg:w-1/2">
             {!showConfirm && !showFinal ? (
               <div className="bg-zinc-900/40 rounded-[2rem] border border-zinc-800 p-8 backdrop-blur-xl">
                 <h2 className="text-center text-3xl font-bold text-white mb-6">Preinscripción</h2>
+                
+                {isMissingBirthDate && (
+                  <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-sm">
+                    ⚠️ No tenemos registrada tu fecha de nacimiento. Para poder preinscribir a otras personas, por favor actualiza tu fecha de nacimiento en tu perfil.
+                  </div>
+                )}
+                
                 <div className="mb-8 w-full">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
@@ -202,7 +269,7 @@ const StudentPreinscriptions = () => {
                             <p className="text-sm text-zinc-500 leading-relaxed">Inscríbete tú mismo en una de nuestras clases.</p>
                         </button>
 
-                        {!isUserMinor && (
+                        {canRegisterThirdParty && (
                             <button
                                 type="button"
                                 onClick={() => setFormData({ ...formData, tipo_preinscripcion: 'TERCERO' })}
@@ -221,8 +288,8 @@ const StudentPreinscriptions = () => {
                                         </div>
                                     )}
                                 </div>
-                                <h4 className={`font-bold text-lg mb-1 ${formData.tipo_preinscripcion === 'TERCERO' ? 'text-white' : 'text-gray-300'}`}>Para otra persona</h4>
-                                <p className="text-sm text-zinc-500 leading-relaxed">Incribe a un hijo, familiar o amigo.</p>
+                                 <h4 className={`font-bold text-lg mb-1 ${formData.tipo_preinscripcion === 'TERCERO' ? 'text-white' : 'text-gray-300'}`}>Para otra persona</h4>
+                                 <p className="text-sm text-zinc-500 leading-relaxed">Inscribe a un hijo, familiar o amigo.</p>
                             </button>
                         )}
                     </div>
@@ -325,19 +392,21 @@ const StudentPreinscriptions = () => {
                         <option value="Avanzado">Avanzado</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="edad">Edad:</label>
-                      <input
-                        className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
-                        id="edad"
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={formData.edad}
-                        onChange={(e) => setFormData(prev => ({ ...prev, edad: e.target.value }))}
-                        required
-                      />
-                    </div>
+                    {formData.tipo_preinscripcion === 'TERCERO' && (
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="edad">Edad:</label>
+                        <input
+                          className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
+                          id="edad"
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={formData.edad}
+                          onChange={(e) => setFormData(prev => ({ ...prev, edad: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="mb-6">
@@ -375,36 +444,57 @@ const StudentPreinscriptions = () => {
                         <div>
                           <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="nombre_acudiente">Nombre del acudiente:</label>
                           <input
-                            className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
-                            id="nombre_acudiente"
-                            type="text"
-                            value={formData.nuevoAcudiente.nombre_acudiente}
-                            onChange={(e) => setFormData(prev => ({ ...prev, nuevoAcudiente: { ...prev.nuevoAcudiente, nombre_acudiente: e.target.value } }))}
-                            required
-                          />
+                             className={`w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition ${formData.tipo_preinscripcion === 'TERCERO' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                             id="nombre_acudiente"
+                             type="text"
+                             value={formData.nuevoAcudiente.nombre_acudiente}
+                             onChange={(e) => setFormData(prev => ({
+                               ...prev,
+                               nuevoAcudiente: {
+                                 ...prev.nuevoAcudiente,
+                                 nombre_acudiente: e.target.value
+                               }
+                             }))}
+                             readOnly={formData.tipo_preinscripcion === 'TERCERO'}
+                             required
+                           />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="telefono">Teléfono:</label>
-                            <input
-                              className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
-                              id="telefono"
-                              type="text"
-                              value={formData.nuevoAcudiente.telefono}
-                              onChange={(e) => setFormData(prev => ({ ...prev, nuevoAcudiente: { ...prev.nuevoAcudiente, telefono: e.target.value } }))}
-                              required
-                            />
+                                <input
+                               className={`w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition ${formData.tipo_preinscripcion === 'TERCERO' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                               id="telefono"
+                               type="text"
+                               value={formData.nuevoAcudiente.telefono}
+                               onChange={(e) => setFormData(prev => ({
+                                 ...prev,
+                                 nuevoAcudiente: {
+                                   ...prev.nuevoAcudiente,
+                                   telefono: e.target.value
+                                 }
+                               }))}
+                               readOnly={formData.tipo_preinscripcion === 'TERCERO'}
+                               required
+                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-zinc-400 mb-2" htmlFor="email">Email:</label>
-                            <input
-                              className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition"
-                              id="email"
-                              type="email"
-                              value={formData.nuevoAcudiente.email}
-                              onChange={(e) => setFormData(prev => ({ ...prev, nuevoAcudiente: { ...prev.nuevoAcudiente, email: e.target.value } }))}
-                              required
-                            />
+                                <input
+                               className={`w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition ${formData.tipo_preinscripcion === 'TERCERO' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                               id="email"
+                               type="email"
+                               value={formData.nuevoAcudiente.email}
+                               onChange={(e) => setFormData(prev => ({
+                                 ...prev,
+                                 nuevoAcudiente: {
+                                   ...prev.nuevoAcudiente,
+                                   email: e.target.value
+                                 }
+                               }))}
+                               readOnly={formData.tipo_preinscripcion === 'TERCERO'}
+                               required
+                             />
                           </div>
                         </div>
                         <div>
@@ -479,7 +569,7 @@ const StudentPreinscriptions = () => {
                       </div>
                       <div className="flex justify-between py-2 border-b border-zinc-800/30">
                         <span className="text-zinc-500">Edad:</span>
-                        <span className="font-medium text-white">{formData.edad}</span>
+                        <span className="font-medium text-white">{formData.tipo_preinscripcion === 'PROPIA' ? userAge : formData.edad}</span>
                       </div>
                       <div className="flex justify-between py-2">
                         <span className="text-zinc-500">Enfermedad:</span>
@@ -540,7 +630,7 @@ const StudentPreinscriptions = () => {
                   )}
                 </div>
                 <div className="flex justify-center mt-8">
-                  <button className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-[var(--color-blue)] hover:text-white transition-all uppercase tracking-wider text-sm" onClick={() => window.location.href = "/"}>Volver al inicio</button>
+                  <button className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-[var(--color-blue)] hover:text-white transition-all uppercase tracking-wider text-sm" onClick={() => window.location.href = '/'}>Volver al inicio</button>
                 </div>
               </div>
             )}
