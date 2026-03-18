@@ -1,17 +1,32 @@
 
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { UsersLayout } from "../layout/UsersLayout";
 import api from "../../../../services/api";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
+import { User, Users, Check } from "lucide-react"; // Assuming lucide-react for icons
+
+const calculateAge = (birthDate) => {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
 
 const UsersPreinscriptions = () => {
+  const { user } = useAuth();
+  const isUserMinor = calculateAge(user?.fecha_nacimiento) < 18; // Renamed to avoid conflict with form-based isMinor
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [showFinal, setShowFinal] = useState(false);
   const [hasEnfermedad, setHasEnfermedad] = useState("no");
-  const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Default to false as we use context user
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -36,55 +51,15 @@ const UsersPreinscriptions = () => {
     }
   });
 
-  const isMinor = formData.edad !== "" && Number(formData.edad) < 18;
+  const isMinor = formData.edad !== "" && Number(formData.edad) < 18; // This is for the person being pre-registered
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          // ✅ Modo desarrollo: usar usuario simulado si no hay token
-          console.warn("No token found. Using mock user for development.");
-          setCurrentUser({
-            id_usuario: 999,
-            nombre_completo: "Usuario de Prueba",
-            email: "prueba@ejemplo.com"
-          });
-          setLoading(false);
-          return;
-        }
-
-        const response = await api.get("/auth/me");
-        setCurrentUser(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error cargando usuario:", err);
-
-        // ✅ Si estás en desarrollo y el endpoint falla, usar usuario simulado
-        if (err.response?.status === 404) {
-          console.warn("Endpoint /api/auth/me not found. Using mock user for development.");
-          setCurrentUser({
-            id_usuario: 999,
-            nombre_completo: "Usuario de Prueba (Simulado)",
-            email: "mock@ejemplo.com"
-          });
-          setLoading(false);
-          return;
-        }
-
-        setError("Error al cargar tus datos. Por favor inicia sesión.");
-        setLoading(false);
-      }
-    };
-
-    fetchCurrentUser();
-  }, []);
+  // User data is now managed by AuthContext
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      if (!currentUser) {
+      if (!user) {
         setError("Debes estar logueado para preinscribirte");
         return;
       }
@@ -132,7 +107,7 @@ const UsersPreinscriptions = () => {
     try {
       const edadNum = parseInt(formData.edad);
       const payload = {
-        id_usuario: currentUser.id_usuario,
+        id_usuario: user.id_usuario,
         enfermedad: hasEnfermedad === "si" ? formData.enfermedad : "No aplica",
         nivel_experiencia: formData.nivel_experiencia,
         edad: edadNum,
@@ -169,9 +144,9 @@ const UsersPreinscriptions = () => {
       // Extraer mensaje detallado si existe
       let msg = "Error al crear preinscripción";
       if (err.response?.data) {
-        msg = err.response.data.mensaje || 
-              err.response.data.error || 
-              err.response.data.message || 
+        msg = err.response.data.mensaje ||
+              err.response.data.error ||
+              err.response.data.message ||
               (Array.isArray(err.response.data.errors) ? err.response.data.errors.join(", ") : null) ||
               msg;
       }
@@ -228,29 +203,54 @@ const UsersPreinscriptions = () => {
                 </h2>
 
                 {/* Selector de Tipo de Preinscripción */}
-                <div className="mb-8 flex justify-center">
-                  <div className="inline-flex bg-zinc-800/60 p-1 rounded-full border border-zinc-700">
-                    <button
-                      type="button"
-                      className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${formData.tipo_preinscripcion === 'PROPIA'
-                        ? 'bg-white text-black shadow-sm'
-                        : 'text-zinc-400 hover:text-white'
-                        }`}
-                      onClick={() => setFormData(prev => ({ ...prev, tipo_preinscripcion: 'PROPIA' }))}
-                    >
-                      Para mí
-                    </button>
-                    <button
-                      type="button"
-                      className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${formData.tipo_preinscripcion === 'TERCERO'
-                        ? 'bg-white text-black shadow-sm'
-                        : 'text-zinc-400 hover:text-white'
-                        }`}
-                      onClick={() => setFormData(prev => ({ ...prev, tipo_preinscripcion: 'TERCERO' }))}
-                    >
-                      Para otra persona
-                    </button>
-                  </div>
+                <div className="mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, tipo_preinscripcion: 'PROPIA' })}
+                            className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left group ${formData.tipo_preinscripcion === 'PROPIA'
+                                ? 'border-[var(--color-blue)] bg-[var(--color-blue)]/5 ring-2 ring-[var(--color-blue)]/20'
+                                : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'
+                                }`}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <div className={`p-3 rounded-xl ${formData.tipo_preinscripcion === 'PROPIA' ? 'bg-[var(--color-blue)] text-white' : 'bg-zinc-800 text-gray-400 group-hover:bg-zinc-700 group-hover:text-gray-300'}`}>
+                                    <User size={24} />
+                                </div>
+                                {formData.tipo_preinscripcion === 'PROPIA' && (
+                                    <div className="w-6 h-6 bg-[var(--color-blue)] rounded-full flex items-center justify-center">
+                                        <Check size={14} className="text-white" />
+                                    </div>
+                                )}
+                            </div>
+                            <h4 className={`font-bold text-lg mb-1 ${formData.tipo_preinscripcion === 'PROPIA' ? 'text-white' : 'text-gray-300'}`}>Para mí</h4>
+                            <p className="text-sm text-gray-500 leading-relaxed">Inscríbete tú mismo en una de nuestras clases.</p>
+                        </button>
+
+                        {!isUserMinor && (
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, tipo_preinscripcion: 'TERCERO' })}
+                                className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left group ${formData.tipo_preinscripcion === 'TERCERO'
+                                    ? 'border-[var(--color-blue)] bg-[var(--color-blue)]/5 ring-2 ring-[var(--color-blue)]/20'
+                                    : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'
+                                    }`}
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={`p-3 rounded-xl ${formData.tipo_preinscripcion === 'TERCERO' ? 'bg-[var(--color-blue)] text-white' : 'bg-zinc-800 text-gray-400 group-hover:bg-zinc-700 group-hover:text-gray-300'}`}>
+                                        <Users size={24} />
+                                    </div>
+                                    {formData.tipo_preinscripcion === 'TERCERO' && (
+                                        <div className="w-6 h-6 bg-[var(--color-blue)] rounded-full flex items-center justify-center">
+                                            <Check size={14} className="text-white" />
+                                        </div>
+                                    )}
+                                </div>
+                                <h4 className={`font-bold text-lg mb-1 ${formData.tipo_preinscripcion === 'TERCERO' ? 'text-white' : 'text-gray-300'}`}>Para otra persona</h4>
+                                <p className="text-sm text-gray-500 leading-relaxed">Inscribe a un hijo, familiar o amigo.</p>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -578,7 +578,7 @@ const UsersPreinscriptions = () => {
                         <span className="font-medium text-white">
                           {formData.tipo_preinscripcion === 'TERCERO'
                             ? formData.datos_tercero?.nombre_completo
-                            : (currentUser?.nombre_completo || currentUser?.nombre || "Usuario")}
+                            : (user?.nombre_completo || user?.nombre || "Usuario")}
                         </span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-zinc-800/30">
@@ -586,7 +586,7 @@ const UsersPreinscriptions = () => {
                         <span className="font-medium text-white">
                           {formData.tipo_preinscripcion === 'TERCERO'
                             ? formData.datos_tercero?.email
-                            : currentUser?.email}
+                            : user?.email}
                         </span>
                       </div>
                       {formData.tipo_preinscripcion === 'TERCERO' && (
