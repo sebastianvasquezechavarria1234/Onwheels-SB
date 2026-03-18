@@ -178,6 +178,24 @@ const PreinscripcionesAdmin = () => {
       await aceptarPreinscripcionYCrearMatricula(selectedPreinscripcion.id_estudiante, matriculaData);
       await fetchPreinscripciones();
       showNotification("Preinscripción aceptada y matrícula creada correctamente");
+
+      // Enviar email de notificación al estudiante aceptado
+      try {
+        const nombreEstudiante = selectedPreinscripcion.nombre_completo || "Estudiante";
+        const emailEstudiante = selectedPreinscripcion.email;
+
+        if (emailEstudiante) {
+          await api.post("/admin/correos-masivos/enviar-individual", {
+            destinatario: emailEstudiante,
+            asunto: "¡Tu preinscripción ha sido aceptada! — OnWheels",
+            mensaje: `Hola ${nombreEstudiante},\n\n¡Felicidades! Tu preinscripción en OnWheels ha sido aceptada exitosamente.\n\nYa puedes iniciar sesión como estudiante en nuestra plataforma con el correo: ${emailEstudiante}\n\nTe esperamos en clase. ¡Bienvenido/a a la familia OnWheels! 🛹\n\nSaludos,\nEl equipo de OnWheels`,
+          });
+        }
+      } catch (emailErr) {
+        console.warn("No se pudo enviar el email de aceptación:", emailErr);
+        showNotification("Matrícula creada, pero no se pudo enviar el email de notificación", "error");
+      }
+
       closeModal();
     } catch (err) {
       console.error("Error aceptando preinscripción:", err);

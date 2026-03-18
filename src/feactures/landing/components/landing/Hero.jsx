@@ -61,9 +61,7 @@ export const Hero = () => {
                                 Ver Tienda <ArrowUpRight size={16} />
                             </span>
                         </Link>
-                        <Link to={joinPath} className="px-6 py-3 border border-white/20 rounded-full font-bold hover:bg-white/5 transition-all uppercase text-sm">
-                            Unirse
-                        </Link>
+
                     </div>
                 </motion.div>
             </div>

@@ -137,6 +137,8 @@ import Clientes from "../feactures/dashboards/admin/pages/ventas/clientes/client
 import { CustomShoppingCart } from "../feactures/dashboards/custom/pages/CustomShoppingCart"
 import { CustomCheckout } from "../feactures/dashboards/custom/pages/CustomCheckout"
 import { CustomLayoutWrapper } from "../feactures/dashboards/custom/layout/CustomLayoutWrapper"
+import { InstructorEvents } from "../feactures/landing/instructor/pages/InstructorEvents"
+import { InstructorAbaut } from "../feactures/landing/instructor/pages/InstructorAbout"
 
 
 const AppRouter = () => {
@@ -293,6 +295,8 @@ const AppRouter = () => {
           <Route path="instructor/myPurchases/:id" element={<MyPurchasesDetailInstructor />} />
           <Route path="instructor/home" element={<InstructorHome />} />
           <Route path="instructor/training" element={<InstructorClass />} />
+          <Route path="instructor/events" element={<InstructorEvents />} />
+          <Route path="instructor/abaut" element={<InstructorAbaut />} />
           <Route path="instructor/store" element={<InstructorStore />} />
           <Route path="instructor/shoppingCart" element={<InstructorShoppingCart />} />
           <Route path="instructor/checkout" element={<InstructorCheckout />} />
