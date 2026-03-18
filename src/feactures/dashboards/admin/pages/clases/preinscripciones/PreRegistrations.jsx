@@ -154,6 +154,23 @@ const PreinscripcionesAdmin = () => {
       await rechazarPreinscripcion(selectedPreinscripcion.id_estudiante);
       await fetchPreinscripciones();
       showNotification("Preinscripción rechazada correctamente");
+
+      // Enviar email de notificación al estudiante rechazado
+      try {
+        const nombreEstudiante = selectedPreinscripcion.nombre_completo || "Estudiante";
+        const emailEstudiante = selectedPreinscripcion.email;
+
+        if (emailEstudiante) {
+          await api.post("/admin/correos-masivos/enviar-individual", {
+            destinatario: emailEstudiante,
+            asunto: "Actualización sobre tu preinscripción — OnWheels",
+            mensaje: `Hola ${nombreEstudiante},\n\nLamentablemente, luego de revisar tu solicitud de preinscripción en OnWheels, no ha podido ser aceptada en este momento por algunos motivos internos.\n\nSi tienes dudas o deseas más información, puedes contactarnos y con gusto te atenderemos.\n\nGracias por tu interés en OnWheels. ¡Esperamos verte pronto! 🛹\n\nSaludos,\nEl equipo de OnWheels`,
+          });
+        }
+      } catch (emailErr) {
+        console.warn("No se pudo enviar el email de rechazo:", emailErr);
+      }
+
       closeModal();
     } catch (err) {
       console.error("Error rechazando preinscripción:", err);

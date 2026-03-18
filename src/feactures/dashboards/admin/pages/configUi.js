@@ -11,24 +11,49 @@ export const configUi = {
   input: "w-full rounded-2xl border border-[#bfd1f4] bg-white px-4 py-3 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] placeholder:text-[#86a0c6]",
   inputWithIcon: "w-full rounded-2xl border border-[#bfd1f4] bg-white py-3 pl-11 pr-4 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] placeholder:text-[#86a0c6]",
   select: "appearance-none rounded-2xl border border-[#bfd1f4] bg-white py-3 pl-4 pr-10 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe]",
-  iconButton: "flex h-12 w-12 items-center justify-center rounded-2xl border border-[#bfd1f4] bg-white text-[#6a85ad] shadow-sm transition hover:border-[#9fbce7] hover:bg-[#f8fbff] hover:text-[#16315f]",
-  primaryButton: "inline-flex items-center justify-center gap-2 rounded-2xl bg-[#223a63] px-5 py-3 text-sm font-bold text-white shadow-[0_12px_24px_-16px_rgba(34,58,99,0.95)] transition hover:bg-[#16315f]",
-  tableCard: "flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.6rem] border border-[#bfd1f4] bg-white shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)]",
+  iconButton: "flex h-10 w-auto min-w-[100px] items-center justify-center gap-2 rounded-xl border border-[#bfd1f4] bg-white px-3 text-[13px] font-semibold text-[#3b5a9a] shadow-sm transition hover:border-[#9fbce7] hover:bg-[#f0f5ff] hover:text-[#16315f]",
+  primaryButton: "inline-flex items-center justify-center gap-2 rounded-xl bg-[#223a63] px-5 py-2.5 text-[13px] font-bold text-white shadow-md transition hover:bg-[#16315f]",
+
+  // ── TABLA ──────────────────────────────────────────────────────────────────
+  tableCard: "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm",
   tableScroll: "flex-1 overflow-auto",
-  table: "w-full min-w-[900px] border-separate border-spacing-0 text-left",
-  thead: "sticky top-0 z-10 bg-[#dbeafe] text-[#16315f]",
-  th: "border-b border-[#9ec1ef] px-3 py-3 text-[10px] font-black uppercase tracking-[0.14em]",
-  td: "border-b border-[#d7e5f8] px-3 py-2.5 text-[12px] text-[#16315f] align-middle",
-  row: "transition-colors hover:bg-[#f8fbff]",
-  emptyState: "px-6 py-10 text-center text-sm text-[#6b84aa]",
-  paginationBar: "mt-auto flex items-center justify-between border-t border-[#d7e5f8] bg-[#fbfdff] px-5 py-4",
-  paginationButton: "flex h-10 w-10 items-center justify-center rounded-xl border border-[#bfd1f4] bg-white text-[#6a85ad] shadow-sm transition hover:bg-[#f8fbff] hover:text-[#16315f] disabled:opacity-50",
-  pill: "inline-flex items-center rounded-full border border-[#bfd1f4] bg-[#edf5ff] px-3 py-1 text-xs font-bold text-[#1d4f91]",
-  subtlePill: "inline-flex items-center rounded-full border border-[#d7e5f8] bg-[#f8fbff] px-3 py-1 text-xs font-semibold text-[#5b7398]",
-  successPill: "inline-flex items-center gap-2 rounded-full border border-[#bde7d0] bg-[#edfdf4] px-3 py-1 text-xs font-bold text-[#0d8a4d]",
-  dangerPill: "inline-flex items-center gap-2 rounded-full border border-[#f3c0c8] bg-[#fff1f3] px-3 py-1 text-xs font-bold text-[#d44966]",
-  actionButton: "flex h-9 w-9 items-center justify-center rounded-xl border border-[#bfd1f4] bg-white text-[#6a85ad] shadow-sm transition hover:border-[#9fbce7] hover:bg-[#f8fbff] hover:text-[#16315f]",
-  actionDangerButton: "flex h-9 w-9 items-center justify-center rounded-xl border border-[#f5c4cc] bg-[#fff1f3] text-[#d44966] shadow-sm transition hover:bg-[#ffe4e8]",
+  table: "w-full min-w-[900px] border-collapse text-left",
+
+  // Header de tabla — fondo oscuro (dark navy/gray) #1f2937 (slate-800) como la captura
+  thead: "sticky top-0 z-10 bg-[#1f2937] text-white",
+  th: "border-b border-transparent px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-white",
+
+  // Filas — separador muy sutil (gray-100), hover suave
+  td: "border-b border-gray-100 px-4 py-3.5 text-[13px] font-medium text-gray-700 align-middle",
+  row: "bg-white transition-colors hover:bg-gray-50",
+
+  emptyState: "px-6 py-10 text-center text-sm text-gray-500",
+  paginationBar: "flex items-center justify-between border-t border-gray-100 bg-white px-5 py-3",
+  paginationButton: "flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-40 disabled:hover:bg-white",
+
+  // ── PILLS / BADGES (Estilos de la captura) ──────────────────────────────
+  // Pill azul claro (Medellín)
+  pill: "inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-[11px] font-bold text-blue-600",
+  // Pill gris sutil
+  subtlePill: "inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold text-gray-600",
+  // Pill verde (éxito)
+  successPill: "inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-[11px] font-bold text-green-700",
+  // Pill rojo (error)
+  dangerPill: "inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-[11px] font-bold text-red-600",
+  // Pill cyan claro (Bogotá)
+  tealPill: "inline-flex items-center rounded-full bg-cyan-100 px-3 py-1 text-[11px] font-bold text-cyan-700",
+  // Pill verde claro (Pereira - en la captura es verde claro, no purple)
+  purplePill: "inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-600",
+
+  // ── BOTONES DE ACCIÓN (Derecha: ver / editar / eliminar) ────────────────
+  // Ojo — fondo azul muy claro, icono azul (captura)
+  actionButton: "flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-blue-500 transition hover:bg-blue-100",
+  // Lápiz — fondo verde muy claro, icono verde (captura)
+  actionEditButton: "flex h-7 w-7 items-center justify-center rounded-md bg-green-50 text-green-500 transition hover:bg-green-100",
+  // Basurero — fondo rojo muy claro, icono rojo (captura)
+  actionDangerButton: "flex h-7 w-7 items-center justify-center rounded-md bg-red-50 text-red-500 transition hover:bg-red-100",
+
+  // ── MODALES ───────────────────────────────────────────────────────────────
   modalBackdrop: "fixed inset-0 z-40 flex items-center justify-center bg-[#0e1d35]/18 p-4 backdrop-blur-sm",
   modalPanel: "w-full overflow-hidden rounded-[2rem] border border-[#d7e5f8] bg-white shadow-[0_30px_80px_-34px_rgba(20,35,70,0.65)]",
   modalSplit: "flex max-h-[78vh] min-h-[460px] overflow-hidden",

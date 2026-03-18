@@ -233,51 +233,52 @@ export default function Sedes() {
       <div className={configUi.pageShell}>
         
         {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
-            {/* Row 1: Minimal Header */}
-            <div className="flex items-center justify-between ">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
-                        Gestión de Sedes
-                    </h2>
-                     <div className="flex items-center gap-2 border-l pl-4">
-                        <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md ">
-                            <Building2 className="h-3 w-3 " />
-                            <span className="text-xs font-bold!">{sedes.length} Sedes</span>
-                        </div>
-                    </div>
-                </div>
+        <div className="shrink-0 flex flex-col gap-4 p-6 pb-2">
+            {/* Row 1: Minimal Header (Matches Screenshot) */}
+            <div className="flex items-center gap-4">
+               <div className="w-10 h-10 bg-[#1f2937] rounded-xl flex items-center justify-center text-white shadow-sm">
+                   <Building2 size={20} />
+               </div>
+               <div>
+                   <h2 className="text-xl font-black text-[#1f2937] tracking-tight uppercase">
+                       Gestión de Sedes
+                   </h2>
+                   <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 mt-0.5">
+                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                       {sedes.length} sedes registradas
+                   </div>
+               </div>
             </div>
 
             {/* Row 2: Active Toolbar */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
                  {/* Search & Create Group */}
-                 <div className="flex flex-1 w-full sm:w-auto gap-3">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                 <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="relative w-[280px]">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input 
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                             placeholder="Buscar sedes..."
-                          className={configUi.inputWithIcon}
+                            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-gray-400"
                         />
                          {search && (
-                            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 <X className="h-4 w-4" />
                             </button>
                         )}
                     </div>
                     <button 
                         onClick={() => openModal("add")} 
-                      className={configUi.primaryButton}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-[13px] font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 whitespace-nowrap"
                     >
-                        <Plus className="h-4 w-4" />
+                        <Plus size={16} strokeWidth={2.5} />
                         Nueva Sede
                     </button>
                  </div>
 
-                 {/* Filters (Sort) */}
-                 <div className="flex flex-1 w-full justify-start sm:justify-end items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                 {/* Filters (Sort - Matches screenshot dark pill styling) */}
+                 <div className="flex items-center gap-2 overflow-x-auto">
                     {[
                         { id: "nombre_sede", label: "Nombre" },
                         { id: "ciudad", label: "Ciudad" },
@@ -286,14 +287,14 @@ export default function Sedes() {
                             key={field.id}
                             onClick={() => toggleSort(field.id)}
                             className={cn(
-                                "px-4 py-2 text-xs uppercase font-bold tracking-wide rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
+                                "px-4 py-2 text-[11px] uppercase font-bold tracking-wider rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
                                 sortField === field.id 
-                                    ? "bg-[#040529] text-white border-[#040529] shadow-sm transform scale-105" 
-                                    : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                                    ? "bg-[#1f2937] text-white border-[#1f2937]" 
+                                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                             )}
                         >
                             {field.label}
-                            {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
+                            {sortField === field.id && <ArrowUpDown className="h-3 w-3 opacity-70" />}
                         </button>
                     ))}
                 </div>
@@ -301,17 +302,17 @@ export default function Sedes() {
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0">
             <div className={configUi.tableCard}>
               <div className={configUi.tableScroll}>
                 <table className={configUi.table}>
                    <thead className={configUi.thead}>
                             <tr>
-                      <th className={`${configUi.th} rounded-tl-[1.4rem] w-[25%]`}>Nombre</th>
+                      <th className={`${configUi.th} w-[25%]`}>Nombre</th>
                       <th className={`${configUi.th} w-[30%]`}>Dirección</th>
                       <th className={`${configUi.th} w-[15%]`}>Ciudad</th>
                       <th className={`${configUi.th} w-[15%]`}>Teléfono</th>
-                      <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
+                      <th className={`${configUi.th} text-right w-[15%]`}>Acciones</th>
                             </tr>
                         </thead>
                    <tbody>
@@ -329,22 +330,22 @@ export default function Sedes() {
                              ) : (
                                 currentItems.map((s) => (
                                     <tr key={s.id_sede} className={configUi.row}>
-                                      <td className={`${configUi.td} font-bold text-[#16315f]`}>{s.nombre_sede}</td>
-                                      <td className={`${configUi.td} text-[#5b7398] flex items-center gap-1.5`}>
-                                            <MapPin size={14} className="text-gray-400 shrink-0" />
+                                      <td className={`${configUi.td} font-bold text-gray-900`}>{s.nombre_sede}</td>
+                                      <td className={`${configUi.td} text-gray-500 flex items-center gap-2`}>
+                                            <MapPin size={14} className="text-blue-400 shrink-0" />
                                             <span className="truncate">{s.direccion}</span>
                                         </td>
                                       <td className={configUi.td}>
-                                        <span className={configUi.pill}>
+                                        <span className={s.ciudad.toLowerCase().includes('bogot') ? configUi.tealPill : s.ciudad.toLowerCase().includes('pereira') ? configUi.purplePill : configUi.pill}>
                                                 {s.ciudad}
                                             </span>
                                         </td>
-                                      <td className={`${configUi.td} text-[#5b7398] font-mono`}>{s.telefono}</td>
+                                      <td className={`${configUi.td} text-gray-600`}>{s.telefono}</td>
                                        <td className={`${configUi.td} text-right`}>
-                                            <div className="flex items-center justify-end gap-2">
-                                          <button onClick={() => openModal("details", s)} className={configUi.actionButton} title="Ver"><Eye className="h-4 w-4" /></button>
-                                          <button onClick={() => openModal("edit", s)} className={configUi.actionButton} title="Editar"><Pencil className="h-4 w-4" /></button>
-                                          <button onClick={() => openModal("delete", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                                            <div className="flex items-center justify-end gap-1.5">
+                                              <button onClick={() => openModal("details", s)} className={configUi.actionButton} title="Ver"><Eye size={14} strokeWidth={2.5} /></button>
+                                              <button onClick={() => openModal("edit", s)} className={configUi.actionEditButton} title="Editar"><Pencil size={14} strokeWidth={2.5} /></button>
+                                              <button onClick={() => openModal("delete", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} strokeWidth={2.5} /></button>
                                             </div>
                                         </td>
                                     </tr>
