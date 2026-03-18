@@ -31,6 +31,7 @@ export default function Proveedores() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+  const [currentStep, setCurrentStep] = useState(1);
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -73,6 +74,7 @@ export default function Proveedores() {
   const openModal = (type, item = null) => {
     setModalType(type);
     setSelected(item);
+    setCurrentStep(1);
     if ((type === "edit" || type === "details") && item) {
       setFormData({
         nombre_proveedor: item.nombre_proveedor || "",
@@ -124,14 +126,6 @@ export default function Proveedores() {
       showNotification(err.response?.data?.mensaje || "Error al eliminar", "error");
     }
   };
-
-  const filtered = proveedores.filter(p =>
-    p.nombre_proveedor?.toLowerCase().includes(search.toLowerCase()) ||
-    p.nit?.includes(search)
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
@@ -189,9 +183,9 @@ export default function Proveedores() {
             <table className="w-full min-w-[860px] text-left border-separate border-spacing-0">
               <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-10">
                 <tr>
-                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Proveedor / NIT</th>
-                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Contacto Directo</th>
-                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right">Acciones</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Proveedor / NIT</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Contacto Directo</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -199,7 +193,7 @@ export default function Proveedores() {
                   <tr>
                     <td colSpan="3" className="p-20 text-center">
                       <div className="flex flex-col items-center gap-4">
-                        <div className="w-12 h-12 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin" />
+                        <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
                         <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Sincronizando aliados...</p>
                       </div>
                     </td>
@@ -216,15 +210,15 @@ export default function Proveedores() {
                 ) : (
                   proveedores.map((p) => (
                     <tr key={p.nit} className="group hover:bg-[#f8fbff] transition-all">
-                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm">
+                      <td className="px-3 py-2 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm">
                         <div className="flex flex-col">
-                           <span>{p.nombre_proveedor}</span>
-                           <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-1">NIT: {p.nit || "N/A"}</span>
+                           <span className="leading-tight">{p.nombre_proveedor}</span>
+                           <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-0.5">NIT: {p.nit || "N/A"}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                        <div className="flex flex-col gap-1">
-                           <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                      <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                        <div className="flex flex-col gap-0.5">
+                           <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
                              <Mail size={12} className="text-indigo-500" />
                              {p.email}
                            </div>
@@ -234,11 +228,11 @@ export default function Proveedores() {
                            </div>
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => openModal("details", p)} className="p-2.5 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Eye size={16} /></button>
-                          <button onClick={() => openModal("edit", p)} className="p-2.5 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Pencil size={16} /></button>
-                          <button onClick={() => openModal("delete", p)} className="p-2.5 rounded-xl bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105"><Trash2 size={16} /></button>
+                      <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button onClick={() => openModal("details", p)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Eye size={14} /></button>
+                          <button onClick={() => openModal("edit", p)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Pencil size={14} /></button>
+                          <button onClick={() => openModal("delete", p)} className="p-2 rounded-xl bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -399,67 +393,107 @@ export default function Proveedores() {
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Razón Social *</label>
-                         <input 
-                           type="text" 
-                           value={formData.nombre_proveedor} 
-                           onChange={(e) => setFormData({ ...formData, nombre_proveedor: e.target.value })} 
-                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all placeholder:text-gray-300" 
-                           placeholder="Nombre comercial" 
-                         />
+                    {/* Stepper Indicator */}
+                    <div className="flex items-center justify-center gap-4 mb-8">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${currentStep === 1 ? 'bg-[#040529] text-white shadow-lg shadow-[#040529]/20' : 'bg-slate-100 text-slate-400'}`}>1</div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${currentStep === 1 ? 'text-[#040529]' : 'text-slate-300'}`}>IDENTIDAD</span>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NIT / ID Fiscal *</label>
-                         <input 
-                           type="text" 
-                           value={formData.nit} 
-                           onChange={(e) => setFormData({ ...formData, nit: e.target.value })} 
-                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-gray-50 border border-gray-300 rounded-xl outline-none disabled:opacity-50" 
-                           placeholder="Número de identificación" 
-                           disabled={modalType === "edit"} 
-                         />
+                      <div className="w-12 h-[2px] bg-slate-100">
+                        <div className={`h-full bg-[#040529] transition-all duration-500 ${currentStep === 2 ? 'w-full' : 'w-0'}`} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${currentStep === 2 ? 'bg-[#040529] text-white shadow-lg shadow-[#040529]/20' : 'bg-slate-100 text-slate-400'}`}>2</div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${currentStep === 2 ? 'text-[#040529]' : 'text-slate-300'}`}>CONTACTO</span>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico *</label>
-                       <input 
-                         type="email" 
-                         value={formData.email} 
-                         onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
-                         className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all" 
-                         placeholder="proveedor@ejemplo.com"
-                       />
-                    </div>
+                    <div className="min-h-[280px]">
+                      {currentStep === 1 ? (
+                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+                          <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Razón Social *</label>
+                               <input 
+                                 type="text" 
+                                 value={formData.nombre_proveedor} 
+                                 onChange={(e) => setFormData({ ...formData, nombre_proveedor: e.target.value })} 
+                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all placeholder:text-gray-300 shadow-sm" 
+                                 placeholder="Nombre comercial" 
+                               />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NIT / ID Fiscal *</label>
+                               <input 
+                                 type="text" 
+                                 value={formData.nit} 
+                                 onChange={(e) => setFormData({ ...formData, nit: e.target.value })} 
+                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-gray-50 border border-gray-300 rounded-xl outline-none disabled:opacity-50 shadow-sm" 
+                                 placeholder="Número de identificación" 
+                                 disabled={modalType === "edit"} 
+                               />
+                            </div>
+                          </div>
+                          <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50">
+                            <p className="text-[10px] font-medium text-blue-600 leading-relaxed italic">
+                              <Info size={12} className="inline mr-2 mb-0.5" />
+                              Asegúrese de que el NIT coincida con el RUT actualizado del proveedor para evitar inconsistencias en la facturación.
+                            </p>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico *</label>
+                             <input 
+                               type="email" 
+                               value={formData.email} 
+                               onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                               className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all shadow-sm" 
+                               placeholder="proveedor@ejemplo.com"
+                             />
+                          </div>
 
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono Móvil</label>
-                         <input 
-                           type="text" 
-                           value={formData.telefono} 
-                           onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} 
-                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all" 
-                         />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección Física</label>
-                         <input 
-                           type="text" 
-                           value={formData.direccion} 
-                           onChange={(e) => setFormData({ ...formData, direccion: e.target.value })} 
-                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all" 
-                         />
-                      </div>
+                          <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono Móvil</label>
+                               <input 
+                                 type="text" 
+                                 value={formData.telefono} 
+                                 onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} 
+                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all shadow-sm" 
+                               />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección Física</label>
+                               <input 
+                                 type="text" 
+                                 value={formData.direccion} 
+                                 onChange={(e) => setFormData({ ...formData, direccion: e.target.value })} 
+                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all shadow-sm" 
+                               />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
                     </div>
 
                      <div className="pt-4 flex gap-4">
-                        <button onClick={closeModal} className="flex-1 py-3.5 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Cancelar</button>
-                        <button onClick={handleSave} className="flex-[2] py-3.5 bg-[#040529] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#040529]/10 hover:bg-[#040529]/90 transition-all active:scale-95">
-                          {modalType === "add" ? "Registrar Aliado" : "Guardar Cambios"}
-                        </button>
+                        {currentStep === 1 ? (
+                          <>
+                            <button onClick={closeModal} className="flex-1 py-3.5 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Cancelar</button>
+                            <button onClick={() => setCurrentStep(2)} className="flex-[2] py-3.5 bg-[#040529] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#040529]/10 hover:bg-[#040529]/90 transition-all active:scale-95 flex items-center justify-center gap-2">
+                              Siguiente Paso <ChevronRight size={18} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => setCurrentStep(1)} className="flex-1 py-3.5 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Volver</button>
+                            <button onClick={handleSave} className="flex-[2] py-3.5 bg-[#040529] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#040529]/10 hover:bg-[#040529]/90 transition-all active:scale-95">
+                              {modalType === "add" ? "Registrar Aliado" : "Guardar Cambios"}
+                            </button>
+                          </>
+                        )}
                      </div>
                   </div>
                 )}

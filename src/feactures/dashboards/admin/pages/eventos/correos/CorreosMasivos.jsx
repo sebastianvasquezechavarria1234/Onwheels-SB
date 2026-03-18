@@ -1,6 +1,8 @@
-// src/feactures/dashboards/admin/pages/eventos/correos/CorreosMasivos.jsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Plus, X, Eye, Mail, AlertCircle, Trash2, Calendar, Users, FileText, Send, Search, Hash, CheckCircle, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  Plus, X, Eye, Mail, Trash2, Calendar, Users, Send, Search, Hash, 
+  ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle2, AlertCircle, Info
+} from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   obtenerRolesDisponibles,
@@ -9,11 +11,7 @@ import {
   obtenerHistorialEnvios,
   eliminarEnvio
 } from "../../services/emailMasivoServices";
-
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { configUi, cn } from "../../configuracion/configUi";
 
 export default function EnviarCorreosMasivos() {
   const [roles, setRoles] = useState([]);
@@ -27,9 +25,10 @@ export default function EnviarCorreosMasivos() {
   const [sortDirection, setSortDirection] = useState("desc");
 
   // Modal states
-  const [modal, setModal] = useState(false); // New Email Modal
+  const [modal, setModal] = useState(false); // New Email Modal (split view)
   const [modalPreview, setModalPreview] = useState(false);
   const [modalDetalle, setModalDetalle] = useState(false);
+  const [modalDelete, setModalDelete] = useState(false);
   
   // Selection states
   const [rolesSeleccionados, setRolesSeleccionados] = useState([]);
@@ -42,662 +41,392 @@ export default function EnviarCorreosMasivos() {
   const [loadingHistorial, setLoadingHistorial] = useState(false);
 
   // Form
-  const [form, setForm] = useState({
-    asunto: "",
-    mensaje: "",
-  });
+  const [form, setForm] = useState({ asunto: "", mensaje: "" });
   const [errores, setErrores] = useState({});
 
   // Notification
-  const [notification, setNotification] = useState({
-    show: false,
-    type: "success",
-    message: "",
-  });
+  const [notification, setNotification] = useState({ show: false, type: "success", message: "" });
 
-  // Load initial data
-  useEffect(() => {
-    cargarRoles();
-    cargarHistorial();
-  }, []);
-
-  const cargarRoles = async () => {
-    try {
-      const respuesta = await obtenerRolesDisponibles();
-      if (respuesta.success) {
-        setRoles(respuesta.data);
-      }
-    } catch (err) {
-      mostrarNotificacion("Error cargando roles", "error");
-    }
-  };
-
-  const cargarHistorial = async () => {
-    setLoadingHistorial(true);
-    try {
-      const respuesta = await obtenerHistorialEnvios();
-      if (respuesta.success) {
-        setHistorial(respuesta.data);
-      }
-    } catch (err) {
-      console.error(err);
-      mostrarNotificacion("Error cargando historial", "error");
-    } finally {
-      setLoadingHistorial(false);
-    }
-  };
-
-  const mostrarNotificacion = (message, type = "success") => {
+  const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 4000);
   };
 
+  // Load initial data
+  const loadData = useCallback(async () => {
+    try {
+      const respRoles = await obtenerRolesDisponibles();
+      if (respRoles.success) setRoles(respRoles.data);
+      
+      setLoadingHistorial(true);
+      const respHistorial = await obtenerHistorialEnvios();
+      if (respHistorial.success) setHistorial(respHistorial.data);
+    } catch (err) {
+      showNotification("Error de conexión", "error");
+    } finally {
+      setLoadingHistorial(false);
+    }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
   // Form handling
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    if (errores[name]) {
-      setErrores((prev) => ({ ...prev, [name]: "" }));
-    }
+    setForm(prev => ({ ...prev, [name]: value }));
+    if (errores[name]) setErrores(prev => ({ ...prev, [name]: "" }));
   };
 
   const handleRoleToggle = (idRol, nombreRol) => {
-    setRolesSeleccionados((prev) => {
-      const existe = prev.some((r) => r.idRol === idRol);
-      if (existe) {
-        return prev.filter((r) => r.idRol !== idRol);
-      } else {
-        return [...prev, { idRol, nombreRol }];
-      }
+    setRolesSeleccionados(prev => {
+      const existe = prev.some(r => r.idRol === idRol);
+      if (existe) return prev.filter(r => r.idRol !== idRol);
+      return [...prev, { idRol, nombreRol }];
     });
-    if (errores.roles) {
-      setErrores((prev) => ({ ...prev, roles: "" }));
-    }
   };
 
-  const validarFormulario = () => {
-    const nuevosErrores = {};
-
-    if (!form.asunto.trim() || form.asunto.trim().length < 3) {
-      nuevosErrores.asunto = "Asunto debe tener al menos 3 caracteres";
-    } else if (form.asunto.trim().length > 255) {
-      nuevosErrores.asunto = "Asunto no puede exceder 255 caracteres";
-    }
-
-    if (!form.mensaje.trim() || form.mensaje.trim().length < 10) {
-      nuevosErrores.mensaje = "Mensaje debe tener al menos 10 caracteres";
-    } else if (form.mensaje.trim().length > 10000) {
-      nuevosErrores.mensaje = "Mensaje no puede exceder 10000 caracteres";
-    }
-
-    if (rolesSeleccionados.length === 0) {
-      nuevosErrores.roles = "Debes seleccionar al menos un rol";
-    }
-
-    setErrores(nuevosErrores);
-    return Object.keys(nuevosErrores).length === 0;
+  const validateForm = () => {
+    const newErrors = {};
+    if (!form.asunto.trim() || form.asunto.length < 3) newErrors.asunto = "Asunto muy corto";
+    if (!form.mensaje.trim() || form.mensaje.length < 10) newErrors.mensaje = "Mensaje demasiado breve";
+    if (rolesSeleccionados.length === 0) newErrors.roles = "Selecciona destinatarios";
+    setErrores(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Actions
   const handleVistaPrevia = async () => {
-    if (rolesSeleccionados.length === 0) {
-      mostrarNotificacion("Selecciona al menos un rol", "error");
-      return;
-    }
-
+    if (rolesSeleccionados.length === 0) return showNotification("Selecciona al menos un rol", "error");
     setLoadingPreview(true);
     try {
-      const idsRoles = rolesSeleccionados.map((r) => r.idRol);
-      const respuesta = await obtenerVistaPreviaDestinatarios(idsRoles);
-
-      if (respuesta.success) {
-        setPreviewData(respuesta);
+      const idsRoles = rolesSeleccionados.map(r => r.idRol);
+      const resp = await obtenerVistaPreviaDestinatarios(idsRoles);
+      if (resp.success) {
+        setPreviewData(resp);
         setModalPreview(true);
       }
     } catch (err) {
-      const mensaje = err.response?.data?.msg || "Error obteniendo vista previa";
-      mostrarNotificacion(mensaje, "error");
+      showNotification("Error en vista previa", "error");
     } finally {
       setLoadingPreview(false);
     }
   };
 
-  const handleEnviarCorreos = async () => {
-    if (!validarFormulario()) return;
-
+  const handleEnviar = async () => {
+    if (!validateForm()) return;
     setLoading(true);
     try {
-      const idsRoles = rolesSeleccionados.map((r) => r.idRol);
-      const rolesNombres = rolesSeleccionados.map((r) => r.nombreRol);
-
-      const respuesta = await enviarCorreosMasivos(
-        form.asunto,
-        form.mensaje,
-        idsRoles,
-        rolesNombres
-      );
-
-      if (respuesta.success) {
-        mostrarNotificacion(`✓ ${respuesta.data.mensaje}`, "success");
+      const idsRoles = rolesSeleccionados.map(r => r.idRol);
+      const rolesNombres = rolesSeleccionados.map(r => r.nombreRol);
+      const resp = await enviarCorreosMasivos(form.asunto, form.mensaje, idsRoles, rolesNombres);
+      if (resp.success) {
+        showNotification("Emails enviados exitosamente");
         setForm({ asunto: "", mensaje: "" });
         setRolesSeleccionados([]);
         setModal(false);
-        setErrores({});
-        cargarHistorial();
+        setHistorial(prev => [resp.data.envio, ...prev]);
       }
     } catch (err) {
-      const erroresBackend = err.response?.data?.errores;
-      if (erroresBackend && Array.isArray(erroresBackend)) {
-        setErrores({ backend: erroresBackend.join(", ") });
-        mostrarNotificacion(erroresBackend[0], "error");
-      } else {
-        const mensaje = err.response?.data?.msg || "Error enviando correos";
-        mostrarNotificacion(mensaje, "error");
-      }
+      showNotification("Error al realizar el envío", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEliminar = async (idEnvio) => {
-    // Replace confirm with modal later if needed, for now keep simple confirm or use custom modal
-    // Keeping simple confirm for speed unless requested, but unified design usually implies custom modals.
-    // Let's use the custom delete modal pattern.
-    if (!window.confirm("¿Seguro que deseas eliminar este registro del historial?")) return;
-
+  const handleDelete = async () => {
+    if (!selected) return;
     try {
-      await eliminarEnvio(idEnvio);
-      mostrarNotificacion("Registro eliminado", "success");
-      cargarHistorial();
+      await eliminarEnvio(selected.id_envio);
+      setHistorial(prev => prev.filter(h => h.id_envio !== selected.id_envio));
+      showNotification("Registro eliminado");
+      setModalDelete(false);
     } catch (error) {
-      mostrarNotificacion("Error al eliminar", "error");
+       showNotification("No se pudo eliminar", "error");
     }
   };
 
-  const verDetalle = (envio) => {
-    setDetalleEnvio(envio);
-    setModalDetalle(true);
-  };
-
-  // --- FILTER & SORT LOGIC ---
+  // Filter & Sort
   const filteredAndSorted = useMemo(() => {
     let result = [...historial];
-
-    // Filter
     if (search) {
-        const q = search.toLowerCase().trim();
-        result = result.filter((h) =>
-            h.asunto.toLowerCase().includes(q) ||
-            h.roles_destinatarios?.toLowerCase().includes(q)
-        );
+      const q = search.toLowerCase();
+      result = result.filter(h => h.asunto.toLowerCase().includes(q) || h.roles_destinatarios?.toLowerCase().includes(q));
     }
-
-    // Sort
-    result.sort((a, b) => {
-        const aVal = a[sortField];
-        const bVal = b[sortField];
-        if (aVal === null || aVal === undefined) return 1;
-        if (bVal === null || bVal === undefined) return -1;
-        
-        if (typeof aVal === "string" && typeof bVal === "string") {
-             // For dates (which are strings from API usually)
-            return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-        }
-        if (typeof aVal === "number" && typeof bVal === "number") {
-             return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
-        }
-        return 0;
+    result.sort((a,b) => {
+      const vA = a[sortField];
+      const vB = b[sortField];
+      return sortDirection === "asc" ? (vA > vB ? 1 : -1) : (vA < vB ? 1 : -1);
     });
-
     return result;
   }, [historial, search, sortField, sortDirection]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / itemsPerPage));
-  const currentItems = filteredAndSorted.slice(
-      (currentPage - 1) * itemsPerPage, 
-      currentPage * itemsPerPage
-  );
+  const currentItems = filteredAndSorted.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
+  const totalPages = Math.ceil(filteredAndSorted.length / itemsPerPage);
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [totalPages, currentPage]);
-
-  const toggleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(d => d === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
+  const toggleSort = (f) => {
+    if (sortField === f) setSortDirection(d => d === "asc" ? "desc" : "asc");
+    else { setSortField(f); setSortDirection("asc"); }
   };
 
-
   return (
-    <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+    <div className={configUi.pageShell}>
+      {/* HEADER */}
+      <div className={configUi.headerRow}>
+        <div className={configUi.titleWrap}>
+          <h2 className={configUi.title}>Emails Masivos</h2>
+          <span className={configUi.countBadge}>
+             <Mail className="mr-1 h-3 w-3" /> {historial.length} envíos históricos
+          </span>
+        </div>
+
+        <div className={configUi.toolbar}>
+           <div className={configUi.searchWrap}>
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86a0c6]" />
+              <input value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Buscar comunicados..." className={configUi.inputWithIcon} />
+           </div>
+           <button onClick={() => setModal(true)} className={configUi.primaryButton}>
+              <Send size={18} /> <span>Redactar</span>
+           </button>
+        </div>
+      </div>
+
+      {/* HISTORY TABLE */}
+      <div className={configUi.tableCard}>
+        <div className={configUi.tableScroll}>
+          <table className={configUi.table}>
+            <thead className={configUi.thead}>
+              <tr>
+                <th className={cn(configUi.th, "pl-5 w-[20%]")}>
+                  <button onClick={() => toggleSort("fecha_envio")} className="flex items-center gap-2">Fecha {sortField==="fecha_envio" && <ArrowUpDown className="h-3 w-3"/>}</button>
+                </th>
+                <th className={cn(configUi.th, "w-[30%]")}>Asunto de correo</th>
+                <th className={cn(configUi.th, "w-[30%]")}>Destinatarios</th>
+                <th className={cn(configUi.th, "w-[10%] text-center")}>Total</th>
+                <th className={cn(configUi.th, "w-[10%] pr-5 text-right")}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingHistorial ? (
+                <tr><td colSpan="5" className={configUi.emptyState}>Cargando historial...</td></tr>
+              ) : currentItems.length === 0 ? (
+                <tr><td colSpan="5" className={configUi.emptyState}>No se registran envíos previos.</td></tr>
+              ) : (
+                currentItems.map(h => (
+                  <tr key={h.id_envio} className={configUi.row}>
+                    <td className={cn(configUi.td, "pl-5 text-[#5b7398] font-medium")}>{new Date(h.fecha_envio).toLocaleDateString()}</td>
+                    <td className={cn(configUi.td, "font-bold text-[#16315f]")}>{h.asunto}</td>
+                    <td className={cn(configUi.td)}>
+                       <div className="flex flex-wrap gap-1">
+                          {h.roles_destinatarios?.split(',').map((r,idx) => (
+                            <span key={idx} className="text-[10px] font-black uppercase px-2 py-0.5 bg-blue-50 text-blue-600 rounded">
+                              {r.trim()}
+                            </span>
+                          ))}
+                       </div>
+                    </td>
+                    <td className={cn(configUi.td, "text-center font-bold text-[#16315f]")}>{h.total_destinatarios}</td>
+                    <td className={cn(configUi.td, "pr-5 text-right")}>
+                       <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => { setDetalleEnvio(h); setModalDetalle(true); }} className={configUi.actionButton}><Eye size={14}/></button>
+                          <button onClick={() => { setSelected(h); setModalDelete(true); }} className={configUi.actionDangerButton}><Trash2 size={14}/></button>
+                       </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
         
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
-             {/* Row 1: Minimal Header */}
-             <div className="flex items-center justify-between ">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
-                        Envío Masivo de Correos
-                    </h2>
-
-                    {/* Compact Stats */}
-                    <div className="flex items-center gap-2 border-l pl-4">
-                        <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md ">
-                            <Mail className="h-3 w-3 " />
-                            <span className="text-xs font-bold!">{historial.length} Envíos</span>
-                        </div>
-                    </div>
-                </div>
+        {totalPages > 0 && (
+          <div className={configUi.paginationBar}>
+            <p className="text-sm font-bold text-slate-500">Página {currentPage} de {totalPages}</p>
+            <div className="flex items-center gap-2">
+               <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p-1)} className={configUi.paginationButton}><ChevronLeft size={18}/></button>
+               <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p+1)} className={configUi.paginationButton}><ChevronRight size={18}/></button>
             </div>
+          </div>
+        )}
+      </div>
 
-            {/* Row 2: Active Toolbar */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
-                {/* Search & Create Group */}
-                 <div className="flex flex-1 w-full sm:w-auto gap-3">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                            placeholder="Buscar en historial..."
-                            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
-                        />
-                         {search && (
-                            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                <X className="h-4 w-4" />
-                            </button>
-                        )}
-                    </div>
-                     <button 
-                        onClick={() => setModal(true)} 
-                        className="flex items-center gap-2 px-5 py-2 bg-[#040529] hover:bg-[#040529]/90 text-white rounded-lg text-sm font-bold transition shadow-md hover:shadow-lg whitespace-nowrap"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Nuevo Envío
-                    </button>
-                 </div>
-                 
-                 {/* Sort (Simple) */}
-                 <div className="flex items-center gap-2">
-                    <button
-                            onClick={() => toggleSort("fecha_envio")}
-                            className={cn(
-                                "px-4 py-2 text-xs uppercase font-bold tracking-wide rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
-                                sortField === "fecha_envio"
-                                    ? "bg-[#040529] text-white border-[#040529] shadow-sm transform scale-105" 
-                                    : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                            )}
-                        >
-                            Fecha
-                            {sortField === "fecha_envio" && <ArrowUpDown className="h-3 w-3" />}
-                        </button>
-                 </div>
-            </div>
-        </div>
-
-        {/* --- SECTION 2: HISTORY TABLE --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-             <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-                <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                    <table className="w-full text-left relative">
-                        <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
-                            <tr>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[20%]">Fecha</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[30%]">Asunto</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[25%]">Destinatarios</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider w-[10%]">Total</th>
-                                <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right w-[15%]">Acciones</th>
-                            </tr>
-                        </thead>
-                         <tbody className="divide-y divide-gray-100">
-                             {loadingHistorial ? (
-                                <tr><td colSpan="5" className="p-8 text-center text-gray-400 text-sm">Cargando historial...</td></tr>
-                             ) : currentItems.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="p-12 text-center text-gray-400">
-                                        <div className="flex flex-col items-center gap-2 opacity-50">
-                                            <Mail className="h-8 w-8" />
-                                            <p className="text-sm">No hay envíos registrados</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                             ) : (
-                                currentItems.map((envio) => (
-                                    <tr key={envio.id_envio} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                                        <td className="px-5 py-4 text-sm text-gray-700">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={14} className="text-gray-400" />
-                                                 <span className="font-bold text-[#040529]">
-                                                    {new Date(envio.fecha_envio).toLocaleDateString()}
-                                                </span>
-                                                <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                                                  {new Date(envio.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4 text-sm font-medium text-gray-800">{envio.asunto}</td>
-                                        <td className="px-5 py-4">
-                                             <div className="flex flex-wrap gap-1">
-                                                {envio.roles_destinatarios?.split(',').map((rol, idx) => (
-                                                    <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                                                        {rol.trim()}
-                                                    </span>
-                                                )) || "N/A"}
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
-                                                <Users size={12} className="mr-1"/> {envio.total_destinatarios}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => verDetalle(envio)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver detalle"><Eye className="h-4 w-4" /></button>
-                                                <button onClick={() => handleEliminar(envio.id_envio)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Eliminar registro"><Trash2 className="h-4 w-4" /></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                             )}
-                         </tbody>
-                    </table>
-                </div>
-
-                 {/* Footer Pagination */}
-                 {totalPages > 1 && (
-                    <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                        <p className="text-xs text-gray-500 font-medium">
-                            Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{filteredAndSorted.length}</span> resultados
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
-                            <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+      {/* CREATE MESSAGE MODAL */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModal(false)}>
+            <motion.div className={cn(configUi.modalPanel, "max-w-4xl")} initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}>
+               <div className="flex flex-col lg:flex-row h-full overflow-hidden min-h-[500px]">
+                  
+                  {/* Left (Visual Info) */}
+                  <div className="hidden lg:flex w-1/3 bg-[#16315f] flex-col justify-between p-8 text-white relative">
+                     <div>
+                        <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6"><Send size={24}/></div>
+                        <h3 className="text-xl font-black mb-2 leading-tight">Comunicación Institucional</h3>
+                        <p className="text-xs text-blue-200 leading-relaxed font-medium">Redacte comunicados importantes para los diferentes roles de la comunidad OnWheels.</p>
+                     </div>
+                     <div className="space-y-4">
+                        <div className="p-4 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
+                           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider mb-3"><Info size={14}/> Recomendaciones</div>
+                           <ul className="text-[11px] text-blue-100 space-y-2 font-medium opacity-80">
+                              <li>• El asunto debe ser claro y directo.</li>
+                              <li>• Verifique los roles antes de enviar.</li>
+                              <li>• Use el botón de "Vista Previa".</li>
+                           </ul>
                         </div>
-                    </div>
-                )}
-             </div>
-        </div>
-
-        {/* --- TOAST --- */}
-        <AnimatePresence>
-            {notification.show && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
-                    {notification.message}
-                </motion.div>
-            )}
-        </AnimatePresence>
-
-        {/* --- MODAL CREAR ENVIO (Split View) --- */}
-        <AnimatePresence>
-            {modal && (
-              <motion.div
-                className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => setModal(false)}
-              >
-                <motion.div
-                  className="bg-white rounded-2xl shadow-2xl relative overflow-hidden max-w-4xl w-full"
-                  initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                   <div className="flex flex-col lg:flex-row h-[600px] lg:h-[650px]">
-                        {/* Left Side (Visual / Tips) */}
-                        <div className="hidden lg:flex w-1/3 bg-[#040529] flex-col items-center justify-center p-8 relative overflow-hidden text-white">
-                             <div className="absolute inset-0 opacity-10 pattern-grid-lg bg-white/5" />
-                             
-                             <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm border border-white/10">
-                                <Send size={32} />
-                             </div>
-                             
-                             <h4 className="font-bold text-xl text-center mb-2">Nuevo Comunicado</h4>
-                             <p className="text-white/60 text-center text-sm mb-8">Envía notificaciones importantes a todos tus usuarios registrados.</p>
-
-                             <div className="w-full space-y-4">
-                                <div className="bg-white/5 p-4 rounded-lg border border-white/10">
-                                    <h5 className="font-bold text-xs uppercase text-white/80 mb-2 flex items-center gap-2"><CheckCircle size={12}/> Tips</h5>
-                                    <ul className="text-xs text-white/60 space-y-2 list-disc pl-4">
-                                        <li>Se claro y conciso con el asunto.</li>
-                                        <li>Revisa la ortografía antes de enviar.</li>
-                                        <li>Usa la vista previa para verificar.</li>
-                                    </ul>
-                                </div>
-                             </div>
-                        </div>
-
-                        {/* Right Side (Form) */}
-                         <div className="flex-1 flex flex-col h-full overflow-hidden">
-                             <div className="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
-                                <h3 className="text-xl font-bold text-[#040529] flex items-center gap-2">
-                                     Redactar Mensaje
-                                </h3>
-                                <button onClick={() => setModal(false)} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-6">
-                                <div className="space-y-5">
-                                    {/* Asunto */}
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Asunto *</label>
-                                        <input
-                                            autoFocus
-                                            type="text"
-                                            name="asunto"
-                                            placeholder="Ej: Mantenimiento programado"
-                                            value={form.asunto}
-                                            onChange={handleChange}
-                                            maxLength={255}
-                                            className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${errores.asunto ? "border-red-500" : "border-gray-200"}`}
-                                        />
-                                        <div className="flex justify-between mt-1">
-                                             {errores.asunto ? <p className="text-red-500 text-xs font-medium">{errores.asunto}</p> : <span></span>}
-                                             <span className="text-xs text-gray-400">{form.asunto.length}/255</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Mensaje */}
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase ml-1">Mensaje *</label>
-                                        <textarea
-                                            name="mensaje"
-                                            placeholder="Escribe tu mensaje aquí..."
-                                            rows="8"
-                                            value={form.mensaje}
-                                            onChange={handleChange}
-                                            maxLength={10000}
-                                            className={`w-full mt-1 px-3 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] resize-none ${errores.mensaje ? "border-red-500" : "border-gray-200"}`}
-                                        />
-                                        <div className="flex justify-between mt-1">
-                                             {errores.mensaje ? <p className="text-red-500 text-xs font-medium">{errores.mensaje}</p> : <span></span>}
-                                             <span className="text-xs text-gray-400">{form.mensaje.length}/10000</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Roles */}
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase ml-1 block mb-2">Destinatarios por Rol *</label>
-                                        {errores.roles && <p className="text-red-500 text-xs font-medium mb-2">{errores.roles}</p>}
-                                        
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            {roles.map((rol) => (
-                                                <label
-                                                    key={rol.id_rol}
-                                                    className={`flex items-center p-3 border rounded-lg cursor-pointer transition relative overflow-hidden ${rolesSeleccionados.some((r) => r.idRol === rol.id_rol)
-                                                        ? "border-[#040529] bg-[#040529]/5"
-                                                        : "border-gray-200 hover:bg-gray-50"
-                                                    }`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={rolesSeleccionados.some((r) => r.idRol === rol.id_rol)}
-                                                        onChange={() => handleRoleToggle(rol.id_rol, rol.nombre_rol)}
-                                                        className="w-4 h-4 text-[#040529] rounded focus:ring-[#040529]"
-                                                    />
-                                                    <div className="ml-3 flex-1 flex justify-between items-center">
-                                                        <span className="text-sm font-bold text-gray-800 capitalize">{rol.nombre_rol}</span>
-                                                        <span className="text-xs font-medium px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">{rol.cantidad_usuarios}</span>
-                                                    </div>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                             {/* Footer Actions */}
-                             <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
-                                <button
-                                    onClick={handleVistaPrevia}
-                                    disabled={rolesSeleccionados.length === 0 || loadingPreview}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-                                >
-                                    <Eye size={16} />
-                                    {loadingPreview ? "Cargando..." : "Vista Previa"}
-                                </button>
-                                
-                                <button
-                                    onClick={handleEnviarCorreos}
-                                    disabled={loading}
-                                    className="flex items-center gap-2 px-6 py-2 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-blue-900/10"
-                                >
-                                    {loading ? "Enviando..." : (
-                                        <>
-                                            <Send size={16} /> Enviar Correos
-                                        </>
-                                    )}
-                                </button>
-                             </div>
-                         </div>
-                   </div>
-                </motion.div>
-              </motion.div>
-            )}
-        </AnimatePresence>
-
-        {/* --- MODAL PREVIEW (Centered, Standard) --- */}
-        <AnimatePresence>
-            {modalPreview && previewData && (
-              <motion.div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => setModalPreview(false)}
-              >
-                <motion.div
-                  className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
-                  initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
-                        <h3 className="text-lg font-bold text-[#040529]">Vista Previa</h3>
-                        <button onClick={() => setModalPreview(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-6">
-                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-3 text-blue-800 mb-6">
-                            <Users size={20} />
-                            <span className="font-bold">Total: {previewData.total} destinatarios</span>
-                        </div>
-
-                         <div className="space-y-6">
-                            {Object.entries(previewData.porRol).map(([rol, usuarios]) => (
-                            <div key={rol}>
-                                <h4 className="font-bold text-gray-700 mb-3 capitalize flex items-center gap-2 text-sm">
-                                    <span className="w-2 h-2 rounded-full bg-[#040529]"></span>
-                                    {rol} <span className="text-gray-400 font-normal">({usuarios.length})</span>
-                                </h4>
-                                <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-100 max-h-48 overflow-y-auto">
-                                {usuarios.map((usuario) => (
-                                    <div key={usuario.id_usuario} className="p-3 flex items-center justify-between hover:bg-white transition">
-                                        <div>
-                                            <p className="font-bold text-[#040529] text-xs max-w-[200px] truncate">{usuario.nombre_completo}</p>
-                                            <p className="text-xs text-gray-500">{usuario.correo}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                </div>
-                            </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    <div className="p-5 border-t border-gray-100 bg-gray-50/50 flex justify-end shrink-0">
-                        <button onClick={() => setModalPreview(false)} className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300 transition">Cerrar</button>
-                    </div>
-                </motion.div>
-              </motion.div>
-            )}
-        </AnimatePresence>
-
-        {/* --- MODAL DETALLE (Centered, Standard) --- */}
-        <AnimatePresence>
-            {modalDetalle && detalleEnvio && (
-              <motion.div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => setModalDetalle(false)}
-              >
-                <motion.div
-                  className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
-                  initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="p-5 border-b border-gray-100 flex justify-between items-center shrink-0">
-                        <h3 className="text-lg font-bold text-[#040529]">Detalle del Envío</h3>
-                        <button onClick={() => setModalDetalle(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-wider mb-1">Asunto</p>
-                                <p className="text-lg font-bold text-[#040529]">{detalleEnvio.asunto}</p>
-                             </div>
-                             <div className="text-left sm:text-right">
-                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-wider mb-1">Fecha de Envío</p>
-                                <p className="text-sm font-bold text-gray-600 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm inline-block">
-                                    {new Date(detalleEnvio.fecha_envio).toLocaleString()}
-                                </p>
-                             </div>
-                        </div>
+                  {/* Right (Form) */}
+                  <div className="flex-1 flex flex-col bg-white">
+                      <div className={configUi.modalHeader}>
+                        <h3 className={configUi.modalTitle}>Redactar Nuevo Correo</h3>
+                        <button onClick={() => setModal(false)} className={configUi.modalClose}><X size={20}/></button>
+                      </div>
 
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-wider mb-2">Destinatarios</p>
-                            <div className="flex flex-wrap gap-2">
-                                {detalleEnvio.roles_destinatarios?.split(',').map((rol, idx) => (
-                                    <span key={idx} className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-lg font-bold border border-blue-100">
-                                        {rol.trim()}
-                                    </span>
-                                ))}
-                                <span className="bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-lg font-bold border border-gray-200 flex items-center gap-1">
-                                    <Users size={12} /> Total: {detalleEnvio.total_destinatarios}
-                                </span>
+                      <div className={cn(configUi.modalContent, "space-y-4")}>
+                         <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Asunto del comunicado *</label>
+                            <input name="asunto" value={form.asunto} onChange={handleChange} className={cn(configUi.fieldInput, errores.asunto && "border-red-500")} placeholder="Ej: Invitación a evento oficial" />
+                            {errores.asunto && <p className="text-[10px] text-red-500 font-bold mt-1">{errores.asunto}</p>}
+                         </div>
+
+                         <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Mensaje / Cuerpo del correo *</label>
+                            <textarea name="mensaje" value={form.mensaje} onChange={handleChange} rows={6} className={cn(configUi.fieldTextarea, errores.mensaje && "border-red-500")} placeholder="Escriba el contenido aquí..." />
+                            {errores.mensaje && <p className="text-[10px] text-red-500 font-bold mt-1">{errores.mensaje}</p>}
+                         </div>
+
+                         <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Seleccionar Destinatarios *</label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                               {roles.map(r => (
+                                 <button key={r.id_rol} onClick={() => handleRoleToggle(r.id_rol, r.nombre_rol)} className={cn("flex items-center justify-between p-3 rounded-xl border text-left transition shadow-sm", rolesSeleccionados.some(s => s.idRol === r.id_rol) ? "bg-blue-50 border-blue-200 ring-2 ring-blue-100" : "bg-white border-slate-100 opacity-70 hover:opacity-100")}>
+                                    <div>
+                                       <span className="text-xs font-black text-[#16315f] uppercase tracking-wide">{r.nombre_rol}</span>
+                                       <p className="text-[10px] text-[#5b7398] font-bold">{r.cantidad_usuarios} usuarios</p>
+                                    </div>
+                                    {rolesSeleccionados.some(s => s.idRol === r.id_rol) && <CheckCircle2 size={16} className="text-blue-500" />}
+                                 </button>
+                               ))}
                             </div>
-                        </div>
+                            {errores.roles && <p className="text-[10px] text-red-500 font-bold mt-2">{errores.roles}</p>}
+                         </div>
+                      </div>
 
-                        <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-black tracking-wider mb-2">Mensaje</p>
-                            <div className="bg-white p-5 rounded-xl border border-gray-200 text-gray-700 text-sm whitespace-pre-wrap leading-relaxed shadow-sm">
-                                {detalleEnvio.mensaje}
+                      <div className={configUi.modalFooter}>
+                         <div className="flex items-center gap-2">
+                            <Users size={14} className="text-slate-400" />
+                            <span className="text-[10px] font-black uppercase text-slate-400">Total: {rolesSeleccionados.reduce((acc, r) => acc + (roles.find(x => x.id_rol === r.idRol)?.cantidad_usuarios || 0), 0)} destinatarios</span>
+                         </div>
+                         <div className="flex items-center gap-3">
+                            <button onClick={handleVistaPrevia} disabled={loadingPreview} className={configUi.secondaryButton}>{loadingPreview ? "..." : "Vista Previa"}</button>
+                            <button onClick={handleEnviar} disabled={loading} className={configUi.primarySoftButton}>{loading ? "Enviando..." : "Enviar Correo"}</button>
+                         </div>
+                      </div>
+                  </div>
+               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* OTHER MODALS (Preview, Detail, Delete) */}
+      {/* (Simplified for brevity but following the same unified patterns) */}
+       <AnimatePresence>
+          {modalPreview && (
+            <motion.div className={configUi.modalBackdrop} onClick={() => setModalPreview(false)}>
+               <motion.div className={cn(configUi.modalPanel, "max-w-2xl")} onClick={e => e.stopPropagation()}>
+                  <div className={configUi.modalHeader}>
+                    <h3 className={configUi.modalTitle}>Vista Previa de Destinatarios</h3>
+                    <button onClick={() => setModalPreview(false)} className={configUi.modalClose}><X size={20}/></button>
+                  </div>
+                  <div className={cn(configUi.modalContent, "max-h-96 overflow-y-auto")}>
+                     {previewData && Object.entries(previewData.porRol).map(([rol, users]) => (
+                       <div key={rol} className="mb-6">
+                          <h4 className="text-[10px] font-black uppercase text-blue-500 tracking-widest mb-3 flex items-center gap-2"><Hash size={12}/>{rol} ({users.length})</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                             {users.map(u => (
+                               <div key={u.id_usuario} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-0.5 shadow-sm">
+                                  <span className="text-[11px] font-black text-[#16315f] line-clamp-1">{u.nombre_completo}</span>
+                                  <span className="text-[10px] font-bold text-[#5b7398] line-clamp-1">{u.correo}</span>
+                               </div>
+                             ))}
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+                  <div className={configUi.modalFooter}>
+                    <button onClick={() => setModalPreview(false)} className={cn(configUi.secondaryButton, "w-full")}>Cerrar Vista Previa</button>
+                  </div>
+               </motion.div>
+            </motion.div>
+          )}
+       </AnimatePresence>
+
+       {/* DELETE CONFIRM */}
+       <AnimatePresence>
+          {modalDelete && (
+            <motion.div className={configUi.modalBackdrop} onClick={() => setModalDelete(false)}>
+               <motion.div className={cn(configUi.modalPanel, "max-w-md")} onClick={e => e.stopPropagation()}>
+                  <div className="p-8 text-center flex flex-col items-center">
+                     <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4"><Trash2 size={30}/></div>
+                     <h3 className="text-xl font-bold text-[#16315f]">¿Eliminar Registro?</h3>
+                     <p className="text-sm text-[#6b84aa] mt-2 font-medium">Esta acción borrará este envío del historial de forma permanente.</p>
+                     <div className="mt-8 flex gap-3 w-full">
+                        <button onClick={() => setModalDelete(false)} className={cn(configUi.secondaryButton, "flex-1")}>No, cancelar</button>
+                        <button onClick={handleDelete} className={cn(configUi.dangerButton, "flex-1")}>Sí, eliminar</button>
+                     </div>
+                  </div>
+               </motion.div>
+            </motion.div>
+          )}
+       </AnimatePresence>
+
+       {/* DETAIL MODAL */}
+       <AnimatePresence>
+          {modalDetalle && detalleEnvio && (
+            <motion.div className={configUi.modalBackdrop} onClick={() => setModalDetalle(false)}>
+               <motion.div className={cn(configUi.modalPanel, "max-w-2xl")} onClick={e => e.stopPropagation()}>
+                  <div className={configUi.modalHeader}>
+                    <h3 className={configUi.modalTitle}>Detalle del Comunicado</h3>
+                    <button onClick={() => setModalDetalle(false)} className={configUi.modalClose}><X size={20}/></button>
+                  </div>
+                  <div className={configUi.modalContent}>
+                      <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
+                         <span className="text-[10px] font-black uppercase text-blue-500 tracking-wider">Asunto</span>
+                         <h4 className="text-lg font-black text-[#16315f] mt-1">{detalleEnvio.asunto}</h4>
+                         <div className="mt-4 flex items-center gap-4 text-[10px] font-bold text-slate-400">
+                            <span className="flex items-center gap-1"><Calendar size={12}/> {new Date(detalleEnvio.fecha_envio).toLocaleString()}</span>
+                            <span className="flex items-center gap-1 text-slate-200">|</span>
+                            <span className="flex items-center gap-1 font-black text-[#5b7398]"><Users size={12}/> {detalleEnvio.total_destinatarios} Destinatarios</span>
+                         </div>
+                      </div>
+                      <div className="space-y-4">
+                         <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Mensaje Enviado</label>
+                            <div className="bg-white p-6 rounded-2xl border border-slate-100 text-xs text-[#5b7398] font-bold leading-relaxed whitespace-pre-wrap shadow-inner h-48 overflow-y-auto">
+                               {detalleEnvio.mensaje}
                             </div>
-                        </div>
-                   </div>
+                         </div>
+                      </div>
+                  </div>
+                  <div className={configUi.modalFooter}>
+                    <button onClick={() => setModalDetalle(false)} className={cn(configUi.primarySoftButton, "w-full")}>Entendido</button>
+                  </div>
+               </motion.div>
+            </motion.div>
+          )}
+       </AnimatePresence>
 
-                   <div className="p-5 border-t border-gray-100 bg-gray-50/50 flex justify-center shrink-0">
-                        <button onClick={() => setModalDetalle(false)} className="px-8 py-2.5 bg-[#040529] text-white rounded-lg font-bold hover:bg-[#040529]/90 transition shadow-lg">
-                            Cerrar
-                        </button>
-                    </div>
-                </motion.div>
-              </motion.div>
-            )}
-        </AnimatePresence>
+       {/* NOTIFICATION TOAST */}
+       <AnimatePresence>
+        {notification.show && (
+          <motion.div initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }}
+            className={cn("fixed top-4 right-4 z-[100] px-4 py-3 rounded-xl shadow-lg text-white font-black text-xs tracking-wide", notification.type === "success" ? "bg-[#16315f]" : "bg-red-500")}>
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      </div>
-    </>
+    </div>
   );
 }

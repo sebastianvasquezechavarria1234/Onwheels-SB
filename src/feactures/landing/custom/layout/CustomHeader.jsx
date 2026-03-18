@@ -40,7 +40,6 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
     },
   };
 
-<<<<<<< HEAD
   const cartItems = Array.isArray(cart) ? cart : (Array.isArray(cart?.items) ? cart.items : []);
   const totalItems = cartItems.reduce((acc, item) => acc + (item.qty || item.quantity || 1), 0);
 
@@ -50,12 +49,10 @@ const IconWithTooltip = ({ label, children, className = "", onClick }) => {
     { name: "Eventos", path: "/custom/events" },
     { name: "Nosotros", path: "/custom/about" },
   ];
-=======
   const popPulse = {
     initial: { scale: 1 },
     hover: { scale: 1.03, transition: { yoyo: Infinity, duration: 0.9 } },
   };
->>>>>>> 8f090883ef92da6210237285518da2c9b42269a9
 
   return (
     <div

@@ -1,20 +1,18 @@
 import React, { useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { X, Search, Package, Plus, Image as ImageIcon, ExternalLink, Hash, XCircle, DollarSign, ArrowLeft } from "lucide-react";
+import { X, Search, Package, Plus, Image as ImageIcon, ExternalLink, ArrowLeft, CheckCircle, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-// Helper for conditional classes
-function cn(...classes) {
-    return classes.filter(Boolean).join(" ");
-}
+import { useLocation } from "react-router-dom";
+import { cn, configUi } from "../../configUi";
 
 export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
     const location = useLocation();
     const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const productPath = basePath === '/custom' ? 'productos' : 'products';
+    
     const [productSearch, setProductSearch] = useState("");
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
+    // BUG FIX: default to sale price (precio) not cost (precio_compra)
     const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
 
     const filteredProducts = allProducts.filter(p =>
@@ -31,302 +29,253 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
             cantidad: parseInt(newItemData.cantidad) || 1,
             precio_unitario: parseFloat(newItemData.precio_unitario) || 0
         });
-
-        // Reset local state after adding
-        setSelectedProduct(null);
-        setSelectedVariant(null);
-        setNewItemData({ cantidad: 1, precio_unitario: "" });
     };
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 1.05, y: -20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="flex-1 flex flex-col p-10 overflow-hidden bg-white/40 backdrop-blur-xl relative z-20 font-['Outfit']"
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            className="flex-1 flex flex-col min-h-0 bg-white border border-[#d7e5f8] rounded-[2rem] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.5)] overflow-hidden"
         >
-            <div className="bg-white rounded-[3rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15)] w-full h-full flex flex-col overflow-hidden border border-white mx-auto max-w-7xl relative">
-                
-                {/* Header Section */}
-                <div className="flex items-center justify-between px-12 py-10 border-b border-slate-50 shrink-0 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
-                    
-                    <div className="flex items-center gap-8">
-                        <button
-                            onClick={onClose}
-                            className="w-14 h-14 rounded-[1.25rem] bg-slate-50 hover:bg-slate-900 hover:text-white flex items-center justify-center text-slate-400 transition-all border border-slate-100 shadow-sm active:scale-90"
-                            title="Volver al formulario"
-                        >
-                            <ArrowLeft size={22} strokeWidth={2.5} />
-                        </button>
-                        <div>
-                            <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase flex items-center gap-4">
-                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100/50">
-                                   <Package className="text-indigo-600" size={24} strokeWidth={2.5} />
-                                </div>
-                                Selección de Inventario
-                            </h2>
-                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] mt-2 italic">
-                                Catálogo de productos disponibles para abastecimiento
-                            </p>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#d7e5f8] bg-[#f8fbff] shrink-0">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={onClose}
+                        className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#16315f] hover:border-[#16315f]/30 transition-all shadow-sm"
+                        title="Volver"
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
+                    <div>
+                        <h2 className="text-base font-black text-[#16315f]">Seleccionar Producto</h2>
+                        <p className="text-xs text-[#6b84aa]">Elige el producto y la variante que deseas agregar</p>
+                    </div>
+                </div>
+                <a
+                    href={`${basePath}/${productPath}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#16315f] bg-white border border-[#bfd1f4] rounded-xl hover:bg-[#f0f5ff] transition-all"
+                >
+                    <Plus size={12} />
+                    Nuevo Producto
+                    <ExternalLink size={11} />
+                </a>
+            </div>
+
+            {/* Content */}
+            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
+                {/* Left: Product List */}
+                <div className="w-full lg:w-[45%] flex flex-col border-r border-[#e8f0fa] bg-[#fbfdff]">
+                    <div className="p-4 border-b border-[#e8f0fa] shrink-0">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+                            <input
+                                placeholder="Buscar producto..."
+                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#d7e5f8] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] transition-all text-[#16315f] placeholder:text-[#86a0c6]"
+                                value={productSearch}
+                                onChange={(e) => setProductSearch(e.target.value)}
+                            />
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-5">
-                        <a
-                            href={`${basePath}/${productPath}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-200 group border border-slate-800"
-                        >
-                            <Plus size={16} strokeWidth={3} />
-                            Ingresar Nuevo Producto
-                            <ExternalLink size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all ml-1" />
-                        </a>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                        {filteredProducts.length === 0 ? (
+                            <div className="py-12 text-center">
+                                <Search size={28} className="mx-auto text-[#bfd1f4] mb-3" />
+                                <p className="text-sm font-bold text-[#6b84aa]">Sin resultados</p>
+                                <p className="text-xs text-slate-300 mt-1">Intenta con otro nombre</p>
+                            </div>
+                        ) : (
+                            filteredProducts.map(p => {
+                                const isSelected = selectedProduct?.id_producto === p.id_producto;
+                                const totalStock = (p.variantes || []).reduce((acc, v) => acc + (v.stock || 0), 0);
+                                return (
+                                    <button
+                                        key={p.id_producto}
+                                        onClick={() => {
+                                            setSelectedProduct(p);
+                                            setSelectedVariant(null);
+                                            // BUG FIX: use sale price (precio), not cost (precio_compra)
+                                            setNewItemData({ cantidad: 1, precio_unitario: p.precio || "" });
+                                        }}
+                                        className={cn(
+                                            "w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
+                                            isSelected
+                                                ? "bg-[#16315f] border-[#16315f] shadow-md"
+                                                : "bg-white border-[#d7e5f8] hover:bg-[#f0f6ff] hover:border-[#9fbce7]"
+                                        )}
+                                    >
+                                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
+                                            {p.imagen || p.url_imagen || (p.imagenes && p.imagenes[0]?.url_imagen) ? (
+                                                <img src={p.imagen || p.url_imagen || p.imagenes[0]?.url_imagen} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ImageIcon size={18} className="text-slate-300" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className={cn("text-xs font-bold truncate", isSelected ? "text-white" : "text-[#16315f]")}>{p.nombre_producto}</h4>
+                                            <div className={cn("flex items-center gap-2 mt-0.5 text-[10px] font-bold", isSelected ? "text-white/60" : "text-[#6b84aa]")}>
+                                                <span>{p.variantes?.length || 0} variantes</span>
+                                                <span>·</span>
+                                                <span className={(!isSelected && totalStock <= 5) ? "text-rose-400" : ""}>{totalStock} en stock</span>
+                                            </div>
+                                        </div>
+                                        {isSelected && <CheckCircle size={16} className="text-white/80 shrink-0" />}
+                                    </button>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
 
-                {/* View Body */}
-                <div className="flex flex-col lg:row-span-1 lg:flex-row flex-1 overflow-hidden min-h-0">
-
-                    {/* Left: Product Feed */}
-                    <div className="w-full lg:w-1/2 flex flex-col border-r border-slate-100 bg-slate-50/30">
-                        {/* Search Bar Container */}
-                        <div className="px-12 py-8 bg-white border-b border-slate-50 shrink-0 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.03)]">
-                            <div className="relative group">
-                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors" size={20} />
-                                <input
-                                    placeholder="FILTRAR POR NOMBRE O SKU..."
-                                    className="w-full pl-16 pr-6 py-5 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] text-[11px] font-black tracking-widest outline-none focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100 transition-all text-slate-900 placeholder:text-slate-300 uppercase"
-                                    value={productSearch}
-                                    onChange={(e) => setProductSearch(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Product List Feed */}
-                        <div className="flex-1 overflow-y-auto px-12 py-8 space-y-4 custom-scrollbar">
-                            {filteredProducts.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center gap-8 opacity-20">
-                                    <div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center border-4 border-dashed border-slate-200">
-                                       <Search size={48} className="text-slate-400" />
+                {/* Right: Config Panel */}
+                <div className="w-full lg:flex-1 bg-white flex flex-col overflow-y-auto custom-scrollbar">
+                    <AnimatePresence mode="wait">
+                        {selectedProduct ? (
+                            <motion.div
+                                key={`conf-${selectedProduct.id_producto}`}
+                                initial={{ opacity: 0, x: 16 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -16 }}
+                                className="p-6 space-y-5"
+                            >
+                                {/* Product header */}
+                                <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
+                                    <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
+                                        {(selectedProduct.imagenes && selectedProduct.imagenes[0]?.url_imagen) ? (
+                                            <img src={selectedProduct.imagenes[0].url_imagen} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <ImageIcon size={20} className="text-slate-300" />
+                                        )}
                                     </div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 italic">No se encontraron coincidencias</p>
+                                    <div>
+                                        <h3 className="text-sm font-black text-[#16315f]">{selectedProduct.nombre_producto}</h3>
+                                        <p className="text-xs text-[#6b84aa] mt-0.5 line-clamp-2">{selectedProduct.descripcion}</p>
+                                        <div className="mt-1.5">
+                                            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                                Precio de venta: ${Number(selectedProduct.precio || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            ) : (
-                                filteredProducts.map(p => {
-                                    const isSelected = selectedProduct?.id_producto === p.id_producto;
-                                    const hasStock = p.variantes?.some(v => v.stock > 0);
-                                    
-                                    return (
-                                        <button
-                                            key={p.id_producto}
-                                            onClick={() => {
-                                                setSelectedProduct(p);
-                                                setSelectedVariant(null);
-                                                setNewItemData({ cantidad: 1, precio_unitario: p.precio_compra || "" });
-                                            }}
-                                            className={cn(
-                                                "w-full flex items-center gap-6 p-6 rounded-[2rem] text-left border-2 transition-all group relative overflow-hidden",
-                                                isSelected
-                                                    ? "bg-slate-900 border-slate-900 shadow-2xl shadow-slate-300 -translate-y-1"
-                                                    : "bg-white border-slate-100 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/50"
-                                            )}
-                                        >
-                                            {/* Thumbnail Section */}
-                                            <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-100 shadow-inner group-hover:scale-110 transition-transform">
-                                                {p.imagen || p.url_imagen || (p.imagenes && p.imagenes[0]?.url_imagen) ? (
-                                                    <img
-                                                        src={p.imagen || p.url_imagen || p.imagenes[0]?.url_imagen}
-                                                        alt={p.nombre_producto}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <ImageIcon size={32} className={isSelected ? "text-white/20" : "text-slate-200"} />
-                                                )}
-                                            </div>
 
-                                            {/* Info Content */}
-                                            <div className="flex-1 min-w-0 pr-4">
-                                                <div className="flex items-center justify-between gap-4 mb-1.5">
-                                                   <h4 className={cn(
-                                                       "text-[13px] font-black uppercase tracking-tight truncate",
-                                                       isSelected ? "text-white" : "text-slate-800"
-                                                   )}>
-                                                       {p.nombre_producto}
-                                                   </h4>
-                                                   {!hasStock && (
-                                                       <span className="shrink-0 text-[8px] font-black px-2 py-0.5 bg-rose-500 text-white rounded-full uppercase tracking-tighter">SIN STOCK</span>
-                                                   )}
-                                                </div>
-                                                
-                                                <div className="flex items-center gap-4">
-                                                    <span className={cn(
-                                                        "inline-flex items-center gap-2 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
-                                                        isSelected ? "bg-white/10 border-white/20 text-indigo-300" : "bg-slate-50 border-slate-100 text-slate-400"
-                                                    )}>
-                                                        <Hash size={10} strokeWidth={3} /> {p.variantes?.length || 0} Configs
-                                                    </span>
-                                                    <span className={cn(
-                                                        "text-[10px] font-black uppercase tracking-widest",
-                                                        isSelected ? "text-emerald-400" : "text-emerald-600"
-                                                    )}>
-                                                        $ {Number(p.precio_compra || 0).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Active Marker */}
-                                            {isSelected && (
-                                                <div className="absolute right-6 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                                                   <ChevronRight size={18} className="text-white" strokeWidth={3} />
-                                                </div>
-                                            )}
-                                        </button>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Right: Configuration Panel */}
-                    <div className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center relative shadow-[-50px_0_100px_-20px_rgba(0,0,0,0.02)]">
-                        <AnimatePresence mode="wait">
-                            {selectedProduct ? (
-                                <motion.div 
-                                    key={`config-${selectedProduct.id_producto}`}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
-                                    className="w-full h-full flex flex-col p-12 overflow-y-auto custom-scrollbar"
-                                >
-                                    <div className="space-y-12">
-                                        <div className="space-y-2">
-                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.4em] italic mb-2">Paso 01 / Configuración</p>
-                                            <h3 className="text-4xl font-black text-slate-900 tracking-tighter uppercase leading-none">{selectedProduct.nombre_producto}</h3>
-                                            <p className="text-[11px] font-medium text-slate-300 leading-relaxed uppercase tracking-widest italic">{selectedProduct.descripcion?.slice(0, 150)}{selectedProduct.descripcion?.length > 150 ? '...' : ''}</p>
+                                {/* Variant picker */}
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Selecciona variante (Color / Talla)</label>
+                                    {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
+                                        <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
+                                            Este producto no tiene variantes configuradas.
                                         </div>
-
-                                        {/* Variants Selector Grid */}
-                                        <div className="space-y-6">
-                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] block ml-1 leading-none italic">
-                                                Seleccionar Variante Específica
-                                            </label>
-
-                                            {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
-                                                <div className="p-10 bg-rose-50 border-2 border-rose-100 rounded-[2rem] text-rose-600 text-[11px] font-black uppercase tracking-widest leading-relaxed flex flex-col items-center text-center gap-4">
-                                                    <div className="w-14 h-14 bg-rose-500 text-white rounded-[1.25rem] flex items-center justify-center shadow-lg shadow-rose-200">
-                                                       <XCircle size={28} />
-                                                    </div>
-                                                    Este producto requiere configuración de variantes en el banco de inventario antes de ser abastecido.
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    {selectedProduct.variantes.map(v => {
-                                                        const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
-                                                        return (
-                                                            <button
-                                                                key={v.id_variante || v.id_producto_variante}
-                                                                onClick={() => setSelectedVariant(v)}
-                                                                className={cn(
-                                                                    "p-6 rounded-[1.75rem] text-left border-2 transition-all flex flex-col gap-3 relative overflow-hidden group",
-                                                                    isVarSelected
-                                                                        ? "bg-indigo-600 border-indigo-600 text-white shadow-xl shadow-indigo-200 -translate-y-1 scale-[1.03]"
-                                                                        : "bg-slate-50 border-slate-50 text-slate-400 hover:border-slate-200 hover:bg-white hover:text-slate-800"
-                                                                )}
-                                                            >
-                                                                <span className="text-[12px] font-black uppercase tracking-tight">{v.nombre_color || v.color || 'Unico'} • {v.nombre_talla || v.talla || 'Unica'}</span>
-                                                                <div className="flex items-center justify-between">
-                                                                   <span className={cn(
-                                                                       "text-[9px] font-black uppercase tracking-widest italic opacity-70",
-                                                                       isVarSelected ? "text-indigo-100" : "text-slate-300"
-                                                                   )}>
-                                                                       Almacén: {v.stock} pcs
-                                                                   </span>
-                                                                   {isVarSelected && <div className="w-2 h-2 bg-white rounded-full animate-pulse" />}
-                                                                </div>
-                                                            </button>
-                                                        )
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Input Form for Quantity and Price */}
-                                        <AnimatePresence>
-                                            {selectedVariant && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 50 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, scale: 0.9 }}
-                                                    className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl shadow-indigo-200 space-y-10 relative overflow-hidden border border-slate-800 mt-auto"
-                                                >
-                                                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-3xl rounded-full translate-x-20 -translate-y-20 pointer-events-none" />
-                                                    
-                                                    <div className="grid grid-cols-2 gap-10">
-                                                        <div className="space-y-3">
-                                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] ml-1">Cantidad Ingreso</label>
-                                                            <input
-                                                                type="number"
-                                                                min="1"
-                                                                className="w-full bg-slate-800/50 border-2 border-slate-700 rounded-2xl px-6 py-4 text-lg font-black text-white outline-none focus:border-indigo-500 focus:ring-8 focus:ring-indigo-500/10 transition-all font-mono"
-                                                                value={newItemData.cantidad}
-                                                                onChange={(e) => setNewItemData({ ...newItemData, cantidad: e.target.value })}
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-3">
-                                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] ml-1">Costo Unitario</label>
-                                                            <div className="relative">
-                                                                <DollarSign className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-                                                                <input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    step="0.01"
-                                                                    className="w-full bg-slate-800/50 border-2 border-slate-700 rounded-2xl pl-16 pr-6 py-4 text-lg font-black text-white outline-none focus:border-indigo-500 focus:ring-8 focus:ring-indigo-500/10 transition-all font-mono"
-                                                                    placeholder="0,00"
-                                                                    value={newItemData.precio_unitario}
-                                                                    onChange={(e) => setNewItemData({ ...newItemData, precio_unitario: e.target.value })}
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {selectedProduct.variantes.map(v => {
+                                                const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
+                                                const outOfStock = v.stock <= 0;
+                                                return (
+                                                    <button
+                                                        key={v.id_variante || v.id_producto_variante}
+                                                        onClick={() => { if (!outOfStock) setSelectedVariant(v); }}
+                                                        disabled={outOfStock}
+                                                        className={cn(
+                                                            "p-3 rounded-xl border text-left transition-all",
+                                                            outOfStock
+                                                                ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+                                                                : isVarSelected
+                                                                    ? "border-[#16315f] bg-[#16315f] text-white shadow-md"
+                                                                    : "border-[#d7e5f8] bg-[#fbfdff] text-[#5f7396] hover:border-[#9fbce7] hover:bg-[#f0f6ff]"
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            {v.codigo_hex && (
+                                                                <div
+                                                                    className="w-3 h-3 rounded-full border border-white/40 shadow-sm shrink-0"
+                                                                    style={{ backgroundColor: v.codigo_hex }}
                                                                 />
-                                                            </div>
+                                                            )}
+                                                            <span className="text-xs font-bold truncate">
+                                                                {v.nombre_color || v.color || 'Único'} / {v.nombre_talla || v.talla || 'Única'}
+                                                            </span>
                                                         </div>
-                                                    </div>
+                                                        <span className={cn("text-[10px] font-bold", isVarSelected ? "text-white/70" : outOfStock ? "text-rose-400" : "text-[#6b84aa]")}>
+                                                            {outOfStock ? "Sin stock" : `${v.stock} disponibles`}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
 
-                                                    <div className="flex items-center justify-between p-8 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-sm">
-                                                        <div className="space-y-1">
-                                                           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] italic">Neto Inversión</p>
-                                                           <p className="text-4xl font-black text-white tracking-tighter tabular-nums">
-                                                               $ {((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
-                                                           </p>
-                                                        </div>
-                                                        <button
-                                                            onClick={handleAddItem}
-                                                            disabled={!newItemData.cantidad || !newItemData.precio_unitario}
-                                                            className="h-16 px-10 bg-indigo-500 hover:bg-white hover:text-indigo-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/20 active:scale-95 disabled:opacity-20 disabled:pointer-events-none group italic"
-                                                        >
-                                                            Confirmar Item <ChevronRight size={14} className="inline ml-2 group-hover:translate-x-1 transition-transform" />
-                                                        </button>
+                                <AnimatePresence>
+                                    {selectedVariant && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="space-y-4 overflow-hidden"
+                                        >
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className={configUi.fieldGroup}>
+                                                    <label className={configUi.fieldLabel}>Cantidad</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max={selectedVariant.stock}
+                                                        className={configUi.fieldInput}
+                                                        value={newItemData.cantidad}
+                                                        onChange={(e) => setNewItemData({ ...newItemData, cantidad: e.target.value })}
+                                                    />
+                                                    <p className="text-[10px] text-slate-300 mt-1">Máx: {selectedVariant.stock}</p>
+                                                </div>
+                                                <div className={configUi.fieldGroup}>
+                                                    <label className={configUi.fieldLabel}>Precio unitario *</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            className={cn(configUi.fieldInput, "pl-7")}
+                                                            value={newItemData.precio_unitario}
+                                                            onChange={(e) => setNewItemData({ ...newItemData, precio_unitario: e.target.value })}
+                                                        />
                                                     </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-                                </motion.div>
-                            ) : (
-                                <motion.div 
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="flex flex-col items-center justify-center p-12 text-center"
-                                >
-                                    <div className="w-40 h-40 rounded-[3rem] bg-slate-50 border-4 border-dashed border-slate-100 flex items-center justify-center mb-10 group hover:rotate-6 transition-transform">
-                                       <Package size={80} className="text-slate-100 group-hover:text-slate-200 transition-colors" />
-                                    </div>
-                                    <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tighter mb-4">Esperando Selección</h3>
-                                    <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.3em] max-w-[300px] leading-relaxed italic">Explora el registro maestro a la izquierda para iniciar la configuración de abastecimiento</p>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 bg-[#f0f6ff] border border-[#d7e5f8] rounded-2xl flex items-center justify-between">
+                                                <div>
+                                                    <div className="text-[10px] font-black text-[#6b84aa] uppercase tracking-widest">Subtotal estimado</div>
+                                                    <div className="text-xl font-black text-[#16315f] mt-0.5">
+                                                        ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={handleAddItem}
+                                                    disabled={!newItemData.cantidad || !newItemData.precio_unitario}
+                                                    className="flex items-center gap-2 px-5 py-3 bg-[#16315f] text-white text-xs font-black rounded-xl hover:bg-[#0d2248] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-95"
+                                                >
+                                                    <ShoppingCart size={14} />
+                                                    Agregar
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
+                                <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-100">
+                                    <Package size={28} className="text-slate-300" />
+                                </div>
+                                <h3 className="text-sm font-bold text-[#16315f]">Ningún producto seleccionado</h3>
+                                <p className="text-xs text-[#6b84aa] mt-2 max-w-[220px] leading-relaxed">Busca y selecciona un producto de la lista para elegir variante y cantidad.</p>
+                            </div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </motion.div>
