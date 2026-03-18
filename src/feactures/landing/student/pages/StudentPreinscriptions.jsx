@@ -1,14 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { StudentLayout } from "../layout/StudentLayout";
 import api from "../../../../services/api";
+import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
+import { User, Users, Check } from "lucide-react";
+
+const calculateAge = (birthDate) => {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
 
 const StudentPreinscriptions = () => {
+  const { user } = useAuth();
+  const isUserMinor = calculateAge(user?.fecha_nacimiento) < 18;
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [showFinal, setShowFinal] = useState(false);
   const [hasEnfermedad, setHasEnfermedad] = useState("no");
-  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(false); // Changed to false as we use context user
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -35,48 +51,12 @@ const StudentPreinscriptions = () => {
 
   const isMinor = formData.edad !== "" && Number(formData.edad) < 18;
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.warn("No token found. Using mock user for development.");
-          setCurrentUser({
-            id_usuario: 999,
-            nombre_completo: "Usuario de Prueba",
-            email: "prueba@ejemplo.com"
-          });
-          setLoading(false);
-          return;
-        }
-
-        const response = await api.get("/auth/me");
-        setCurrentUser(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error cargando usuario:", err);
-        if (err.response?.status === 404) {
-          console.warn("Endpoint /api/auth/me not found. Using mock user for development.");
-          setCurrentUser({
-            id_usuario: 999,
-            nombre_completo: "Usuario de Prueba (Simulado)",
-            email: "mock@ejemplo.com"
-          });
-          setLoading(false);
-          return;
-        }
-        setError("Error al cargar tus datos. Por favor inicia sesión.");
-        setLoading(false);
-      }
-    };
-
-    fetchCurrentUser();
-  }, []);
+  // We use the user from context, no need for redundant fetch
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (!currentUser) {
+      if (!user) {
         setError("Debes estar logueado para preinscribirte");
         return;
       }
@@ -120,7 +100,7 @@ const StudentPreinscriptions = () => {
     try {
       const edadNum = parseInt(formData.edad);
       const payload = {
-        id_usuario: currentUser.id_usuario,
+        id_usuario: user.id_usuario,
         enfermedad: hasEnfermedad === "si" ? formData.enfermedad : "No aplica",
         nivel_experiencia: formData.nivel_experiencia,
         edad: edadNum,
@@ -137,9 +117,6 @@ const StudentPreinscriptions = () => {
       const response = await api.post("/preinscripciones", payload);
 
       if (response.status === 201 || response.status === 200) {
-        if (response.data.credenciales) {
-          setFormData(prev => ({ ...prev, credenciales: response.data.credenciales }));
-        }
         setShowConfirm(false);
         setShowFinal(true);
         setError(null);
@@ -201,23 +178,54 @@ const StudentPreinscriptions = () => {
             {!showConfirm && !showFinal ? (
               <div className="bg-zinc-900/40 rounded-[2rem] border border-zinc-800 p-8 backdrop-blur-xl">
                 <h2 className="text-center text-3xl font-bold text-white mb-6">Preinscripción</h2>
-                <div className="mb-8 flex justify-center">
-                  <div className="inline-flex bg-zinc-800/60 p-1 rounded-full border border-zinc-700">
-                    <button
-                      type="button"
-                      className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${formData.tipo_preinscripcion === 'PROPIA' ? 'bg-white text-black shadow-sm' : 'text-zinc-400 hover:text-white'}`}
-                      onClick={() => setFormData(prev => ({ ...prev, tipo_preinscripcion: 'PROPIA' }))}
-                    >
-                      Para mí
-                    </button>
-                    <button
-                      type="button"
-                      className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${formData.tipo_preinscripcion === 'TERCERO' ? 'bg-white text-black shadow-sm' : 'text-zinc-400 hover:text-white'}`}
-                      onClick={() => setFormData(prev => ({ ...prev, tipo_preinscripcion: 'TERCERO' }))}
-                    >
-                      Para otra persona
-                    </button>
-                  </div>
+                <div className="mb-8 w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, tipo_preinscripcion: 'PROPIA' })}
+                            className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left group ${formData.tipo_preinscripcion === 'PROPIA'
+                                ? 'border-[var(--color-blue)] bg-[var(--color-blue)]/5 ring-2 ring-[var(--color-blue)]/20'
+                                : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'
+                                }`}
+                        >
+                            <div className="flex items-center justify-between mb-3">
+                                <div className={`p-3 rounded-xl ${formData.tipo_preinscripcion === 'PROPIA' ? 'bg-[var(--color-blue)] text-white' : 'bg-zinc-800 text-gray-400 group-hover:bg-zinc-700 group-hover:text-gray-300'}`}>
+                                    <User size={24} />
+                                </div>
+                                {formData.tipo_preinscripcion === 'PROPIA' && (
+                                    <div className="w-6 h-6 bg-[var(--color-blue)] rounded-full flex items-center justify-center">
+                                        <Check size={14} className="text-white" />
+                                    </div>
+                                )}
+                            </div>
+                            <h4 className={`font-bold text-lg mb-1 ${formData.tipo_preinscripcion === 'PROPIA' ? 'text-white' : 'text-gray-300'}`}>Para mí</h4>
+                            <p className="text-sm text-zinc-500 leading-relaxed">Inscríbete tú mismo en una de nuestras clases.</p>
+                        </button>
+
+                        {!isUserMinor && (
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, tipo_preinscripcion: 'TERCERO' })}
+                                className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left group ${formData.tipo_preinscripcion === 'TERCERO'
+                                    ? 'border-[var(--color-blue)] bg-[var(--color-blue)]/5 ring-2 ring-[var(--color-blue)]/20'
+                                    : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700'
+                                    }`}
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={`p-3 rounded-xl ${formData.tipo_preinscripcion === 'TERCERO' ? 'bg-[var(--color-blue)] text-white' : 'bg-zinc-800 text-gray-400 group-hover:bg-zinc-700 group-hover:text-gray-300'}`}>
+                                        <Users size={24} />
+                                    </div>
+                                    {formData.tipo_preinscripcion === 'TERCERO' && (
+                                        <div className="w-6 h-6 bg-[var(--color-blue)] rounded-full flex items-center justify-center">
+                                            <Check size={14} className="text-white" />
+                                        </div>
+                                    )}
+                                </div>
+                                <h4 className={`font-bold text-lg mb-1 ${formData.tipo_preinscripcion === 'TERCERO' ? 'text-white' : 'text-gray-300'}`}>Para otra persona</h4>
+                                <p className="text-sm text-zinc-500 leading-relaxed">Incribe a un hijo, familiar o amigo.</p>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -443,11 +451,11 @@ const StudentPreinscriptions = () => {
                     <div className="grid grid-cols-1 gap-3 text-sm">
                       <div className="flex justify-between py-2 border-b border-zinc-800/30">
                         <span className="text-zinc-500">Nombre:</span>
-                        <span className="font-medium text-white">{formData.tipo_preinscripcion === 'TERCERO' ? formData.datos_tercero?.nombre_completo : (currentUser?.nombre_completo || currentUser?.nombre || "Usuario")}</span>
+                        <span className="font-medium text-white">{formData.tipo_preinscripcion === 'TERCERO' ? formData.datos_tercero?.nombre_completo : (user?.nombre_completo || user?.nombre || "Usuario")}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-zinc-800/30">
                         <span className="text-zinc-500">Email:</span>
-                        <span className="font-medium text-white">{formData.tipo_preinscripcion === 'TERCERO' ? formData.datos_tercero?.email : currentUser?.email}</span>
+                        <span className="font-medium text-white">{formData.tipo_preinscripcion === 'TERCERO' ? formData.datos_tercero?.email : user?.email}</span>
                       </div>
                       {formData.tipo_preinscripcion === 'TERCERO' && (
                         <>
