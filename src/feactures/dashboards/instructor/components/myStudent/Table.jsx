@@ -17,7 +17,7 @@ export const Table = ({ usuarios, setUsuarios }) => {
 	};
 
 	const confirmDelete = (id) => {
-		setUsuarios((prev) => prev.filter((u) => u.id !== id));
+		setUsuarios((prev) => prev.filter((u) => u.id_estudiante !== id));
 		closeModal();
 	};
 
@@ -43,19 +43,19 @@ export const Table = ({ usuarios, setUsuarios }) => {
 								{ fondo: "bg-purple-500/10", border: "border-purple-500/20", texto: "text-purple-400" },
 								{ fondo: "bg-pink-500/10", border: "border-pink-500/20", texto: "text-pink-400" },
 							];
-							const color = colores[(element.id || 0) % colores.length];
-							const inicial = element.name?.charAt(0).toUpperCase() || "?";
+							const color = colores[(element.id_estudiante || 0) % colores.length];
+							const inicial = element.nombre_completo?.charAt(0).toUpperCase() || "?";
 
 							return (
-								<tr key={element.id} className="hover:bg-[#0B0F14]/50 transition-colors group">
+								<tr key={element.id_estudiante} className="hover:bg-[#0B0F14]/50 transition-colors group">
 									<td className="py-5 px-8">
 										<div className="flex items-center gap-4">
 											<div className={`w-12 h-12 rounded-full ${color.fondo} border ${color.border} ${color.texto} flex justify-center items-center text-xl font-black shadow-lg shadow-black/20`}>
 												{inicial}
 											</div>
 											<div>
-												<h4 className="font-white font-bold text-white group-hover:text-[#3b82f6] transition-colors">{element.name} {element.lastName}</h4>
-												<p className="text-xs text-[#9CA3AF]">ID: STU-{element.id.toString().padStart(4, '0')}</p>
+												<h4 className="font-white font-bold text-white group-hover:text-[#3b82f6] transition-colors">{element.nombre_completo}</h4>
+												<p className="text-xs text-[#9CA3AF]">ID: STU-{(element.id_estudiante || 0).toString().padStart(4, '0')}</p>
 											</div>
 										</div>
 									</td>
@@ -66,20 +66,20 @@ export const Table = ({ usuarios, setUsuarios }) => {
 												<Mail size={12} className="text-[#9CA3AF]" /> {element.email}
 											</div>
 											<div className="flex items-center gap-2">
-												<Phone size={12} className="text-[#9CA3AF]" /> {element.phone}
+												<Phone size={12} className="text-[#9CA3AF]" /> {element.telefono}
 											</div>
 										</div>
 									</td>
 
 									<td className="py-5 px-6">
 										<span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border 
-                                            ${element.nivel === "Principiante" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-												element.nivel === "Intermedio" ? "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" :
-													element.nivel === "Avanzado" ? "text-[#3b82f6] bg-[#3b82f6]/10 border-[#3b82f6]/20" :
-														element.nivel === "Profesional" ? "text-purple-400 bg-purple-500/10 border-purple-500/20" :
-															"text-gray-400 bg-gray-500/10 border-gray-500/20"}`}>
+                                            ${element.nivel_experiencia === "Principiante" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+											element.nivel_experiencia === "Intermedio" ? "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" :
+												element.nivel_experiencia === "Avanzado" ? "text-[#3b82f6] bg-[#3b82f6]/10 border-[#3b82f6]/20" :
+													element.nivel_experiencia === "Profesional" ? "text-purple-400 bg-purple-500/10 border-purple-500/20" :
+														"text-gray-400 bg-gray-500/10 border-gray-500/20"}`}>
 											<span className="w-1.5 h-1.5 rounded-full bg-[currentColor]"></span>
-											{element.nivel}
+											{element.nivel_experiencia || "Sin nivel"}
 										</span>
 									</td>
 
@@ -121,19 +121,19 @@ export const Table = ({ usuarios, setUsuarios }) => {
 						<div className="p-8">
 							<div className="flex items-center gap-5 mb-8 border-b border-gray-800 pb-6">
 								<div className="w-16 h-16 rounded-full bg-[#1E3A8A] flex justify-center items-center text-3xl font-black text-white shadow-lg">
-									{selectedUser.name?.charAt(0).toUpperCase()}
+									{selectedUser.nombre_completo?.charAt(0).toUpperCase()}
 								</div>
 								<div>
 									<h3 className="text-2xl font-black uppercase tracking-tight text-white mb-1">
-										{selectedUser.name} {selectedUser.lastName}
+										{selectedUser.nombre_completo}
 									</h3>
 									<span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border 
-                                            ${selectedUser.nivel === "Principiante" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-											selectedUser.nivel === "Intermedio" ? "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" :
-												selectedUser.nivel === "Avanzado" ? "text-[#3b82f6] bg-[#3b82f6]/10 border-[#3b82f6]/20" :
-													selectedUser.nivel === "Profesional" ? "text-purple-400 bg-purple-500/10 border-purple-500/20" :
-														"text-gray-400 bg-gray-500/10 border-gray-500/20"}`}>
-										<Award size={10} /> {selectedUser.nivel}
+                                            ${selectedUser.nivel_experiencia === "Principiante" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+										selectedUser.nivel_experiencia === "Intermedio" ? "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" :
+											selectedUser.nivel_experiencia === "Avanzado" ? "text-[#3b82f6] bg-[#3b82f6]/10 border-[#3b82f6]/20" :
+												selectedUser.nivel_experiencia === "Profesional" ? "text-purple-400 bg-purple-500/10 border-purple-500/20" :
+													"text-gray-400 bg-gray-500/10 border-gray-500/20"}`}>
+										<Award size={10} /> {selectedUser.nivel_experiencia || "Sin nivel"}
 									</span>
 								</div>
 							</div>
@@ -143,28 +143,28 @@ export const Table = ({ usuarios, setUsuarios }) => {
 									<Phone className="text-[#3b82f6]" size={20} />
 									<div>
 										<p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Teléfono</p>
-										<p className="font-semibold text-white">{selectedUser.phone}</p>
+										<p className="font-semibold text-white">{selectedUser.telefono || "—"}</p>
 									</div>
 								</div>
 								<div className="bg-[#0B0F14] border border-gray-800 rounded-xl p-4 flex items-center gap-4">
 									<Mail className="text-[#3b82f6]" size={20} />
 									<div>
 										<p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Email</p>
-										<p className="font-semibold text-white truncate max-w-[150px]">{selectedUser.email}</p>
+										<p className="font-semibold text-white truncate max-w-[150px]">{selectedUser.email || "—"}</p>
 									</div>
 								</div>
 								<div className="bg-[#0B0F14] border border-gray-800 rounded-xl p-4 flex items-center gap-4">
-									<div className="font-bold text-[#3b82f6] text-xl px-1">23</div>
+									<div className="font-bold text-[#3b82f6] text-xl px-1">{selectedUser.edad || "—"}</div>
 									<div>
 										<p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Edad</p>
-										<p className="font-semibold text-white">23 años</p>
+										<p className="font-semibold text-white">{selectedUser.edad ? `${selectedUser.edad} años` : "—"}</p>
 									</div>
 								</div>
 								<div className="bg-[#0B0F14] border border-gray-800 rounded-xl p-4 flex items-center gap-4">
 									<div className="font-bold text-[#3b82f6] text-sm px-1">#</div>
 									<div>
 										<p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">ID Estudiante</p>
-										<p className="font-semibold text-white">STU-{selectedUser.id.toString().padStart(4, '0')}</p>
+										<p className="font-semibold text-white">STU-{(selectedUser.id_estudiante || 0).toString().padStart(4, '0')}</p>
 									</div>
 								</div>
 							</div>
@@ -185,15 +185,9 @@ export const Table = ({ usuarios, setUsuarios }) => {
 								<Pencil className="text-[#3b82f6]" size={24} /> Editar Estudiante
 							</h3>
 							<form>
-								<div className="flex gap-4 mb-4">
-									<div className="flex-1">
-										<label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2 block mb-1">Nombre</label>
-										<input className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors" defaultValue={selectedUser.name} />
-									</div>
-									<div className="flex-1">
-										<label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2 block mb-1">Apellido</label>
-										<input className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors" defaultValue={selectedUser.lastName} />
-									</div>
+								<div className="mb-4">
+									<label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2 block mb-1">Nombre completo</label>
+									<input className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors" defaultValue={selectedUser.nombre_completo} />
 								</div>
 								<div className="mb-4">
 									<label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2 block mb-1">Correo electrónico</label>
@@ -201,7 +195,7 @@ export const Table = ({ usuarios, setUsuarios }) => {
 								</div>
 								<div className="mb-6">
 									<label className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-wider ml-2 block mb-1">Teléfono</label>
-									<input type="tel" className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors" defaultValue={selectedUser.phone} />
+									<input type="tel" className="w-full bg-[#0B0F14] border border-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-[#3b82f6] transition-colors" defaultValue={selectedUser.telefono} />
 								</div>
 
 								<div className="flex justify-end gap-3 pt-6 border-t border-gray-800">
@@ -225,13 +219,13 @@ export const Table = ({ usuarios, setUsuarios }) => {
 							</div>
 							<h3 className="text-2xl font-black text-white uppercase tracking-tight mb-4">Eliminar Estudiante</h3>
 							<p className="text-gray-400 mb-8 max-w-[300px] mx-auto text-sm">
-								¿Estás seguro que deseas eliminar a <br /><span className="font-bold text-white text-base mt-2 inline-block">{selectedUser.name} {selectedUser.lastName}</span>?<br /><br />Esta acción no se puede deshacer.
+								¿Estás seguro que deseas eliminar a <br /><span className="font-bold text-white text-base mt-2 inline-block">{selectedUser.nombre_completo}</span>?<br /><br />Esta acción no se puede deshacer.
 							</p>
 							<div className="flex justify-center gap-3">
 								<button className="px-8 py-3 bg-[#0B0F14] border border-gray-700 text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all" onClick={closeModal}>
 									Cancelar
 								</button>
-								<button className="px-8 py-3 bg-red-500 text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-red-600 transition-all shadow-lg shadow-red-500/20" onClick={() => confirmDelete(selectedUser.id)}>
+								<button className="px-8 py-3 bg-red-500 text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-red-600 transition-all shadow-lg shadow-red-500/20" onClick={() => confirmDelete(selectedUser.id_estudiante)}>
 									Eliminar
 								</button>
 							</div>

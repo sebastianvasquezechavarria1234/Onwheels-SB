@@ -20,7 +20,7 @@ export default function Sedes() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  
+
   // Sorting
   const [sortField, setSortField] = useState("nombre_sede");
   const [sortDirection, setSortDirection] = useState("asc");
@@ -200,7 +200,7 @@ export default function Sedes() {
   // Filter + Sort + Pagination
   const filteredAndSorted = useMemo(() => {
     let result = [...sedes];
-    
+
     if (search) {
       const q = search.toLowerCase().trim();
       result = result.filter(s =>
@@ -215,7 +215,7 @@ export default function Sedes() {
       const bVal = b[sortField];
       if (aVal === null || aVal === undefined) return 1;
       if (bVal === null || bVal === undefined) return -1;
-      
+
       if (typeof aVal === "string" && typeof bVal === "string") {
         return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       }
@@ -245,320 +245,332 @@ export default function Sedes() {
   };
 
   return (
-    <div className={configUi.pageShell}>
-      {/* 1. HEADER */}
-      <div className={configUi.headerRow}>
-        <div className={configUi.titleWrap}>
-          <h2 className={configUi.title}>Sedes de Eventos</h2>
-          <span className={configUi.countBadge}>
-            <Hash className="mr-1 h-3 w-3" />
-            {filteredAndSorted.length} sedes
-          </span>
-        </div>
+    <>
+      <div className={configUi.pageShell}>
 
-        <div className={configUi.toolbar}>
-          <div className={configUi.searchWrap}>
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86a0c6]" />
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Buscar sede o ciudad..."
-              className={configUi.inputWithIcon}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#86a0c6] hover:text-[#16315f]"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          <button onClick={() => openModal("crear")} className={configUi.primaryButton}>
-            <Plus size={18} />
-            <span>Nueva Sede</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. TABLE AREA */}
-      <div className={configUi.tableCard}>
-        <div className={configUi.tableScroll}>
-          <table className={configUi.table}>
-            <thead className={configUi.thead}>
-              <tr>
-                <th className={cn(configUi.th, "w-[25%] pl-5")}>
-                  <button onClick={() => toggleSort("nombre_sede")} className="flex items-center gap-2">
-                    Sede
-                    {sortField === "nombre_sede" && <ArrowUpDown className="h-3 w-3" />}
-                  </button>
-                </th>
-                <th className={cn(configUi.th, "w-[20%]")}>
-                   <button onClick={() => toggleSort("ciudad")} className="flex items-center gap-2">
-                    Ciudad
-                    {sortField === "ciudad" && <ArrowUpDown className="h-3 w-3" />}
-                  </button>
-                </th>
-                <th className={cn(configUi.th, "w-[30%]")}>Dirección</th>
-                <th className={cn(configUi.th, "w-[15%]")}>Teléfono</th>
-                <th className={cn(configUi.th, "w-[10%] pr-5 text-right")}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className={configUi.emptyState}>
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#223a63] border-t-transparent" />
-                      <span>Cargando sedes...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : currentItems.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className={configUi.emptyState}>No se encontraron sedes.</td>
-                </tr>
-              ) : (
-                currentItems.map((s) => (
-                  <tr key={s.id_sede} className={configUi.row}>
-                    <td className={cn(configUi.td, "pl-5 font-bold text-[#16315f]")}>
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-[#3b82f6]" />
-                        {s.nombre_sede}
-                      </div>
-                    </td>
-                    <td className={cn(configUi.td, "text-[#16315f] font-medium")}>
-                      {s.ciudad}
-                    </td>
-                    <td className={cn(configUi.td, "text-[#5b7398]")}>
-                      {s.direccion}
-                    </td>
-                    <td className={cn(configUi.td, "text-[#5b7398]")}>
-                      {s.telefono}
-                    </td>
-                    <td className={cn(configUi.td, "pr-5 text-right")}>
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openModal("ver", s)} className={configUi.actionButton} title="Ver">
-                          <Eye size={14} />
-                        </button>
-                        <button onClick={() => openModal("editar", s)} className={configUi.actionButton} title="Editar">
-                          <Pen size={14} />
-                        </button>
-                        <button onClick={() => openModal("eliminar", s)} className={configUi.actionDangerButton} title="Eliminar">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* PAGINATION */}
-        {totalPages > 0 && (
-          <div className={configUi.paginationBar}>
-            <p className="text-sm font-bold text-slate-500">
-              Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className={configUi.paginationButton}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className={configUi.paginationButton}
-              >
-                <ChevronRight size={18} />
-              </button>
+        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
+        <div className="shrink-0 flex flex-col gap-4 p-6 pb-2">
+          {/* Row 1: Minimal Header (Matches Screenshot) */}
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-[#1f2937] rounded-xl flex items-center justify-center text-white shadow-sm">
+              <Building2 size={20} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-[#1f2937] tracking-tight uppercase">
+                Gestión de Sedes
+              </h2>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 mt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                {sedes.length} sedes registradas
+              </div>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* NOTIFICATIONS */}
-      <AnimatePresence>
-        {notification.show && (
-          <motion.div
-            initial={{ opacity: 0, x: 300 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 300 }}
-            className={cn(
-                "fixed top-4 right-4 z-[60] px-4 py-3 rounded-xl shadow-lg text-white font-medium",
-                notification.type === "success" ? "bg-blue-600" : "bg-red-600"
-            )}
-          >
-            {notification.message}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {/* Row 2: Active Toolbar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+            {/* Search & Create Group */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative w-[280px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                  placeholder="Buscar sedes..."
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-gray-400"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => openModal("add")}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-[13px] font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 whitespace-nowrap"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                Nueva Sede
+              </button>
+            </div>
 
-      {/* MODALES */}
-      <AnimatePresence>
-        {modal && (
-          <motion.div
-            className={configUi.modalBackdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
-          >
-            <motion.div
-              className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-2xl")}
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex flex-col">
-                <div className={configUi.modalHeader}>
-                  <div>
-                    <h3 className={configUi.modalTitle}>
-                      {modal === "crear" ? "Nueva Sede" : 
-                       modal === "editar" ? "Editar Sede" : 
-                       modal === "ver" ? "Detalles de Sede" : "Eliminar Sede"}
-                    </h3>
-                    <p className={configUi.modalSubtitle}>
-                      {modal === "eliminar" ? "Confirme si desea remover esta ubicación." : "Información de la ubicación física."}
-                    </p>
-                  </div>
-                  <button onClick={closeModal} className={configUi.modalClose} disabled={submitting}>
-                    <X size={20} />
+            {/* Filters (Sort - Matches screenshot dark pill styling) */}
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {[
+                { id: "nombre_sede", label: "Nombre" },
+                { id: "ciudad", label: "Ciudad" },
+              ].map((field) => (
+                <button
+                  key={field.id}
+                  onClick={() => toggleSort(field.id)}
+                  className={cn(
+                    "px-4 py-2 text-[11px] uppercase font-bold tracking-wider rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
+                    sortField === field.id
+                      ? "bg-[#1f2937] text-white border-[#1f2937]"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                  )}
+                >
+                  {field.label}
+                  {sortField === field.id && <ArrowUpDown className="h-3 w-3 opacity-70" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* --- SECTION 2: TABLE AREA --- */}
+        <div className="flex-1 px-6 pb-6 overflow-hidden flex flex-col min-h-0">
+          <div className={configUi.tableCard}>
+            <div className={configUi.tableScroll}>
+              <table className={configUi.table}>
+                <thead className={configUi.thead}>
+                  <tr>
+                    <th className={`${configUi.th} w-[25%]`}>Nombre</th>
+                    <th className={`${configUi.th} w-[30%]`}>Dirección</th>
+                    <th className={`${configUi.th} w-[15%]`}>Ciudad</th>
+                    <th className={`${configUi.th} w-[15%]`}>Teléfono</th>
+                    <th className={`${configUi.th} text-right w-[15%]`}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="5" className="p-8 text-center text-gray-400 text-sm">Cargando sedes...</td></tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="p-12 text-center text-gray-400">
+                        <div className="flex flex-col items-center gap-2 opacity-50">
+                          <MapPin className="h-8 w-8" />
+                          <p className="text-sm">No se encontraron sedes</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((s) => (
+                      <tr key={s.id_sede} className={configUi.row}>
+                        <td className={`${configUi.td} font-bold text-gray-900`}>{s.nombre_sede}</td>
+                        <td className={`${configUi.td} text-gray-500 flex items-center gap-2`}>
+                          <MapPin size={14} className="text-blue-400 shrink-0" />
+                          <span className="truncate">{s.direccion}</span>
+                        </td>
+                        <td className={configUi.td}>
+                          <span className={s.ciudad.toLowerCase().includes('bogot') ? configUi.tealPill : s.ciudad.toLowerCase().includes('pereira') ? configUi.purplePill : configUi.pill}>
+                            {s.ciudad}
+                          </span>
+                        </td>
+                        <td className={`${configUi.td} text-gray-600`}>{s.telefono}</td>
+                        <td className={`${configUi.td} text-right`}>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button onClick={() => openModal("details", s)} className={configUi.actionButton} title="Ver"><Eye size={14} strokeWidth={2.5} /></button>
+                            <button onClick={() => openModal("edit", s)} className={configUi.actionEditButton} title="Editar"><Pencil size={14} strokeWidth={2.5} /></button>
+                            <button onClick={() => openModal("delete", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} strokeWidth={2.5} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* PAGINATION */}
+            {totalPages > 0 && (
+              <div className={configUi.paginationBar}>
+                <p className="text-sm font-bold text-slate-500">
+                  Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className={configUi.paginationButton}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className={configUi.paginationButton}
+                  >
+                    <ChevronRight size={18} />
                   </button>
                 </div>
-
-                <div className={configUi.modalContent}>
-                  {modal === "eliminar" ? (
-                    <div className="py-4 text-center">
-                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
-                        <Trash2 size={30} />
-                      </div>
-                      <p className="text-sm leading-6 text-[#6b84aa]">
-                        ¿Estás seguro de eliminar la sede <span className="font-bold text-[#d44966]">{selected?.nombre_sede}</span>?
-                        <br />Esta acción no se puede deshacer.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div className={configUi.fieldGroup}>
-                        <label className={configUi.fieldLabel}>Nombre de la Sede *</label>
-                        <div className="relative">
-                           <Home className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                           <input
-                            name="nombre_sede"
-                            value={form.nombre_sede}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            readOnly={modal === "ver"}
-                            disabled={modal === "ver" || submitting}
-                            placeholder="Ej: Auditorio Principal"
-                            className={cn(configUi.fieldInput, "pl-10", formErrors.nombre_sede && "border-red-500")}
-                           />
-                        </div>
-                        {formErrors.nombre_sede && (
-                          <p className="mt-1 text-xs font-bold text-red-500">{formErrors.nombre_sede}</p>
-                        )}
-                      </div>
-
-                      <div className={configUi.fieldGroup}>
-                        <label className={configUi.fieldLabel}>Ciudad *</label>
-                        <input
-                          name="ciudad"
-                          value={form.ciudad}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          readOnly={modal === "ver"}
-                          disabled={modal === "ver" || submitting}
-                          placeholder="Ej: Medellín"
-                          className={cn(configUi.fieldInput, formErrors.ciudad && "border-red-500")}
-                        />
-                        {formErrors.ciudad && (
-                          <p className="mt-1 text-xs font-bold text-red-500">{formErrors.ciudad}</p>
-                        )}
-                      </div>
-
-                      <div className={cn(configUi.fieldGroup, "md:col-span-2")}>
-                        <label className={configUi.fieldLabel}>Dirección Completa *</label>
-                        <div className="relative">
-                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                           <input
-                            name="direccion"
-                            value={form.direccion}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            readOnly={modal === "ver"}
-                            disabled={modal === "ver" || submitting}
-                            placeholder="Ej: Calle 10 # 45-20"
-                            className={cn(configUi.fieldInput, "pl-10", formErrors.direccion && "border-red-500")}
-                           />
-                        </div>
-                        {formErrors.direccion && (
-                          <p className="mt-1 text-xs font-bold text-red-500">{formErrors.direccion}</p>
-                        )}
-                      </div>
-
-                      <div className={configUi.fieldGroup}>
-                        <label className={configUi.fieldLabel}>Teléfono de Contacto *</label>
-                        <div className="relative">
-                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                           <input
-                            name="telefono"
-                            value={form.telefono}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            readOnly={modal === "ver"}
-                            disabled={modal === "ver" || submitting}
-                            placeholder="Ej: 3001234567"
-                            className={cn(configUi.fieldInput, "pl-10", formErrors.telefono && "border-red-500")}
-                           />
-                        </div>
-                        {formErrors.telefono && (
-                          <p className="mt-1 text-xs font-bold text-red-500">{formErrors.telefono}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className={configUi.modalFooter}>
-                  <span className="text-xs text-[#6b84aa]">
-                    {modal === "ver" ? "Vista de información registrada." : "Complete todos los campos marcados con *."}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>
-                      {modal === "ver" ? "Cerrar" : "Cancelar"}
-                    </button>
-                    {modal === "crear" && (
-                      <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
-                        {submitting ? "Creando..." : "Crear Sede"}
-                      </button>
-                    )}
-                    {modal === "editar" && (
-                      <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
-                        {submitting ? "Actualizando..." : "Guardar Cambios"}
-                      </button>
-                    )}
-                    {modal === "eliminar" && (
-                      <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>
-                        {submitting ? "Eliminando..." : "Confirmar Eliminación"}
-                      </button>
-                    )}
-                  </div>
-                </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+            )}
+          </div>
+
+          {/* NOTIFICATIONS */}
+          <AnimatePresence>
+            {notification.show && (
+              <motion.div
+                initial={{ opacity: 0, x: 300 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 300 }}
+                className={cn(
+                  "fixed top-4 right-4 z-[60] px-4 py-3 rounded-xl shadow-lg text-white font-medium",
+                  notification.type === "success" ? "bg-blue-600" : "bg-red-600"
+                )}
+              >
+                {notification.message}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* MODALES */}
+          <AnimatePresence>
+            {modal && (
+              <motion.div
+                className={configUi.modalBackdrop}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeModal}
+              >
+                <motion.div
+                  className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-2xl")}
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex flex-col">
+                    <div className={configUi.modalHeader}>
+                      <div>
+                        <h3 className={configUi.modalTitle}>
+                          {modal === "crear" ? "Nueva Sede" :
+                            modal === "editar" ? "Editar Sede" :
+                              modal === "ver" ? "Detalles de Sede" : "Eliminar Sede"}
+                        </h3>
+                        <p className={configUi.modalSubtitle}>
+                          {modal === "eliminar" ? "Confirme si desea remover esta ubicación." : "Información de la ubicación física."}
+                        </p>
+                      </div>
+                      <button onClick={closeModal} className={configUi.modalClose} disabled={submitting}>
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <div className={configUi.modalContent}>
+                      {modal === "eliminar" ? (
+                        <div className="py-4 text-center">
+                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
+                            <Trash2 size={30} />
+                          </div>
+                          <p className="text-sm leading-6 text-[#6b84aa]">
+                            ¿Estás seguro de eliminar la sede <span className="font-bold text-[#d44966]">{selected?.nombre_sede}</span>?
+                            <br />Esta acción no se puede deshacer.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Nombre de la Sede *</label>
+                            <div className="relative">
+                              <Home className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                              <input
+                                name="nombre_sede"
+                                value={form.nombre_sede}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                readOnly={modal === "ver"}
+                                disabled={modal === "ver" || submitting}
+                                placeholder="Ej: Auditorio Principal"
+                                className={cn(configUi.fieldInput, "pl-10", formErrors.nombre_sede && "border-red-500")}
+                              />
+                            </div>
+                            {formErrors.nombre_sede && (
+                              <p className="mt-1 text-xs font-bold text-red-500">{formErrors.nombre_sede}</p>
+                            )}
+                          </div>
+
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Ciudad *</label>
+                            <input
+                              name="ciudad"
+                              value={form.ciudad}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              readOnly={modal === "ver"}
+                              disabled={modal === "ver" || submitting}
+                              placeholder="Ej: Medellín"
+                              className={cn(configUi.fieldInput, formErrors.ciudad && "border-red-500")}
+                            />
+                            {formErrors.ciudad && (
+                              <p className="mt-1 text-xs font-bold text-red-500">{formErrors.ciudad}</p>
+                            )}
+                          </div>
+
+                          <div className={cn(configUi.fieldGroup, "md:col-span-2")}>
+                            <label className={configUi.fieldLabel}>Dirección Completa *</label>
+                            <div className="relative">
+                              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                              <input
+                                name="direccion"
+                                value={form.direccion}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                readOnly={modal === "ver"}
+                                disabled={modal === "ver" || submitting}
+                                placeholder="Ej: Calle 10 # 45-20"
+                                className={cn(configUi.fieldInput, "pl-10", formErrors.direccion && "border-red-500")}
+                              />
+                            </div>
+                            {formErrors.direccion && (
+                              <p className="mt-1 text-xs font-bold text-red-500">{formErrors.direccion}</p>
+                            )}
+                          </div>
+
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Teléfono de Contacto *</label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                              <input
+                                name="telefono"
+                                value={form.telefono}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                readOnly={modal === "ver"}
+                                disabled={modal === "ver" || submitting}
+                                placeholder="Ej: 3001234567"
+                                className={cn(configUi.fieldInput, "pl-10", formErrors.telefono && "border-red-500")}
+                              />
+                            </div>
+                            {formErrors.telefono && (
+                              <p className="mt-1 text-xs font-bold text-red-500">{formErrors.telefono}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={configUi.modalFooter}>
+                      <span className="text-xs text-[#6b84aa]">
+                        {modal === "ver" ? "Vista de información registrada." : "Complete todos los campos marcados con *."}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>
+                          {modal === "ver" ? "Cerrar" : "Cancelar"}
+                        </button>
+                        {modal === "crear" && (
+                          <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
+                            {submitting ? "Creando..." : "Crear Sede"}
+                          </button>
+                        )}
+                        {modal === "editar" && (
+                          <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
+                            {submitting ? "Actualizando..." : "Guardar Cambios"}
+                          </button>
+                        )}
+                        {modal === "eliminar" && (
+                          <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>
+                            {submitting ? "Eliminando..." : "Confirmar Eliminación"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        );
 }

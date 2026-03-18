@@ -291,61 +291,61 @@ export const MyClasses = () => {
                     {modalOpen && selected && (
                         <ModalWrapper onClose={closeModal}>
                             <div className="p-8">
-                                <div className="flex justify-between items-start mb-8 border-b border-gray-100 pb-6">
+                                <div className="flex justify-between items-start mb-8 border-b border-gray-800 pb-6">
                                     <div>
-                                        <h3 className="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">
+                                        <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-1">
                                             {selected.nombre}
                                         </h3>
-                                        <p className="text-gray-500 font-medium">Instructor: {selected.instructor}</p>
+                                        <p className="text-[#9CA3AF] font-medium">Instructor: {selected.instructor}</p>
                                     </div>
-                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-600 text-xs font-black uppercase tracking-widest">
+                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 text-xs font-black uppercase tracking-widest border border-orange-500/20">
                                         {selected.nivel}
                                     </span>
                                 </div>
 
                                 <div className="space-y-6 mb-8 text-sm">
-                                    <p className="text-gray-600 leading-relaxed italic border-l-4 border-blue-500 pl-4">
+                                    <p className="text-[#9CA3AF] leading-relaxed italic border-l-4 border-[#3b82f6] pl-4">
                                         "{selected.descripcion}"
                                     </p>
 
-                                    <div className="grid grid-cols-2 gap-x-8 gap-y-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                    <div className="grid grid-cols-2 gap-x-8 gap-y-6 bg-[#0B0F14] p-6 rounded-2xl border border-gray-800">
                                         <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-white rounded-lg shadow-sm">
-                                                <MapPin className="text-blue-500" size={20} />
+                                            <div className="p-2 bg-gray-800/50 rounded-lg">
+                                                <MapPin className="text-[#3b82f6]" size={20} />
                                             </div>
                                             <div>
-                                                <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Lugar</p>
-                                                <p className="font-semibold text-gray-900">{selected.ubicacion}</p>
-                                                <p className="text-gray-500 text-xs mt-0.5">{selected.direccion}</p>
+                                                <p className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-1">Lugar</p>
+                                                <p className="font-semibold text-white">{selected.ubicacion}</p>
+                                                <p className="text-gray-400 text-xs mt-0.5">{selected.direccion}</p>
                                             </div>
                                         </div>
 
                                         <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-white rounded-lg shadow-sm">
-                                                <Clock className="text-blue-500" size={20} />
+                                            <div className="p-2 bg-gray-800/50 rounded-lg">
+                                                <Clock className="text-[#3b82f6]" size={20} />
                                             </div>
                                             <div>
-                                                <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Horario</p>
-                                                <p className="font-semibold text-gray-900">{selected.dia}</p>
-                                                <p className="text-gray-500 text-xs mt-0.5">{selected.hora}</p>
+                                                <p className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-1">Horario</p>
+                                                <p className="font-semibold text-white">{selected.dia}</p>
+                                                <p className="text-gray-400 text-xs mt-0.5">{selected.hora}</p>
                                             </div>
                                         </div>
 
                                         <div className="flex items-start gap-3 col-span-2">
-                                            <div className="p-2 bg-white rounded-lg shadow-sm">
-                                                <Users className="text-blue-500" size={20} />
+                                            <div className="p-2 bg-gray-800/50 rounded-lg">
+                                                <Users className="text-[#3b82f6]" size={20} />
                                             </div>
                                             <div>
-                                                <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Tamaño del Grupo</p>
-                                                <p className="font-semibold text-gray-900">{selected.cantidadEstudiantes} Estudiantes</p>
+                                                <p className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-1">Tamaño del Grupo</p>
+                                                <p className="font-semibold text-white">{selected.cantidadEstudiantes} Estudiantes</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end pt-6 border-t border-gray-100">
+                                <div className="flex justify-end pt-6 border-t border-gray-800">
                                     <button
-                                        className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                                        className="bg-[#0B0F14] border border-gray-800 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[#3b82f6]/10 hover:border-[#3b82f6] hover:text-[#3b82f6] transition-all"
                                         onClick={closeModal}
                                     >
                                         Cerrar Detalle
@@ -372,7 +372,7 @@ const ModalWrapper = ({ children, onClose }) => {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
             <motion.div
-                className="relative z-10 bg-white rounded-3xl w-[90%] max-w-[640px] shadow-2xl overflow-hidden"
+                className="relative z-10 bg-[#121821] border border-gray-800 rounded-3xl w-[90%] max-w-[640px] shadow-2xl overflow-hidden"
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}

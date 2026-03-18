@@ -1,18 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { InstructorLayout } from "../../../landing/instructor/layout/InstructorLayout";
-import { Users, Search } from "lucide-react";
+import { Users, Search, Loader2 } from "lucide-react";
 import { Table } from "../components/myStudent/Table";
-import { useAuth } from "../../dinamico/context/AuthContext";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { getEstudiantes } from "../../../dashboards/admin/pages/services/estudiantesServices";
 
 export const MyStudent = () => {
-  const [usuarios, setUsuarios] = useState(initialUsuarios);
+  const [usuarios, setUsuarios] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        const data = await getEstudiantes();
+        setUsuarios(data);
+      } catch (err) {
+        console.error("Error fetching students:", err);
+        setError(err.message);
+        setUsuarios([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
 
   const filteredUsers = usuarios.filter(user =>
-    `${user.name} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.nombre_completo || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.documento || "").includes(searchTerm)
   );
 
   return (
@@ -46,7 +64,24 @@ export const MyStudent = () => {
               </div>
             </div>
 
-            <Table usuarios={filteredUsers} setUsuarios={setUsuarios} />
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <Loader2 className="animate-spin text-[#3b82f6] mb-4" size={36} />
+                <p className="text-sm font-medium">Cargando estudiantes...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <p className="text-red-400 font-bold mb-2">Error</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                <Users className="mb-4 text-gray-600" size={40} />
+                <p className="text-sm font-medium">No se encontraron estudiantes</p>
+              </div>
+            ) : (
+              <Table usuarios={filteredUsers} setUsuarios={setUsuarios} />
+            )}
           </div>
         </div>
       </section>

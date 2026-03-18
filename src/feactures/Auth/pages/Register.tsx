@@ -10,6 +10,7 @@ interface FormData {
   phone: string;
   password: string;
   confirmPassword: string;
+  birthDate: string;
 }
 
 interface Errors {
@@ -24,6 +25,7 @@ const Register = () => {
     phone: "",
     password: "",
     confirmPassword: "",
+    birthDate: "",
   });
 
   const [errors, setErrors] = useState<Errors>({ passwordMatch: "", passwordStrength: "" });
@@ -92,6 +94,7 @@ const Register = () => {
         email: formData.email.toLowerCase(),
         telefono: formData.phone || null,
         contrasena: formData.password,
+        fecha_nacimiento: formData.birthDate
       };
 
       const response = await api.post("/auth/register", payload);
@@ -104,6 +107,7 @@ const Register = () => {
           phone: "",
           password: "",
           confirmPassword: "",
+          birthDate: "",
         });
         setErrors({ passwordMatch: "", passwordStrength: "" });
 
@@ -210,6 +214,18 @@ const Register = () => {
                   onChange={handleChange}
                   placeholder="usuario@email.com"
                   className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-400 ml-1 uppercase tracking-wider">Fecha de Nacimiento</label>
+                <input
+                  id="birthDate"
+                  name="birthDate"
+                  type="date"
+                  value={formData.birthDate}
+                  onChange={handleChange}
+                  className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-(--color-blue) focus:border-(--color-blue) outline-none transition-all text-white placeholder:text-gray-600 font-medium text-sm [color-scheme:dark]"
                   required
                 />
               </div>

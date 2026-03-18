@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { User, LogOut, ShoppingBag, BookOpen, LayoutDashboard } from "lucide-react";
+import { User, LogOut, ShoppingBag, BookOpen, LayoutDashboard, Users } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { getProfilePath, getPurchasesPath, getUserRoleSlug } from "../../../utils/roleHelpers";
@@ -64,6 +64,12 @@ export const UserDropdown = ({ isScrolled = false }) => {
             icon: <BookOpen size={16} />,
             path: `/${roleSlug}/myClasses`,
             show: roleSlug === "student" || roleSlug === "instructor",
+        },
+        {
+            label: "Mis Estudiantes",
+            icon: <Users size={16} />,
+            path: "/instructor/myStudent",
+            show: roleSlug === "instructor",
         },
     ];
 
