@@ -51,11 +51,6 @@ export const Layout = ({ children }) => {
 							</BtnSideBar>
 						</li>
 						<li>
-							<BtnSideBar title="Mis estudiantes" link="../instructor/myStudent">
-								<Users size={20} className="text-black/80" strokeWidth={1.5} />
-							</BtnSideBar>
-						</li>
-						<li>
 							<BtnSideBar title="Mis clases" link="../instructor/myClasses">
 								<School size={20} className="text-black/70" strokeWidth={1.5} />
 							</BtnSideBar>

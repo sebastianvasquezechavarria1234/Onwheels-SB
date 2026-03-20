@@ -162,6 +162,17 @@ export default function PedidoEditar() {
             if (userId) showNotification("Usuario nuevo. Por favor complete el envío.");
         }
     };
+    
+    const validateForm = () => {
+        const errors = {};
+        if (!form.id_usuario) errors.id_usuario = "Seleccione un cliente";
+        if (!form.direccion) errors.direccion = "Ingrese la dirección";
+        if (!form.telefono) errors.telefono = "Ingrese el teléfono";
+        if (form.items.length === 0) errors.items = "Agregue al menos un producto";
+        
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();

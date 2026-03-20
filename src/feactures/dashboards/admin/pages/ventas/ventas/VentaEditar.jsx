@@ -67,22 +67,35 @@ export default function VentaEditar() {
     // --- CARGA DE DATOS ---
     const combinarProductosConVariantes = (productosList = [], variantesList = []) => {
         const productoMap = new Map();
-        productosList.forEach((p) => productoMap.set(p.id_producto, { ...p, variantes: [] }));
-        variantesList.forEach((v) => {
-            const producto = productoMap.get(v.id_producto);
-            if (producto) {
-                producto.variantes.push({
-                    id_variante: v.id_variante,
-                    id_color: v.id_color,
-                    id_talla: v.id_talla,
-                    stock: v.stock,
-                    nombre_color: v.nombre_color,
-                    nombre_talla: v.nombre_talla,
-                    codigo_hex: v.codigo_hex,
-                });
-            }
+        productosList.forEach((p) => {
+            const pid = Number(p.id_producto);
+            productoMap.set(pid, { ...p, variantes: p.variantes || [] });
         });
-        return Array.from(productoMap.values());
+
+        if (variantesList && variantesList.length > 0) {
+            variantesList.forEach((v) => {
+                const pid = Number(v.id_producto);
+                const producto = productoMap.get(pid);
+                if (producto) {
+                    // Evitar duplicados si el backend ya los traía
+                    const exists = producto.variantes.some(ev => ev.id_variante === v.id_variante);
+                    if (!exists) {
+                        producto.variantes.push({
+                            id_variante: v.id_variante,
+                            id_color: v.id_color,
+                            id_talla: v.id_talla,
+                            stock: v.stock,
+                            nombre_color: v.nombre_color,
+                            nombre_talla: v.nombre_talla,
+                            codigo_hex: v.codigo_hex,
+                        });
+                    }
+                }
+            });
+        }
+        const final = Array.from(productoMap.values());
+        console.log("VentaEditar: Productos cargados y combinados:", final.length);
+        return final;
     };
 
     useEffect(() => {
@@ -185,6 +198,7 @@ export default function VentaEditar() {
                 id_usuario: !isEditing ? form.id_usuario : undefined,
                 fecha_venta: form.fecha_venta,
                 metodo_pago: form.metodo_pago,
+                estado: form.estado,
                 direccion: form.direccion,
                 telefono: form.telefono,
                 items: form.items.map(it => ({
