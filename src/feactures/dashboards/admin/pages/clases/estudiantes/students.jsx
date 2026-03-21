@@ -15,6 +15,8 @@ import {
   getUsuariosActivos
 } from "../../services/estudiantesServices";
 import { configUi } from "../../configuracion/configUi";
+import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
+import api from "../../../../../../services/api";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -110,38 +112,96 @@ const Students = () => {
     }
   };
 
+  const [modalError, setModalError] = useState(null);
+
   const closeModal = () => {
     setModal(null);
     setSelectedStudent(null);
     setDetails(null);
     setFormErrors({});
+    setModalError(null);
   };
 
   const handleSave = async () => {
+    setModalError(null);
     try {
+      let finalIdAcudiente = selectedStudent?.id_acudiente || null;
+
+      // Actualizar o crear acudiente si se llenó el nombre y teléfono
+      if (formData.acudiente_nombre?.trim()) {
+         try {
+           if (!finalIdAcudiente) {
+             const resAcud = await api.post("/acudientes", {
+               nombre_acudiente: formData.acudiente_nombre,
+               telefono: formData.acudiente_telefono || "0000000000",
+               email: null,
+               relacion: formData.acudiente_parentesco || "Padre/Madre"
+             });
+             finalIdAcudiente = resAcud.data.id_acudiente;
+           } else {
+             await api.put(`/acudientes/${finalIdAcudiente}`, {
+               nombre_acudiente: formData.acudiente_nombre,
+               telefono: formData.acudiente_telefono || "0000000000",
+               email: null,
+               relacion: formData.acudiente_parentesco || "Padre/Madre"
+             });
+           }
+         } catch (e) {
+           console.warn("Error info acudiente (no crítico).", e);
+         }
+      }
+
+      const payloadEstudiante = {
+         id_usuario: formData.id_usuario,
+         enfermedad: formData.enfermedad,
+         nivel_experiencia: formData.nivel_experiencia,
+         edad: formData.edad,
+         id_acudiente: finalIdAcudiente
+      };
+
       if (modal === 'add') {
-        if (!formData.id_usuario) throw new Error("Debes seleccionar un usuario para vincular al estudiante");
-        await crearEstudiante(formData);
+        if (!formData.id_usuario) throw new Error("Debes seleccionar un usuario base.");
+        await crearEstudiante(payloadEstudiante);
         showNotification("Estudiante registrado con éxito");
       } else if (modal === 'edit') {
-        await actualizarEstudiante(selectedStudent.id_estudiante, formData);
+        // También actualizar la información de contacto original en usuarios
+        if (selectedStudent?.id_usuario) {
+           try {
+             await api.put(`/usuarios/${selectedStudent.id_usuario}`, {
+                nombre_completo: formData.nombre_completo,
+                email: formData.email,
+                telefono: formData.telefono,
+                documento: formData.documento,
+                tipo_documento: formData.tipo_documento
+             });
+           } catch (uErr) {
+             console.warn("Fallo actualizando info de usuario subyacente.", uErr);
+           }
+        }
+        await actualizarEstudiante(selectedStudent.id_estudiante, payloadEstudiante);
         showNotification("Estudiante actualizado correctamente");
       }
-      fetchEstudiantes();
+
+      await fetchEstudiantes();
       closeModal();
     } catch (err) {
-      showNotification(err.response?.data?.mensaje || "Error al guardar", "error");
+      const msj = err.response?.data?.mensaje || err.message || "Error al procesar el estudiante.";
+      setModalError(msj);
+      showNotification(msj, "error");
     }
   };
 
   const handleDelete = async () => {
+    setModalError(null);
     try {
       await eliminarEstudiante(selectedStudent.id_estudiante);
-      showNotification("Estudiante eliminado");
-      fetchEstudiantes();
+      showNotification("Estudiante eliminado del sistema.");
+      await fetchEstudiantes();
       closeModal();
     } catch (err) {
-      showNotification("No se puede eliminar: el estudiante tiene datos asociados", "error");
+      const msg = err.response?.data?.mensaje || "No se puede eliminar: el estudiante tiene datos asociados";
+      setModalError(msg);
+      showNotification(msg, "error");
     }
   };
 
@@ -370,6 +430,8 @@ const Students = () => {
                 </div>
 
                 <div className={configUi.modalContent}>
+                    <ModalErrorAlert error={modalError} />
+
                     {modal === 'delete' ? (
                         <div className="py-4 text-center">
                             <p className="text-sm leading-6 text-[#6b84aa]">
@@ -708,7 +770,7 @@ const Students = () => {
                              {modal === 'details' ? "Entendido" : "Cancelar"}
                         </button>
 
-                        {(modal === 'add' || modal === 'edit') && (
+                        {!modalError && (modal === 'add' || modal === 'edit') && (
                             <div className="flex gap-2">
                                 {currentStep > 1 && (
                                     <button onClick={() => setCurrentStep(p => p - 1)} className={configUi.secondaryButton}>Atrás</button>
@@ -723,7 +785,7 @@ const Students = () => {
                             </div>
                         )}
 
-                        {modal === 'delete' && (
+                        {!modalError && modal === 'delete' && (
                              <button onClick={handleDelete} className={configUi.dangerButton}>Confirmar Baja</button>
                         )}
                     </div>

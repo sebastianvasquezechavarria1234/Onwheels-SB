@@ -369,7 +369,7 @@ export const Layout = ({ children }) => {
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
             {/* Floating user menu — dentro del área blanca */}
-            <div ref={menuRef} className="absolute top-4 right-5 z-50">
+            <div ref={menuRef} className="absolute top-4 right-5 z-30">
               <button
                 onClick={() => setMenuOpen(prev => !prev)}
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-[#102035] shadow-md border border-[#23364e] text-slate-300 hover:text-white hover:bg-[#1a3050] transition-all"

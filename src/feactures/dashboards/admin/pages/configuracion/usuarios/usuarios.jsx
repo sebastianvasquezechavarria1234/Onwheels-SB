@@ -15,6 +15,7 @@ import {
 import { getRoles } from "../../services/RolesService";
 import { canManage } from "../../../../../../utils/permissions";
 import { cn, configUi } from "../configUi";
+import ModalErrorAlert from "../ModalErrorAlert";
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -296,9 +297,12 @@ export default function Usuarios() {
     }
   };
 
+  const [modalError, setModalError] = useState(null);
+
   const handleDelete = async () => {
     try {
       setSubmitting(true);
+      setModalError(null);
       if (!selectedUsuario) return;
       await deleteUsuario(selectedUsuario.id_usuario);
       await fetchData();
@@ -306,10 +310,10 @@ export default function Usuarios() {
       showNotification("Usuario eliminado con éxito");
     } catch (err) {
       console.error("Error eliminando usuario:", err);
-      // Mostrar el error exacto del backend
       const errorMessage = err.response?.data?.mensaje || "Error eliminando usuario";
+      setModalError(errorMessage);
       showNotification(errorMessage, "error");
-      closeModal(); // Cerrar modal después del error
+      // NO cerrar modal para que el usuario vea el mensaje ahí mismo
     } finally {
       setSubmitting(false);
     }
@@ -319,6 +323,7 @@ export default function Usuarios() {
     setModal(type);
     setSelectedUsuario(usuario);
     setFormErrors({});
+    setModalError(null);
     setFormStep(1);
 
     if (usuario && type === "editar") {
@@ -354,6 +359,7 @@ export default function Usuarios() {
   const closeModal = () => {
     setModal(null);
     setSelectedUsuario(null);
+    setModalError(null);
     setFormStep(1);
     setSubmitting(false);
     setFormData({
@@ -680,9 +686,14 @@ export default function Usuarios() {
                         <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-[#6b84aa]">
                           Esta accion no se puede deshacer. El usuario <span className="font-bold text-[#d44966]">{selectedUsuario?.nombre_completo}</span> perdera el acceso al sistema.
                         </p>
+
+                        <ModalErrorAlert error={modalError} />
+
                         <div className="mx-auto flex max-w-md gap-3">
                           <button onClick={closeModal} disabled={submitting} className={`${configUi.secondaryButton} flex-1`}>Cancelar</button>
-                          <button onClick={handleDelete} disabled={submitting} className={`${configUi.dangerButton} flex-1`}>{submitting ? "Eliminando..." : "Eliminar"}</button>
+                          {!modalError && (
+                             <button onClick={handleDelete} disabled={submitting} className={`${configUi.dangerButton} flex-1`}>{submitting ? "Eliminando..." : "Eliminar"}</button>
+                          )}
                         </div>
                       </div>
                     ) : modal === "ver" ? (

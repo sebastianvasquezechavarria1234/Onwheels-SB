@@ -23,10 +23,12 @@ import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
 import { configUi } from "../../configuracion/configUi";
 import ProductSelectorView from "../../compras/compras/ProductSelectorView";
+import { useToast } from "../../../../../../context/ToastContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 export default function VentaEditar() {
+    const toast = useToast();
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -179,8 +181,14 @@ export default function VentaEditar() {
     const validateForm = () => {
         const errors = {};
         if (!form.id_usuario) errors.id_usuario = "Seleccione un cliente";
-        if (!form.direccion) errors.direccion = "Ingrese la dirección";
-        if (!form.telefono) errors.telefono = "Ingrese el teléfono";
+        if (!form.direccion || !form.direccion.trim()) errors.direccion = "Ingrese la dirección";
+        
+        if (!form.telefono || !form.telefono.trim()) {
+            errors.telefono = "Ingrese el teléfono";
+        } else if (form.telefono.replace(/\D/g, '').length !== 10) {
+            errors.telefono = "El teléfono debe tener exactamente 10 dígitos";
+        }
+
         if (form.items.length === 0) errors.items = "Agregue al menos un producto";
         
         setFormErrors(errors);
@@ -189,7 +197,20 @@ export default function VentaEditar() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isSubmitting || !validateForm()) return;
+        if (isSubmitting || !validateForm()) {
+          if (!validateForm()) toast.error("Por favor completa los campos obligatorios.");
+          return;
+        }
+
+        // Validar fecha de venta (no futura)
+        if (form.fecha_venta) {
+            const saleDate = new Date(form.fecha_venta);
+            const today = new Date();
+            if (saleDate > today) {
+                toast.error("La fecha de venta no puede ser futura.");
+                return;
+            }
+        }
 
         setIsSubmitting(true);
         try {
@@ -209,14 +230,18 @@ export default function VentaEditar() {
 
             if (isEditing) {
                 await updateVenta(id, payload);
+                toast.success("Venta actualizada");
                 showNotification("Venta actualizada");
             } else {
                 await createVenta(payload);
+                toast.success("Venta registrada exitosamente");
                 showNotification("Venta registrada exitosamente");
             }
             setTimeout(() => navigate(`${basePath}/ventas`), 1500);
         } catch (err) {
-            showNotification(err?.response?.data?.mensaje || "Error al procesar la venta", "error");
+            const msg = err?.response?.data?.mensaje || "Error al procesar la venta";
+            toast.error(msg);
+            showNotification(msg, "error");
             setIsSubmitting(false);
         }
     };
@@ -369,7 +394,7 @@ export default function VentaEditar() {
                                                <input
                                                    type="text"
                                                    value={form.telefono}
-                                                   onChange={e => setForm({ ...form, telefono: e.target.value.replace(/[^0-9+]/g, '') })}
+                                                   onChange={e => setForm({ ...form, telefono: e.target.value.replace(/\D/g, '').slice(0, 10) })}
                                                    placeholder="+57 3..."
                                                    className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.telefono && "border-rose-300")}
                                                />

@@ -13,10 +13,12 @@ import {
 } from "../../services/preinscripcionesService";
 import api from "../../../../../../services/api";
 import { configUi } from "../../configuracion/configUi";
+import { useToast } from "../../../../../../context/ToastContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const PreinscripcionesAdmin = () => {
+  const toast = useToast();
   // --- ESTADOS ---
   const [preinscripciones, setPreinscripciones] = useState([]);
   const [clases, setClases] = useState([]);
@@ -115,8 +117,20 @@ const PreinscripcionesAdmin = () => {
 
   const handleAceptarYMatricular = async () => {
     if (!claseSeleccionada || !planSeleccionado) {
+      toast.error("Campos obligatorios faltantes");
       showNotification("Campos obligatorios faltantes", "error");
       return;
+    }
+
+    // Validar fecha de matrícula (no pasada)
+    if (fechaMatricula) {
+      const matDate = new Date(fechaMatricula + "T00:00:00");
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      if (matDate < today) {
+        toast.error("La fecha de matrícula no puede ser en el pasado.");
+        return;
+      }
     }
     
     try {
@@ -128,10 +142,13 @@ const PreinscripcionesAdmin = () => {
 
       await aceptarPreinscripcionYCrearMatricula(selectedPreinscripcion.id_estudiante, matriculaData);
       fetchData();
+      toast.success("Matrícula creada con éxito");
       showNotification("Matrícula creada con éxito");
       closeModal();
     } catch (err) {
-      showNotification(err.response?.data?.mensaje || "Error al procesar", "error");
+      const msg = err.response?.data?.mensaje || "Error al procesar";
+      toast.error(msg);
+      showNotification(msg, "error");
     }
   };
 

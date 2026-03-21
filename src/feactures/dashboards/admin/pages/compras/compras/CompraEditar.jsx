@@ -7,8 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import comprasService from "../../services/comprasService";
 import ProductSelectorView from "./ProductSelectorView";
 import { cn, configUi } from "../../configUi";
+import { useToast } from "../../../../../../context/ToastContext";
 
 const CompraEditar = () => {
+    const toast = useToast();
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -77,18 +79,32 @@ const CompraEditar = () => {
             return;
         }
         if (items.length === 0) {
+            toast.error("Añade al menos un producto");
             showNotification("Añade al menos un producto", "error");
             return;
+        }
+
+        // Validar fecha de compra (no futura)
+        if (purchase.fecha_compra) {
+          const buyDate = new Date(purchase.fecha_compra);
+          const today = new Date();
+          if (buyDate > today) {
+            toast.error("La fecha de compra no puede ser futura.");
+            return;
+          }
         }
 
         setSaving(true);
         try {
             const payload = { ...purchase, items };
             await comprasService.createCompra(payload);
+            toast.success("Compra registrada correctamente");
             showNotification("Compra registrada correctamente");
             setTimeout(() => navigate(`${basePath}/compras`), 1000);
         } catch (err) {
-            showNotification(err?.response?.data?.mensaje || "Error al registrar la compra", "error");
+            const msg = err?.response?.data?.mensaje || "Error al registrar la compra";
+            toast.error(msg);
+            showNotification(msg, "error");
         } finally {
             setSaving(false);
         }
