@@ -125,13 +125,7 @@ export default function Proveedores() {
     }
   };
 
-  const filtered = proveedores.filter(p =>
-    p.nombre_proveedor?.toLowerCase().includes(search.toLowerCase()) ||
-    p.nit?.includes(search)
-  );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">

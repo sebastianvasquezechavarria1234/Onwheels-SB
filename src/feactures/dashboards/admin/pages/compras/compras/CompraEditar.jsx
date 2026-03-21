@@ -49,6 +49,7 @@ const CompraEditar = () => {
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
 
+    const [errors, setErrors] = useState({});
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
     const showNotification = (message, type = "success") => {
@@ -86,13 +87,19 @@ const CompraEditar = () => {
         setPurchase(prev => ({ ...prev, total_compra: calculateTotal(newItems) }));
     };
 
+    const validateForm = () => {
+        const newErrors = {};
+        if (!purchase.nit_proveedor) newErrors.nit_proveedor = "REQUERIDO";
+        if (!purchase.fecha_compra) newErrors.fecha_compra = "REQUERIDO";
+        if (items.length === 0) newErrors.items = "DEBES AÑADIR AL MENOS UN PRODUCTO";
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSave = async () => {
-        if (!purchase.nit_proveedor) {
-            showNotification("Selecciona un proveedor", "error");
-            return;
-        }
-        if (items.length === 0) {
-            showNotification("Añade al menos un producto", "error");
+        if (!validateForm()) {
+            showNotification("Por favor revisa las validaciones en rojo", "error");
             return;
         }
 
@@ -202,11 +209,20 @@ const CompraEditar = () => {
 
                                         <div className="space-y-6 relative z-10">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Proveedor Autorizado *</label>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
+                                                    <span>Proveedor Autorizado *</span>
+                                                    {errors.nit_proveedor && <span className="text-rose-500 animate-pulse italic">{errors.nit_proveedor}</span>}
+                                                </label>
                                                 <select
                                                     value={purchase.nit_proveedor}
-                                                    onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
-                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100 outline-none transition-all appearance-none cursor-pointer uppercase tracking-tight"
+                                                    onChange={(e) => {
+                                                        setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }));
+                                                        if (errors.nit_proveedor) setErrors(prev => ({ ...prev, nit_proveedor: null }));
+                                                    }}
+                                                    className={cn(
+                                                        "w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 text-sm font-bold text-slate-700 outline-none transition-all appearance-none cursor-pointer uppercase tracking-tight",
+                                                        errors.nit_proveedor ? "border-rose-200 bg-rose-50 focus:border-rose-500 focus:ring-rose-100" : "border-slate-100 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100"
+                                                    )}
                                                 >
                                                     <option value="">Seleccionar del Registro...</option>
                                                     {proveedores.map(p => (
@@ -218,38 +234,66 @@ const CompraEditar = () => {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fecha de Transacción</label>
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
+                                                    <span>Fecha de Transacción</span>
+                                                    {errors.fecha_compra && <span className="text-rose-500 italic">{errors.fecha_compra}</span>}
+                                                </label>
                                                 <input
                                                     type="date"
                                                     value={purchase.fecha_compra}
-                                                    onChange={(e) => setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }))}
-                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-slate-700 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100 outline-none transition-all"
+                                                    onChange={(e) => {
+                                                        setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }));
+                                                        if (errors.fecha_compra) setErrors(prev => ({ ...prev, fecha_compra: null }));
+                                                    }}
+                                                    className={cn(
+                                                        "w-full px-6 py-4 rounded-2xl border-2 bg-slate-50 text-sm font-bold text-slate-700 outline-none transition-all",
+                                                        errors.fecha_compra ? "border-rose-200 bg-rose-50 focus:border-rose-500" : "border-slate-100 focus:bg-white focus:border-slate-900 focus:ring-8 focus:ring-slate-100"
+                                                    )}
                                                 />
                                             </div>
                                         </div>
                                     </section>
 
                                     {/* Product Selector Trigger */}
-                                    <button 
-                                        onClick={() => setShowProductSelector(true)}
-                                        className="w-full group bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl shadow-slate-300 text-white space-y-6 relative overflow-hidden text-left hover:scale-[1.02] transition-all active:scale-95"
-                                    >
-                                        <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-125 transition-transform"><ShoppingBag size={120} /></div>
-                                        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
-                                           <Package size={28} className="text-indigo-400" />
-                                        </div>
-                                        <div className="space-y-2 relative z-10">
-                                            <h3 className="text-2xl font-black uppercase tracking-tight leading-tight">
-                                                Añadir Productos
-                                            </h3>
-                                            <p className="text-[10px] font-medium text-slate-400 leading-relaxed uppercase tracking-widest">
-                                                Explorar el catálogo para definir variantes, cantidades y costos
+                                    <div className="space-y-4">
+                                        <button 
+                                            onClick={() => setShowProductSelector(true)}
+                                            className={cn(
+                                                "w-full group rounded-[2.5rem] p-10 shadow-2xl space-y-6 relative overflow-hidden text-left hover:scale-[1.02] transition-all active:scale-95",
+                                                errors.items ? "bg-rose-500 shadow-rose-200 text-white" : "bg-slate-900 shadow-slate-300 text-white"
+                                            )}
+                                        >
+                                            <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-125 transition-transform"><ShoppingBag size={120} /></div>
+                                            <div className={cn(
+                                                "w-14 h-14 rounded-2xl flex items-center justify-center border",
+                                                errors.items ? "bg-white/10 border-white/20" : "bg-white/10 border-white/20"
+                                            )}>
+                                               <Package size={28} className={errors.items ? "text-white" : "text-indigo-400"} />
+                                            </div>
+                                            <div className="space-y-2 relative z-10">
+                                                <h3 className="text-2xl font-black uppercase tracking-tight leading-tight">
+                                                    Añadir Productos
+                                                </h3>
+                                                <p className={cn(
+                                                    "text-[10px] font-medium leading-relaxed uppercase tracking-widest",
+                                                    errors.items ? "text-rose-100" : "text-slate-400"
+                                                )}>
+                                                    Explorar el catálogo para definir variantes, cantidades y costos
+                                                </p>
+                                            </div>
+                                            <div className={cn(
+                                                "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] pt-4",
+                                                errors.items ? "text-white" : "text-indigo-400"
+                                            )}>
+                                               Abrir Catálogo <ChevronRight size={14} />
+                                            </div>
+                                        </button>
+                                        {errors.items && (
+                                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest text-center animate-bounce">
+                                                ⚠️ {errors.items}
                                             </p>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] pt-4">
-                                           Abrir Catálogo <ChevronRight size={14} />
-                                        </div>
-                                    </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Right: Items List Table */}

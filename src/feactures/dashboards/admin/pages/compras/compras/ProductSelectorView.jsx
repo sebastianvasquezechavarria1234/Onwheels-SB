@@ -17,25 +17,39 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
 
+    const [localError, setLocalError] = useState(null);
+
     const filteredProducts = allProducts.filter(p =>
         p.nombre_producto?.toLowerCase().includes(productSearch.toLowerCase()) ||
         p.codigo_referencia?.toLowerCase().includes(productSearch.toLowerCase())
     );
 
     const handleAddItem = () => {
-        if (!selectedProduct || !selectedVariant) return;
+        if (!selectedProduct || !selectedVariant) {
+            setLocalError("Selecciona una variante");
+            return;
+        }
+        if (!newItemData.cantidad || parseInt(newItemData.cantidad) <= 0) {
+            setLocalError("La cantidad debe ser mayor a 0");
+            return;
+        }
+        if (!newItemData.precio_unitario || parseFloat(newItemData.precio_unitario) < 0) {
+            setLocalError("El precio debe ser válido");
+            return;
+        }
 
         onAdd({
             product: selectedProduct,
             variant: selectedVariant,
-            cantidad: parseInt(newItemData.cantidad) || 1,
-            precio_unitario: parseFloat(newItemData.precio_unitario) || 0
+            cantidad: parseInt(newItemData.cantidad),
+            precio_unitario: parseFloat(newItemData.precio_unitario)
         });
 
         // Reset local state after adding
         setSelectedProduct(null);
         setSelectedVariant(null);
         setNewItemData({ cantidad: 1, precio_unitario: "" });
+        setLocalError(null);
     };
 
     return (
@@ -210,8 +224,9 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
 
                                         {/* Variants Selector Grid */}
                                         <div className="space-y-6">
-                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] block ml-1 leading-none italic">
-                                                Seleccionar Variante Específica
+                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] block ml-1 leading-none italic flex justify-between">
+                                                <span>Seleccionar Variante Específica</span>
+                                                {localError && !selectedVariant && <span className="text-rose-500 animate-pulse">{localError}</span>}
                                             </label>
 
                                             {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
@@ -228,7 +243,10 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
                                                         return (
                                                             <button
                                                                 key={v.id_variante || v.id_producto_variante}
-                                                                onClick={() => setSelectedVariant(v)}
+                                                                onClick={() => {
+                                                                    setSelectedVariant(v);
+                                                                    setLocalError(null);
+                                                                }}
                                                                 className={cn(
                                                                     "p-6 rounded-[1.75rem] text-left border-2 transition-all flex flex-col gap-3 relative overflow-hidden group",
                                                                     isVarSelected
@@ -270,9 +288,15 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
                                                             <input
                                                                 type="number"
                                                                 min="1"
-                                                                className="w-full bg-slate-800/50 border-2 border-slate-700 rounded-2xl px-6 py-4 text-lg font-black text-white outline-none focus:border-indigo-500 focus:ring-8 focus:ring-indigo-500/10 transition-all font-mono"
+                                                                className={cn(
+                                                                    "w-full bg-slate-800/50 border-2 rounded-2xl px-6 py-4 text-lg font-black text-white outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all font-mono",
+                                                                    localError && (!newItemData.cantidad || newItemData.cantidad <= 0) ? "border-rose-500 focus:border-rose-500" : "border-slate-700 focus:border-indigo-500"
+                                                                )}
                                                                 value={newItemData.cantidad}
-                                                                onChange={(e) => setNewItemData({ ...newItemData, cantidad: e.target.value })}
+                                                                onChange={(e) => {
+                                                                    setNewItemData({ ...newItemData, cantidad: e.target.value });
+                                                                    setLocalError(null);
+                                                                }}
                                                             />
                                                         </div>
                                                         <div className="space-y-3">
@@ -283,14 +307,26 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
                                                                     type="number"
                                                                     min="0"
                                                                     step="0.01"
-                                                                    className="w-full bg-slate-800/50 border-2 border-slate-700 rounded-2xl pl-16 pr-6 py-4 text-lg font-black text-white outline-none focus:border-indigo-500 focus:ring-8 focus:ring-indigo-500/10 transition-all font-mono"
+                                                                    className={cn(
+                                                                        "w-full bg-slate-800/50 border-2 rounded-2xl pl-16 pr-6 py-4 text-lg font-black text-white outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all font-mono",
+                                                                        localError && (!newItemData.precio_unitario || newItemData.precio_unitario < 0) ? "border-rose-500 focus:border-rose-500" : "border-slate-700 focus:border-indigo-500"
+                                                                    )}
                                                                     placeholder="0,00"
                                                                     value={newItemData.precio_unitario}
-                                                                    onChange={(e) => setNewItemData({ ...newItemData, precio_unitario: e.target.value })}
+                                                                    onChange={(e) => {
+                                                                        setNewItemData({ ...newItemData, precio_unitario: e.target.value });
+                                                                        setLocalError(null);
+                                                                    }}
                                                                 />
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    {localError && (
+                                                        <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest text-center">
+                                                            ⚠️ {localError}
+                                                        </p>
+                                                    )}
 
                                                     <div className="flex items-center justify-between p-8 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-sm">
                                                         <div className="space-y-1">
