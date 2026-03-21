@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../../../../context/CartContext";
 import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { useToast } from "../../../../context/ToastContext";
-import { getProductDetailPath, getCartPath } from "../../../../utils/roleHelpers";
+import { getProductDetailPath, getCartPath, getCheckoutPath } from "../../../../utils/roleHelpers";
 import { LoginRequiredModal } from "../LoginRequiredModal";
 
 export const Card = ({ product }) => {
@@ -18,6 +18,7 @@ export const Card = ({ product }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
   // Card might not be inside a Router context if used in a portal? usually it is.
   // useNavigate is safe if Card is child of Router.
 
@@ -61,6 +62,7 @@ export const Card = ({ product }) => {
   const imgSrcHover = validImages.length > 1 ? getImageUrl(validImages[1]) : null;
   const productDetailLink = getProductDetailPath(user, product.id_producto);
   const cartPath = getCartPath(user);
+  const checkoutPath = getCheckoutPath(user);
 
   // Lógica de variantes
   const uniqueColors = variantes && variantes.length > 0
@@ -156,8 +158,8 @@ export const Card = ({ product }) => {
                   if (!localStorage.getItem("token")) {
                     setShowLoginModal(true);
                   } else {
-                    // Redirect to shopping cart for checkout flow
-                    window.location.href = cartPath;
+                    // Redirect to checkout flow
+                    navigate(checkoutPath);
                   }
                 }}
                 className="block w-full text-center py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-white/10"
@@ -170,7 +172,7 @@ export const Card = ({ product }) => {
                 onClick={(e) => {
                   e.preventDefault();
                   toast.dismiss();
-                  window.location.href = cartPath;
+                  navigate(cartPath);
                 }}
                 className="block w-full text-center py-2.5 rounded-xl bg-white text-black font-bold text-xs hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase tracking-wide shadow-lg shadow-white/10"
               >

@@ -26,7 +26,8 @@ import {
   Mail,
   ChevronDown,
   ArrowLeft,
-  MoreVertical
+  MoreVertical,
+  Truck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdminLayout } from "../../context/AdminLayoutContext";
@@ -263,11 +264,13 @@ export const Layout = ({ children }) => {
                             <BtnSideBar title="Categorías" link="../admin/categoriasProductos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ChartBarIncreasing size={16} />
                             </BtnSideBar>
+                            <BtnSideBar title="Proveedores" link="../admin/proveedores" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <Truck size={16} />
+                            </BtnSideBar>
 
                             <BtnSideBar title="Productos" link="../admin/products" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Shirt size={16} />
                             </BtnSideBar>
-
 
                             <BtnSideBar title="Compras" link="../admin/compras" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ShoppingBag size={16} />
