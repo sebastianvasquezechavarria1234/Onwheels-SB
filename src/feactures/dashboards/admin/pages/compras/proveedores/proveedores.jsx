@@ -127,11 +127,6 @@ export default function Proveedores() {
     }
   };
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 4fb69d6c78f842029ef4c562d05b6567c5c0d64c
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
       {/* Header & Stats */}

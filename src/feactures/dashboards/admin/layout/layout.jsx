@@ -264,18 +264,14 @@ export const Layout = ({ children }) => {
                             <BtnSideBar title="Categorías" link="../admin/categoriasProductos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ChartBarIncreasing size={16} />
                             </BtnSideBar>
-<<<<<<< HEAD
                             <BtnSideBar title="Proveedores" link="../admin/proveedores" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Truck size={16} />
                             </BtnSideBar>
-=======
 
                             <BtnSideBar title="Productos" link="../admin/products" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Shirt size={16} />
                             </BtnSideBar>
 
-
->>>>>>> 4fb69d6c78f842029ef4c562d05b6567c5c0d64c
                             <BtnSideBar title="Compras" link="../admin/compras" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ShoppingBag size={16} />
                             </BtnSideBar>
