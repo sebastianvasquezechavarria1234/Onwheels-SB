@@ -65,12 +65,6 @@ export const UserDropdown = ({ isScrolled = false }) => {
             path: `/${roleSlug}/myClasses`,
             show: roleSlug === "student" || roleSlug === "instructor",
         },
-        {
-            label: "Mis Estudiantes",
-            icon: <Users size={16} />,
-            path: "/instructor/myStudent",
-            show: roleSlug === "instructor",
-        },
     ];
 
     return (

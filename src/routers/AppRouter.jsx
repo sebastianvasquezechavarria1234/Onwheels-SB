@@ -61,7 +61,6 @@ import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses"
 
 // Dashboard instructor
 import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor"
-import { MyStudent } from "../feactures/dashboards/instructor/pages/MyStudent"
 import { MyClassesInstructor } from "../feactures/dashboards/instructor/pages/MyClassesInstructor"
 import { MyPurchasesInstrutor as MyPurchasesInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesInstrutor"
 import { MyPurchasesDetailInstructor } from "../feactures/dashboards/instructor/pages/MyPurchasesDetailInstructor"
@@ -289,7 +288,6 @@ const AppRouter = () => {
         {/* Dashboard Instructor - PROTEGIDAS */}
         <Route element={<ProtectedRoute allowedRoles={["instructor"]} />}>
           <Route path="instructor/setting" element={<SettingInstructor />} />
-          <Route path="instructor/myStudent" element={<MyStudent />} />
           <Route path="instructor/myClasses" element={<MyClassesInstructor />} />
           <Route path="instructor/myPurchases" element={<MyPurchasesInstructor />} />
           <Route path="instructor/myPurchases/:id" element={<MyPurchasesDetailInstructor />} />

@@ -241,12 +241,17 @@ export const Layout = ({ children }) => {
                       >
                         {key === "config" && (
                           <>
-                            <BtnSideBar title="Usuarios" link="../admin/users" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
-                              <Users size={16} />
-                            </BtnSideBar>
+
+
                             <BtnSideBar title="Roles" link="../admin/roles" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Shield size={16} />
                             </BtnSideBar>
+
+                            <BtnSideBar title="Usuarios" link="../admin/users" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <Users size={16} />
+                            </BtnSideBar>
+
+
                             <BtnSideBar title="Administradores" link="../admin/admins" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Shield size={16} />
                             </BtnSideBar>
@@ -255,15 +260,22 @@ export const Layout = ({ children }) => {
 
                         {key === "compras" && (
                           <>
-                            <BtnSideBar title="Productos" link="../admin/products" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
-                              <Shirt size={16} />
-                            </BtnSideBar>
+
                             <BtnSideBar title="Categorías" link="../admin/categoriasProductos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ChartBarIncreasing size={16} />
                             </BtnSideBar>
+<<<<<<< HEAD
                             <BtnSideBar title="Proveedores" link="../admin/proveedores" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Truck size={16} />
                             </BtnSideBar>
+=======
+
+                            <BtnSideBar title="Productos" link="../admin/products" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <Shirt size={16} />
+                            </BtnSideBar>
+
+
+>>>>>>> 4fb69d6c78f842029ef4c562d05b6567c5c0d64c
                             <BtnSideBar title="Compras" link="../admin/compras" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ShoppingBag size={16} />
                             </BtnSideBar>
@@ -272,43 +284,56 @@ export const Layout = ({ children }) => {
 
                         {key === "eventos" && (
                           <>
-                            <BtnSideBar title="Eventos" link="../admin/eventos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
-                              <Calendar size={16} />
-                            </BtnSideBar>
+
+
                             <BtnSideBar title="Categorías" link="../admin/categoriasEventos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ChartBarIncreasing size={16} />
                             </BtnSideBar>
+
                             <BtnSideBar title="Patrocinadores" link="../admin/patrocinadores" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <MapPinHouse size={16} />
                             </BtnSideBar>
+
                             <BtnSideBar title="Sedes" link="../admin/sedes" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <MapPinHouse size={16} />
                             </BtnSideBar>
+
+                            <BtnSideBar title="Eventos" link="../admin/eventos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <Calendar size={16} />
+                            </BtnSideBar>
+
                           </>
                         )}
 
                         {key === "clases" && (
                           <>
-                            <BtnSideBar title="Clases" link="../admin/clases" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
-                              <Calendar size={16} />
-                            </BtnSideBar>
+
                             <BtnSideBar title="Niveles" link="../admin/classLevels" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <ChartBarIncreasing size={16} />
                             </BtnSideBar>
+
+
+                            <BtnSideBar title="Planes" link="../admin/plans" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <CreditCard size={16} />
+                            </BtnSideBar>
+
+                            <BtnSideBar title="Clases" link="../admin/clases" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <Calendar size={16} />
+                            </BtnSideBar>
+
                             <BtnSideBar title="Estudiantes" link="../admin/estudiantes" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Users size={16} />
                             </BtnSideBar>
                             <BtnSideBar title="Instructores" link="../admin/instructores" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <User size={16} />
                             </BtnSideBar>
-                            <BtnSideBar title="Matriculas" link="../admin/matriculas" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
-                              <School2 size={16} />
-                            </BtnSideBar>
+
                             <BtnSideBar title="Preinscripciones" link="../admin/preRegistrations" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <UserPlus size={16} />
                             </BtnSideBar>
-                            <BtnSideBar title="Planes" link="../admin/plans" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
-                              <CreditCard size={16} />
+
+                            <BtnSideBar title="Matriculas" link="../admin/matriculas" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <School2 size={16} />
                             </BtnSideBar>
                           </>
                         )}
@@ -345,7 +370,7 @@ export const Layout = ({ children }) => {
 
           {/* Dynamic Content Body with "White Table" effect */}
           <motion.section
-            className="flex-1 overflow-hidden bg-white rounded-[2rem] p-3 md:p-5 shadow-[0_15px_40px_-12px_rgba(0,0,0,0.12)] border border-white flex flex-col relative"
+            className="flex-1 overflow-y-auto bg-white rounded-[2rem] p-3 md:p-5 shadow-[0_15px_40px_-12px_rgba(0,0,0,0.12)] border border-white flex flex-col relative"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}

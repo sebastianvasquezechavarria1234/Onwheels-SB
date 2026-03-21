@@ -330,7 +330,7 @@ export const Clases = () => {
         <div className={configUi.headerRow}>
           <div className={configUi.titleWrap}>
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
-              Gestión de Clases
+              Clases
             </h2>
             <span className={configUi.countBadge}>{filteredAndSorted.length} registros</span>
           </div>

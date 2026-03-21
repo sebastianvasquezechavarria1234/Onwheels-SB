@@ -127,7 +127,7 @@ export default function CategoriaProductos() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-2xl font-bold text-[#040529] font-['Outfit'] tracking-tight">
-              Gestión de Categorías
+              Categorías de productos
             </h2>
             <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
               <span>{totalItems} categorías totales</span>
@@ -176,10 +176,10 @@ export default function CategoriaProductos() {
             <table className="w-full min-w-[860px] text-left border-separate border-spacing-0">
               <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-10">
                 <tr>
-                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">ID</th>
-                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Nombre</th>
-                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Descripción</th>
-                  <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right">Acciones</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-16">ID</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Nombre</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Descripción</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -187,7 +187,7 @@ export default function CategoriaProductos() {
                   <tr>
                     <td colSpan="4" className="p-20 text-center">
                       <div className="flex flex-col items-center gap-4">
-                        <div className="w-12 h-12 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin" />
+                        <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
                         <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Sincronizando categorías...</p>
                       </div>
                     </td>
@@ -204,18 +204,18 @@ export default function CategoriaProductos() {
                 ) : (
                   categorias.map((c) => (
                     <tr key={c.id_categoria} className="group hover:bg-[#f8fbff] transition-all">
-                      <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                        <span className="text-[11px] font-black text-slate-400 px-2 py-1 bg-slate-100 rounded-lg">#{c.id_categoria}</span>
+                      <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                        <span className="text-[10px] font-black text-slate-400 px-2 py-0.5 bg-slate-100 rounded-md">#{c.id_categoria}</span>
                       </td>
-                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm">{c.nombre_categoria}</td>
-                      <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                        <p className="text-xs text-slate-400 font-medium max-w-xs truncate">{c.descripcion || "—"}</p>
+                      <td className="px-3 py-2 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm uppercase tracking-tight">{c.nombre_categoria}</td>
+                      <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                        <p className="text-[11px] text-slate-400 font-medium max-w-sm truncate leading-none">{c.descripcion || "—"}</p>
                       </td>
-                      <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => openModal("details", c)} className="p-2.5 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Eye size={16} /></button>
-                          <button onClick={() => openModal("edit", c)} className="p-2.5 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Pencil size={16} /></button>
-                          <button onClick={() => openModal("delete", c)} className="p-2.5 rounded-xl bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105"><Trash2 size={16} /></button>
+                      <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button onClick={() => openModal("details", c)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Eye size={14} /></button>
+                          <button onClick={() => openModal("edit", c)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Pencil size={14} /></button>
+                          <button onClick={() => openModal("delete", c)} className="p-2 rounded-xl bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -337,12 +337,12 @@ export default function CategoriaProductos() {
                   <div className="space-y-8">
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre de la Categoría</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre de la Categoría *</label>
                          <input 
                            type="text" 
                            value={formData.nombre_categoria} 
                            onChange={(e) => setFormData({ ...formData, nombre_categoria: e.target.value })} 
-                           className={cn("w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all placeholder:text-gray-300", formErrors.nombre_categoria && "border-rose-400 bg-rose-50")} 
+                           className={cn("w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all placeholder:text-gray-300 shadow-sm", formErrors.nombre_categoria && "border-rose-400 bg-rose-50")} 
                            placeholder="Ej: Calzado Deportivo" 
                          />
                         {formErrors.nombre_categoria && <p className="text-rose-500 text-[10px] font-black uppercase tracking-widest ml-1">{formErrors.nombre_categoria}</p>}
@@ -352,7 +352,7 @@ export default function CategoriaProductos() {
                          <textarea 
                            value={formData.descripcion} 
                            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} 
-                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none min-h-[120px] resize-none transition-all placeholder:text-gray-300" 
+                           className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none min-h-[120px] resize-none transition-all placeholder:text-gray-300 shadow-sm" 
                            placeholder="Agregue contexto adicional..." 
                          />
                       </div>

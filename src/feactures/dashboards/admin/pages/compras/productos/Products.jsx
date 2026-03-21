@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/compras/productos/Products.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock, Download, ChevronDown, TrendingUp, PlusCircle, AlertTriangle, FileText, Upload } from "lucide-react";
+import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock, Download, ChevronDown, TrendingUp, PlusCircle, AlertTriangle, FileText, Upload, Package } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getProductos,
@@ -18,6 +18,7 @@ import {
 import { getCategorias } from "../../services/categoriasService";
 import { canManage } from "../../../../../../utils/permissions";
 
+import { configUi } from "../../configuracion/configUi";
 
 
 // Helper para clases condicionales
@@ -45,6 +46,7 @@ export default function Productos({ renderLayout = true }) {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [productoToDelete, setProductoToDelete] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
   const [paginaActual, setPaginaActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -123,7 +125,7 @@ export default function Productos({ renderLayout = true }) {
   const validateVariantsInline = () => {
     // Determine whether user interacted with currentVariant
     const isInteractingWithTallas = currentVariant.tallas.some(t => t.talla.trim() !== "" || String(t.cantidad).trim() !== "");
-    const isInteracting = isInteractingWithTallas || (currentVariant.color && currentVariant.color !== "#2563eb");
+    const isInteracting = isInteractingWithTallas || (currentVariant.color && currentVariant.color !== "");
 
     if (!isInteracting) {
       setVariantError("");
@@ -155,7 +157,7 @@ export default function Productos({ renderLayout = true }) {
   const [selectedProductForView, setSelectedProductForView] = useState(null);
   const [variants, setVariants] = useState([]);
   const [currentVariant, setCurrentVariant] = useState({
-    color: "#2563eb",
+    color: "",
     tallas: [{ talla: "", cantidad: "" }],
   });
   const [newColorName, setNewColorName] = useState("");
@@ -341,6 +343,7 @@ export default function Productos({ renderLayout = true }) {
       setImagenesUrls([]);
       setVariants([]);
     }
+    setCurrentStep(1);
     setFormErrors({});
     setIsProductModalOpen(true);
   };
@@ -505,7 +508,7 @@ export default function Productos({ renderLayout = true }) {
         return [...prev, newGrouping];
       });
 
-      setCurrentVariant({ color: "#2563eb", tallas: [{ talla: "", cantidad: "" }] });
+      setCurrentVariant({ color: "", tallas: [{ talla: "", cantidad: "" }] });
       showNotification("Variante agregada con éxito");
     } catch (err) {
       console.error("saveVariant error:", err);
@@ -574,7 +577,7 @@ export default function Productos({ renderLayout = true }) {
 
         <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 px-6 pt-6">
           <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
-            Gestión de Productos
+             Productos
           </h2>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
@@ -628,122 +631,98 @@ export default function Productos({ renderLayout = true }) {
         {/* Table Area */}
         <div className="flex-1 px-6 pb-6 overflow-hidden">
           <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] flex flex-col h-full overflow-hidden">
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-              <table className="w-full min-w-[1080px] text-left relative border-separate border-spacing-0">
-                <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-20 shadow-sm">
+          <div className="flex-1 overflow-auto custom-scrollbar">
+            <table className="w-full min-w-[1000px] text-left border-separate border-spacing-0">
+              <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-30 shadow-sm">
+                <tr>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] w-12 text-center">#</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef]">Producto / Categoría</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef]">Estado</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Inversión</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Venta</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Stock</th>
+                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#d7e5f8]">
+                {loading ? (
                   <tr>
-                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[10%]">Imagen</th>
-                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[25%]">Nombre</th>
-                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[15%]">Categoría</th>
-                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[20%]">Precios</th>
-                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[10%]">Stock</th>
-                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-[10%] text-center">Estado</th>
-                    <th className="px-3 py-3 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right w-[10%]">Acciones</th>
+                    <td colSpan="7" className="p-20 text-center">
+                       <div className="flex flex-col items-center gap-4">
+                         <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando inventario...</p>
+                       </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="7" className="p-20 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
-                          <p className="text-sm text-slate-500 font-medium">Cargando productos...</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : productos.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="p-20 text-center text-slate-400">
-                        <div className="flex flex-col items-center gap-4 opacity-40">
-                          <Tag className="h-12 w-12" />
-                          <div className="space-y-1">
-                            <p className="text-lg font-bold text-slate-600">No se encontraron productos</p>
-                            <p className="text-sm">Prueba ajustando los filtros o la búsqueda</p>
+                ) : productos.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="p-20 text-center">
+                       <div className="flex flex-col items-center gap-3 opacity-20">
+                         <ImageIcon size={48} />
+                         <p className="text-xs font-black uppercase tracking-widest">Sin productos</p>
+                       </div>
+                    </td>
+                  </tr>
+                ) : (
+                  productos.map((p, idx) => {
+                    const totalStock = (variantesGlobales || []).filter(v => v.id_producto === p.id_producto).reduce((acc, v) => acc + (v.stock || 0), 0);
+                    return (
+                      <tr key={p.id_producto} className="group hover:bg-[#f8fbff] transition-all">
+                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-center">
+                           <span className="text-[10px] font-black text-slate-300">{(paginaActual - 1) * productosPorPagina + idx + 1}</span>
+                        </td>
+                        <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100 overflow-hidden shrink-0">
+                               {p.imagenes && p.imagenes.length > 0 ? (
+                                 <img 
+                                   src={p.imagenes[0].url_imagen?.startsWith('http') ? p.imagenes[0].url_imagen : `${API_URL}${p.imagenes[0].url_imagen}`} 
+                                   alt={p.nombre_producto} 
+                                   className="w-full h-full object-cover" 
+                                 />
+                               ) : (
+                                 <ImageIcon size={14} className="text-slate-200" />
+                               )}
+                             </div>
+                             <div className="flex flex-col min-w-0">
+                               <span className="font-bold text-[#16315f] text-sm leading-tight truncate uppercase tracking-tight">{p.nombre_producto}</span>
+                               <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-0.5">{getCategoriaNombre(p.id_categoria)}</span>
+                             </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    productos.map((p) => {
-                      const pVars = variantesGlobales.filter(v => v.id_producto === p.id_producto);
-                      const totalStock = pVars.reduce((acc, v) => acc + (v.stock || 0), 0);
-
-                      return (
-                        <tr key={p.id_producto} className="group hover:bg-[#f8fbff] transition-colors">
-                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                            <div className="h-14 w-14 shrink-0 bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                              {p.imagenes && p.imagenes.length > 0 ? (
-                                <img 
-                                  src={p.imagenes[0].url_imagen?.startsWith('http') ? p.imagenes[0].url_imagen : `${API_URL}${p.imagenes[0].url_imagen}`} 
-                                  alt={p.nombre_producto} 
-                                  className="w-full h-full object-cover" 
-                                />
-                              ) : (
-                                <ImageIcon className="h-6 w-6 text-slate-300" />
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                            <div className="flex flex-col">
-                              <span className="font-bold text-slate-800 text-sm leading-snug">{p.nombre_producto}</span>
-                              <span className="text-[10px] text-slate-400 font-medium uppercase mt-0.5 tracking-tight">ID: {p.id_producto}</span>
-                            </div>
-                          </td>
-                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                              {getCategoriaNombre(p.id_categoria)}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-400">$</span>
-                                <span className={`text-sm font-bold ${Number(p.descuento_producto || 0) > 0 ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                                  {Number(p.precio || 0).toLocaleString()}
-                                </span>
-                              </div>
-                              {Number(p.descuento_producto || 0) > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-black text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">-{p.descuento_producto}%</span>
-                                  <span className="text-sm font-black text-emerald-600">
-                                    ${(Number(p.precio || 0) * (1 - Number(p.descuento_producto || 0) / 100)).toLocaleString()}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-3 py-2.5 border-b border-[#d7e5f8]">
-                            <div className="flex flex-col">
-                              <span className={`text-sm font-black ${totalStock <= 5 ? 'text-rose-600' : 'text-slate-700'}`}>
-                                {totalStock} <span className="text-[10px] font-bold text-slate-400 ml-1">und.</span>
-                              </span>
-                              {totalStock <= 5 && <span className="text-[10px] font-bold text-rose-400 mt-0.5">Stock bajo</span>}
-                            </div>
-                          </td>
-                          <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-center">
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${p.estado ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${p.estado ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                              {p.estado ? 'Activo' : 'Inactivo'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2.5 border-b border-[#d7e5f8] text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => openViewModal(p)} className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm border border-slate-100" title="Ver"><Eye className="h-4 w-4" /></button>
-                              {canManage("productos") && (
-                                <>
-                                  <button onClick={() => openProductModal(p)} className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm border border-slate-100" title="Editar"><Pen className="h-4 w-4" /></button>
-                                  <button onClick={() => openDeleteConfirm(p)} className="p-2 rounded-xl bg-rose-50 text-rose-400 hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        </td>
+                        <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${p.estado ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
+                            {p.estado ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right font-bold text-slate-400 text-[11px] tabular-nums">
+                          ${Number(p.precio_compra).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                          <div className="flex flex-col items-end">
+                             <span className="font-black text-[#16315f] text-[11px] tabular-nums">${Number(p.precio).toLocaleString()}</span>
+                             {Number(p.descuento_producto) > 0 && <span className="text-[9px] font-bold text-rose-500 bg-rose-50 px-1 rounded">-{p.descuento_producto}% OFF</span>}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                           <span className={`font-black text-[11px] ${totalStock <= 5 ? 'text-rose-500' : 'text-slate-700'}`}>
+                             {totalStock} <span className="text-[9px] font-bold text-slate-300 ml-0.5">UND</span>
+                           </span>
+                        </td>
+                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => openViewModal(p)} className="p-1.5 rounded-lg bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105" title="Ver Detalle"><Eye size={12} /></button>
+                            <button onClick={() => openProductModal(p)} className="p-1.5 rounded-lg bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105" title="Editar"><Pen size={12} /></button>
+                            <button onClick={() => { setProductoToDelete(p); setIsDeleteConfirmOpen(true); }} className="p-1.5 rounded-lg bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105" title="Eliminar"><Trash2 size={12} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
             {/* Footer Pagination */}
             {totalPaginas > 0 && (
@@ -784,443 +763,342 @@ export default function Productos({ renderLayout = true }) {
         {/* --- MODALS --- */}
         <AnimatePresence>
           {isProductModalOpen && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsProductModalOpen(false)}
-          >
             <motion.div
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", damping: 20 }}
-              onClick={(e) => e.stopPropagation()}
+              className={configUi.modalBackdrop}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsProductModalOpen(false)}
             >
-              <div className="flex h-[600px] overflow-hidden">
-                {/* Left Side (Visual Preview) */}
-                <div className="hidden lg:flex w-1/3 bg-slate-50 flex-col relative overflow-hidden border-r border-slate-100">
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+              <motion.div
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col overflow-hidden border border-slate-100"
+                style={{ maxHeight: "92vh" }}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="px-7 pt-7 pb-5 border-b border-slate-100 shrink-0">
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="text-xl font-black text-[#16315f] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                        {productForm.id_producto ? "Editar Producto" : "Nuevo Producto"}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {productForm.id_producto ? "Actualiza la información del producto" : "Completa los campos para agregar un producto"}
+                      </p>
                     </div>
-                    
-                    <div className="h-48 w-full p-8 flex flex-col items-center justify-center relative z-10">
-                      {(() => {
-                        const getFullUrl = (url) => url ? (url.startsWith('http') ? url : `${API_URL}${url}`) : null;
-                        const dbImg = imagenesGuardadas.find(img => !imagenesConservadas || imagenesConservadas.includes(img.id_imagen))?.url_imagen;
-                        const fileImg = imagenesArchivos[0] ? URL.createObjectURL(imagenesArchivos[0]) : null;
-                        const urlImg = imagenesUrls[0] || null;
-                        const currentDisplay = dbImg || fileImg || urlImg;
-
-                        if (currentDisplay) {
-                          return <img src={currentDisplay.startsWith('blob:') ? currentDisplay : getFullUrl(currentDisplay)} alt="Preview" className="h-full w-full object-contain drop-shadow-2xl" />;
-                        }
-                        return (
-                          <div className="flex flex-col items-center gap-3 opacity-20">
-                            <ImageIcon size={48} />
-                            <p className="font-black text-[10px] uppercase tracking-[0.2em]">Sin imagen</p>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="flex-1 p-8 z-10 overflow-y-auto">
-                      <div className="space-y-6">
-                        <div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Vista Previa</p>
-                          <h4 className="text-slate-900 font-bold text-xl leading-tight font-['Outfit']">{productForm.nombre_producto || "Nuevo Producto"}</h4>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
-                            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-500">
-                              <Tag size={16} />
-                            </div>
-                            <span>{getCategoriaNombre(productForm.id_categoria) || "Sin categoría"}</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
-                            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-500">
-                              <MapPin size={16} />
-                            </div>
-                            <span>Venta: ${Number(productForm.precio || 0).toLocaleString()}</span>
-                          </div>
-                          {Number(productForm.descuento_producto) > 0 && (
-                            <div className="flex items-center gap-3 text-sm text-emerald-600 font-bold bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
-                              <div className="p-1 px-2 bg-rose-500 rounded-lg text-white text-[10px] font-black uppercase">
-                                -{productForm.descuento_producto}%
-                              </div>
-                              <span>Final: ${(Number(productForm.precio || 0) * (1 - Number(productForm.descuento_producto || 0) / 100)).toLocaleString()}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <button onClick={() => setIsProductModalOpen(false)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all">
+                      <X size={18} />
+                    </button>
                   </div>
-
-                  {/* Right Side (Form) */}
-                  <div className="flex-1 flex flex-col h-full overflow-hidden bg-white">
-                    <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center shrink-0">
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-800 font-['Outfit'] tracking-tight">
-                          {productForm.id_producto ? "Editar Producto" : "Nuevo Producto"}
-                        </h3>
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">Complete la información detallada del artículo</p>
-                      </div>
-                      <button 
-                        onClick={() => setIsProductModalOpen(false)} 
-                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                  {/* Tabs */}
+                  <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
+                    {[
+                      { id: 1, label: "Información" },
+                      { id: 2, label: "Precios" },
+                      { id: 3, label: "Fotos y Stock" },
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setCurrentStep(tab.id)}
+                        className={cn(
+                          "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                          currentStep === tab.id
+                            ? "bg-white text-[#16315f] shadow-sm"
+                            : "text-slate-400 hover:text-slate-600"
+                        )}
                       >
-                        <X size={20} />
+                        {tab.label}
                       </button>
-                    </div>
+                    ))}
+                  </div>
+                </div>
 
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                      <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+                {/* Modal Body */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  <AnimatePresence mode="wait">
+                    {/* ── TAB 1: INFORMACIÓN ── */}
+                    {currentStep === 1 && (
+                      <motion.div key="tab1" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="p-7 space-y-5">
+                        <div className={configUi.fieldGroup}>
+                          <label className={configUi.fieldLabel}>Nombre del producto *</label>
+                          <input
+                            autoFocus
+                            name="nombre_producto"
+                            value={productForm.nombre_producto}
+                            onChange={handleProductChange}
+                            onBlur={handleProductBlur}
+                            placeholder="Ej: Camiseta Deportiva Premium"
+                            className={cn(configUi.fieldInput, formErrors.nombre_producto && "border-rose-400 bg-rose-50")}
+                          />
+                          {formErrors.nombre_producto && <p className="text-rose-500 text-xs font-bold mt-1">{formErrors.nombre_producto}</p>}
+                        </div>
 
-                        {/* Group 1: Basics */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="md:col-span-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Nombre del Producto *</label>
-                            <input
-                              autoFocus
-                              name="nombre_producto"
-                              value={productForm.nombre_producto}
-                              onChange={handleProductChange}
-                              onBlur={handleProductBlur}
-                              placeholder="Ej: Camiseta de Verano"
-                              className={`w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 outline-none transition-all text-sm font-medium text-slate-700 ${formErrors.nombre_producto ? "border-rose-400 bg-rose-50" : "border-slate-300 focus:border-[#040529]"}`}
-                            />
-                            {formErrors.nombre_producto && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.nombre_producto}</p>}
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Categoría *</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Categoría *</label>
                             <div className="relative">
-                              <select
-                                name="id_categoria"
-                                value={productForm.id_categoria ?? ""}
-                                onChange={handleProductChange}
-                                onBlur={handleProductBlur}
-                                className={`w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 outline-none transition-all text-sm font-medium text-slate-700 appearance-none cursor-pointer ${formErrors.id_categoria ? "border-rose-400 bg-rose-50" : "border-slate-300 focus:border-[#040529]"}`}
-                              >
+                              <select name="id_categoria" value={productForm.id_categoria ?? ""} onChange={handleProductChange} onBlur={handleProductBlur} className={cn(configUi.fieldSelect, formErrors.id_categoria && "border-rose-400 bg-rose-50")}>
                                 <option value="">Seleccionar...</option>
                                 {categorias.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>)}
                               </select>
-                              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
                             </div>
-                            {formErrors.id_categoria && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.id_categoria}</p>}
+                            {formErrors.id_categoria && <p className="text-rose-500 text-xs font-bold mt-1">{formErrors.id_categoria}</p>}
                           </div>
-
-                          <div>
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Estado *</label>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Visibilidad</label>
                             <div className="relative">
-                              <select
-                                name="estado"
-                                value={productForm.estado}
-                                onChange={handleProductChange}
-                                onBlur={handleProductBlur}
-                                className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-medium text-slate-700 appearance-none cursor-pointer"
-                              >
+                              <select name="estado" value={productForm.estado} onChange={handleProductChange} className={configUi.fieldSelect}>
                                 <option value="activo">Activo</option>
                                 <option value="inactivo">Inactivo</option>
                               </select>
-                              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
                             </div>
                           </div>
                         </div>
 
-                        {/* Group 2: Prices */}
-                        <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100">
-                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                             <TrendingUp size={14} className="text-emerald-500" /> 
-                             Gestión de Precios
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Compra *</label>
-                              <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
-                                <input
-                                  name="precio_compra"
-                                  type="number"
-                                  step="0.01"
-                                  value={productForm.precio_compra}
-                                  onChange={handleProductChange}
-                                  onBlur={handleProductBlur}
-                                  className={`w-full pl-7 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.precio_compra ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
-                                />
-                              </div>
-                              {formErrors.precio_compra && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.precio_compra}</p>}
+                        <div className={configUi.fieldGroup}>
+                          <label className={configUi.fieldLabel}>Descripción *</label>
+                          <textarea name="descripcion" value={productForm.descripcion} onChange={handleProductChange} onBlur={handleProductBlur} rows={4} placeholder="Describe el producto: materiales, uso, características..." className={cn(configUi.fieldInput, "pt-3 resize-none", formErrors.descripcion && "border-rose-400 bg-rose-50")} />
+                          {formErrors.descripcion && <p className="text-rose-500 text-xs font-bold mt-1">{formErrors.descripcion}</p>}
+                          <p className="text-[10px] text-slate-300 mt-1 text-right">{(productForm.descripcion || "").length}/500</p>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* ── TAB 2: PRECIOS ── */}
+                    {currentStep === 2 && (
+                      <motion.div key="tab2" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="p-7 space-y-5">
+                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-xs text-blue-600 font-medium">
+                          💡 Ingresa el <strong>costo</strong> y el <strong>margen</strong> para calcular el precio de venta automáticamente, o ajústalo manualmente.
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Costo de compra *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+                              <input type="number" name="precio_compra" value={productForm.precio_compra} onChange={handleProductChange} onBlur={handleProductBlur} placeholder="0" className={cn(configUi.fieldInput, "pl-8 font-bold", formErrors.precio_compra && "border-rose-400 bg-rose-50")} />
                             </div>
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Venta *</label>
-                              <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
-                                <input
-                                  name="precio"
-                                  type="number"
-                                  step="0.01"
-                                  value={productForm.precio}
-                                  onChange={handleProductChange}
-                                  onBlur={handleProductBlur}
-                                  className={`w-full pl-7 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.precio ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
-                                />
-                              </div>
-                              {formErrors.precio && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.precio}</p>}
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">% Ganancia</label>
-                              <div className="relative">
-                                <input
-                                  name="porcentaje_ganancia"
-                                  type="number"
-                                  step="0.01"
-                                  value={productForm.porcentaje_ganancia}
-                                  onChange={handleProductChange}
-                                  onBlur={handleProductBlur}
-                                  className={`w-full pr-8 pl-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.porcentaje_ganancia ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
-                                />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">%</span>
-                              </div>
-                              {formErrors.porcentaje_ganancia && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.porcentaje_ganancia}</p>}
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Desc. %</label>
-                              <div className="relative">
-                                <input
-                                  name="descuento_producto"
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  step="any"
-                                  value={productForm.descuento_producto}
-                                  onChange={handleProductChange}
-                                  onBlur={handleProductBlur}
-                                  className={`w-full pr-8 pl-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 ${formErrors.descuento_producto ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
-                                />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-rose-400 text-sm font-bold">%</span>
-                              </div>
-                              {formErrors.descuento_producto && <p className="text-rose-500 text-[10px] mt-1.5 font-black uppercase tracking-wider ml-1">{formErrors.descuento_producto}</p>}
+                            {formErrors.precio_compra && <p className="text-rose-500 text-xs font-bold mt-1">{formErrors.precio_compra}</p>}
+                          </div>
+
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Margen de ganancia (%)</label>
+                            <div className="relative">
+                              <input type="number" name="porcentaje_ganancia" value={productForm.porcentaje_ganancia} onChange={handleProductChange} placeholder="0" className={cn(configUi.fieldInput, "pr-8 font-bold text-emerald-700 bg-emerald-50 border-emerald-200 focus:border-emerald-400")} />
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-sm">%</span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Group 3: Description & Image */}
-                        <div className="space-y-6">
-                          <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">Descripción *</label>
-                            <textarea
-                              name="descripcion"
-                              value={productForm.descripcion}
-                              onChange={handleProductChange}
-                              onBlur={handleProductBlur}
-                              placeholder="Detalles sobre materiales, uso, o características especiales..."
-                              rows={3}
-                              className={`w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-medium text-slate-700 ${formErrors.descripcion ? "border-rose-400 bg-rose-50" : "border-slate-300"}`}
-                            />
-                            {formErrors.descripcion && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.descripcion}</p>}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Precio de venta *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 font-bold text-sm">$</span>
+                              <input type="number" name="precio" value={productForm.precio} onChange={handleProductChange} onBlur={handleProductBlur} placeholder="0" className={cn(configUi.fieldInput, "pl-8 font-bold text-indigo-700 bg-indigo-50 border-indigo-200 focus:border-indigo-400", formErrors.precio && "border-rose-400 bg-rose-50")} />
+                            </div>
+                            {formErrors.precio && <p className="text-rose-500 text-xs font-bold mt-1">{formErrors.precio}</p>}
                           </div>
 
-                          <div className="md:col-span-2 space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Galería de Imágenes *</label>
-                            
-                            <div className="flex flex-col gap-4">
-                              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer group">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                  <Upload className="h-6 w-6 text-slate-400 group-hover:text-slate-600 mb-2 transition-colors" />
-                                  <p className="text-xs text-slate-500 font-bold group-hover:text-slate-700 transition-colors">Click para subir o arrastra y suelta</p>
-                                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-widest">PNG, JPG o WEBP</p>
-                                </div>
-                                <input
-                                  type="file"
-                                  multiple
-                                  accept="image/*"
-                                  onChange={handleFileChange}
-                                  className="hidden"
-                                />
-                              </label>
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Descuento promocional (%)</label>
+                            <div className="relative">
+                              <input type="number" name="descuento_producto" value={productForm.descuento_producto} onChange={handleProductChange} placeholder="0" className={cn(configUi.fieldInput, "pr-8 font-bold text-rose-600 bg-rose-50 border-rose-200 focus:border-rose-400", formErrors.descuento_producto && "border-rose-400 bg-rose-50")} />
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-rose-400 font-bold text-sm">%</span>
+                            </div>
+                            {formErrors.descuento_producto && <p className="text-rose-500 text-xs font-bold mt-1">{formErrors.descuento_producto}</p>}
+                          </div>
+                        </div>
 
-                              <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
-                                <input
-                                  type="text"
-                                  value={urlInput}
-                                  onChange={(e) => setUrlInput(e.target.value)}
-                                  placeholder="O pega una URL de imagen..."
-                                  className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all"
-                                />
-                                <button type="button" onClick={addUrlManual} className="px-5 py-2 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all shadow-sm active:scale-95">Añadir</button>
-                              </div>
-
-                              {(imagenesGuardadas.length > 0 || imagenesArchivos.length > 0 || imagenesUrls.length > 0) && (
-                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-2">
-                                  {/* Existing Images */}
-                                  {imagenesGuardadas.map((img) => (
-                                    <div key={`db-${img.id_imagen}`} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-200">
-                                      <img src={img.url_imagen?.startsWith('http') ? img.url_imagen : `${API_URL}${img.url_imagen}`} alt="Existente" className={`w-full h-full object-cover transition-opacity ${!imagenesConservadas?.includes(img.id_imagen) ? 'opacity-30' : 'opacity-100'}`} />
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleConservarImagen(img.id_imagen)}
-                                        className={`absolute top-1 right-1 p-1 rounded-full shadow-md transition-all ${!imagenesConservadas?.includes(img.id_imagen) ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white opacity-0 group-hover:opacity-100'}`}
-                                      >
-                                        {!imagenesConservadas?.includes(img.id_imagen) ? <CheckCircle size={10} strokeWidth={4} /> : <Trash2 size={10} strokeWidth={4} />}
-                                      </button>
-                                    </div>
-                                  ))}
-                                  {imagenesArchivos.map((file, idx) => (
-                                    <div key={`file-${idx}`} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-200">
-                                      <img src={URL.createObjectURL(file)} alt="Nueva" className="w-full h-full object-cover" />
-                                      <button type="button" onClick={() => removeArchivo(idx)} className="absolute top-1 right-1 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-all">
-                                        <X size={10} strokeWidth={4} />
-                                      </button>
-                                    </div>
-                                  ))}
-                                  {imagenesUrls.map((url, idx) => (
-                                    <div key={`url-${idx}`} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-200">
-                                      <img src={url} alt="URL" className="w-full h-full object-cover" />
-                                      <button type="button" onClick={() => removeUrlManual(idx)} className="absolute top-1 right-1 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600 transition-all">
-                                        <X size={10} strokeWidth={4} />
-                                      </button>
-                                    </div>
-                                  ))}
+                        {Number(productForm.precio) > 0 && (
+                          <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between">
+                            <div>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Precio final al cliente</p>
+                              {Number(productForm.descuento_producto) > 0 ? (
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-slate-300 line-through text-base font-bold">${Number(productForm.precio).toLocaleString()}</span>
+                                  <span className="text-2xl font-black text-[#16315f]">${(Number(productForm.precio) * (1 - Number(productForm.descuento_producto) / 100)).toLocaleString()}</span>
+                                  <span className="text-[10px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">-{productForm.descuento_producto}%</span>
                                 </div>
+                              ) : (
+                                <span className="text-2xl font-black text-[#16315f] mt-1 block">${Number(productForm.precio).toLocaleString()}</span>
                               )}
                             </div>
-                            {formErrors.imagenes && <p className="text-rose-500 text-[10px] mt-2 font-black uppercase tracking-wider ml-1">{formErrors.imagenes}</p>}
+                            {Number(productForm.precio_compra) > 0 && Number(productForm.precio) > 0 && (
+                              <div className="text-right">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ganancia unitaria</p>
+                                <span className="text-lg font-black text-emerald-600">${(Number(productForm.precio) - Number(productForm.precio_compra)).toLocaleString()}</span>
+                              </div>
+                            )}
                           </div>
-                        </div>
+                        )}
+                      </motion.div>
+                    )}
 
+                    {/* ── TAB 3: FOTOS & STOCK ── */}
+                    {currentStep === 3 && (
+                      <motion.div key="tab3" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} className="p-7 space-y-6">
+                        {/* Images */}
+                        <div>
+                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Imágenes del producto</h4>
+                          <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
+                            <Upload className="h-5 w-5 text-slate-300 mb-1" />
+                            <span className="text-[11px] font-bold text-slate-400">Haz clic para subir imágenes</span>
+                            <span className="text-[10px] text-slate-300 mt-0.5">PNG, JPG, WEBP</span>
+                            <input type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
+                          </label>
 
-                        {/* === Gestión de Variantes === */}
-                        <div className="pt-8 border-t border-slate-100 flex flex-col gap-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-2">
-                                 <PlusCircle size={14} className="text-indigo-500" /> 
-                                 Atributos y Stock
-                               </h4>
-                               <p className="text-[11px] text-slate-400 font-medium">Defina las combinaciones de color y tallas disponibles</p>
+                          <div className="flex gap-2 mt-3">
+                            <input type="text" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addUrlManual()} placeholder="O pega una URL de imagen externa..." className={cn(configUi.fieldInput, "flex-1 text-xs")} />
+                            <button type="button" onClick={addUrlManual} className="px-4 bg-[#16315f] text-white rounded-xl hover:bg-[#0d2248] transition-colors text-sm font-bold">+</button>
+                          </div>
+
+                          {(imagenesGuardadas.length > 0 || imagenesArchivos.length > 0 || imagenesUrls.length > 0) && (
+                            <div className="flex flex-wrap gap-2 mt-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                              {imagenesGuardadas.map((img) => (
+                                <div key={`db-${img.id_imagen}`} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                                  <img src={img.url_imagen?.startsWith('http') ? img.url_imagen : `${API_URL}${img.url_imagen}`} alt="" className={`w-full h-full object-cover ${!imagenesConservadas?.includes(img.id_imagen) ? 'opacity-25' : ''}`} />
+                                  <button type="button" onClick={() => toggleConservarImagen(img.id_imagen)} className={`absolute inset-0 flex items-center justify-center bg-black/40 text-white transition-opacity ${!imagenesConservadas?.includes(img.id_imagen) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                    {!imagenesConservadas?.includes(img.id_imagen) ? <CheckCircle size={16} /> : <Trash2 size={16} />}
+                                  </button>
+                                </div>
+                              ))}
+                              {imagenesArchivos.map((file, idx) => (
+                                <div key={`file-${idx}`} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                                  <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                                  <button type="button" onClick={() => removeArchivo(idx)} className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100"><X size={16} /></button>
+                                </div>
+                              ))}
+                              {imagenesUrls.map((url, idx) => (
+                                <div key={`url-${idx}`} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                                  <img src={url} alt="" className="w-full h-full object-cover" />
+                                  <button type="button" onClick={() => removeUrlManual(idx)} className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 group-hover:opacity-100"><X size={16} /></button>
+                                </div>
+                              ))}
                             </div>
-                            {canManage("productos") && (
-                                <button 
-                                  type="button" 
-                                  onClick={saveVariant}
-                                  className="px-5 py-2.5 bg-slate-900 text-white rounded-[1.2rem] text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95 flex items-center gap-2"
-                                >
-                                <Plus size={14} strokeWidth={3} /> Guardar Combinación
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="bg-slate-50 border-2 border-slate-200 rounded-[2rem] p-6 lg:p-8 space-y-8 relative overflow-hidden">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                              {/* Color Selection */}
-                              <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Color de la Prenda</label>
-                                <div className="flex gap-2">
-                                   <div className="relative flex-1">
-                                      <select
-                                        value={currentVariant.color}
-                                        onChange={(e) => handleVariantChange('color', e.target.value)}
-                                        className="w-full px-5 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 appearance-none cursor-pointer"
-                                      >
-                                        <option value="">Seleccionar color...</option>
-                                        {colores.map(c => <option key={c.id_color} value={c.nombre_color}>{c.nombre_color}</option>)}
-                                      </select>
-                                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-                                   </div>
-                                   <button type="button" onClick={() => setIsCreateColorOpen(true)} className="p-3.5 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 text-slate-400 transition-colors shadow-sm"><Plus size={20} /></button>
-                                </div>
-                              </div>
-
-                              {/* Tallas and Cantidad */}
-                              <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Distribución de Tallas</label>
-                                <div className="space-y-3">
-                                  {currentVariant.tallas.map((t, idx) => (
-                                      <div key={idx} className="flex gap-2 group animate-in slide-in-from-right-4 duration-300">
-                                        <div className="relative flex-1">
-                                          <select
-                                            value={t.talla}
-                                            onChange={(e) => handleTallaChange(idx, 'talla', e.target.value)}
-                                            className="w-full px-5 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-bold text-slate-700 appearance-none cursor-pointer"
-                                          >
-                                            <option value="">Talla...</option>
-                                            {tallas.map(tl => <option key={tl.id_talla} value={tl.nombre_talla}>{tl.nombre_talla}</option>)}
-                                          </select>
-                                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-                                        </div>
-                                        <div className="relative w-32">
-                                          <input
-                                            type="number"
-                                            placeholder="Cant."
-                                            value={t.cantidad}
-                                            onChange={(e) => handleTallaChange(idx, 'cantidad', e.target.value)}
-                                            className="w-full px-5 py-3.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all text-sm font-black text-slate-700 placeholder:text-slate-300 placeholder:font-medium"
-                                          />
-                                        </div>
-                                        {idx === currentVariant.tallas.length - 1 ? (
-                                          <button type="button" onClick={addTalla} className="p-3.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl hover:bg-[#040529] hover:text-white transition-colors shadow-sm" title="Añadir talla"><Plus size={20} /></button>
-                                        ) : (
-                                          <button type="button" onClick={() => removeTalla(idx)} className="p-3.5 bg-rose-50 text-rose-500 border border-rose-100 rounded-xl hover:bg-rose-100 transition-colors shadow-sm" title="Quitar talla"><Trash2 size={20} /></button>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                              {variantError && <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex items-center gap-2 text-rose-600 animate-shake"><AlertTriangle size={14} /><p className="text-[10px] font-black uppercase tracking-wider">{variantError}</p></div>}
-                            {variants.length > 0 ? (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                  {variants.map((v, idx) => (
-                                    <div key={idx} className="p-4 bg-white border-2 border-slate-200 rounded-[1.5rem] shadow-sm flex items-center justify-between group hover:border-slate-400 transition-all">
-                                      <div className="flex flex-col gap-1.5">
-                                        <span className="text-xs font-black text-slate-800 uppercase tracking-tight">{v.color}</span>
-                                        <div className="flex flex-wrap gap-1">
-                                          {v.tallas?.map((t, tid) => (
-                                            <span key={tid} className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[9px] font-bold text-slate-500">
-                                              {t.talla}: {t.cantidad}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      </div>
-                                      <button onClick={() => removeVariant(v)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
-                                  ))}
-                              </div>
-                            ) : (
-                              <div className="py-8 text-center bg-slate-100/50 rounded-[1.5rem] border-2 border-dashed border-slate-200">
-                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Sin variantes registradas</p>
-                              </div>
-                            )}
-                          </div>
+                          )}
                         </div>
-                      </form>
-                    </div>
 
-                    <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                        {/* Variants */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Color y Tallas (Stock)</h4>
+                            <button type="button" onClick={saveVariant} className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 bg-[#16315f] text-white rounded-lg hover:bg-[#0d2248] transition-all">
+                              + Agregar variante
+                            </button>
+                          </div>
+
+                          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                            <div className={configUi.fieldGroup}>
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 block">Color</label>
+                              <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                  <select value={currentVariant.color} onChange={(e) => handleVariantChange('color', e.target.value)} className={cn(configUi.fieldSelect, "bg-white")}>
+                                    <option value="">Seleccionar color...</option>
+                                    {colores.map(c => <option key={c.id_color} value={c.nombre_color}>{c.nombre_color}</option>)}
+                                  </select>
+                                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                </div>
+                                <button type="button" onClick={() => setIsCreateColorOpen(true)} title="Nuevo color" className="px-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-[#16315f] hover:border-[#16315f] transition-all text-xs font-bold">+ Color</button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tallas y cantidad</label>
+                                <button type="button" onClick={() => setIsCreateTallaOpen(true)} className="text-[10px] font-black text-slate-400 hover:text-[#16315f] uppercase tracking-widest">+ Talla</button>
+                              </div>
+                              <div className="space-y-2">
+                                {currentVariant.tallas.map((t, idx) => (
+                                  <div key={idx} className="flex gap-2 items-center">
+                                    <div className="relative flex-1">
+                                      <select value={t.talla} onChange={(e) => handleTallaChange(idx, 'talla', e.target.value)} className={cn(configUi.fieldSelect, "bg-white")}>
+                                        <option value="">Talla...</option>
+                                        {tallas.map(tl => <option key={tl.id_talla} value={tl.nombre_talla}>{tl.nombre_talla}</option>)}
+                                      </select>
+                                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
+                                    </div>
+                                    <input type="number" value={t.cantidad} onChange={(e) => handleTallaChange(idx, 'cantidad', e.target.value)} placeholder="Und." className={cn(configUi.fieldInput, "w-24 bg-white font-bold text-center")} />
+                                    {idx === currentVariant.tallas.length - 1 ? (
+                                      <button type="button" onClick={addTalla} className="w-10 h-10 bg-white border border-slate-200 text-slate-400 rounded-xl flex items-center justify-center hover:bg-slate-50 transition-colors shrink-0"><Plus size={14} /></button>
+                                    ) : (
+                                      <button type="button" onClick={() => removeTalla(idx)} className="w-10 h-10 bg-rose-50 text-rose-400 rounded-xl flex items-center justify-center hover:bg-rose-100 transition-colors shrink-0"><Trash2 size={14} /></button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {variantError && <p className="text-rose-500 text-xs font-bold mt-2">{variantError}</p>}
+
+                          {variants.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Variantes agregadas</p>
+                              {variants.map((v, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                                  <div>
+                                    <span className="text-xs font-black text-[#16315f]">{v.color || "—"}</span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {v.tallas.map((t, ti) => (
+                                        <span key={ti} className="text-[9px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-slate-600">{t.talla}: {t.cantidad} und.</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <button type="button" onClick={() => removeVariant(v)} className="w-8 h-8 flex items-center justify-center text-rose-300 hover:bg-rose-50 hover:text-rose-500 rounded-lg transition-colors shrink-0"><X size={13} /></button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="px-7 py-5 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
+                  <div className="flex gap-1">
+                    {[1, 2, 3].map(step => (
                       <button
-                        onClick={() => setIsProductModalOpen(false)}
-                        className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
-                      >
-                        Cancelar
+                        key={step}
+                        type="button"
+                        onClick={() => setCurrentStep(step)}
+                        className={cn("w-7 h-1.5 rounded-full transition-all", currentStep === step ? "bg-[#16315f]" : "bg-slate-200 hover:bg-slate-300")}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    <button type="button" onClick={() => setIsProductModalOpen(false)} className="text-slate-400 text-sm font-bold hover:text-slate-600 transition-colors px-3">
+                      Cancelar
+                    </button>
+                    {currentStep > 1 && (
+                      <button type="button" onClick={() => setCurrentStep(s => s - 1)} className={configUi.secondaryButton}>
+                        ← Atrás
                       </button>
-                      <button
-                        onClick={saveProduct}
-                        className="px-8 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95"
-                      >
-                        Guardar Cambios
+                    )}
+                    {currentStep < 3 ? (
+                      <button type="button" onClick={() => setCurrentStep(s => s + 1)} className={configUi.primaryButton}>
+                        Siguiente →
                       </button>
-                    </div>
+                    ) : (
+                      <button type="button" onClick={saveProduct} className={configUi.primaryButton}>
+                        <CheckCircle size={16} />
+                        <span>{productForm.id_producto ? "Guardar Cambios" : "Crear Producto"}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
+
+
+
+
 
                   {/* === Modal de Vista === */}
         <AnimatePresence>

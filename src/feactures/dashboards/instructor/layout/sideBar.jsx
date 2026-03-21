@@ -155,11 +155,7 @@ const Sidebar = () => {
                 <User size={18} />
                 <span>Instructores</span>
               </div>
-              <div className="flex items-center gap-2 hover:text-blue-600">
-                <Users size={18} />
 
-                <span> <BtnLink link="estudiantes" title="etudiantes" /></span>
-              </div>
               <div className="flex items-center gap-2 hover:text-blue-600">
                 <FilePlus size={18} />
                 <span>Preinscripciones</span>

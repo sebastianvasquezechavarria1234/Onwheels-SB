@@ -1,8 +1,6 @@
-// src/feactures/dashboards/admin/pages/eventos/patrocinadores/Patrocinadores.jsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
-  Search, Plus, Pen, Trash2, Eye, X, Image as ImageIcon, Mail, Phone, User,
-  ChevronLeft, ChevronRight, Hash, ArrowUpDown, ExternalLink
+  Search, Plus, Pen, Trash2, Eye, X, Award, Hash, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Phone, Globe, Upload, Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,99 +9,71 @@ import {
   updatePatrocinador,
   deletePatrocinador,
 } from "../../services/patrocinadoresServices";
-import { configUi } from "../../configuracion/configUi";
-
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { configUi, cn } from "../../configuracion/configUi";
 
 export default function Patrocinadores() {
+  // Data
   const [patrocinadores, setPatrocinadores] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // UI State
+  // UI state
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
-
+  const itemsPerPage = 7; // Ajustado para densidad y logos
+  
   // Sorting
   const [sortField, setSortField] = useState("nombre_patrocinador");
   const [sortDirection, setSortDirection] = useState("asc");
 
-  const [modal, setModal] = useState(null);
+  // Modal & selection
+  const [modal, setModal] = useState(null); // crear | editar | ver | eliminar
   const [selected, setSelected] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Form
   const [form, setForm] = useState({
     nombre_patrocinador: "",
     email: "",
     telefono: "",
-    logo: "",
-    logoArchivo: null,
-    imageMode: "file", // "file" | "url"
+    logo_patrocinador: "", // String (file path/URL or base64)
   });
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoType, setLogoType] = useState("url"); // url | file
 
+  // Validation
   const [formErrors, setFormErrors] = useState({});
-  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
+
+  // Notifications
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
-    setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
+    setTimeout(() => {
+      setNotification({ show: false, message: "", type: "success" });
+    }, 3000);
   };
 
-  // VALIDACIONES
-  const validateField = (name, value, currentForm = form, options = {}) => {
-    // options.suppressRequired: when true, do not show "campo obligatorio" errors (used on blur)
-    const { suppressRequired = false } = options;
+  // Field validation
+  const validateField = (name, value) => {
     let error = "";
-    const v = (value || "").toString();
 
     if (name === "nombre_patrocinador") {
-      const trimmed = v.trim();
-      if (!trimmed) {
-        if (!suppressRequired) error = "No puede estar vacío";
-      } else if (trimmed.length < 3 || trimmed.length > 20) {
-        error = "Debe tener entre 3 y 20 caracteres";
-      } else {
-        // Duplicado (case-insensitive). Excluir seleccionado cuando se edita.
-        const currentId = selected?.id_patrocinador || null;
-        const exists = patrocinadores.find(p => {
-          if (!p.nombre_patrocinador) return false;
-          if (currentId && p.id_patrocinador === currentId) return false;
-          return p.nombre_patrocinador.trim().toLowerCase() === trimmed.toLowerCase();
-        });
-        if (exists) error = "No puede estar repetido";
-      }
+      if (!value || !value.trim()) error = "El nombre es obligatorio";
+      else if (value.trim().length < 2) error = "Mínimo 2 caracteres";
     }
 
     if (name === "email") {
-      const trimmed = v.trim();
-      if (!trimmed) {
-        if (!suppressRequired) error = "No puede estar vacío";
-      } else if (trimmed.length < 3 || trimmed.length > 35) {
-        error = "Debe tener entre 3 y 35 caracteres";
-      } else {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!re.test(trimmed)) error = "Debe cumplir formato válido de email";
-      }
+      if (!value || !value.trim()) error = "El email es obligatorio";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Email inválido";
     }
 
     if (name === "telefono") {
-      const trimmed = v.trim();
-      if (trimmed.length < 1 || trimmed.length > 15) {
-        error = "Longitud entre 1 y 15";
-      } else {
-        const re = /^\d+$/;
-        if (!re.test(trimmed)) error = "Solo números"; // No permitir caracteres especiales según requerimiento
-      }
-    }
-
-    if (name === "logo" && currentForm.imageMode === "url" && (v || "").trim() !== "") {
-      try {
-        new URL((v || "").trim());
-      } catch {
-        error = "Debe ser un link válido de imagen";
-      }
+      if (!value || !value.trim()) error = "El teléfono es obligatorio";
+      else if (!/^\d{7,15}$/.test(value)) error = "Número inválido (7-15 dígitos)";
     }
 
     setFormErrors((prev) => ({ ...prev, [name]: error }));
@@ -111,15 +81,14 @@ export default function Patrocinadores() {
   };
 
   const validateAll = () => {
-    // validateField default will show "required" errors (suppressRequired = false)
-    const okName = validateField("nombre_patrocinador", form.nombre_patrocinador, form, { suppressRequired: false });
-    const okEmail = validateField("email", form.email, form, { suppressRequired: false });
-    const okPhone = validateField("telefono", form.telefono, form, { suppressRequired: false });
-    const okLogo = form.imageMode === "url" ? validateField("logo", form.logo, form, { suppressRequired: false }) : true;
-    return okName && okEmail && okPhone && okLogo;
+    const ok1 = validateField("nombre_patrocinador", form.nombre_patrocinador);
+    const ok2 = validateField("email", form.email);
+    const ok3 = validateField("telefono", form.telefono);
+    return ok1 && ok2 && ok3;
   };
 
-  const fetchAll = async () => {
+  // Fetch data
+  const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getPatrocinadores();
@@ -130,155 +99,136 @@ export default function Patrocinadores() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAll();
-  }, []);
+  }, [fetchAll]);
 
-  // HANDLERS
-  const openModal = (type, patrocinador = null) => {
+  // Modal handlers
+  const openModal = (type, patro = null) => {
     setModal(type);
-    setSelected(patrocinador);
+    setSelected(patro);
+    setSubmitting(false);
 
-    const initial = patrocinador
-      ? {
-        nombre_patrocinador: patrocinador.nombre_patrocinador,
-        email: patrocinador.email,
-        telefono: patrocinador.telefono,
-        logo: patrocinador.logo || "",
-        logoArchivo: null,
-        imageMode: "file",
-      }
-      : {
-        nombre_patrocinador: "",
-        email: "",
-        telefono: "",
-        logo: "",
-        logoArchivo: null,
-        imageMode: "file"
-      };
+    if (patro) {
+      setForm({
+        nombre_patrocinador: patro.nombre_patrocinador || "",
+        email: patro.email || "",
+        telefono: patro.telefono || "",
+        logo_patrocinador: patro.logo_patrocinador || "",
+      });
+      setLogoPreview(patro.logo_patrocinador || null);
+      setLogoType("url");
+    } else {
+      setForm({ nombre_patrocinador: "", email: "", telefono: "", logo_patrocinador: "" });
+      setLogoPreview(null);
+      setLogoType("url");
+    }
 
-    setForm(initial);
     setFormErrors({});
-    // no forzar "required" al abrir; validación inicial no mostrará errores de requerido
-    // pero sí es útil limpiar comprobaciones de formato/duplicado si hay valor: validar con suppressRequired=true
-    if (initial.nombre_patrocinador) validateField("nombre_patrocinador", initial.nombre_patrocinador, initial, { suppressRequired: true });
-    if (initial.email) validateField("email", initial.email, initial, { suppressRequired: true });
-    if (initial.telefono) validateField("telefono", initial.telefono, initial, { suppressRequired: true });
-    if (initial.imageMode === "url" && initial.logo) validateField("logo", initial.logo, initial, { suppressRequired: true });
   };
 
   const closeModal = () => {
+    if (submitting) return;
     setModal(null);
     setSelected(null);
-    setForm({
-      nombre_patrocinador: "",
-      email: "",
-      telefono: "",
-      logo: "",
-      logoArchivo: null,
-      imageMode: "file"
-    });
+    setLogoPreview(null);
+    setForm({ nombre_patrocinador: "", email: "", telefono: "", logo_patrocinador: "" });
     setFormErrors({});
   };
 
+  // Form handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Limpiar el error al escribir para no mostrarlo mientras el usuario tipea
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: undefined }));
+    if (formErrors[name]) validateField(name, value);
+    if (name === "logo_patrocinador" && logoType === "url") {
+        setLogoPreview(value);
     }
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setForm(prev => ({
-        ...prev,
-        logo: URL.createObjectURL(file), // Preview
-        logoArchivo: file
-      }));
-      if (formErrors.logo) {
-        setFormErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.logo;
-          return newErrors;
-        });
-      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+        setForm(prev => ({ ...prev, logo_patrocinador: reader.result }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleBlur = (e) => {
-    // Validar todo al perder el foco (incluyendo vacío si lo dejaron así)
-    validateField(e.target.name, e.target.value, form, { suppressRequired: false });
-  };
-
+  // Save data
   const handleSave = async () => {
     if (!validateAll()) {
       showNotification("Corrige los errores del formulario", "error");
       return;
     }
 
+    setSubmitting(true);
     const payload = {
-      ...form,
       nombre_patrocinador: form.nombre_patrocinador.trim(),
       email: form.email.trim(),
       telefono: form.telefono.trim(),
+      logo_patrocinador: form.logo_patrocinador,
     };
-    // remove preview url if file is selected (logic handled in service or backend? Service handles FormData building)
 
     try {
       if (modal === "crear") {
         await createPatrocinador(payload);
-        showNotification("Patrocinador creado con éxito", "success");
-      } else {
+        showNotification("Patrocinador registrado");
+      } else if (modal === "editar" && selected) {
         await updatePatrocinador(selected.id_patrocinador, payload);
-        showNotification("Patrocinador actualizado con éxito", "success");
+        showNotification("Patrocinador actualizado");
       }
 
-      fetchAll();
+      await fetchAll();
       closeModal();
     } catch (err) {
-      console.error("Error guardando patrocinador:", err);
-      showNotification("No se pudo guardar el patrocinador", "error");
+      console.error("Error guardando:", err);
+      showNotification("Error al procesar la solicitud", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  // Delete
   const handleDelete = async () => {
+    if (!selected) return;
+    setSubmitting(true);
     try {
       await deletePatrocinador(selected.id_patrocinador);
-      showNotification("Patrocinador eliminado con éxito", "success");
-      fetchAll();
+      showNotification("Patrocinador eliminado");
+      await fetchAll();
       closeModal();
     } catch (err) {
-      console.error("Error eliminando patrocinador:", err);
+      console.error("Error eliminando:", err);
       showNotification("No se pudo eliminar", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // FILTROS + SORT + PAGINACIÓN
+  // Filter + Sort + Pagination
   const filteredAndSorted = useMemo(() => {
     let result = [...patrocinadores];
-
-    // Filter
+    
     if (search) {
       const q = search.toLowerCase().trim();
-      result = result.filter((p) =>
+      result = result.filter(p =>
         p.nombre_patrocinador.toLowerCase().includes(q) ||
-        p.email.toLowerCase().includes(q) ||
-        p.telefono.toLowerCase().includes(q)
+        p.email.toLowerCase().includes(q)
       );
     }
 
-    // Sort
     result.sort((a, b) => {
       const aVal = a[sortField];
       const bVal = b[sortField];
       if (aVal === null || aVal === undefined) return 1;
       if (bVal === null || bVal === undefined) return -1;
-
+      
       if (typeof aVal === "string" && typeof bVal === "string") {
         return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       }
@@ -308,362 +258,234 @@ export default function Patrocinadores() {
   };
 
   return (
-    <>
-      <div className={configUi.pageShell}>
-
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
-
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between ">
-            <div className="flex items-center gap-4">
-              <h2 className="text-sm font-bold! whitespace-nowrap uppercase tracking-wider">
-                Gestión de Patrocinadores
-              </h2>
-
-              {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l pl-4">
-                <div className="flex font-bold! items-center gap-1.5 px-2 py-0.5 rounded-md ">
-                  <Hash className="h-3 w-3 " />
-                  <span className="text-xs font-bold!">{filteredAndSorted.length}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Row 2: Active Toolbar (Big Buttons) */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
-            {/* Search & Create Group */}
-            <div className="flex flex-1 w-full sm:w-auto gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar patrocinador..."
-                  className={configUi.inputWithIcon}
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => openModal("crear")}
-                className={configUi.primaryButton}
-              >
-                <Plus className="h-4 w-4" />
-                Nuevo Patrocinador
-              </button>
-            </div>
-
-            {/* Filters (Larger) */}
-            <div className="flex flex-1 w-full justify-start sm:justify-end items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-              {[
-                { id: "nombre_patrocinador", label: "Nombre" },
-                { id: "email", label: "Email" }
-              ].map((field) => (
-                <button
-                  key={field.id}
-                  onClick={() => toggleSort(field.id)}
-                  className={cn(
-                    "px-4 py-2 text-xs uppercase font-bold tracking-wide rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
-                    sortField === field.id
-                      ? "bg-[#040529] text-white border-[#040529] shadow-sm transform scale-105"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
-                  )}
-                >
-                  {field.label}
-                  {sortField === field.id && <ArrowUpDown className="h-3 w-3" />}
-                </button>
-              ))}
-            </div>
-          </div>
+    <div className={configUi.pageShell}>
+      {/* 1. HEADER */}
+      <div className={configUi.headerRow}>
+        <div className={configUi.titleWrap}>
+          <h2 className={configUi.title}>Patrocinadores</h2>
+          <span className={configUi.countBadge}>
+            <Hash className="mr-1 h-3 w-3" />
+            {filteredAndSorted.length} empresas
+          </span>
         </div>
 
-        {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className={configUi.tableCard}>
-            <div className={configUi.tableScroll}>
-              <table className={configUi.table}>
-                <thead className={configUi.thead}>
-                  <tr>
-                    <th className={`${configUi.th} rounded-tl-[1.4rem] w-[10%]`}>Logo</th>
-                    <th className={`${configUi.th} w-[25%]`}>Nombre</th>
-                    <th className={`${configUi.th} w-[30%]`}>Email</th>
-                    <th className={`${configUi.th} w-[20%]`}>Teléfono</th>
-                    <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan="5" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="p-12 text-center text-gray-400">
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                          <User className="h-8 w-8" />
-                          <p className="text-sm">No se encontraron patrocinadores</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    currentItems.map((p) => (
-                      <tr key={p.id_patrocinador} className={configUi.row}>
-                        <td className={configUi.td}>
-                          <div className="h-10 w-10 shrink-0 bg-white border border-gray-100 rounded-lg overflow-hidden flex items-center justify-center p-1 shadow-sm">
-                            {p.logo ? (
-                              <img src={p.logo} alt="Logo" className="w-full h-full object-contain" />
-                            ) : (
-                              <ImageIcon className="h-4 w-4 text-gray-300" />
-                            )}
-                          </div>
-                        </td>
-                        <td className={`${configUi.td} font-bold text-[#16315f] text-sm`}>{p.nombre_patrocinador}</td>
-                        <td className={`${configUi.td} text-sm text-[#5b7398]`}>{p.email}</td>
-                        <td className={`${configUi.td} text-sm text-[#5b7398]`}>{p.telefono}</td>
-                        <td className={`${configUi.td} text-right`}>
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => openModal("ver", p)} className={configUi.actionButton} title="Ver"><Eye className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("editar", p)} className={configUi.actionButton} title="Editar"><Pen className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("eliminar", p)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 className="h-4 w-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Footer Pagination */}
-            {totalPages > 1 && (
-              <div className={configUi.paginationBar}>
-                <p className="text-xs text-[#6b84aa] font-medium">
-                  Mostrando <span className="font-bold text-[#16315f]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#16315f]">{filteredAndSorted.length}</span> resultados
-                </p>
-                <div className="flex items-center gap-2">
-                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className={configUi.paginationButton}><ChevronLeft className="h-4 w-4" /></button>
-                  <span className="text-sm font-bold text-[#16315f] px-2">{currentPage}</span>
-                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className={configUi.paginationButton}><ChevronRight className="h-4 w-4" /></button>
-                </div>
-              </div>
-            )}
+        <div className={configUi.toolbar}>
+          <div className={configUi.searchWrap}>
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86a0c6]" />
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Buscar por nombre o email..."
+              className={configUi.inputWithIcon}
+            />
           </div>
+          <button onClick={() => openModal("crear")} className={configUi.primaryButton}>
+            <Plus size={18} />
+            <span>Nuevo Patrocinador</span>
+          </button>
         </div>
-
-        {/* --- NOTIFICATIONS --- */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
-              {notification.message}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* --- MODALS --- */}
-        <AnimatePresence>
-          {(modal === "crear" || modal === "editar" || modal === "ver") && (
-            <motion.div
-              className={configUi.modalBackdrop}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className={`${configUi.modalPanel} max-w-2xl`}
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex flex-col h-[500px] lg:h-[550px]">
-
-                  {/* Header Modal */}
-                  <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <div>
-                      <h3 className="text-lg font-bold text-[#040529]">
-                        {modal === "crear" ? "Registrar Patrocinador" : modal === "editar" ? "Editar Patrocinador" : "Detalles"}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-0.5">Complete la información del aliado</p>
-                    </div>
-                    <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
-                  </div>
-
-                  <div className="flex-1 p-6 overflow-y-auto">
-                    <form className="space-y-5">
-                      <div className="grid grid-cols-1 gap-5">
-
-                        {/* Logo Preview (Centered) */}
-                        <div className="flex flex-col items-center justify-center mb-2">
-                          <div className="w-24 h-24 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden mb-2 shadow-sm">
-                            {form.logo ? (
-                              <img src={form.logo} alt="Preview" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block' }} />
-                            ) : null}
-                            <ImageIcon size={32} className={`text-gray-300 ${form.logo ? 'hidden' : ''}`} />
-                          </div>
-                          <p className="text-xs text-gray-400">Previsualización</p>
-                        </div>
-
-                        {/* Nombre */}
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Patrocinador</label>
-                          <div className="relative">
-                            <input
-                              name="nombre_patrocinador"
-                              autoFocus={modal !== "ver"}
-                              value={form.nombre_patrocinador}
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              readOnly={modal === "ver"} disabled={modal === "ver"}
-                              placeholder="Ej: Nike"
-                              className={`w-full mt-1 pl-3 pr-10 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.nombre_patrocinador ? "border-red-500" : "border-gray-200"}`}
-                            />
-                            <User className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                          </div>
-                          {formErrors.nombre_patrocinador && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.nombre_patrocinador}</p>}
-                        </div>
-
-                        {/* Email & Telefono Row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email</label>
-                            <div className="relative">
-                              <input
-                                name="email"
-                                value={form.email}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                readOnly={modal === "ver"} disabled={modal === "ver"}
-                                placeholder="contacto@..."
-                                className={`w-full mt-1 pl-3 pr-10 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.email ? "border-red-500" : "border-gray-200"}`}
-                              />
-                              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            </div>
-                            {formErrors.email && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.email}</p>}
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
-                            <div className="relative">
-                              <input
-                                name="telefono"
-                                value={form.telefono}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                readOnly={modal === "ver"} disabled={modal === "ver"}
-                                placeholder="+57 300..."
-                                className={`w-full mt-1 pl-3 pr-10 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.telefono ? "border-red-500" : "border-gray-200"}`}
-                              />
-                              <Phone className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            </div>
-                            {formErrors.telefono && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.telefono}</p>}
-                          </div>
-                        </div>
-
-                        {/* Logo Input (Dual Mode) */}
-                        <div>
-                          <div className="flex justify-between items-center mb-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Logo del Patrocinador</label>
-                            <div className="flex bg-gray-100 rounded-lg p-0.5">
-                              <button
-                                type="button"
-                                onClick={() => setForm(prev => ({ ...prev, imageMode: "file" }))}
-                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition ${form.imageMode === "file" ? "bg-white text-[#040529] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
-                              >
-                                Subir Archivo
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setForm(prev => ({ ...prev, imageMode: "url" }))}
-                                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition ${form.imageMode === "url" ? "bg-white text-[#040529] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
-                              >
-                                URL Logo
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="relative mt-1">
-                            {form.imageMode === "file" ? (
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                disabled={modal === "ver"}
-                                className={`w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#040529] file:text-white hover:file:bg-[#040529]/90 bg-gray-50 border rounded-lg ${formErrors.logo ? "border-red-500" : "border-gray-200"}`}
-                              />
-                            ) : (
-                              <div className="relative">
-                                <input
-                                  name="logo"
-                                  value={typeof form.logo === 'string' ? form.logo : ''}
-                                  onChange={(e) => {
-                                    setForm(prev => ({ ...prev, logo: e.target.value, logoArchivo: null }));
-                                    if (formErrors.logo) setFormErrors(prev => ({ ...prev, logo: undefined }));
-                                  }}
-                                  onBlur={handleBlur}
-                                  readOnly={modal === "ver"} disabled={modal === "ver"}
-                                  placeholder="https://ejemplo.com/logo.png"
-                                  className={`w-full pl-3 pr-10 py-2 bg-gray-50 border rounded-lg focus:bg-white focus:ring-2 focus:ring-[#040529]/20 outline-none transition text-sm text-[#040529] ${formErrors.logo ? "border-red-500" : "border-gray-200"}`}
-                                />
-                                <ExternalLink className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                              </div>
-                            )}
-                          </div>
-                          {formErrors.logo && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.logo}</p>}
-                        </div>
-
-                      </div>
-                    </form>
-                  </div>
-
-                  {/* Footer Modal */}
-                  <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-2xl">
-                    <button type="button" onClick={closeModal} className={configUi.secondaryButton}>{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
-                    {modal !== "ver" && (
-                      <button type="button" onClick={handleSave} className={configUi.primarySoftButton}>
-                        {modal === "crear" ? "Guardar" : "Actualizar"}
-                      </button>
-                    )}
-                  </div>
-
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* --- MODAL ELIMINAR --- */}
-        <AnimatePresence>
-          {modal === "eliminar" && selected && (
-            <motion.div
-              className={configUi.modalBackdrop}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className={`${configUi.modalPanel} max-w-sm p-6 relative text-center`}
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={24} /></div>
-                <h3 className="text-lg font-bold text-[#040529] mb-2">Eliminar Patrocinador</h3>
-                <p className="text-gray-500 text-sm mb-6">
-                  ¿Confirma que desea eliminar a <span className="font-bold text-[#040529]">{selected.nombre_patrocinador}</span>? <br />
-                  Esta acción es irreversible.
-                </p>
-
-                <div className="flex justify-center gap-3">
-                  <button onClick={closeModal} className={configUi.secondaryButton}>Cancelar</button>
-                  <button onClick={handleDelete} className={configUi.dangerButton}>Sí, Eliminar</button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
-    </>
+
+      {/* 2. TABLE AREA */}
+      <div className={configUi.tableCard}>
+        <div className={configUi.tableScroll}>
+          <table className={configUi.table}>
+            <thead className={configUi.thead}>
+              <tr>
+                <th className={cn(configUi.th, "w-[15%] pl-5")}>Logo</th>
+                <th className={cn(configUi.th, "w-[25%]")}>
+                   <button onClick={() => toggleSort("nombre_patrocinador")} className="flex items-center gap-2">
+                    Empresa
+                    {sortField === "nombre_patrocinador" && <ArrowUpDown className="h-3 w-3" />}
+                  </button>
+                </th>
+                <th className={cn(configUi.th, "w-[25%]")}>Email</th>
+                <th className={cn(configUi.th, "w-[20%]")}>Teléfono</th>
+                <th className={cn(configUi.th, "w-[15%] pr-5 text-right")}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className={configUi.emptyState}>Cargando patrocinadores...</td>
+                </tr>
+              ) : currentItems.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className={configUi.emptyState}>No se encontraron resultados.</td>
+                </tr>
+              ) : (
+                currentItems.map((p) => (
+                  <tr key={p.id_patrocinador} className={configUi.row}>
+                    <td className={cn(configUi.td, "pl-5")}>
+                       <div className="h-10 w-20 flex items-center justify-center rounded-lg bg-slate-50 border border-slate-100 overflow-hidden shadow-sm p-1">
+                          {p.logo_patrocinador ? (
+                            <img src={p.logo_patrocinador} alt="Logo" className="max-h-full max-w-full object-contain" />
+                          ) : (
+                            <ImageIcon size={16} className="text-slate-300" />
+                          )}
+                       </div>
+                    </td>
+                    <td className={cn(configUi.td, "font-bold text-[#16315f]")}>
+                      {p.nombre_patrocinador}
+                    </td>
+                    <td className={cn(configUi.td, "text-[#5b7398]")}>
+                      <div className="flex items-center gap-2">
+                        <Mail size={12} className="text-[#3b82f6]" />
+                         {p.email}
+                      </div>
+                    </td>
+                    <td className={cn(configUi.td, "text-[#5b7398]")}>
+                      <div className="flex items-center gap-2">
+                        <Phone size={12} className="text-[#3b82f6]" />
+                         {p.telefono}
+                      </div>
+                    </td>
+                    <td className={cn(configUi.td, "pr-5 text-right")}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => openModal("ver", p)} className={configUi.actionButton}><Eye size={14} /></button>
+                        <button onClick={() => openModal("editar", p)} className={configUi.actionButton}><Pen size={14} /></button>
+                        <button onClick={() => openModal("eliminar", p)} className={configUi.actionDangerButton}><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PAGINATION */}
+        {totalPages > 0 && (
+          <div className={configUi.paginationBar}>
+            <p className="text-sm font-bold text-slate-500">
+              Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+            </p>
+            <div className="flex items-center gap-2">
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p-1))} className={configUi.paginationButton}><ChevronLeft size={18} /></button>
+              <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} className={configUi.paginationButton}><ChevronRight size={18} /></button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* NOTIFICATIONS */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }}
+            className={cn("fixed top-4 right-4 z-[60] px-4 py-3 rounded-xl shadow-lg text-white font-medium", notification.type === "success" ? "bg-blue-600" : "bg-red-600")}>
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+            <motion.div className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-2xl")} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex flex-col">
+                <div className={configUi.modalHeader}>
+                   <div>
+                    <h3 className={configUi.modalTitle}>
+                      {modal === "crear" ? "Nuevo Patrocinador" : modal === "editar" ? "Editar Perfil" : modal === "ver" ? "Detalles del Aliado" : "Eliminar Aliado"}
+                    </h3>
+                    <p className={configUi.modalSubtitle}>Gestión de marcas colaboradoras.</p>
+                   </div>
+                   <button onClick={closeModal} className={configUi.modalClose} disabled={submitting}><X size={20} /></button>
+                </div>
+
+                <div className={configUi.modalContent}>
+                   {modal === "eliminar" ? (
+                     <div className="py-4 text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]"><Trash2 size={30} /></div>
+                        <p className="text-sm text-[#6b84aa]">¿Retirar a <span className="font-bold text-[#d44966]">{selected?.nombre_patrocinador}</span> de la lista? </p>
+                     </div>
+                   ) : (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* LEFT: Logo Upload */}
+                        <div className="flex flex-col items-center">
+                           <label className={cn(configUi.fieldLabel, "w-full text-center")}>Logo de la Marca</label>
+                           <div className="mt-4 h-32 w-full max-w-[200px] border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center bg-slate-50 overflow-hidden transition hover:border-[#3b82f6]">
+                              {logoPreview ? (
+                                <img src={logoPreview} alt="Preview" className="h-full w-full object-contain p-2" />
+                              ) : (
+                                <div className="flex flex-col items-center gap-1 text-slate-400">
+                                   <ImageIcon size={32} />
+                                   <span className="text-[10px] uppercase font-bold tracking-widest">Sin imagen</span>
+                                </div>
+                              )}
+                           </div>
+                           {modal !== "ver" && (
+                             <div className="mt-4 w-full space-y-3">
+                                <div className="flex items-center gap-2 justify-center">
+                                   <button onClick={() => setLogoType("url")} className={cn("text-[10px] font-bold px-3 py-1 rounded-full border transition", logoType === "url" ? "bg-[#16315f] text-white border-[#16315f]" : "bg-white text-slate-500 border-slate-200")}>Usar URL</button>
+                                   <button onClick={() => setLogoType("file")} className={cn("text-[10px] font-bold px-3 py-1 rounded-full border transition", logoType === "file" ? "bg-[#16315f] text-white border-[#16315f]" : "bg-white text-slate-500 border-slate-200")}>Subir Archivo</button>
+                                </div>
+                                {logoType === "url" ? (
+                                   <input name="logo_patrocinador" value={form.logo_patrocinador} onChange={handleChange} placeholder="https://ejemplo.com/logo.png" className={cn(configUi.fieldInput, "text-[11px]")} />
+                                ) : (
+                                   <div className="relative">
+                                      <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="logo-file" />
+                                      <label htmlFor="logo-file" className="flex items-center gap-2 justify-center w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 cursor-pointer hover:bg-slate-50 shadow-sm"><Upload size={14} /> Seleccionar Imagen</label>
+                                   </div>
+                                )}
+                             </div>
+                           )}
+                        </div>
+
+                        {/* RIGHT: Fields */}
+                        <div className="space-y-4">
+                           <div className={configUi.fieldGroup}>
+                              <label className={configUi.fieldLabel}>Nombre de la Empresa *</label>
+                              <div className="relative">
+                                 <Award className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                 <input name="nombre_patrocinador" value={form.nombre_patrocinador} onChange={handleChange} onBlur={(e) => validateField("nombre_patrocinador", e.target.value)} readOnly={modal === "ver"} disabled={submitting} placeholder="Ej: Red Bull" className={cn(configUi.fieldInput, "pl-10", formErrors.nombre_patrocinador && "border-red-500")} />
+                              </div>
+                              {formErrors.nombre_patrocinador && <p className="mt-1 text-xs font-bold text-red-500">{formErrors.nombre_patrocinador}</p>}
+                           </div>
+
+                           <div className={configUi.fieldGroup}>
+                              <label className={configUi.fieldLabel}>Correo Electrónico *</label>
+                              <div className="relative">
+                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                 <input name="email" value={form.email} onChange={handleChange} onBlur={(e) => validateField("email", e.target.value)} readOnly={modal === "ver"} disabled={submitting} placeholder="aliado@empresa.com" className={cn(configUi.fieldInput, "pl-10", formErrors.email && "border-red-500")} />
+                              </div>
+                              {formErrors.email && <p className="mt-1 text-xs font-bold text-red-500">{formErrors.email}</p>}
+                           </div>
+
+                           <div className={configUi.fieldGroup}>
+                              <label className={configUi.fieldLabel}>Número de Teléfono *</label>
+                              <div className="relative">
+                                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                 <input name="telefono" value={form.telefono} onChange={handleChange} onBlur={(e) => validateField("telefono", e.target.value)} readOnly={modal === "ver"} disabled={submitting} placeholder="Ej: 3001234567" className={cn(configUi.fieldInput, "pl-10", formErrors.telefono && "border-red-500")} />
+                              </div>
+                              {formErrors.telefono && <p className="mt-1 text-xs font-bold text-red-500">{formErrors.telefono}</p>}
+                           </div>
+                        </div>
+                     </div>
+                   )}
+                </div>
+
+                <div className={configUi.modalFooter}>
+                  <div className="flex items-center gap-2">
+                     <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                     <span className="text-[10px] font-black uppercase tracking-wider text-[#6b84aa]">Aliados Estratégicos</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={closeModal} className={configUi.secondaryButton}>{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
+                    {modal === "crear" && <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Procesando..." : "Registrar Empresa"}</button>}
+                    {modal === "editar" && <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Guardando..." : "Actualizar Datos"}</button>}
+                    {modal === "eliminar" && <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>{submitting ? "Eliminando..." : "Eliminar Permanentemente"}</button>}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

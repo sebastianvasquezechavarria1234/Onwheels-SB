@@ -409,7 +409,7 @@ export default function Usuarios() {
         <div className={configUi.headerRow}>
           <div className={configUi.titleWrap}>
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
-              Gestión de Usuarios
+               Usuarios
             </h2>
             <span className={configUi.countBadge}>{totalItems} usuarios</span>
           </div>

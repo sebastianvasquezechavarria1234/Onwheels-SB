@@ -436,6 +436,11 @@ const MatriculasAdmin = () => {
                                   <button onClick={() => { openModal("expediente", m); fetchHistorialEstudiante(m.id_estudiante); }} className="w-full px-4 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3">
                                     <ClipboardList size={14} className="text-indigo-500" /> Expediente
                                   </button>
+                                  {m.estado !== 'Finalizada' && m.estado !== 'Cancelada' && (
+                                    <button onClick={() => openModal("finalizar", m)} className="w-full px-4 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                      <CheckCircle size={14} className="text-emerald-500" /> Finalizar Matrícula
+                                    </button>
+                                  )}
                                   <div className="h-px bg-slate-100 my-1 mx-2"></div>
                                   <button onClick={() => openModal("editar", m)} className="w-full px-4 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3">
                                     <Edit size={14} className="text-slate-400" /> Editar Plan/Clase
@@ -797,26 +802,24 @@ const MatriculasAdmin = () => {
                     {['details', 'expediente', 'pagos'].includes(modal) ? "Visualización detallada." : "Recuerda confirmar los montos y fechas."}
                   </span>
                   <div className="flex items-center gap-3">
-                    <button onClick={closeModal} className={configUi.secondaryButton}>
-                      {['details', 'expediente', 'pagos'].includes(modal) ? "Cerrar" : "Cancelar"}
+                                  <button onClick={closeModal} className={configUi.secondaryButton}>
+                      Cancelar
                     </button>
-                    {modal === "nueva" && (
-                      <button onClick={handleCreate} className={configUi.primarySoftButton}>Generar Matrícula</button>
-                    )}
-                    {modal === "editar" && (
-                      <button onClick={handleUpdate} className={configUi.primarySoftButton}>Actualizar</button>
-                    )}
-                    {modal === "registrar_pago" && (
-                      <button onClick={handleRegistrarPago} disabled={isSubmittingPago} className={configUi.primarySoftButton}>
-                        {isSubmittingPago ? "Procesando..." : "Guardar Abono"}
+                    {modal === 'delete' ? (
+                      <button onClick={handleDelete} className={configUi.dangerButton}>Eliminar Ahora</button>
+                    ) : modal === 'registrar_pago' ? (
+                      <button onClick={handleRegistrarPago} disabled={isSubmittingPago} className={configUi.primaryButton}>
+                        {isSubmittingPago ? "Procesando..." : "Confirmar Pago"}
                       </button>
-                    )}
-                    {modal === "pausar" && (
-                      <button onClick={handlePausar} className={configUi.dangerButton}>Confirmar Pausa</button>
-                    )}
-                    {modal === "delete" && (
-                      <button onClick={handleDelete} className={configUi.dangerButton}>Confirmar</button>
-                    )}
+                    ) : modal === 'pausar' ? (
+                      <button onClick={handlePausar} className={configUi.warningButton}>Confirmar Pausa</button>
+                    ) : modal === 'finalizar' ? (
+                      <button onClick={handleFinalizarMatricula} className={configUi.primaryButton}>Finalizar Ahora</button>
+                    ) : modal === 'editar' ? (
+                      <button onClick={handleUpdate} className={configUi.primaryButton}>Guardar Cambios</button>
+                    ) : modal === 'nueva' ? (
+                      <button onClick={handleCreate} className={configUi.primaryButton}>Crear Matrícula</button>
+                    ) : null}
                   </div>
                 </div>
               </div>

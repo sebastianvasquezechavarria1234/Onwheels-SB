@@ -1,6 +1,10 @@
-// src/features/dashboards/admin/pages/clases/preinscripciones/PreinscripcionesAdmin.jsx
+// src/features/dashboards/admin/pages/clases/preinscripciones/PreRegistrations.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { Eye, Check, X, Search, Hash, User, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { 
+  Eye, Check, X, Search, Hash, User, 
+  ChevronLeft, ChevronRight, AlertCircle, 
+  UserPlus, Calendar, BookOpen, Info
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getPreinscripcionesPendientes,
@@ -8,11 +12,9 @@ import {
   aceptarPreinscripcionYCrearMatricula
 } from "../../services/preinscripcionesService";
 import api from "../../../../../../services/api";
+import { configUi } from "../../configuracion/configUi";
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const PreinscripcionesAdmin = () => {
   // --- ESTADOS ---
@@ -21,17 +23,11 @@ const PreinscripcionesAdmin = () => {
   const [planes, setPlanes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [backendError, setBackendError] = useState(false);
   const [search, setSearch] = useState("");
-  const [formErrors, setFormErrors] = useState({});
 
-  // Sorting state
-  const [sortField, setSortField] = useState("nombre_completo");
-  const [sortDirection, setSortDirection] = useState("asc");
-  
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
   // Modal state
   const [modal, setModal] = useState(null); // "details" | "matricula" | "rechazar"
@@ -45,26 +41,16 @@ const PreinscripcionesAdmin = () => {
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
-  const showNotification = (message, type = "success") => {
+  const showNotification = useCallback((message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
-  };
-
-  // Cerrar modal con Escape
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") closeModal();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // --- CARGAR DATOS ---
-  const fetchPreinscripciones = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      setBackendError(false);
 
       const [preinscripcionesData, clasesData, planesData] = await Promise.all([
         getPreinscripcionesPendientes(),
@@ -77,54 +63,32 @@ const PreinscripcionesAdmin = () => {
       setPlanes(Array.isArray(planesData) ? planesData : []);
     } catch (err) {
       console.error("Error cargando datos:", err);
-      setError("Error al cargar los datos.");
-      if (err.message && (err.message.includes("Network Error") || err.code === "ERR_CONNECTION_REFUSED")) {
-        setBackendError(true);
-        setError("No se pudo conectar con el servidor. Verifica que el Backend esté encendido.");
-      }
+      setError("No se pudo conectar con el servidor.");
       showNotification("Error de conexión", "error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showNotification]);
 
   useEffect(() => {
-    fetchPreinscripciones();
-  }, [fetchPreinscripciones]);
+    fetchData();
+  }, [fetchData]);
 
- 
-  const preinscripcionesFiltradas = useMemo(() => {
-    let result = [...preinscripciones];
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(p =>
-        (p.nombre_completo || "").toLowerCase().includes(q) ||
-        (p.email || "").toLowerCase().includes(q) ||
-        (p.documento || "").includes(q) ||
-        (p.nivel_experiencia || "").toLowerCase().includes(q) ||
-        (p.enfermedad || "").toLowerCase().includes(q) ||
-        (p.nombre_acudiente || "").toLowerCase().includes(q)
-      );
-    }
-    return result;
+  const filtered = useMemo(() => {
+    return preinscripciones.filter(p =>
+      (p.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
+      (p.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (p.documento || "").includes(search)
+    );
   }, [preinscripciones, search]);
 
-  const totalPages = Math.max(1, Math.ceil(preinscripcionesFiltradas.length / itemsPerPage));
-  const currentItems = preinscripcionesFiltradas.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // --- MODAL HANDLERS ---
-  const openModal = (type, preinscripcion = null) => {
+  const openModal = (type, pre = null) => {
     setModal(type);
-    setSelectedPreinscripcion(preinscripcion);
-    setFormErrors({});
-    
+    setSelectedPreinscripcion(pre);
     if (type === "matricula") {
       setClaseSeleccionada("");
       setPlanSeleccionado("");
@@ -135,53 +99,23 @@ const PreinscripcionesAdmin = () => {
   const closeModal = () => {
     setModal(null);
     setSelectedPreinscripcion(null);
-    setFormErrors({});
-  };
-
-  // Validar formulario de matrícula
-  const validateMatriculaForm = () => {
-    const errors = {};
-    if (!claseSeleccionada) errors.claseSeleccionada = "La clase es requerida";
-    if (!planSeleccionado) errors.planSeleccionado = "El plan es requerido";
-    if (!fechaMatricula) errors.fechaMatricula = "La fecha es requerida";
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
   };
 
   // --- CRUD OPERATIONS ---
   const handleRechazar = async () => {
     try {
       await rechazarPreinscripcion(selectedPreinscripcion.id_estudiante);
-      await fetchPreinscripciones();
-      showNotification("Preinscripción rechazada correctamente");
-
-      // Enviar email de notificación al estudiante rechazado
-      try {
-        const nombreEstudiante = selectedPreinscripcion.nombre_completo || "Estudiante";
-        const emailEstudiante = selectedPreinscripcion.email;
-
-        if (emailEstudiante) {
-          await api.post("/admin/correos-masivos/enviar-individual", {
-            destinatario: emailEstudiante,
-            asunto: "Actualización sobre tu preinscripción — OnWheels",
-            mensaje: `Hola ${nombreEstudiante},\n\nLamentablemente, luego de revisar tu solicitud de preinscripción en OnWheels, no ha podido ser aceptada en este momento por algunos motivos internos.\n\nSi tienes dudas o deseas más información, puedes contactarnos y con gusto te atenderemos.\n\nGracias por tu interés en OnWheels. ¡Esperamos verte pronto! 🛹\n\nSaludos,\nEl equipo de OnWheels`,
-          });
-        }
-      } catch (emailErr) {
-        console.warn("No se pudo enviar el email de rechazo:", emailErr);
-      }
-
+      fetchData();
+      showNotification("Preinscripción rechazada");
       closeModal();
     } catch (err) {
-      console.error("Error rechazando preinscripción:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error rechazando preinscripción";
-      showNotification(errorMessage, "error");
+      showNotification("Error al rechazar", "error");
     }
   };
 
   const handleAceptarYMatricular = async () => {
     if (!claseSeleccionada || !planSeleccionado) {
-      showNotification("Debes seleccionar clase y plan", "error");
+      showNotification("Campos obligatorios faltantes", "error");
       return;
     }
     
@@ -193,387 +127,354 @@ const PreinscripcionesAdmin = () => {
       };
 
       await aceptarPreinscripcionYCrearMatricula(selectedPreinscripcion.id_estudiante, matriculaData);
-      await fetchPreinscripciones();
-      showNotification("Preinscripción aceptada y matrícula creada correctamente");
-
-      // Enviar email de notificación al estudiante aceptado
-      try {
-        const nombreEstudiante = selectedPreinscripcion.nombre_completo || "Estudiante";
-        const emailEstudiante = selectedPreinscripcion.email;
-
-        if (emailEstudiante) {
-          await api.post("/admin/correos-masivos/enviar-individual", {
-            destinatario: emailEstudiante,
-            asunto: "¡Tu preinscripción ha sido aceptada! — OnWheels",
-            mensaje: `Hola ${nombreEstudiante},\n\n¡Felicidades! Tu preinscripción en OnWheels ha sido aceptada exitosamente.\n\nYa puedes iniciar sesión como estudiante en nuestra plataforma con el correo: ${emailEstudiante}\n\nTe esperamos en clase. ¡Bienvenido/a a la familia OnWheels! 🛹\n\nSaludos,\nEl equipo de OnWheels`,
-          });
-        }
-      } catch (emailErr) {
-        console.warn("No se pudo enviar el email de aceptación:", emailErr);
-        showNotification("Matrícula creada, pero no se pudo enviar el email de notificación", "error");
-      }
-
+      fetchData();
+      showNotification("Matrícula creada con éxito");
       closeModal();
     } catch (err) {
-      console.error("Error aceptando preinscripción:", err);
-      const errorMessage = err.response?.data?.mensaje || "Error al aceptar preinscripción";
-      showNotification(errorMessage, "error");
+      showNotification(err.response?.data?.mensaje || "Error al procesar", "error");
     }
   };
 
   return (
     <>
-      <div className="flex flex-col h-dvh bg-gray-50 overflow-hidden">
-
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-3 p-4 pb-2">
-
-          {/* Row 1: Minimal Header */}
-          <div className="flex items-center justify-between  rounded-xl px-4 py-2 ">
-            <div className="flex items-center gap-4">
-              <h1 className="text-sm whitespace-nowrap uppercase tracking-wider">
-                Gestión de Preinscripciones
-              </h1>
-
-              {/* Compact Stats */}
-              <div className="flex items-center gap-2 border-l pl-4">
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md">
-                  <Hash className="h-3 w-3 " />
-                  <span className="text-xs font-bold ">{preinscripcionesFiltradas.length}</span>
-                </div>
-              </div>
-            </div>
+      <div className={configUi.pageShell}>
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Preinscripciones
+            </h2>
+            <span className={configUi.countBadge}>{filtered.length} pendientes</span>
           </div>
 
-          {/* Row 2: Active Toolbar */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white rounded-xl border border-[#040529]/5 px-4 py-3 shadow-sm">
-            <div className="relative flex-1 w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <div className={configUi.toolbar}>
+            <div className={configUi.searchWrap}>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
+                type="text"
+                placeholder="Buscar preinscripción..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                placeholder="Buscar preinscripción..."
-                className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#040529]/10 outline-none transition"
+                className={configUi.inputWithIcon}
               />
-              {search && (
-                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  <X className="h-4 w-4" />
-                </button>
-              )}
             </div>
           </div>
         </div>
 
         {/* --- SECTION 2: TABLE AREA --- */}
-        <div className="flex-1 p-4 pt-0 overflow-hidden flex flex-col min-h-0">
-          <div className="bg-white rounded-2xl border border-[#040529]/8 shadow-sm flex flex-col h-full overflow-hidden">
-
-            {/* Table Content */}
-            <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-              <table className="w-full text-left relative">
-                <thead className="bg-[#F0E6E6] text-[#040529] sticky top-0 z-10 shadow-sm">
+        <div className={configUi.tableCard}>
+          <div className={configUi.tableScroll}>
+            <table className={configUi.table}>
+              <thead className={configUi.thead}>
+                <tr>
+                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[25%]`}>Estudiante</th>
+                  <th className={`${configUi.th} w-[20%]`}>Contacto</th>
+                  <th className={`${configUi.th} w-[15%]`}>Nivel / Experiencia</th>
+                  <th className={`${configUi.th} w-[15%]`}>Fecha Registro</th>
+                  <th className={`${configUi.th} w-[15%]`}>Acudiente</th>
+                  <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[10%]`}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="6" className={configUi.emptyState}>Cargando preinscripciones...</td></tr>
+                ) : error ? (
                   <tr>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Estudiante</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Email</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-center">Edad</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Nivel</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Enfermedad</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider">Acudiente</th>
-                    <th className="px-5 py-4 font-bold text-xs uppercase tracking-wider text-right">Acciones</th>
+                    <td colSpan="6" className={configUi.emptyState}>
+                      <div className="flex flex-col items-center justify-center gap-2 text-red-500">
+                        <AlertCircle className="h-8 w-8 opacity-80" />
+                        <p className="font-medium">{error}</p>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr><td colSpan="7" className="p-8 text-center text-gray-400 text-sm">Cargando registros...</td></tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan="7" className="p-12 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2 text-red-500">
-                          <AlertCircle className="h-8 w-8 opacity-80" />
-                          <p className="font-medium">{error}</p>
-                          {backendError && (
-                            <p className="text-xs text-red-400 bg-red-50 px-3 py-1 rounded-full">
-                              Intenta iniciar el backend en el puerto 3000
-                            </p>
-                          )}
+                ) : currentItems.length === 0 ? (
+                  <tr><td colSpan="6" className={configUi.emptyState}>No hay preinscripciones pendientes.</td></tr>
+                ) : (
+                  currentItems.map((p) => (
+                    <tr key={p.id_estudiante} className={configUi.row}>
+                      <td className={configUi.td}>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-[#16315f] flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                            {(p.nombre_completo || "PR").substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-[#16315f] text-sm leading-tight truncate">{p.nombre_completo}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{p.documento || "Sin ID"}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={configUi.td}>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-semibold text-[#16315f] truncate">{p.email}</span>
+                          <span className="text-[10px] text-slate-400">{p.telefono || p.edad + " años"}</span>
+                        </div>
+                      </td>
+                      <td className={configUi.td}>
+                        <span className={cn(configUi.pill, "bg-blue-50 text-[#16315f] scale-90 origin-left border border-blue-100")}>
+                          {p.nivel_experiencia || "Principiante"}
+                        </span>
+                      </td>
+                      <td className={configUi.td}>
+                        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                          <Calendar size={12} className="text-slate-300" />
+                          {new Date(p.fecha_preinscripcion).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className={configUi.td}>
+                        {p.nombre_acudiente ? (
+                           <div className="flex flex-col">
+                              <span className="text-xs font-bold text-[#16315f]">{p.nombre_acudiente}</span>
+                              <span className="text-[10px] text-slate-400 font-medium">{p.telefono_acudiente || "—"}</span>
+                           </div>
+                        ) : (
+                          <span className="text-xs text-slate-300 italic">—</span>
+                        )}
+                      </td>
+                      <td className={`${configUi.td} text-right`}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => openModal("details", p)} className={configUi.actionButton} title="Detalles">
+                            <Eye size={14} />
+                          </button>
+                          <button onClick={() => openModal("matricula", p)} className={cn(configUi.actionButton, "hover:bg-emerald-50 hover:text-emerald-600")} title="Aceptar">
+                            <Check size={14} />
+                          </button>
+                          <button onClick={() => openModal("rechazar", p)} className={cn(configUi.actionButton, "hover:bg-red-50 hover:text-red-600")} title="Rechazar">
+                            <X size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  ) : currentItems.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="p-12 text-center text-gray-400">
-                        <div className="flex flex-col items-center gap-2 opacity-50">
-                          <Hash className="h-8 w-8" />
-                          <p className="text-sm">No se encontraron preinscripciones pendientes</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    currentItems.map((p) => (
-                      <tr key={p.id_estudiante} className="group hover:bg-[#F0E6E6]/30 transition-colors">
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-[#040529] text-[#F0E6E6] font-bold text-xs shadow-sm">
-                              {p.nombre_completo?.substring(0, 2).toUpperCase() || "PR"}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-bold text-[#040529] text-sm leading-tight mb-0.5">{p.nombre_completo}</p>
-                              <p className="text-xs text-gray-500 font-medium">{p.documento || "Sin documento"}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-sm text-gray-600">{p.email}</td>
-                        <td className="px-5 py-4 text-center">
-                          <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-md text-xs font-bold border border-gray-200">
-                            {p.edad || "—"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-sm text-gray-600">{p.nivel_experiencia || "—"}</td>
-                        <td className="px-5 py-4 text-sm text-gray-600">{p.enfermedad || "—"}</td>
-                        <td className="px-5 py-4 text-sm text-gray-600">
-                          {p.nombre_acudiente ? (
-                            <div className="flex flex-col">
-                              <span className="font-medium">{p.nombre_acudiente}</span>
-                              <span className="text-xs text-gray-400">{p.telefono_acudiente || "—"}</span>
-                            </div>
-                          ) : "—"}
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => openModal("details", p)} className="p-2 rounded-lg bg-gray-50 text-gray-500 hover:bg-[#040529] hover:text-white transition shadow-sm border border-gray-100" title="Ver"><Eye className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("matricula", p)} className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition shadow-sm border border-green-100" title="Aceptar"><Check className="h-4 w-4" /></button>
-                            <button onClick={() => openModal("rechazar", p)} className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100" title="Rechazar"><X className="h-4 w-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Footer Pagination */}
-            {totalPages > 1 && (
-              <div className="shrink-0 border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex items-center justify-between">
-                <p className="text-xs text-gray-500 font-medium">
-                  Mostrando <span className="font-bold text-[#040529]">{Math.min(currentItems.length, itemsPerPage)}</span> de <span className="font-bold text-[#040529]">{preinscripcionesFiltradas.length}</span> resultados
-                </p>
-                <div className="flex items-center gap-2">
-                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronLeft className="h-4 w-4 text-gray-600" /></button>
-                  <span className="text-sm font-bold text-[#040529] px-2">{currentPage}</span>
-                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"><ChevronRight className="h-4 w-4 text-gray-600" /></button>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className={configUi.paginationBar}>
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className={configUi.paginationButton}>
+                  <ChevronLeft size={18} />
+                </button>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className={configUi.paginationButton}>
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Notificación */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 300 }}
+            className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium max-w-xs ${notification.type === "success" ? "bg-[#16315f]" : "bg-red-600"}`}
+          >
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modales */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div
+            className={configUi.modalBackdrop}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+          >
+            <motion.div
+              className={`${configUi.modalPanel} ${modal === 'rechazar' ? "max-w-sm" : "max-w-4xl"}`}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col">
+                <div className={configUi.modalHeader}>
+                  <div>
+                    <h3 className={configUi.modalTitle}>
+                      {modal === 'details' ? 'Información Solicitante' :
+                       modal === 'matricula' ? 'Aprobar Preinscripción' :
+                       modal === 'rechazar' ? 'Declinar Solicitud' : ''}
+                    </h3>
+                    <p className={configUi.modalSubtitle}>
+                      {selectedPreinscripcion?.nombre_completo || "Gestión de preinscripción"}
+                    </p>
+                  </div>
+                  <button onClick={closeModal} className={configUi.modalClose}>
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className={configUi.modalContent}>
+                    {modal === 'rechazar' ? (
+                       <div className="py-4 text-center">
+                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
+                             <X size={30} />
+                          </div>
+                          <p className="text-sm text-slate-500 italic">¿Seguro que deseas rechazar la solicitud de {selectedPreinscripcion?.nombre_completo}?</p>
+                       </div>
+                    ) : modal === 'details' ? (
+                       <div className="flex flex-col lg:flex-row gap-8">
+                          <div className="w-full lg:w-1/3 bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col items-center">
+                             <div className="h-24 w-24 rounded-2xl bg-[#16315f] flex items-center justify-center text-white text-3xl font-bold shadow-lg mb-4">
+                                {selectedPreinscripcion?.nombre_completo?.charAt(0)}
+                             </div>
+                             <h4 className="text-lg font-extrabold text-[#16315f] text-center mb-1">{selectedPreinscripcion?.nombre_completo}</h4>
+                             <p className="text-xs text-slate-400 font-bold mb-6">{selectedPreinscripcion?.email}</p>
+                             
+                             <div className="w-full space-y-4">
+                                <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                                   <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Documento</label>
+                                   <p className="text-sm font-bold text-[#16315f] flex items-center gap-2"><Hash size={12}/> {selectedPreinscripcion?.documento || "No suministrado"}</p>
+                                </div>
+                                <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                                   <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Edad Declarada</label>
+                                   <p className="text-sm font-bold text-[#16315f] flex items-center gap-2"><User size={12}/> {selectedPreinscripcion?.edad} años</p>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div className="flex-1 space-y-6">
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className={configUi.fieldGroup}>
+                                   <label className={configUi.fieldLabel}>Nivel de Experiencia</label>
+                                   <div className={configUi.readOnlyField}>{selectedPreinscripcion?.nivel_experiencia || "Principiante"}</div>
+                                </div>
+                                <div className={configUi.fieldGroup}>
+                                   <label className={configUi.fieldLabel}>Fecha de Solicitud</label>
+                                   <div className={configUi.readOnlyField}>{new Date(selectedPreinscripcion?.fecha_preinscripcion).toLocaleDateString()}</div>
+                                </div>
+                             </div>
+                             
+                             <div className={configUi.fieldGroup}>
+                                <label className={configUi.fieldLabel}>Condiciones Médicas / Observaciones</label>
+                                <div className={cn(configUi.readOnlyField, "min-h-[80px] leading-relaxed italic")}>
+                                   {selectedPreinscripcion?.enfermedad || "Sin observaciones médicas registradas."}
+                                </div>
+                             </div>
+
+                             {selectedPreinscripcion?.nombre_acudiente && (
+                                <div className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                                   <h5 className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                      <Info size={12}/> Datos del Acudiente
+                                   </h5>
+                                   <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                         <p className="text-[10px] text-slate-400 font-bold uppercase">Nombre</p>
+                                         <p className="text-sm font-bold text-[#16315f]">{selectedPreinscripcion?.nombre_acudiente}</p>
+                                      </div>
+                                      <div>
+                                         <p className="text-[10px] text-slate-400 font-bold uppercase">Teléfono</p>
+                                         <p className="text-sm font-bold text-[#16315f]">{selectedPreinscripcion?.telefono_acudiente}</p>
+                                      </div>
+                                   </div>
+                                </div>
+                             )}
+                          </div>
+                       </div>
+                    ) : (
+                       // MODAL MATRICULA (APROBAR)
+                       <div className="flex flex-col lg:flex-row gap-8">
+                          <div className="hidden lg:flex w-1/3 bg-emerald-50 rounded-2xl p-8 flex-col items-center justify-center border border-emerald-100 italic text-center">
+                             <div className="h-20 w-20 bg-white rounded-2xl shadow-sm flex items-center justify-center text-emerald-500 mb-4 border border-emerald-100">
+                                <UserPlus size={40} />
+                             </div>
+                             <h4 className="text-lg font-bold text-[#16315f] mb-2">Formalizar Matrícula</h4>
+                             <p className="text-xs text-emerald-800 leading-relaxed font-medium">Asigna una clase y un plan de pagos para convertir esta preinscripción en una matrícula activa.</p>
+                          </div>
+
+                          <div className="flex-1 space-y-6">
+                             <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-4">
+                                <div className="h-10 w-10 bg-[#16315f] rounded-xl flex items-center justify-center text-white text-xs font-bold">{selectedPreinscripcion?.nombre_completo?.charAt(0)}</div>
+                                <div>
+                                   <p className="text-sm font-bold text-[#16315f]">{selectedPreinscripcion?.nombre_completo}</p>
+                                   <p className="text-[10px] text-slate-400 font-bold">Documento: {selectedPreinscripcion?.documento}</p>
+                                </div>
+                             </div>
+
+                             <div className={configUi.fieldGroup}>
+                                <label className={configUi.fieldLabel}>Seleccionar Clase / Horario</label>
+                                <select 
+                                  className={configUi.fieldSelect}
+                                  value={claseSeleccionada}
+                                  onChange={(e) => setClaseSeleccionada(e.target.value)}
+                                >
+                                  <option value="">Elegir horario...</option>
+                                  {clases.map(c => (
+                                    <option key={c.id_clase} value={c.id_clase}>
+                                      {c.nombre_nivel} - {c.dia_semana} {c.hora_inicio?.substring(0,5)} ({c.nombre_sede})
+                                    </option>
+                                  ))}
+                                </select>
+                             </div>
+
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className={configUi.fieldGroup}>
+                                   <label className={configUi.fieldLabel}>Plan de Pago</label>
+                                   <select 
+                                     className={configUi.fieldSelect}
+                                     value={planSeleccionado}
+                                     onChange={(e) => setPlanSeleccionado(e.target.value)}
+                                   >
+                                      <option value="">Elegir plan...</option>
+                                      {planes.map(p => (
+                                        <option key={p.id_plan} value={p.id_plan}>
+                                          {p.nombre_plan} (${Number(p.precio).toLocaleString()})
+                                        </option>
+                                      ))}
+                                   </select>
+                                </div>
+                                <div className={configUi.fieldGroup}>
+                                   <label className={configUi.fieldLabel}>Fecha de Inicio</label>
+                                   <input 
+                                     type="date" 
+                                     className={configUi.fieldInput} 
+                                     value={fechaMatricula}
+                                     onChange={(e) => setFechaMatricula(e.target.value)}
+                                   />
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+                    )}
+                </div>
+
+                <div className={configUi.modalFooter}>
+                  <span className="text-xs text-slate-400 font-medium italic">
+                    {modal === 'details' ? "Visualización de datos de pre-registro." : "Confirma la información antes de procesar."}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={closeModal} className={configUi.secondaryButton}>
+                      Cancelar
+                    </button>
+                    {modal === 'rechazar' ? (
+                      <button onClick={handleRechazar} className={configUi.dangerButton}>Rechazar Ahora</button>
+                    ) : modal === 'matricula' ? (
+                      <button onClick={handleAceptarYMatricular} className={configUi.primaryButton}>
+                         Aprobar y Matricular
+                      </button>
+                    ) : (
+                      <button onClick={closeModal} className={configUi.primaryButton}>Cerrar</button>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* --- NOTIFICATIONS & MODALS --- */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium ${notification.type === "success" ? "bg-[#040529]" : "bg-red-500"}`}>
-              {notification.message}
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {modal && (
-            <motion.div
-              className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={closeModal}
-            >
-              <motion.div
-                className={`bg-white rounded-2xl shadow-2xl relative overflow-hidden ${modal === "rechazar" ? "max-w-sm w-full" : "max-w-4xl w-full"}`}
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* --- MODAL RECHAZAR --- */}
-                {modal === "rechazar" && selectedPreinscripcion && (
-                  <div className="p-6 text-center">
-                    <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><X size={24} /></div>
-                    <h3 className="text-lg font-bold text-[#040529] mb-2">Rechazar Preinscripción</h3>
-                    <p className="text-sm text-gray-500 mb-6">
-                      ¿Estás seguro de rechazar la preinscripción de <span className="font-bold text-red-600">{selectedPreinscripcion.nombre_completo}</span>?
-                    </p>
-                    <div className="flex justify-center gap-3">
-                      <button onClick={closeModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                      <button onClick={handleRechazar} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Rechazar</button>
-                    </div>
-                  </div>
-                )}
-
-                {/* --- MODAL DETAILS --- */}
-                {modal === "details" && selectedPreinscripcion && (
-                  <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
-                    {/* Left Side (Visual) */}
-                    <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                      <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                        <User size={48} strokeWidth={1.5} />
-                      </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Detalles de Preinscripción</p>
-                    </div>
-
-                    {/* Right Side (Content) */}
-                    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-[#040529]">Información del Estudiante</h3>
-                        <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre Completo</label>
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.nombre_completo}</p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email</label>
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.email}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Documento</label>
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.documento || "—"}</p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.telefono || "—"}</p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Edad</label>
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.edad || "—"}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nivel Experiencia</label>
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.nivel_experiencia || "—"}</p>
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Enfermedad</label>
-                            <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.enfermedad || "—"}</p>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Fecha Preinscripción</label>
-                          <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">
-                            {selectedPreinscripcion.fecha_preinscripcion ? new Date(selectedPreinscripcion.fecha_preinscripcion).toLocaleDateString('es-ES') : "—"}
-                          </p>
-                        </div>
-
-                        {selectedPreinscripcion.nombre_acudiente && (
-                          <div className="border-t pt-4 mt-4">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Información del Acudiente</h4>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nombre</label>
-                                <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.nombre_acudiente}</p>
-                              </div>
-                              {selectedPreinscripcion.telefono_acudiente && (
-                                <div>
-                                  <label className="text-xs font-bold text-gray-500 uppercase ml-1">Teléfono</label>
-                                  <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-[#040529]">{selectedPreinscripcion.telefono_acudiente}</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                          <button onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50">Cerrar</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* --- MODAL MATRICULA --- */}
-                {modal === "matricula" && selectedPreinscripcion && (
-                  <div className="flex flex-col lg:flex-row h-[500px] lg:h-[600px]">
-                    {/* Left Side (Visual) */}
-                    <div className="hidden lg:flex w-1/3 bg-gray-50 flex-col items-center justify-center border-r border-gray-100 p-8">
-                      <div className="w-32 h-32 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-gray-300">
-                        <Check size={48} strokeWidth={1.5} />
-                      </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Crear Matrícula</p>
-                    </div>
-
-                    {/* Right Side (Form) */}
-                    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-[#040529]">Aceptar y Matricular</h3>
-                        <button onClick={closeModal} className="text-gray-400 hover:text-[#040529]"><X size={20} /></button>
-                      </div>
-
-                      <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-100">
-                        <p className="text-sm text-blue-800"><strong>Estudiante:</strong> {selectedPreinscripcion.nombre_completo}</p>
-                        <p className="text-sm text-blue-800"><strong>Email:</strong> {selectedPreinscripcion.email}</p>
-                      </div>
-
-                      <form className="space-y-5">
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Clase</label>
-                          <select
-                            className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
-                            value={claseSeleccionada}
-                            onChange={(e) => setClaseSeleccionada(e.target.value)}
-                            required
-                          >
-                            <option value="">Seleccionar clase</option>
-                            {clases.map(clase => (
-                              <option key={clase.id_clase} value={clase.id_clase}>
-                                {clase.nombre_nivel} - {clase.dia_semana} {clase.hora_inicio} ({clase.nombre_sede})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Plan</label>
-                          <select
-                            className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
-                            value={planSeleccionado}
-                            onChange={(e) => setPlanSeleccionado(e.target.value)}
-                            required
-                          >
-                            <option value="">Seleccionar plan</option>
-                            {planes.map(plan => (
-                              <option key={plan.id_plan} value={plan.id_plan}>
-                                {plan.nombre_plan} - ${plan.precio}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase ml-1">Fecha de matrícula</label>
-                          <input
-                            type="date"
-                            className="w-full mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#040529]/20"
-                            value={fechaMatricula}
-                            onChange={(e) => setFechaMatricula(e.target.value)}
-                          />
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-                          <button type="button" onClick={closeModal} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50">Cancelar</button>
-                          <button type="button" onClick={handleAceptarYMatricular} className="px-5 py-2.5 bg-[#040529] text-white rounded-lg text-sm font-bold hover:bg-[#040529]/90 shadow-lg shadow-blue-900/10">Aceptar y Matricular</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

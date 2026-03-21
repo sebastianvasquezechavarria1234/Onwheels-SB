@@ -63,7 +63,7 @@ const ClassLevels = () => {
         await api.post("/niveles", formData);
         showNotification("Nivel creado correctamente");
       } else {
-        await api.put(`/niveles/${selectedLevel.id_nivel_clase}`, formData);
+        await api.put(`/niveles/${selectedLevel.id_nivel}`, formData);
         showNotification("Nivel actualizado correctamente");
       }
       fetchLevels();
@@ -78,7 +78,7 @@ const ClassLevels = () => {
   const handleDelete = async () => {
     try {
       setSubmitting(true);
-      await api.delete(`/niveles/${selectedLevel.id_nivel_clase}`);
+      await api.delete(`/niveles/${selectedLevel.id_nivel}`);
       showNotification("Nivel eliminado");
       fetchLevels();
       closeModal();
@@ -138,7 +138,7 @@ const ClassLevels = () => {
                 ) : currentItems.length === 0 ? (
                   <tr><td colSpan="4" className={configUi.emptyState}>No se encontraron niveles.</td></tr>
                 ) : currentItems.map((lvl) => (
-                  <tr key={lvl.id_nivel_clase} className={configUi.row}>
+                  <tr key={lvl.id_nivel} className={configUi.row}>
                     <td className={`${configUi.td} font-bold text-[#16315f]`}>{lvl.nombre_nivel}</td>
                     <td className={`${configUi.td} text-[#5b7398]`}>{lvl.descripcion || "—"}</td>
                     <td className={`${configUi.td} text-center`}>
