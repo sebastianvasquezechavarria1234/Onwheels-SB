@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
-  Search, Plus, Pen, Trash2, Eye, X, MapPin, Hash, ArrowUpDown, ChevronLeft, ChevronRight, Phone, Home
+  Search, Plus, Pen, Trash2, Eye, X, MapPin, Hash, ArrowUpDown, ChevronLeft, ChevronRight, Phone, Home, Building2, AlertCircle, Pencil
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,6 +10,7 @@ import {
   deleteSede,
 } from "../../services/sedesServices";
 import { configUi, cn } from "../../configuracion/configUi";
+import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
 
 export default function Sedes() {
   // Data
@@ -89,6 +90,8 @@ export default function Sedes() {
     return ok1 && ok2 && ok3 && ok4;
   };
 
+  const [modalError, setModalError] = useState(null);
+
   // Fetch data
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -112,6 +115,7 @@ export default function Sedes() {
     setModal(type);
     setSelected(sede);
     setSubmitting(false);
+    setModalError(null);
 
     setForm(
       sede
@@ -131,6 +135,7 @@ export default function Sedes() {
     if (submitting) return;
     setModal(null);
     setSelected(null);
+    setModalError(null);
     setForm({ nombre_sede: "", direccion: "", ciudad: "", telefono: "" });
     setFormErrors({});
   };
@@ -162,10 +167,10 @@ export default function Sedes() {
     };
 
     try {
-      if (modal === "crear") {
+      if (modal === "add") {
         await createSede(payload);
         showNotification("Sede creada con éxito");
-      } else if (modal === "editar" && selected) {
+      } else if (modal === "edit" && selected) {
         await updateSede(selected.id_sede, payload);
         showNotification("Sede actualizada");
       }
@@ -174,7 +179,8 @@ export default function Sedes() {
       closeModal();
     } catch (err) {
       console.error("Error guardando:", err);
-      showNotification("Error al procesar la solicitud", "error");
+      const errorMessage = err.response?.data?.mensaje || "Error al procesar la solicitud";
+      showNotification(errorMessage, "error");
     } finally {
       setSubmitting(false);
     }
@@ -184,6 +190,7 @@ export default function Sedes() {
   const handleDelete = async () => {
     if (!selected) return;
     setSubmitting(true);
+    setModalError(null);
     try {
       await deleteSede(selected.id_sede);
       showNotification("Sede eliminada con éxito");
@@ -191,7 +198,9 @@ export default function Sedes() {
       closeModal();
     } catch (err) {
       console.error("Error eliminando:", err);
-      showNotification("No se pudo eliminar la sede", "error");
+      const errorMessage = err.response?.data?.mensaje || "No se pudo eliminar la sede";
+      setModalError(errorMessage);
+      showNotification(errorMessage, "error");
     } finally {
       setSubmitting(false);
     }
@@ -248,52 +257,34 @@ export default function Sedes() {
     <>
       <div className={configUi.pageShell}>
 
-        {/* --- SECTION 1: HEADER & TOOLBAR (Fixed) --- */}
-        <div className="shrink-0 flex flex-col gap-4 p-6 pb-2">
-          {/* Row 1: Minimal Header (Matches Screenshot) */}
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-[#1f2937] rounded-xl flex items-center justify-center text-white shadow-sm">
-              <Building2 size={20} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-[#1f2937] tracking-tight uppercase">
-                Gestión de Sedes
-              </h2>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 mt-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                {sedes.length} sedes registradas
-              </div>
-            </div>
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+               Sedes
+            </h2>
+            <span className={configUi.countBadge}>{sedes.length} sedes</span>
           </div>
 
-          {/* Row 2: Active Toolbar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
-            {/* Search & Create Group */}
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="relative w-[280px]">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                  placeholder="Buscar sedes..."
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-gray-400"
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => openModal("add")}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-[13px] font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 whitespace-nowrap"
-              >
-                <Plus size={16} strokeWidth={2.5} />
-                Nueva Sede
-              </button>
+          <div className={configUi.toolbar}>
+            {/* Search Bar */}
+            <div className={configUi.searchWrap}>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                value={search}
+                placeholder="Buscar sedes..."
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className={configUi.inputWithIcon}
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
-            {/* Filters (Sort - Matches screenshot dark pill styling) */}
+            {/* Filters (Sort) */}
             <div className="flex items-center gap-2 overflow-x-auto">
               {[
                 { id: "nombre_sede", label: "Nombre" },
@@ -303,10 +294,10 @@ export default function Sedes() {
                   key={field.id}
                   onClick={() => toggleSort(field.id)}
                   className={cn(
-                    "px-4 py-2 text-[11px] uppercase font-bold tracking-wider rounded-lg border transition flex items-center gap-1.5 shrink-0 select-none",
+                    "px-4 py-2.5 text-[11px] uppercase font-black tracking-wider rounded-2xl border transition flex items-center gap-1.5 shrink-0 select-none",
                     sortField === field.id
                       ? "bg-[#1f2937] text-white border-[#1f2937]"
-                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                      : "bg-white text-[#6a85ad] border-[#bfd1f4] hover:bg-[#f8fbff] hover:text-[#16315f]"
                   )}
                 >
                   {field.label}
@@ -314,6 +305,14 @@ export default function Sedes() {
                 </button>
               ))}
             </div>
+
+            <button
+              onClick={() => openModal("add")}
+              className={`${configUi.primaryButton} whitespace-nowrap`}
+            >
+              <Plus size={18} />
+              Registrar Sede
+            </button>
           </div>
         </div>
 
@@ -352,7 +351,7 @@ export default function Sedes() {
                           <span className="truncate">{s.direccion}</span>
                         </td>
                         <td className={configUi.td}>
-                          <span className={s.ciudad.toLowerCase().includes('bogot') ? configUi.tealPill : s.ciudad.toLowerCase().includes('pereira') ? configUi.purplePill : configUi.pill}>
+                          <span className={configUi.pill}>
                             {s.ciudad}
                           </span>
                         </td>
@@ -360,7 +359,7 @@ export default function Sedes() {
                         <td className={`${configUi.td} text-right`}>
                           <div className="flex items-center justify-end gap-1.5">
                             <button onClick={() => openModal("details", s)} className={configUi.actionButton} title="Ver"><Eye size={14} strokeWidth={2.5} /></button>
-                            <button onClick={() => openModal("edit", s)} className={configUi.actionEditButton} title="Editar"><Pencil size={14} strokeWidth={2.5} /></button>
+                            <button onClick={() => openModal("edit", s)} className={configUi.actionButton} title="Editar"><Pencil size={14} strokeWidth={2.5} /></button>
                             <button onClick={() => openModal("delete", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} strokeWidth={2.5} /></button>
                           </div>
                         </td>
@@ -449,15 +448,18 @@ export default function Sedes() {
                     </div>
 
                     <div className={configUi.modalContent}>
-                      {modal === "eliminar" ? (
+                      {modal === "delete" || modal === "eliminar" ? (
                         <div className="py-4 text-center">
                           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
                             <Trash2 size={30} />
                           </div>
-                          <p className="text-sm leading-6 text-[#6b84aa]">
+                          <h3 className="mb-2 text-xl font-black text-[#16315f]">Eliminar esta sede</h3>
+                          <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-[#6b84aa]">
                             ¿Estás seguro de eliminar la sede <span className="font-bold text-[#d44966]">{selected?.nombre_sede}</span>?
                             <br />Esta acción no se puede deshacer.
                           </p>
+                          
+                          <ModalErrorAlert error={modalError} />
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -549,17 +551,17 @@ export default function Sedes() {
                         <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>
                           {modal === "ver" ? "Cerrar" : "Cancelar"}
                         </button>
-                        {modal === "crear" && (
+                        {(modal === "crear" || modal === "add") && (
                           <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
                             {submitting ? "Creando..." : "Crear Sede"}
                           </button>
                         )}
-                        {modal === "editar" && (
+                        {(modal === "editar" || modal === "edit") && (
                           <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
                             {submitting ? "Actualizando..." : "Guardar Cambios"}
                           </button>
                         )}
-                        {modal === "eliminar" && (
+                        {(modal === "eliminar" || modal === "delete") && !modalError && (
                           <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>
                             {submitting ? "Eliminando..." : "Confirmar Eliminación"}
                           </button>

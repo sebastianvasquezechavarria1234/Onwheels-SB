@@ -43,8 +43,18 @@ export const Footer = () => {
                         Tu comunidad de skate en Colombia. Eventos, tienda y academia.
                     </p>
                     <div className="flex gap-3">
-                        {[Facebook, Instagram, Youtube, Twitter].map((Icon, i) => (
-                            <a key={i} href="#" className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-[var(--color-blue)] transition-colors text-white/50 hover:text-white">
+                        {[
+                            { Icon: Facebook, url: "https://www.facebook.com/PerformanceCor/" },
+                            { Icon: Instagram, url: "https://www.instagram.com/corp_performance/" },
+                            { Icon: Youtube, url: "https://www.youtube.com/@escuelaskateboardingmedell4715" }
+                        ].map(({ Icon, url }, i) => (
+                            <a 
+                                key={i} 
+                                href={url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-[var(--color-blue)] transition-colors text-white/50 hover:text-white"
+                            >
                                 <Icon size={14} />
                             </a>
                         ))}

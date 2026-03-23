@@ -148,9 +148,10 @@ const AppRouter = () => {
   const navigate = useNavigate()
   const prevRoleSlugRef = useRef(null)
 
-  // Refresh auth on every route change to detect role updates (e.g. admin enrolls user as student)
+  // Refresh auth on every route change and scroll to top
   useEffect(() => {
     refreshUser()
+    window.scrollTo(0, 0)
   }, [location.pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Redirect user when their role changes (e.g. cliente → estudiante after admin enrolls them)

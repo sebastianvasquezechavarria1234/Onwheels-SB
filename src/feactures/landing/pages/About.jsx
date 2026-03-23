@@ -15,7 +15,7 @@ export const AboutContent = () => {
 
       {/* === SECTION 1: VISION (DARK THEME) === */}
       <section className="bg-zinc-950 py-32 overflow-hidden border-b border-zinc-900">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-[1100px] mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div
               className="lg:col-span-6 relative group"
@@ -72,7 +72,7 @@ export const AboutContent = () => {
 
       {/* === SECTION 2: MISSION (LIGHT THEME) === */}
       <section className="bg-white py-32 overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-[1100px] mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div
               className="lg:col-span-6 lg:order-2 relative group"

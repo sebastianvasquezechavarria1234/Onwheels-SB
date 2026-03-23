@@ -15,8 +15,11 @@ import { getCategoriasEventos } from "../../services/EventCategory";
 import { getPatrocinadores as getProductosSponsors } from "../../services/patrocinadoresServices";
 import { getSedes } from "../../services/sedesServices";
 import { configUi, cn } from "../../configuracion/configUi";
+import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
+import { useToast } from "../../../../../../context/ToastContext";
 
 export default function Eventos() {
+  const toast = useToast();
   // Data
   const [eventos, setEventos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -41,17 +44,17 @@ export default function Eventos() {
   // Multi-step modal state
   const [step, setStep] = useState(1);
 
-  // Form
   const [form, setForm] = useState({
     id_categoria_evento: "",
     id_sede: "",
     id_patrocinador: "",
     nombre_evento: "",
     fecha_evento: "",
-    hora_evento: "",
+    hora_inicio: "",
+    hora_aproximada_fin: "",
     descripcion: "",
     imagen_evento: "",
-    status: "disponible",
+    estado: "activo",
     link_google_forms: "",
   });
 
@@ -80,7 +83,8 @@ export default function Eventos() {
     if (name === "id_categoria_evento" && !value) error = "Seleccione categoría";
     if (name === "id_sede" && !value) error = "Seleccione sede";
     if (name === "fecha_evento" && !value) error = "Fecha requerida";
-    if (name === "hora_evento" && !value) error = "Hora requerida";
+    if (name === "hora_inicio" && !value) error = "Hora inicio requerida";
+    if (name === "hora_aproximada_fin" && !value) error = "Hora fin requerida";
 
     setFormErrors((prev) => ({ ...prev, [name]: error }));
     return !error;
@@ -91,8 +95,9 @@ export default function Eventos() {
     const ok2 = validateField("id_categoria_evento", form.id_categoria_evento);
     const ok3 = validateField("id_sede", form.id_sede);
     const ok4 = validateField("fecha_evento", form.fecha_evento);
-    const ok5 = validateField("hora_evento", form.hora_evento);
-    return ok1 && ok2 && ok3 && ok4 && ok5;
+    const ok5 = validateField("hora_inicio", form.hora_inicio);
+    const ok6 = validateField("hora_aproximada_fin", form.hora_aproximada_fin);
+    return ok1 && ok2 && ok3 && ok4 && ok5 && ok6;
   };
 
   // Data Fetching
@@ -121,12 +126,15 @@ export default function Eventos() {
     loadInitialData();
   }, [loadInitialData]);
 
+  const [modalError, setModalError] = useState(null);
+
   // Modal Handlers
   const openModal = (type, evento = null) => {
     setModal(type);
     setSelected(evento);
     setStep(1);
     setSubmitting(false);
+    setModalError(null);
 
     if (evento) {
       setForm({
@@ -135,10 +143,11 @@ export default function Eventos() {
         id_patrocinador: evento.id_patrocinador || "",
         nombre_evento: evento.nombre_evento || "",
         fecha_evento: evento.fecha_evento ? evento.fecha_evento.split("T")[0] : "",
-        hora_evento: evento.hora_evento || "",
+        hora_inicio: evento.hora_inicio ? evento.hora_inicio.slice(0, 5) : "",
+        hora_aproximada_fin: evento.hora_aproximada_fin ? evento.hora_aproximada_fin.slice(0, 5) : "",
         descripcion: evento.descripcion || "",
         imagen_evento: evento.imagen_evento || "",
-        status: evento.status || "disponible",
+        estado: evento.estado || "activo",
         link_google_forms: evento.link_google_forms || "",
       });
     } else {
@@ -148,10 +157,11 @@ export default function Eventos() {
         id_patrocinador: "",
         nombre_evento: "",
         fecha_evento: "",
-        hora_evento: "",
+        hora_inicio: "",
+        hora_aproximada_fin: "",
         descripcion: "",
         imagen_evento: "",
-        status: "disponible",
+        estado: "activo",
         link_google_forms: "",
       });
     }
@@ -162,6 +172,7 @@ export default function Eventos() {
     if (submitting) return;
     setModal(null);
     setSelected(null);
+    setModalError(null);
   };
 
   // Form Handlers
@@ -178,20 +189,35 @@ export default function Eventos() {
 
   // Save Event
   const handleSave = async () => {
+    // Validar fecha de evento (no pasada)
+    if (form.fecha_evento) {
+        const eventDate = new Date(form.fecha_evento + "T00:00:00"); // Asegurar fecha local
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (eventDate < today) {
+            toast.error("La fecha del evento no puede ser en el pasado.");
+            return;
+        }
+    }
+
     setSubmitting(true);
     try {
       if (modal === "crear") {
         await createEvento(form);
+        toast.success("Evento publicado con éxito");
         showNotification("Evento publicado con éxito");
       } else if (modal === "editar" && selected) {
         await updateEvento(selected.id_evento, form);
+        toast.success("Evento actualizado");
         showNotification("Evento actualizado");
       }
       await loadInitialData();
       closeModal();
     } catch (err) {
       console.error("Error al guardar:", err);
-      showNotification("No se pudo guardar el evento", "error");
+      const msg = err?.response?.data?.mensaje || "No se pudo guardar el evento";
+      toast.error(msg);
+      showNotification(msg, "error");
     } finally {
       setSubmitting(false);
     }
@@ -200,13 +226,19 @@ export default function Eventos() {
   const handleDelete = async () => {
     if (!selected) return;
     setSubmitting(true);
+    setModalError(null);
     try {
       await deleteEvento(selected.id_evento);
       showNotification("Evento eliminado");
+      toast.success("Evento eliminado");
       await loadInitialData();
       closeModal();
     } catch (err) {
-       showNotification("Error al eliminar", "error");
+      console.error("Error al eliminar:", err);
+      const errorMessage = err.response?.data?.mensaje || "Error al eliminar. Revisa si hay registros asociados.";
+      setModalError(errorMessage);
+      toast.error(errorMessage);
+      showNotification(errorMessage, "error");
     } finally {
       setSubmitting(false);
     }
@@ -297,8 +329,8 @@ export default function Eventos() {
                        <div className="flex items-center gap-1.5"><Calendar size={12} /> {new Date(e.fecha_evento).toLocaleDateString()}</div>
                     </td>
                     <td className={cn(configUi.td, "text-center")}>
-                       <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", e.status === "disponible" ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100")}>
-                          {e.status}
+                       <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", e.estado === "activo" ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100")}>
+                          {e.estado}
                        </span>
                     </td>
                     <td className={cn(configUi.td, "pr-5 text-right")}>
@@ -338,10 +370,17 @@ export default function Eventos() {
                    <div className="p-8 text-center flex flex-col items-center">
                       <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4"><Trash2 size={30}/></div>
                       <h3 className="text-xl font-bold text-[#16315f]">¿Eliminar Evento?</h3>
-                      <p className="text-sm text-[#6b84aa] mt-2">Esta acción removerá permanentemente el evento <span className="font-bold">"{selected?.nombre_evento}"</span> y todos sus datos asociados.</p>
-                      <div className="mt-8 flex gap-3 w-full">
+                      <p className="text-sm text-[#6b84aa] mt-2 mb-6">Esta acción removerá permanentemente el evento <span className="font-bold">"{selected?.nombre_evento}"</span> y todos sus datos asociados.</p>
+                      
+                      <ModalErrorAlert error={modalError} />
+
+                      <div className="mx-auto flex gap-3 w-full max-w-sm">
                          <button onClick={closeModal} className={cn(configUi.secondaryButton, "flex-1")}>Cancelar</button>
-                         <button onClick={handleDelete} className={cn(configUi.dangerButton, "flex-1")}>Confirmar</button>
+                         {!modalError && (
+                           <button onClick={handleDelete} disabled={submitting} className={cn(configUi.dangerButton, "flex-1")}>
+                             {submitting ? "Eliminando..." : "Confirmar"}
+                           </button>
+                         )}
                       </div>
                    </div>
                 ) : (
@@ -401,8 +440,18 @@ export default function Eventos() {
                                   <label className={configUi.fieldLabel}>Hora de Inicio *</label>
                                   <div className="relative">
                                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                     <input type="time" name="hora_evento" value={form.hora_evento} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10")} />
+                                     <input type="time" name="hora_inicio" value={form.hora_inicio} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10", formErrors.hora_inicio && "border-red-500")} />
                                   </div>
+                                  {formErrors.hora_inicio && <p className="text-[10px] text-red-500 font-bold mt-1">{formErrors.hora_inicio}</p>}
+                               </div>
+
+                               <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Hora de Fin *</label>
+                                  <div className="relative">
+                                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                     <input type="time" name="hora_aproximada_fin" value={form.hora_aproximada_fin} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10", formErrors.hora_aproximada_fin && "border-red-500")} />
+                                  </div>
+                                  {formErrors.hora_aproximada_fin && <p className="text-[10px] text-red-500 font-bold mt-1">{formErrors.hora_aproximada_fin}</p>}
                                </div>
                             </div>
                           ) : (
@@ -433,7 +482,7 @@ export default function Eventos() {
 
                                <div className={configUi.fieldGroup}>
                                   <label className={configUi.fieldLabel}>Descripción del Evento</label>
-                                  <textarea name="description" value={form.descripcion} onChange={handleChange} readOnly={modal === "ver"} rows={3} className={configUi.fieldTextarea} placeholder="Describa los objetivos del evento..." />
+                                  <textarea name="descripcion" value={form.descripcion} onChange={handleChange} readOnly={modal === "ver"} rows={3} className={configUi.fieldTextarea} placeholder="Describa los objetivos del evento..." />
                                </div>
                             </div>
                           )}
@@ -449,7 +498,7 @@ export default function Eventos() {
                                  <span className="text-[10px] font-black uppercase text-blue-500 tracking-wider">Vista Previa</span>
                                  <h4 className="font-bold text-[#16315f] mt-1 line-clamp-1">{form.nombre_evento || "Nombre del Evento"}</h4>
                                  <div className="mt-3 flex items-center gap-2 text-[11px] text-[#5b7398]">
-                                    <Clock size={12} /> {form.hora_evento || "00:00"}
+                                    <Clock size={12} /> {form.hora_inicio || "00:00"} {form.hora_aproximada_fin && `- ${form.hora_aproximada_fin}`}
                                  </div>
                               </div>
                            </div>

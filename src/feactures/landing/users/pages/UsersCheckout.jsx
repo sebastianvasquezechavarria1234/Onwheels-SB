@@ -22,6 +22,10 @@ export const UsersCheckout = () => {
 
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 4000);
@@ -32,12 +36,13 @@ export const UsersCheckout = () => {
     const result = await submitOrder();
 
     if (result.success) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
       showNotification("¡Compra realizada exitosamente!", "success");
       setTimeout(() => {
-        // Redirigir usando el ID de la orden retornado por el hook
         navigate(`/${getUserRoleSlug(user)}/orderConfirm?orderId=${result.orderId || 'success'}`);
       }, 1500);
     } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
       showNotification(result.message, "error");
     }
   };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CalendarDays, MapPin, ChevronLeft, ChevronRight, ChevronDown, Clock, Info } from "lucide-react";
+import { CalendarDays, MapPin, ChevronLeft, ChevronRight, ChevronDown, Clock, Info, Globe } from "lucide-react";
 import { Layout } from "../layout/Layout";
 import { getEventos, getEventosFuturos } from "../../../services/eventoServices";
 import { getCategoriasEventos } from "../../dashboards/admin/pages/services/EventCategory";
@@ -408,6 +408,30 @@ export const EventsContent = () => {
                         <p className="text-zinc-400 text-xs leading-relaxed line-clamp-2 mb-4">
                           {event.descripcion}
                         </p>
+                      )}
+
+                      {/* Google Forms / URLs */}
+                      {event.google_forms && Array.isArray(event.google_forms) && event.google_forms.length > 0 && (
+                        <div className="mt-2 pt-3 border-t border-zinc-100 mb-4">
+                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight mb-2 flex items-center gap-1.5">
+                            <Info size={11} className="text-(--color-blue)" />
+                            Si deseas inscribirte a este evento, llena el formulario:
+                          </p>
+                          <div className="flex flex-col gap-2">
+                            {event.google_forms.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url.startsWith('http') ? url : `https://${url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 bg-(--color-blue) text-white py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                              >
+                                <Globe size={14} />
+                                LLenar Formulario {event.google_forms.length > 1 ? `(${idx + 1})` : ""}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
                       )}
 
                       {/* Dirección si existe */}

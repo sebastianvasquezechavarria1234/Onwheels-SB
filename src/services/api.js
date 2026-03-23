@@ -7,12 +7,8 @@ const api = axios.create({
 // Interceptor para añadir el token a todas las requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token")
-  console.log("Interceptor running. URL:", config.url);
   if (token) {
-    console.log("Token found, attaching to header");
     config.headers.Authorization = `Bearer ${token}`
-  } else {
-    console.warn("No token found in localStorage");
   }
   return config
 })
