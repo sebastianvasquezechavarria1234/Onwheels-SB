@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
 import { UserDropdown } from "../../components/UserDropdown";
+import { CartBadge } from "../../components/CartBadge";
 
 const popPulse = {
   initial: { scale: 1 },
@@ -246,7 +247,7 @@ export const CustomHeader = () => {
                 link="/custom/cart"
                 style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
               >
-                <ShoppingCart size={18} />
+                <CartBadge size={18} />
               </BtnLinkIcon>
             </IconWithTooltip>
 

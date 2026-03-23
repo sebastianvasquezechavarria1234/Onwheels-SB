@@ -18,6 +18,7 @@ import PreinscriptionsLanding from "../feactures/landing/pages/preinscriptions";
 import { About } from "../feactures/landing/pages/About";
 import { Events } from "../feactures/landing/pages/Events";
 import { ShoppingCart } from "../feactures/landing/pages/ShoppingCart";
+import NotFound from "../feactures/landing/pages/NotFound";
 import { PublicProductDetail, AdminProductDetail, StudentProductDetail, InstructorProductDetail, UserProductDetail, CustomProductDetail } from "../feactures/landing/pages/ProductDetails";
 // import { Event } from "../feactures/landing/pages/Eventos";
 
@@ -370,6 +371,9 @@ const AppRouter = () => {
             <Route path="custom/plans" element={<PlanClasses />} />
           </Route>
         </Route>
+
+        {/* Catch-all 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
   )

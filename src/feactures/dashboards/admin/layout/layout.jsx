@@ -294,6 +294,9 @@ export const Layout = ({ children }) => {
                             <BtnSideBar title="Eventos" link="../admin/eventos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
                               <Calendar size={16} />
                             </BtnSideBar>
+                            <BtnSideBar title="Correos Masivos" link="../admin/correos-masivos" isCollapsed={isCollapsed} itemClassName={darkSubItemClass} iconClassName={darkSubIconClass} textClassName={darkSubTextClass}>
+                              <Mail size={16} />
+                            </BtnSideBar>
 
                           </>
                         )}

@@ -1,6 +1,7 @@
 import { ShoppingCart, User } from "lucide-react";
 import React from "react";
 import { Link } from "react-router-dom";
+import { CartBadge } from "../../components/CartBadge";
 
 const Navbar = () => (
     <>
@@ -20,7 +21,7 @@ const Navbar = () => (
                       <User size={18}/> Mi cuenta
                     </Link>
                     <Link to="/shoppingCart" className="flex items-center gap-2 border px-3 py-2 rounded-lg hover:bg-gray-50">
-                      <ShoppingCart size={18}/> Carrito
+                      <CartBadge size={18} color="black" /> Carrito
                     </Link>
                   </div>
                 </div>

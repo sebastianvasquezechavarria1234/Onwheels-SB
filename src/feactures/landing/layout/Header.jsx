@@ -7,6 +7,7 @@ import { BtnLinkIcon } from "../components/BtnLinkIcon";
 import { UserDropdown } from "../components/UserDropdown";
 import { useAuth } from "../../dashboards/dinamico/context/AuthContext";
 import { getPreinscriptionPath, getHomePath, getCartPath } from "../../../utils/roleHelpers";
+import { CartBadge } from "../components/CartBadge";
 
 export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -80,9 +81,8 @@ export const Header = () => {
               title="Carrito"
               link={getCartPath(user)}
               style={`transition-all duration-300 hover:text-[var(--color-blue)] text-white ${scrolled ? 'p-1.5' : 'p-2'}`}
-              icon={<ShoppingCart size={scrolled ? 18 : 20} />}
             >
-              <ShoppingCart size={scrolled ? 18 : 20} />
+              <CartBadge size={scrolled ? 18 : 20} />
             </BtnLinkIcon>
 
             {isAuthenticated ? (

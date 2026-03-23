@@ -66,7 +66,7 @@ export const ClassContent = () => {
             </div>
 
             <h1 className="text-7xl md:text-9xl lg:text-[12rem] font-black leading-none tracking-tighter mb-10 uppercase italic">
-              ÉLITE<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-500 not-italic">SB</span>
+              PERFORMANCE<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-500 not-italic">SB</span>
             </h1>
 
             <p className="text-zinc-400 text-base md:text-2xl max-w-3xl mx-auto leading-relaxed mb-16 font-medium">
@@ -197,9 +197,9 @@ export const ClassContent = () => {
                 >
                   <div className="w-full md:w-[200px] h-[200px] shrink-0 relative rounded-[1.5rem] overflow-hidden bg-zinc-900">
                     {clase.url_imagen ? (
-                      <img 
-                        src={clase.url_imagen} 
-                        alt={clase.descripcion || "Imagen de la clase"} 
+                      <img
+                        src={clase.url_imagen}
+                        alt={clase.descripcion || "Imagen de la clase"}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
                       />
                     ) : (
@@ -220,7 +220,7 @@ export const ClassContent = () => {
                     <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight group-hover:text-zinc-300 transition-colors leading-tight mb-2 line-clamp-2">
                       {clase.descripcion || `Clase en ${clase.nombre_sede}`}
                     </h3>
-                    
+
                     <div className="flex items-center gap-2 text-zinc-500 text-[11px] font-black uppercase tracking-widest mb-6">
                       <MapPin size={14} className="text-zinc-600" />
                       {clase.nombre_sede}
@@ -230,7 +230,7 @@ export const ClassContent = () => {
                       <div className="flex flex-col">
                         <span className="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-1">Horario</span>
                         <span className="text-zinc-300 text-xs font-black uppercase tracking-tighter flex items-center gap-1.5">
-                          <Clock size={12} className="text-zinc-500" /> 
+                          <Clock size={12} className="text-zinc-500" />
                           {clase.dia_semana || clase.dia || "General"} • {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
                         </span>
                       </div>
@@ -296,7 +296,7 @@ export const ClassContent = () => {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-zinc-900 w-full flex justify-end">
-                   <ArrowUpRight size={24} className={parseFloat(plan.precio) > 100000 ? 'text-[var(--color-blue)]' : 'text-zinc-600 group-hover:text-white transition-colors'} />
+                  <ArrowUpRight size={24} className={parseFloat(plan.precio) > 100000 ? 'text-[var(--color-blue)]' : 'text-zinc-600 group-hover:text-white transition-colors'} />
                 </div>
               </div>
             ))}
