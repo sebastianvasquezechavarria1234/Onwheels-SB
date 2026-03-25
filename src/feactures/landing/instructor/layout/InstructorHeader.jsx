@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { BtnLink } from "../../components/BtnLink";
 import { UserDropdown } from "../../components/UserDropdown";
+import { CartBadge } from "../../components/CartBadge";
 
 // Helper: wrapper para íconos con tooltip animado (flecha arriba, fondo blanco, texto negro, bold + italic)
 const IconWithTooltip = ({ label, children, className = "", onClick }) => {
@@ -244,7 +245,7 @@ export const InstructorHeader = () => {
                 link="../instructor/shoppingCart"
                 style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
               >
-                <ShoppingCart size={18} />
+                <CartBadge size={18} />
               </BtnLinkIcon>
             </IconWithTooltip>
 
@@ -303,7 +304,7 @@ export const InstructorHeader = () => {
                       style="hidden! max-xl:flex! border-1 border-black/10 "
                       styleIcon="bg-white!"
                     >
-                      <ShoppingCart color="black" strokeWidth={1.5} size={18} />
+                      <CartBadge color="black" size={18} />
                     </BtnLinkIcon>
 
                     <button

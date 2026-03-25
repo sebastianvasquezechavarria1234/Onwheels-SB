@@ -53,9 +53,9 @@ export const Hero = () => {
       {/* Side Decorative Text */}
       <div className="absolute right-10 top-1/2 -rotate-90 origin-right hidden lg:block">
         <span className="text-[10px] font-black uppercase tracking-[0.8em] text-white/20 whitespace-nowrap">
-          EST. 2024 — Performance SB Academy
+          — Corporación Performance SB
         </span>
       </div>
     </section>
   );
-};
+};

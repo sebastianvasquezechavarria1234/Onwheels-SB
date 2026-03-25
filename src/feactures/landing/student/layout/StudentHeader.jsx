@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { UserDropdown } from "../../components/UserDropdown";
+import { CartBadge } from "../../components/CartBadge";
 import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { getPreinscriptionPath } from "../../../../utils/roleHelpers";
 
@@ -229,7 +230,7 @@ export const StudentHeader = () => {
                 link="/student/shoppingCart"
                 style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
               >
-                <ShoppingCart size={18} />
+                <CartBadge size={18} />
               </BtnLinkIcon>
             </IconWithTooltip>
 

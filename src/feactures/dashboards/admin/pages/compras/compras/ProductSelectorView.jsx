@@ -283,3 +283,5 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
         </motion.div >
     );
 };
+
+export default ProductSelectorView;

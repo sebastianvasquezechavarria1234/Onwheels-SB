@@ -22,7 +22,7 @@ import {
 import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
 import { configUi } from "../../configuracion/configUi";
-import ProductSelectorView from "../../compras/compras/ProductSelectorView";
+import { ProductSelectorView } from "../../compras/compras/ProductSelectorView";
 import { useToast } from "../../../../../../context/ToastContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");

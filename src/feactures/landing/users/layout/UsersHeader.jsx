@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingCart } from "lucide-react";
 import { BtnLinkIcon } from "../../components/BtnLinkIcon";
 import { UserDropdown } from "../../components/UserDropdown";
+import { CartBadge } from "../../components/CartBadge";
 import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { getHomePath, getStoreHomePath, getCartPath, getPreinscriptionPath, getUserRoleSlug } from "../../../../utils/roleHelpers";
 
@@ -193,15 +194,10 @@ export const UsersHeader = () => {
             <IconWithTooltip label="Carrito de compras">
               <BtnLinkIcon
                 title=""
-                link={getCartPath(user)}
-                style="bg-transparent
-                      text-white
-                      gap-[0px]!
-                      p-[1px_1px_1px_1px]! 
-                      rounded-full
-                      overflow-hidden"
+                link="/users/shoppingCart"
+                style="bg-transparent text-white p-[1px_1px_1px_1px]! gap-[0px]! rounded-full overflow-hidden"
               >
-                <ShoppingCart size={18} />
+                <CartBadge size={18} />
               </BtnLinkIcon>
             </IconWithTooltip>
 
