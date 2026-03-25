@@ -125,9 +125,9 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
                                     )}
                                 >
                                     <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                                        {(p.imagen || p.url_imagen || (p.imagenes && p.imagenes[0]?.url_imagen)) ? (
+                                        {(p.imagen || p.url_imagen || (p.imagenes && p.imagenes?.[0]?.url_imagen)) ? (
                                             <img 
-                                                src={p.imagen || p.url_imagen || p.imagenes[0]?.url_imagen} 
+                                                src={p.imagen || p.url_imagen || p.imagenes?.[0]?.url_imagen} 
                                                 alt="" 
                                                 className="w-full h-full object-cover" 
                                             />

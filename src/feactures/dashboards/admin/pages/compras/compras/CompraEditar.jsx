@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
-    Save, Plus, Trash2, Package, CheckCircle2, ChevronLeft, Calendar, User, Search, Info, Archive, ShoppingBag, ChevronRight, ArrowLeft,
+    Save, Plus, Trash2, Package, ChevronLeft, Calendar, User, Search, Info, Archive, ShoppingBag, ChevronRight, ArrowLeft,
     PlusCircle, AlertTriangle, ChevronDown, CheckCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import comprasService from "../../services/comprasService";
-import ProductSelectorView from "./ProductSelectorView";
+import { getVariantes } from "../../services/productosServices";
+import { ProductSelectorView } from "./ProductSelectorView";
 import { cn, configUi } from "../../configuracion/configUi";
 import { useToast } from "../../../../../../context/ToastContext";
 
@@ -386,7 +387,7 @@ const CompraEditar = () => {
                                     
                                     <div className="mt-auto px-6 py-6 border-t border-[#d7e5f8] bg-[#fbfdff] flex justify-between items-center">
                                        <div className="flex items-center gap-2 text-emerald-600">
-                                          <CheckCircle2 size={18} />
+                                          <CheckCircle size={18} />
                                           <span className="text-[10px] font-black uppercase tracking-widest">Liquidación Verificada</span>
                                        </div>
                                        <div className="flex flex-col items-end">
