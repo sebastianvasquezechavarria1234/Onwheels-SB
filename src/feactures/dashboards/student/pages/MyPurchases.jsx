@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { StudentLayout } from "../../../landing/student/layout/StudentLayout";
-import { Eye, Shirt, ShoppingBag, Package } from "lucide-react";
+import { Eye, Shirt, ShoppingBag, Package, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import api from "../../../../services/api";
@@ -101,72 +101,53 @@ export const MyPurchases = () => {
                             </Link>
                         </div>
                     ) : (
-                        <div className="bg-[#121821] border border-gray-800 rounded-[2rem] overflow-hidden shadow-xl">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="border-b border-gray-800 bg-[#0B0F14]">
-                                            <th className="py-5 px-6 font-bold uppercase tracking-wider text-xs text-[#9CA3AF]">Fecha</th>
-                                            <th className="py-5 px-6 font-bold uppercase tracking-wider text-xs text-[#9CA3AF]">Producto</th>
-                                            <th className="py-5 px-6 font-bold uppercase tracking-wider text-xs text-[#9CA3AF]">Cantidad</th>
-                                            <th className="py-5 px-6 font-bold uppercase tracking-wider text-xs text-[#9CA3AF]">Total</th>
-                                            <th className="py-5 px-6 font-bold uppercase tracking-wider text-xs text-[#9CA3AF]">Estado</th>
-                                            <th className="py-5 px-6 font-bold uppercase tracking-wider text-xs text-[#9CA3AF] text-right">Detalle</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-800">
-                                        {compras.map((c) => (
-                                            <tr key={c.id_venta} className="hover:bg-[#0B0F14]/50 transition-colors group">
-                                                <td className="py-4 px-6">
-                                                    <span className="font-semibold">{formatDate(c.fecha)}</span>
-                                                </td>
-                                                <td className="py-4 px-6 max-w-[200px]">
-                                                    <span className="block truncate font-medium text-white group-hover:text-[#3b82f6] transition-colors">
-                                                        {c.detalles && c.detalles.length > 0
-                                                            ? c.detalles.map(d => d.producto_nombre).join(", ")
-                                                            : "Múltiples productos"}
-                                                    </span>
-                                                    <span className="text-xs text-[#9CA3AF] block mt-1 font-bold">
-                                                        Pedido #{compras.length - compras.indexOf(c)}
-                                                    </span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="bg-[#0B0F14] inline-flex items-center px-3 py-1 rounded-lg border border-gray-800 text-sm font-medium">
-                                                        {c.detalles ? c.detalles.reduce((acc, d) => acc + d.cantidad, 0) : 1} uds.
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    <span className="font-bold text-emerald-400">
-                                                        ${parseInt(c.total).toLocaleString()}
-                                                    </span>
-                                                </td>
-                                                <td className="py-4 px-6">
-                                                    {c.estado === "Pagado" || c.estado === "Entregada" ? (
-                                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider border border-emerald-500/20">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                                            {c.estado}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 text-xs font-bold uppercase tracking-wider border border-yellow-500/20">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
-                                                            {c.estado}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="py-4 px-6 text-right">
-                                                    <button
-                                                        onClick={() => openView(c)}
-                                                        className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#0B0F14] border border-gray-800 hover:border-[#3b82f6] hover:bg-[#3b82f6]/10 text-[#9CA3AF] hover:text-[#3b82f6] transition-all"
-                                                        title="Ver detalles"
-                                                    >
-                                                        <Eye size={18} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div className="grid grid-cols-1 gap-6">
+                            {compras.map((c) => (
+                                <article
+                                    key={c.id_venta}
+                                    className="bg-[#121821] border border-gray-800 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-gray-700 hover:shadow-xl transition-all cursor-pointer group"
+                                    onClick={() => openView(c)}
+                                >
+                                    <div className="flex items-center gap-6 md:w-1/3">
+                                        <div className="w-16 h-16 bg-[#0B0F14] rounded-xl flex items-center justify-center border border-gray-800 flex-shrink-0 group-hover:border-[#3b82f6]/50 transition-colors">
+                                            <Package size={28} className="text-[#3b82f6]" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Orden #{compras.length - compras.indexOf(c)}</p>
+                                            <div className="flex items-center gap-2 text-white font-medium">
+                                                <span className="text-sm font-bold truncate max-w-[150px]">
+                                                    {c.detalles && c.detalles.length > 0
+                                                        ? c.detalles.map(d => d.producto_nombre).join(", ")
+                                                        : "Múltiples productos"}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-[#9CA3AF] font-medium mt-1">{formatDate(c.fecha)}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:items-center md:w-1/4">
+                                        <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Total</p>
+                                        <p className="text-xl font-black text-emerald-400">${parseInt(c.total).toLocaleString()}</p>
+                                    </div>
+
+                                    <div className="flex flex-col md:items-center md:w-1/4">
+                                        <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-2">Estado</p>
+                                        <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-black tracking-wider border
+                                            ${c.estado === "Pagado" || c.estado === "Entregada"
+                                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                                : "bg-amber-500/10 text-amber-500 border-amber-500/20"}`}>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            {c.estado}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-end md:w-20">
+                                        <div className="w-10 h-10 rounded-full bg-[#0B0F14] border border-gray-800 flex items-center justify-center group-hover:bg-[#1E3A8A] group-hover:border-[#1E3A8A] transition-all shadow-inner">
+                                            <ChevronRight size={20} className="text-gray-400 group-hover:text-white transition-colors" />
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -175,13 +156,13 @@ export const MyPurchases = () => {
                     {modalOpen && selected && (
                         <ModalWrapper onClose={closeModal}>
                             <div className="p-8">
-                                <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
-                                    <h3 className="text-2xl font-black uppercase tracking-tight text-gray-900">
+                                <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-6">
+                                    <h3 className="text-2xl font-black uppercase tracking-tight text-white">
                                         Detalle del Pedido
                                     </h3>
                                     <div className="text-right">
-                                        <p className="text-sm text-gray-500 uppercase font-bold tracking-widest">Estado</p>
-                                        <p className={`font-black uppercase tracking-wider ${selected.estado === 'Pagado' || selected.estado === 'Entregada' ? 'text-emerald-500' : 'text-yellow-500'}`}>
+                                        <p className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-widest">Estado</p>
+                                        <p className={`font-black uppercase tracking-wider ${selected.estado === 'Pagado' || selected.estado === 'Entregada' ? 'text-emerald-400' : 'text-yellow-400'}`}>
                                             {selected.estado}
                                         </p>
                                     </div>
@@ -189,52 +170,52 @@ export const MyPurchases = () => {
 
                                 <div className="grid grid-cols-2 gap-x-12 gap-y-6 mb-8 text-sm">
                                     <div>
-                                        <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Fecha</p>
-                                        <p className="font-semibold text-gray-900">{formatDate(selected.fecha)}</p>
+                                        <p className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-1">Fecha</p>
+                                        <p className="font-semibold text-white">{formatDate(selected.fecha)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Referencia / Orden</p>
-                                        <p className="font-semibold text-gray-900">Pedido #{compras.length - compras.indexOf(selected)}</p>
+                                        <p className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-1">Referencia / Orden</p>
+                                        <p className="font-semibold text-white">Pedido #{compras.length - compras.indexOf(selected)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Método de Pago</p>
-                                        <p className="font-semibold text-gray-900">{selected.metodo_pago || 'No especificado'}</p>
+                                        <p className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-1">Método de Pago</p>
+                                        <p className="font-semibold text-white">{selected.metodo_pago || 'No especificado'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-1">Total Pagado</p>
-                                        <p className="font-black text-lg text-emerald-600">${parseInt(selected.total).toLocaleString()}</p>
+                                        <p className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-1">Total Pagado</p>
+                                        <p className="font-black text-lg text-emerald-400">${parseInt(selected.total).toLocaleString()}</p>
                                     </div>
                                 </div>
 
                                 <div className="mb-8">
-                                    <h4 className="text-gray-500 uppercase font-bold tracking-widest text-[10px] mb-3 pb-2 border-b border-gray-100">Productos</h4>
+                                    <h4 className="text-[#9CA3AF] uppercase font-bold tracking-widest text-[10px] mb-3 pb-2 border-b border-gray-800">Productos</h4>
                                     <div className="flex flex-col gap-3">
                                         {selected.detalles && selected.detalles.length > 0 ? (
                                             selected.detalles.map((d, index) => (
-                                                <div key={index} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <div key={index} className="flex justify-between items-center bg-[#0B0F14] p-3 rounded-lg border border-gray-800">
                                                     <div className="flex-1">
-                                                        <p className="font-bold text-gray-900">{d.producto_nombre || 'Producto'}</p>
-                                                        {d.talla && <p className="text-xs text-gray-500 mt-0.5">Talla: {d.talla}</p>}
+                                                        <p className="font-bold text-white">{d.producto_nombre || 'Producto'}</p>
+                                                        {d.talla && <p className="text-xs text-[#9CA3AF] mt-0.5 font-medium">Talla: {d.talla}</p>}
                                                     </div>
                                                     <div className="flex items-center gap-6">
-                                                        <p className="text-gray-600 text-sm font-semibold text-center w-16 bg-white py-1 px-2 rounded-md shadow-sm border border-gray-200">
+                                                        <p className="text-[#9CA3AF] text-xs font-bold text-center w-20 bg-[#121821] py-1.5 px-2 rounded-md border border-gray-800">
                                                             {d.cantidad} ud.
                                                         </p>
-                                                        <p className="font-bold text-gray-900 w-24 text-right">
+                                                        <p className="font-bold text-white w-24 text-right">
                                                             ${parseInt(d.precio_unitario || 0).toLocaleString()}
                                                         </p>
                                                     </div>
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className="text-gray-500 text-sm italic">Ocurrió un error leyendo los productos.</p>
+                                            <p className="text-[#9CA3AF] text-sm italic">Ocurrió un error leyendo los productos.</p>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end pt-6 border-t border-gray-100">
+                                <div className="flex justify-end pt-6 border-t border-gray-800">
                                     <button
-                                        className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                                        className="bg-[#1E3A8A] text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/10 active:scale-95"
                                         onClick={closeModal}
                                     >
                                         Cerrar Detalle
@@ -261,11 +242,11 @@ const ModalWrapper = ({ children, onClose }) => {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
             <motion.div
-                className="relative z-10 bg-white rounded-3xl w-[90%] max-w-[640px] shadow-2xl overflow-hidden"
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="relative z-10 bg-[#121821] rounded-[2.5rem] w-[95%] max-w-[680px] shadow-2xl overflow-hidden border border-gray-800"
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
             >
                 {children}
             </motion.div>

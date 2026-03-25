@@ -3,8 +3,10 @@ import { StudentLayout } from "../../../landing/student/layout/StudentLayout";
 import { Mail, Phone, Lock, CheckCircle, User, Shield, Camera, Star, Zap } from "lucide-react";
 import { useAuth } from "../../dinamico/context/AuthContext";
 import api from "../../../../services/api";
+import { useToast } from "../../../../context/ToastContext";
 
 export const Setting = () => {
+  const toast = useToast();
   const { user: authUser } = useAuth();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -170,9 +172,17 @@ export const Setting = () => {
   };
 
   const handleSaveProfile = async () => {
-    setIsLoading(true);
-    setPasswordError("");
-    setSuccessMessage("");
+    // Validar fecha de nacimiento
+    if (editData.fecha_nacimiento) {
+      const birthDate = new Date(editData.fecha_nacimiento);
+      const today = new Date();
+      if (birthDate > today) {
+        toast.error("La fecha de nacimiento no puede ser futura.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       const userId = getCurrentUserId();
       if (!userId) throw new Error("No se encontró el usuario autenticado");
@@ -206,11 +216,14 @@ export const Setting = () => {
       const finalData = await userApi.getUsuario(userId);
       setUserData(finalData);
 
+      toast.success("Perfil actualizado correctamente");
       setSuccessMessage("Perfil actualizado correctamente");
       setIsEditingProfile(false);
     } catch (err) {
       console.error(err);
-      setPasswordError(err?.mensaje || "Error al actualizar el perfil. Por favor intente nuevamente.");
+      const msg = err?.mensaje || "Error al actualizar el perfil. Por favor intente nuevamente.";
+      toast.error(msg);
+      setPasswordError(msg);
     } finally { setIsLoading(false); }
   };
 

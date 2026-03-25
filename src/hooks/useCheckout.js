@@ -77,9 +77,20 @@ export const useCheckout = () => {
 
     const validateForm = () => {
         const newErrors = {};
-        if (!form.direccion.trim()) newErrors.direccion = "La dirección es obligatoria";
-        if (!form.telefono.trim()) newErrors.telefono = "El teléfono es obligatorio";
-        // Validar formato telefono si se quiere
+        if (!form.direccion || !form.direccion.trim()) {
+            newErrors.direccion = "La dirección es obligatoria";
+        }
+        
+        if (!form.telefono || !form.telefono.trim()) {
+            newErrors.telefono = "El teléfono es obligatorio";
+        } else if (form.telefono.replace(/\D/g, '').length !== 10) {
+            newErrors.telefono = "El teléfono debe tener exactamente 10 dígitos";
+        }
+
+        if (!form.metodo_pago) {
+            newErrors.metodo_pago = "Selecciona un método de pago";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -87,9 +98,9 @@ export const useCheckout = () => {
     const handleInputChange = (e) => {
         let { name, value } = e.target;
 
-        // Restringir teléfono a números y símbolos básicos
+        // Restringir teléfono a solo números y máximo 10 caracteres
         if (name === "telefono") {
-            value = value.replace(/[^0-9+\s-]/g, '');
+            value = value.replace(/\D/g, '').slice(0, 10);
         }
 
         setForm(prev => ({ ...prev, [name]: value }));

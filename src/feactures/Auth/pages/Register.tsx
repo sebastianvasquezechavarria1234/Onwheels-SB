@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../../../services/api";
+import { useToast } from "../../../context/ToastContext";
 
 interface FormData {
   fullName: string;
@@ -19,6 +20,7 @@ interface Errors {
 }
 
 const Register = () => {
+  const toast = useToast();
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
@@ -69,12 +71,23 @@ const Register = () => {
     e.preventDefault();
     setServerMsg(null);
 
+    // Validar fecha de nacimiento (no futura)
+    if (formData.birthDate) {
+      const birthDate = new Date(formData.birthDate);
+      const today = new Date();
+      if (birthDate > today) {
+        toast.error("La fecha de nacimiento no puede ser futura.");
+        return;
+      }
+    }
+
     const isPasswordStrong = validatePasswordStrength(formData.password);
     if (!isPasswordStrong) {
       setErrors(prev => ({
         ...prev,
         passwordStrength: "La contraseña debe ser más segura (incluye números o símbolos)"
       }));
+      toast.error("Contraseña débil. Incluye números o símbolos.");
       return;
     }
 
@@ -83,6 +96,7 @@ const Register = () => {
         ...prev,
         passwordMatch: "Las contraseñas no coinciden"
       }));
+      toast.error("Las contraseñas no coinciden.");
       return;
     }
 
@@ -100,6 +114,7 @@ const Register = () => {
       const response = await api.post("/auth/register", payload);
 
       if (response.status === 200 || response.status === 201) {
+        toast.success("¡Registro exitoso! Redirigiendo...");
         setServerMsg("¡Registro exitoso! Redirigiendo...");
         setFormData({
           fullName: "",
@@ -112,22 +127,14 @@ const Register = () => {
         setErrors({ passwordMatch: "", passwordStrength: "" });
 
         setTimeout(() => {
-          // Check for checkout intent
-          if (location.state?.intent === 'checkout') {
-            // Since register doesn't return the user object in standard flow often (or we need to auto-login), 
-            // usually we redirect to login to force login OR if your backend returns token on register, auto-login.
-            // Based on code, it directs to /login.
-            // We keep the state so Login.tsx can handle it.
-            navigate("/login", { state: location.state });
-          } else {
-            navigate("/login", { state: location.state });
-          }
+          navigate("/login", { state: location.state });
         }, 1500);
       }
 
     } catch (err: any) {
       console.error("Error al registrar usuario:", err);
       const msg = err.response?.data?.message || err.message || "Error al conectar con el servidor";
+      toast.error(msg);
       setServerMsg(msg);
     } finally {
       setSubmitting(false);

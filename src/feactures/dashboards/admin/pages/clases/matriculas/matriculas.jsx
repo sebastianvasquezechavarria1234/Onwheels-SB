@@ -14,12 +14,14 @@ import {
   updateMatricula,
   createMatricula,
 } from "../../services/matriculaService";
-import api from "../../../../../../services/api";
 import { configUi } from "../../configuracion/configUi";
+import { useToast } from "../../../../../../context/ToastContext";
+import api from "../../../../../../services/api";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const MatriculasAdmin = () => {
+  const toast = useToast();
   // --- ESTADOS ---
   const [matriculas, setMatriculas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +117,10 @@ const MatriculasAdmin = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const [modalError, setModalError] = useState(null);
+
   const openModal = (type, item = null) => {
+    setModalError(null);
     setModal(type);
     setSelectedMatricula(item);
     if (type === 'editar' && item) {
@@ -138,15 +143,16 @@ const MatriculasAdmin = () => {
     setSelectedMatricula(null);
     setOpenMenuId(null);
     setMotivoPausa("");
+    setModalError(null);
   };
 
   // --- OPERACIONES ---
   const handleCreate = async () => {
+    setModalError(null);
     try {
       if (modoMatricula === 'existente') {
         if (!formNueva.id_estudiante || !formNueva.id_clase || !formNueva.id_plan) {
-          showNotification("Completa los campos obligatorios", "error");
-          return;
+          throw new Error("Completa los campos obligatorios");
         }
         await createMatricula({
           id_estudiante: parseInt(formNueva.id_estudiante),
@@ -155,8 +161,7 @@ const MatriculasAdmin = () => {
         });
       } else {
         if (!formNueva.id_usuario || !formNueva.id_clase || !formNueva.id_plan) {
-          showNotification("Completa los campos obligatorios", "error");
-          return;
+          throw new Error("Completa los campos obligatorios");
         }
         await api.post("/matriculas/manual", {
           id_usuario: parseInt(formNueva.id_usuario),
@@ -171,29 +176,37 @@ const MatriculasAdmin = () => {
       fetchData();
       closeModal();
     } catch (err) {
-      showNotification(err.response?.data?.mensaje || "Error al crear matrícula", "error");
+      const msg = err.response?.data?.mensaje || err.message || "Error al crear matrícula";
+      setModalError(msg);
+      showNotification(msg, "error");
     }
   };
 
   const handleUpdate = async () => {
+    setModalError(null);
     try {
       await updateMatricula(selectedMatricula.id_matricula, formEdit);
       showNotification("Matrícula actualizada");
       fetchData();
       closeModal();
     } catch (err) {
-      showNotification("Error al actualizar", "error");
+      const msg = err.response?.data?.mensaje || "Error al actualizar";
+      setModalError(msg);
+      showNotification(msg, "error");
     }
   };
 
   const handleDelete = async () => {
+    setModalError(null);
     try {
       await deleteMatricula(selectedMatricula.id_matricula);
       showNotification("Matrícula eliminada");
       fetchData();
       closeModal();
     } catch (err) {
-      showNotification("Error al eliminar", "error");
+      const msg = err.response?.data?.mensaje || "Error al eliminar la matrícula";
+      setModalError(msg);
+      showNotification(msg, "error");
     }
   };
 
@@ -213,15 +226,34 @@ const MatriculasAdmin = () => {
     try {
       setIsSubmittingPago(true);
       const saldo = Number(selectedMatricula.precio_plan) - Number(selectedMatricula.total_pagado);
-      if (!formPago.monto || formPago.monto <= 0) return showNotification("Monto inválido", "error");
-      if (Number(formPago.monto) > saldo) return showNotification(`Excede el saldo de $${saldo}`, "error");
+      if (!formPago.monto || formPago.monto <= 0) {
+        toast.error("Monto inválido");
+        return showNotification("Monto inválido", "error");
+      }
+      if (Number(formPago.monto) > saldo) {
+        toast.error(`Excede el saldo de $${saldo}`);
+        return showNotification(`Excede el saldo de $${saldo}`, "error");
+      }
+
+      // Validar fecha de pago (no futura)
+      if (formPago.fecha) {
+        const payDate = new Date(formPago.fecha);
+        const today = new Date();
+        if (payDate > today) {
+          toast.error("La fecha de pago no puede ser futura.");
+          return;
+        }
+      }
 
       await api.post(`/matriculas/${selectedMatricula.id_matricula}/pagos`, formPago);
+      toast.success("Pago registrado con éxito");
       showNotification("Pago registrado con éxito");
       fetchData();
       closeModal();
     } catch (error) {
-      showNotification("Error al registrar pago", "error");
+      const msg = error.response?.data?.mensaje || "Error al registrar pago";
+      toast.error(msg);
+      showNotification(msg, "error");
     } finally {
       setIsSubmittingPago(false);
     }
@@ -533,6 +565,7 @@ const MatriculasAdmin = () => {
                 </div>
 
                 <div className={configUi.modalContent}>
+                    <ModalErrorAlert error={modalError} />
                     {modal === 'delete' ? (
                       <div className="py-4 text-center">
                         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
@@ -805,19 +838,19 @@ const MatriculasAdmin = () => {
                                   <button onClick={closeModal} className={configUi.secondaryButton}>
                       Cancelar
                     </button>
-                    {modal === 'delete' ? (
+                    {!modalError && modal === 'delete' ? (
                       <button onClick={handleDelete} className={configUi.dangerButton}>Eliminar Ahora</button>
-                    ) : modal === 'registrar_pago' ? (
+                    ) : !modalError && modal === 'registrar_pago' ? (
                       <button onClick={handleRegistrarPago} disabled={isSubmittingPago} className={configUi.primaryButton}>
                         {isSubmittingPago ? "Procesando..." : "Confirmar Pago"}
                       </button>
-                    ) : modal === 'pausar' ? (
+                    ) : !modalError && modal === 'pausar' ? (
                       <button onClick={handlePausar} className={configUi.warningButton}>Confirmar Pausa</button>
-                    ) : modal === 'finalizar' ? (
+                    ) : !modalError && modal === 'finalizar' ? (
                       <button onClick={handleFinalizarMatricula} className={configUi.primaryButton}>Finalizar Ahora</button>
-                    ) : modal === 'editar' ? (
+                    ) : !modalError && modal === 'editar' ? (
                       <button onClick={handleUpdate} className={configUi.primaryButton}>Guardar Cambios</button>
-                    ) : modal === 'nueva' ? (
+                    ) : !modalError && modal === 'nueva' ? (
                       <button onClick={handleCreate} className={configUi.primaryButton}>Crear Matrícula</button>
                     ) : null}
                   </div>

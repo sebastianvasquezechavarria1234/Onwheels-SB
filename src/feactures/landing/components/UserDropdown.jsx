@@ -15,7 +15,7 @@ export const UserDropdown = ({ isScrolled = false }) => {
 
 
 
-    console.log("USER:", user);
+
 
 
 

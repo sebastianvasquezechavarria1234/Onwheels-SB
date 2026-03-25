@@ -1,23 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { 
-  ArrowLeft, User, Calendar, DollarSign, Package, 
-  Clock, Hash, MapPin, Phone, Mail, AlertTriangle,
-  ChevronRight, Info, CheckCircle, CreditCard
+import {
+    ArrowLeft, User, Calendar, DollarSign, Package,
+    Clock, Hash, MapPin, Phone, Mail, AlertTriangle,
+    ChevronRight, Info, CheckCircle, CreditCard, Printer
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { getVentaById } from "../../services/ventasService";
-import { configUi } from "../../configuracion/configUi";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
+import { cn, configUi } from "../../configuracion/configUi";
 
 export default function VentaDetalle() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
-    
+
     const [venta, setVenta] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -40,26 +38,26 @@ export default function VentaDetalle() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
-               <div className="w-10 h-10 border-4 border-[#16315f]/10 border-t-[#16315f] rounded-full animate-spin"></div>
-               <p className="text-[10px] font-black tracking-widest text-[#16315f]">Sincronizando Factura...</p>
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black tracking-widest text-[#16315f] uppercase">Sincronizando Factura...</p>
             </div>
         );
     }
 
     if (error || !venta) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6 text-center px-4">
-                <div className="h-24 w-24 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center shadow-inner">
-                   <AlertTriangle size={48} strokeWidth={1} />
+            <div className="flex flex-col items-center justify-center h-full gap-6 text-center px-4">
+                <div className="h-20 w-20 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center shadow-inner">
+                    <AlertTriangle size={40} strokeWidth={1} />
                 </div>
                 <div>
-                   <h2 className="text-2xl font-black text-[#16315f] mb-2">Error de Localización</h2>
-                   <p className="text-slate-400 font-medium max-w-md">{error || "La transacción solicitada no existe en nuestros registros actuales."}</p>
+                    <h2 className="text-xl font-black text-[#16315f] mb-2 uppercase tracking-tight">Error de Localización</h2>
+                    <p className="text-xs text-slate-400 font-bold max-w-md uppercase tracking-widest opacity-60">{error || "La transacción solicitada no existe."}</p>
                 </div>
                 <button
                     onClick={() => navigate(`${basePath}/ventas`)}
-                    className={cn(configUi.primaryButton, "h-12")}
+                    className={cn(configUi.primaryButton, "h-11 px-8")}
                 >
                     <ArrowLeft size={20} />
                     Regresar al Historial
@@ -70,101 +68,86 @@ export default function VentaDetalle() {
 
     const getStatusStyle = (estado) => {
         switch (estado) {
-          case "Entregada": return "bg-emerald-50 text-emerald-700 border-emerald-100";
-          case "Pendiente": return "bg-amber-50 text-amber-700 border-amber-100";
-          case "Procesada": return "bg-indigo-50 text-indigo-700 border-indigo-100";
-          case "Cancelada": return "bg-rose-50 text-rose-700 border-rose-100";
-          default: return "bg-slate-100 text-slate-600 border-slate-200";
+            case "Entregada": return configUi.successPill;
+            case "Pendiente": return "bg-amber-50 text-amber-700 border-amber-100 rounded-full px-3 py-1 text-xs font-bold border";
+            case "Procesada": return configUi.subtlePill;
+            case "Cancelada": return configUi.dangerPill;
+            default: return configUi.pill;
         }
     };
 
     return (
-        <div className={cn(configUi.pageShell, "pb-24")}>
-            {/* 1. STICKY HEADER ACTIONS */}
-            <div className={cn(configUi.headerRow, "sticky top-4 z-[30] !bg-white/80 backdrop-blur-xl border border-slate-100 p-4 rounded-3xl shadow-xl shadow-slate-200/50 mb-10")}>
-                <div className="flex items-center gap-5">
-                    <button onClick={() => navigate(`${basePath}/ventas`)} className="group flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-[#16315f] hover:border-[#16315f]/20 hover:shadow-lg transition-all">
+        <div className={configUi.pageShell}>
+            {/* Header Row */}
+            <div className={configUi.headerRow + " mb-8"}>
+                <div className={configUi.titleWrap}>
+                    <button
+                        onClick={() => navigate(`${basePath}/ventas`)}
+                        className={configUi.iconButton + " w-10 h-10 rounded-xl"}
+                    >
                         <ArrowLeft size={20} />
                     </button>
                     <div>
                         <div className="flex items-center gap-3">
-                           <h1 className="text-xl font-black text-[#16315f] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                              Comprobante de Venta Digital
-                           </h1>
-                           <span className={cn(configUi.pill, getStatusStyle(venta.status || venta.estado), "text-[10px] shadow-sm")}>
-                              {venta.status || venta.estado}
-                           </span>
+                            <h1 className={configUi.title}>Comprobante de Venta</h1>
+                            <span className={cn(getStatusStyle(venta.status || venta.estado), "text-[9px] uppercase tracking-widest")}>
+                                {venta.status || venta.estado}
+                            </span>
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                           REF: <span className="text-indigo-400">#VS-{venta.id_venta}</span> &bull; 
-                           <Calendar size={12} className="ml-1" /> {new Date(venta.fecha_venta).toLocaleDateString()} &bull; 
-                           <Clock size={12} /> {new Date(venta.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
+                            REF: <span className="text-indigo-400 font-black">#VS-{String(venta.id_venta).padStart(6, '0')}</span> &bull;
+                            <Calendar size={12} className="opacity-40" /> {new Date(venta.fecha_venta).toLocaleDateString()}
                         </p>
                     </div>
                 </div>
 
-                <div className="flex gap-3">
-                   <button onClick={() => window.print()} className={cn(configUi.secondaryButton, "h-12 border-slate-200 bg-white shadow-sm")}>
-                      Descargar PDF / Imprimir
-                   </button>
+                <div className={configUi.toolbar}>
+                    <button onClick={() => window.print()} className={configUi.secondaryButton + " gap-2"}>
+                        <Printer size={18} />
+                        Imprimir Comprobante
+                    </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                {/* 2. MAIN ITEMS TABLE */}
-                <div className="lg:col-span-2 space-y-10">
-                    <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 ring-1 ring-slate-100/50">
-                        <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-                           <div>
-                              <h3 className="text-xl font-extrabold text-[#16315f] flex items-center gap-3">
-                                 <Package className="text-indigo-500" size={24} />
-                                 Artículos Facturados
-                              </h3>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 ml-9">Detalle de existencias movilizadas</p>
-                           </div>
-                           <div className="h-10 px-4 rounded-xl bg-white border border-slate-100 flex items-center gap-2 shadow-sm">
-                              <span className="text-[10px] font-black text-slate-300 uppercase italic">Registro:</span>
-                              <span className="text-xs font-black text-indigo-600">{venta.items?.length || 0} ITEMS</span>
-                           </div>
+            <div className="flex-1 grid grid-cols-1 xl:grid-cols-12 gap-8 overflow-y-auto pr-2 custom-scrollbar min-h-0">
+
+                {/* Left: Transaction Details & Items */}
+                <div className="xl:col-span-8 flex flex-col gap-8">
+                    <div className={configUi.tableCard}>
+                        <div className="px-6 py-4 border-b border-[#d7e5f8] flex justify-between items-center bg-[#fbfdff]/50">
+                            <h3 className={configUi.modalEyebrow + " flex items-center gap-2"}>
+                                <Package size={14} className="text-indigo-500" /> Artículos Facturados
+                            </h3>
+                            <span className={configUi.subtlePill}>{venta.items?.length || 0} UNI</span>
                         </div>
 
-                        <div className="overflow-x-auto px-6 py-6 font-medium">
-                            <table className="w-full text-left">
-                                <thead className="bg-[#16315f]/5 text-slate-400 font-extrabold uppercase text-[10px] tracking-widest rounded-2xl">
+                        <div className={configUi.tableScroll}>
+                            <table className={configUi.table}>
+                                <thead className={configUi.thead}>
                                     <tr>
-                                        <th className="px-6 py-5 rounded-l-2xl">Producto</th>
-                                        <th className="px-6 py-5">Especificación</th>
-                                        <th className="px-6 py-5 text-center">Cant.</th>
-                                        <th className="px-6 py-5 text-right">Unitario</th>
-                                        <th className="px-6 py-5 text-right rounded-r-2xl">Subtotal</th>
+                                        <th className={configUi.th}>Producto / Especificación</th>
+                                        <th className={configUi.th + " text-center"}>Cant.</th>
+                                        <th className={configUi.th + " text-right"}>Unitario</th>
+                                        <th className={configUi.th + " text-right"}>Subtotal</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50">
+                                <tbody className="divide-y divide-[#d7e5f8]">
                                     {venta.items?.map((it, idx) => (
-                                        <tr key={idx} className="group hover:bg-slate-50/50 transition-all duration-300">
-                                            <td className="px-6 py-8">
+                                        <tr key={idx} className={configUi.row}>
+                                            <td className={configUi.td}>
                                                 <div className="flex flex-col">
-                                                   <span className="text-sm font-black text-[#16315f] tracking-tight">{it.nombre_producto}</span>
-                                                   <span className="text-[9px] text-slate-300 font-bold uppercase tracking-widest mt-0.5">ID SKU: {it.id_producto}</span>
+                                                    <span className="font-bold uppercase tracking-tight text-[#16315f]">{it.nombre_producto}</span>
+                                                    <span className="text-[10px] text-indigo-400 font-black uppercase mt-0.5">{it.nombre_color} / {it.nombre_talla}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-8">
-                                                <div className="flex items-center gap-3">
-                                                   <div className="flex flex-col gap-1">
-                                                      <span className="text-[11px] font-bold text-slate-600 flex items-center gap-2">
-                                                         <div className="w-3 h-3 rounded-full border border-slate-100 shadow-inner" style={{ backgroundColor: it.codigo_hex || '#e2e8f0' }}></div>
-                                                         {it.nombre_color || "Predeterminado"}
-                                                      </span>
-                                                      <span className="text-[10px] font-black text-indigo-400 uppercase bg-indigo-50 px-2 py-0.5 rounded-lg w-fit">
-                                                         Talla {it.nombre_talla || "U"}
-                                                      </span>
-                                                   </div>
-                                                </div>
+                                            <td className={configUi.td + " text-center"}>
+                                                <span className={configUi.subtlePill}>x{it.cantidad}</span>
                                             </td>
-                                            <td className="px-6 py-8 text-center font-black text-slate-700 text-sm font-mono">{it.cantidad}</td>
-                                            <td className="px-6 py-8 text-right font-bold text-slate-400 text-sm">${(parseFloat(it.precio_unitario) || 0).toLocaleString()}</td>
-                                            <td className="px-6 py-8 text-right font-black text-[#16315f] text-base tracking-tighter shadow-indigo-50/50">
-                                                ${((it.cantidad || 0) * (it.precio_unitario || 0)).toLocaleString()}
+                                            <td className={configUi.td + " text-right font-bold text-slate-400 tabular-nums"}>
+                                                ${(parseFloat(it.precio_unitario) || 0).toLocaleString('es-CO')}
+                                            </td>
+                                            <td className={configUi.td + " text-right font-black text-[#16315f] tabular-nums"}>
+                                                ${((it.cantidad || 0) * (it.precio_unitario || 0)).toLocaleString('es-CO')}
                                             </td>
                                         </tr>
                                     ))}
@@ -172,105 +155,95 @@ export default function VentaDetalle() {
                             </table>
                         </div>
 
-                        <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center group relative overflow-hidden">
-                           <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-700 skew-x-12 translate-x-1/2"></div>
-                           <div className="flex flex-col gap-1 relative z-10">
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Fiscalización de Ingreso</span>
-                              <div className="h-1 w-20 bg-indigo-500 rounded-full"></div>
-                           </div>
-                           <div className="text-right relative z-10">
-                              <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1">Impacto Total en Caja</span>
-                              <span className="text-4xl font-black text-[#16315f] tracking-tighter">${(parseFloat(venta.total) || 0).toLocaleString()}</span>
-                           </div>
+                        <div className="mt-auto px-6 py-8 border-t border-[#d7e5f8] bg-[#fbfdff] flex justify-between items-center relative overflow-hidden">
+                            <div className="flex flex-col">
+                                <p className={configUi.modalEyebrow}>Impacto Contable</p>
+                                <div className="h-1 w-16 bg-indigo-500 rounded-full mt-1"></div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Monto Total Facturado</p>
+                                <p className="text-4xl font-black text-[#16315f] tracking-tighter">${Number(venta.total).toLocaleString('es-CO')}</p>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Justificación de cancelación si aplica */}
+                    {(venta.status === "Cancelada" || venta.estado === "Cancelada") && (
+                        <div className={cn(configUi.formSection, "border-rose-200 bg-rose-50/50 p-8")}>
+                            <h3 className="text-sm font-black text-rose-600 uppercase tracking-widest flex items-center gap-3 mb-4">
+                                <AlertTriangle size={18} /> Justificación de Anulación
+                            </h3>
+                            <div className="p-6 bg-white/80 rounded-2xl border border-rose-100 text-sm font-bold text-rose-700 italic shadow-sm">
+                                "{venta.justificacion_cancelacion || "Operación cancelada por solicitud administrativa."}"
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* 3. INFO SIDEBAR */}
-                <div className="space-y-10">
-                    {/* CLIENT CARD */}
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 relative overflow-hidden ring-1 ring-slate-100/50">
-                        <div className="absolute top-0 right-0 p-4 opacity-5">
-                           <User size={80} strokeWidth={1} />
-                        </div>
-                        
-                        <h3 className="text-lg font-extrabold text-[#16315f] mb-8 flex items-center gap-3">
-                           <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner border border-indigo-100">
-                              <User size={20} />
-                           </div>
-                           Datos del Pagador
+                {/* Right: Personal & Payment Info */}
+                <div className="xl:col-span-4 flex flex-col gap-6">
+                    {/* Client Info */}
+                    <div className={cn(configUi.formSection, "p-8 space-y-8")}>
+                        <h3 className={configUi.modalEyebrow + " flex items-center gap-2"}>
+                            <User size={16} className="text-indigo-500" /> Resumen del Cliente
                         </h3>
 
-                        <div className="space-y-8 relative z-10">
-                           <div className="space-y-1">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identidad Legal</label>
-                              <p className="text-sm font-black text-[#16315f] leading-tight">{venta.nombre_cliente || "IDENTIDAD NO REGISTRADA"}</p>
-                              <div className="flex items-center gap-3 mt-2">
-                                 <span className="px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-100 text-[10px] font-bold text-slate-500">ID: {venta.id_cliente}</span>
-                                 <span className="text-[11px] font-bold text-slate-400">CC: {venta.documento || "—"}</span>
-                              </div>
-                           </div>
+                        <div className="space-y-6">
+                            <div className="space-y-1">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre Completo / ID</p>
+                                <p className="text-lg font-black text-[#16315f] leading-tight uppercase tracking-tight">{venta.nombre_cliente || "Consumidor Final"}</p>
+                                <div className="flex items-center gap-3 mt-1">
+                                    <span className={configUi.subtlePill}>ID: {venta.id_cliente || "—"}</span>
+                                    <span className="text-[11px] font-bold text-[#6b84aa]">CC: {venta.documento || "—"}</span>
+                                </div>
+                            </div>
 
-                           <div className="grid grid-cols-1 gap-6 pt-6 border-t border-slate-50">
-                              <div className="flex items-center gap-4">
-                                 <div className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100">
-                                    <Phone size={14} />
-                                 </div>
-                                 <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Contacto</span>
-                                    <span className="text-xs font-bold text-[#16315f]">{venta.telefono || "Sin teléfono"}</span>
-                                 </div>
-                              </div>
-                              <div className="flex items-center gap-4">
-                                 <div className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100">
-                                    <Mail size={14} />
-                                 </div>
-                                 <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Correo-E</span>
-                                    <span className="text-xs font-bold text-[#16315f] lowercase truncate max-w-[180px]">{venta.email || "Sin email"}</span>
-                                 </div>
-                              </div>
-                              <div className="flex items-center gap-4">
-                                 <div className="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shadow-sm border border-slate-100">
-                                    <MapPin size={14} />
-                                 </div>
-                                 <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Logística de Entrega</span>
-                                    <span className="text-xs font-bold text-[#16315f] leading-tight">{venta.direccion_envio || "Entrega en punto físico"}</span>
-                                 </div>
-                              </div>
-                           </div>
+                            <div className="space-y-4 pt-4 border-t border-[#d7e5f8]">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                                        <Phone size={14} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Contacto Directo</span>
+                                        <span className="text-xs font-bold text-[#16315f]">{venta.telefono || "No disponible"}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400">
+                                        <MapPin size={14} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Dirección de Despacho</span>
+                                        <span className="text-xs font-bold text-[#16315f] leading-tight">{venta.direccion_envio || "Recogida en sede local"}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* PAYMENT INFO */}
-                    <div className="bg-[#16315f] rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -right-10 text-white/5 opacity-40 group-hover:scale-110 transition-transform duration-1000">
-                           <CreditCard size={180} strokeWidth={0.5} />
+                    {/* Payment Status Card */}
+                    <div className="bg-[#16315f] rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                            <CreditCard size={100} />
                         </div>
 
-                        <h3 className="text-lg font-extrabold mb-8 flex items-center gap-3">
-                           <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center text-indigo-300 backdrop-blur-md border border-white/10">
-                              <DollarSign size={20} />
-                           </div>
-                           Certificado de Pago
+                        <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                            <DollarSign size={16} /> Parámetros de Recaudo
                         </h3>
 
-                        <div className="space-y-6 relative z-10">
-                           <div className="flex justify-between items-center py-4 border-b border-white/5">
-                              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Metodología</span>
-                              <span className="text-sm font-black bg-white/5 px-4 py-1.5 rounded-xl border border-white/10 uppercase tracking-widest">{venta.metodo_pago || "Efectivo"}</span>
-                           </div>
-                           
-                           <div className="pt-2">
-                              <div className="p-6 bg-white/5 rounded-3xl border border-white/10 flex flex-col gap-4 text-center">
-                                 <span className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em]">Total Recaudado</span>
-                                 <span className="text-4xl font-black tracking-tighter">${(parseFloat(venta.total) || 0).toLocaleString()}</span>
-                                 <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-white/40">
-                                    <CheckCircle size={12} className="text-emerald-400" /> Transacción Conciliada
-                                 </div>
-                              </div>
-                           </div>
+                        <div className="space-y-8">
+                            <div className="flex justify-between items-center py-4 border-b border-white/10">
+                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Metodología</span>
+                                <span className="text-xs font-black uppercase bg-white/10 px-4 py-1.5 rounded-xl border border-white/5">{venta.metodo_pago || "Efectivo"}</span>
+                            </div>
+
+                            <div className="bg-white/5 rounded-3xl p-6 border border-white/10 text-center space-y-2">
+                                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Valor Liquidado</p>
+                                <p className="text-3xl font-black tracking-tighter">${Number(venta.total).toLocaleString('es-CO')}</p>
+                                <div className="flex items-center justify-center gap-2 text-[9px] font-bold text-white/30 uppercase mt-2">
+                                    <CheckCircle size={10} className="text-emerald-400" /> Operación Certificada
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -278,16 +251,16 @@ export default function VentaDetalle() {
                     {(venta.status === "Cancelada" || venta.estado === "Cancelada") && (
                         <div className="bg-rose-600 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
                             <h3 className="text-lg font-extrabold mb-6 flex items-center gap-3">
-                               <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center text-white backdrop-blur-md">
-                                  <AlertTriangle size={20} />
-                               </div>
-                               Registro de Anulación
+                                <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center text-white backdrop-blur-md">
+                                    <AlertTriangle size={20} />
+                                </div>
+                                Registro de Anulación
                             </h3>
                             <div className="space-y-4">
-                               <label className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Dictamen de Cancelación:</label>
-                               <div className="p-6 bg-black/10 rounded-3xl border border-white/5 italic text-sm font-medium leading-relaxed">
-                                  "{venta.motivo_cancelacion || "Se procedió con la anulación por solicitud administrativa."}"
-                               </div>
+                                <label className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Dictamen de Cancelación:</label>
+                                <div className="p-6 bg-black/10 rounded-3xl border border-white/5 italic text-sm font-medium leading-relaxed">
+                                    "{venta.motivo_cancelacion || "Se procedió con la anulación por solicitud administrativa."}"
+                                </div>
                             </div>
                         </div>
                     )}

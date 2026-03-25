@@ -2,17 +2,16 @@ import React, { useState } from "react";
 import { X, Search, Package, Plus, Image as ImageIcon, ExternalLink, ArrowLeft, CheckCircle, ShoppingCart, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import { cn, configUi } from "../../configUi";
+import { cn, configUi } from "../../configuracion/configUi";
 
 export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = false, currentItems = [] }) => {
     const location = useLocation();
     const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const productPath = basePath === '/custom' ? 'productos' : 'products';
-    
+
     const [productSearch, setProductSearch] = useState("");
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
-    // BUG FIX: default to sale price (precio) not cost (precio_compra)
     const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
     const [error, setError] = useState("");
 
@@ -52,60 +51,62 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="flex-1 flex flex-col min-h-0 bg-white border border-[#d7e5f8] rounded-[2rem] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.5)] overflow-hidden"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className={cn(configUi.modalPanel, "flex flex-col h-full min-h-0 border-[#bfd1f4] shadow-[0_20px_60px_-15px_rgba(34,58,99,0.3)]")}
         >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#d7e5f8] bg-[#f8fbff] shrink-0">
+            {/* Modal Header Style */}
+            <div className={configUi.modalHeader}>
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onClose}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#16315f] hover:border-[#16315f]/30 transition-all shadow-sm"
+                        className={configUi.actionButton}
                         title="Volver"
                     >
                         <ArrowLeft size={18} />
                     </button>
                     <div>
-                        <h2 className="text-base font-black text-[#16315f]">Seleccionar Producto</h2>
-                        <p className="text-xs text-[#6b84aa]">Elige el producto y la variante que deseas agregar</p>
+                        <h2 className={configUi.modalTitle}>Catálogo de Activos</h2>
+                        <p className={configUi.modalSubtitle}>Sincronización de Stock Entrante</p>
                     </div>
                 </div>
-                <a
-                    href={`${basePath}/${productPath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#16315f] bg-white border border-[#bfd1f4] rounded-xl hover:bg-[#f0f5ff] transition-all"
-                >
-                    <Plus size={12} />
-                    Nuevo Producto
-                    <ExternalLink size={11} />
-                </a>
+                <div className="flex items-center gap-2">
+                    <a
+                        href={`${basePath}/${productPath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={configUi.secondaryButton + " gap-2 h-10 px-4"}
+                    >
+                        <Plus size={14} />
+                        Nuevo Registro
+                        <ExternalLink size={12} className="opacity-40" />
+                    </a>
+                    <button onClick={onClose} className={configUi.modalClose}><X size={20} /></button>
+                </div>
             </div>
 
-            {/* Content */}
-            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
-                {/* Left: Product List */}
-                <div className="w-full lg:w-[45%] flex flex-col border-r border-[#e8f0fa] bg-[#fbfdff]">
-                    <div className="p-4 border-b border-[#e8f0fa] shrink-0">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
+            {/* Content Split Style like configUi.modalSplit */}
+            <div className="flex-1 flex overflow-hidden min-h-0 bg-[#fbfdff]">
+                {/* Left: Product Selection List */}
+                <div className="w-full md:w-[400px] flex flex-col border-r border-[#d7e5f8] bg-white text-left">
+                    <div className="p-4 border-b border-[#f0f6ff] shrink-0">
+                        <div className={configUi.searchWrap + " w-full"}>
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <input
-                                placeholder="Buscar producto..."
-                                className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#d7e5f8] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] transition-all text-[#16315f] placeholder:text-[#86a0c6]"
+                                placeholder="Filtrar por nombre o referencia..."
+                                className={configUi.inputWithIcon + " py-2.5"}
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                             />
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
                         {filteredProducts.length === 0 ? (
-                            <div className="py-12 text-center">
-                                <Search size={28} className="mx-auto text-[#bfd1f4] mb-3" />
-                                <p className="text-sm font-bold text-[#6b84aa]">Sin resultados</p>
-                                <p className="text-xs text-slate-300 mt-1">Intenta con otro nombre</p>
+                            <div className={configUi.emptyState + " py-20"}>
+                                <Package size={32} className="mx-auto opacity-20 mb-2" />
+                                <p className="text-[10px] font-black uppercase tracking-widest">Sin coincidencias</p>
                             </div>
                         ) : (
                             filteredProducts.map(p => {
@@ -151,35 +152,15 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                     </div>
                 </div>
 
-                {/* Right: Config Panel */}
-                <div className="w-full lg:flex-1 bg-white flex flex-col overflow-y-auto custom-scrollbar">
-                    <AnimatePresence mode="wait">
-                        {selectedProduct ? (
-                            <motion.div
-                                key={`conf-${selectedProduct.id_producto}`}
-                                initial={{ opacity: 0, x: 16 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -16 }}
-                                className="p-6 space-y-5"
-                            >
-                                {/* Product header */}
-                                <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
-                                    <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
-                                        {(selectedProduct.imagenes && selectedProduct.imagenes[0]?.url_imagen) ? (
-                                            <img src={selectedProduct.imagenes[0].url_imagen} alt="" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <ImageIcon size={20} className="text-slate-300" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-[#16315f]">{selectedProduct.nombre_producto}</h3>
-                                        <p className="text-xs text-[#6b84aa] mt-0.5 line-clamp-2">{selectedProduct.descripcion}</p>
-                                        <div className="mt-1.5">
-                                            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                                                Precio de venta: ${Number(selectedProduct.precio || 0).toLocaleString()}
-                                            </span>
-                                        </div>
-                                    </div>
+                {/* Right: Variant Config & Items Form */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className={configUi.modalContent + " space-y-8"}>
+                        {!selectedProduct ? (
+                            <div className="flex-1 flex flex-col items-center justify-center py-20 text-center opacity-30">
+                                <ShoppingCart size={64} />
+                                <div className="mt-4">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-[#16315f]">Seleccione un Producto</h3>
+                                    <p className="text-xs font-bold text-[#6a85ad] mt-1">Configure las variantes para añadir a la orden</p>
                                 </div>
 
                                 {/* Variant picker */}
@@ -229,83 +210,76 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                     )}
                                 </div>
 
-                                <AnimatePresence>
-                                    {selectedVariant && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: "auto" }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className="space-y-4 overflow-hidden"
-                                        >
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className={configUi.fieldGroup}>
-                                                    <label className={configUi.fieldLabel}>Cantidad</label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max={selectedVariant.stock}
-                                                        className={configUi.fieldInput}
-                                                        value={newItemData.cantidad}
-                                                        onChange={(e) => setNewItemData({ ...newItemData, cantidad: e.target.value })}
-                                                    />
-                                                    <p className="text-[10px] text-slate-300 mt-1">Máx: {selectedVariant.stock}</p>
-                                                </div>
-                                                <div className={configUi.fieldGroup}>
-                                                    <label className={configUi.fieldLabel}>Precio unitario *</label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            className={cn(configUi.fieldInput, "pl-7")}
-                                                            value={newItemData.precio_unitario}
-                                                            onChange={(e) => setNewItemData({ ...newItemData, precio_unitario: e.target.value })}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-4 bg-[#f0f6ff] border border-[#d7e5f8] rounded-2xl flex items-center justify-between">
-                                                <div>
-                                                    <div className="text-[10px] font-black text-[#6b84aa] uppercase tracking-widest">Subtotal estimado</div>
-                                                    <div className="text-xl font-black text-[#16315f] mt-0.5">
-                                                        ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
-                                                    </div>
-                                                    {error && (
-                                                        <div className="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1 animate-bounce">
-                                                            <AlertCircle size={12} />
-                                                            {error}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <button
-                                                    onClick={handleAddItem}
-                                                    disabled={!newItemData.cantidad || !newItemData.precio_unitario}
-                                                    className="flex items-center gap-2 px-5 py-3 bg-[#16315f] text-white text-xs font-black rounded-xl hover:bg-[#0d2248] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-95"
-                                                >
-                                                    <ShoppingCart size={14} />
-                                                    Agregar
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </motion.div>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
-                                <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-100">
-                                    <Package size={28} className="text-slate-300" />
+                                <div className={configUi.formSection + " grid grid-cols-1 md:grid-cols-2 gap-6 relative"}>
+                                    <div className={configUi.fieldGroup}>
+                                        <label className={configUi.fieldLabel}>Cantidad a Ingresar</label>
+                                        <input
+                                            type="number"
+                                            value={newItemData.cantidad}
+                                            onChange={(e) => {
+                                                setNewItemData({ ...newItemData, cantidad: e.target.value });
+                                                setLocalError(null);
+                                            }}
+                                            className={configUi.fieldInput}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div className={configUi.fieldGroup}>
+                                        <label className={configUi.fieldLabel}>Costo Unitario</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">$</span>
+                                            <input
+                                                type="number"
+                                                value={newItemData.precio_unitario}
+                                                onChange={(e) => {
+                                                    setNewItemData({ ...newItemData, precio_unitario: e.target.value });
+                                                    setLocalError(null);
+                                                }}
+                                                className={configUi.fieldInput + " pl-8"}
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
-                                <h3 className="text-sm font-bold text-[#16315f]">Ningún producto seleccionado</h3>
-                                <p className="text-xs text-[#6b84aa] mt-2 max-w-[220px] leading-relaxed">Busca y selecciona un producto de la lista para elegir variante y cantidad.</p>
-                            </div>
+
+                                <div className="p-4 bg-[#f0f6ff] border border-[#d7e5f8] rounded-2xl flex items-center justify-between">
+                                    <div>
+                                        <div className="text-[10px] font-black text-[#6b84aa] uppercase tracking-widest">Subtotal estimado</div>
+                                        <div className="text-xl font-black text-[#16315f] mt-0.5">
+                                            ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
+                                        </div>
+                                        {error && (
+                                            <div className="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1 animate-bounce">
+                                                <AlertCircle size={12} />
+                                                {error}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={handleAddItem}
+                                        disabled={!newItemData.cantidad || !newItemData.precio_unitario}
+                                        className="flex items-center gap-2 px-5 py-3 bg-[#16315f] text-white text-xs font-black rounded-xl hover:bg-[#0d2248] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-95"
+                                    >
+                                        <ShoppingCart size={14} />
+                                        Agregar
+                                    </button>
+                                </div>
+                            </motion.div>
                         )}
                     </AnimatePresence>
+                </motion.div>
+                ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-100">
+                        <Package size={28} className="text-slate-300" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#16315f]">Ningún producto seleccionado</h3>
+                    <p className="text-xs text-[#6b84aa] mt-2 max-w-[220px] leading-relaxed">Busca y selecciona un producto de la lista para elegir variante y cantidad.</p>
                 </div>
-            </div>
-        </motion.div>
+                        )}
+            </AnimatePresence>
+        </div>
+            </div >
+        </motion.div >
     );
 };
-
-export default ProductSelectorView;

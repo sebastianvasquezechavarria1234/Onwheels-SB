@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { 
-  Search, Plus, Trash2, ArrowLeft, X, Save, 
-  CheckCircle, Package, User, DollarSign, AlertCircle,
-  Calendar, MapPin, Phone, ShoppingCart, Info, ChevronRight,
-  UserPlus, CreditCard, Clock
+import {
+    Search, Plus, Trash2, ArrowLeft, X, Save,
+    CheckCircle, Package, User, DollarSign, AlertCircle,
+    Calendar, MapPin, Phone, ShoppingCart, Info, ChevronRight,
+    UserPlus, CreditCard, Clock, AlertTriangle, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,10 +23,12 @@ import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
 import { configUi } from "../../configuracion/configUi";
 import ProductSelectorView from "../../compras/compras/ProductSelectorView";
+import { useToast } from "../../../../../../context/ToastContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 export default function PedidoEditar() {
+    const toast = useToast();
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -40,7 +42,7 @@ export default function PedidoEditar() {
     const [productos, setProductos] = useState([]);
     const [colores, setColores] = useState([]);
     const [tallas, setTallas] = useState([]);
-    
+
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
     const [form, setForm] = useState({
@@ -67,21 +69,31 @@ export default function PedidoEditar() {
     // --- CARGA DE DATOS ---
     const combinarProductosConVariantes = (productosList = [], variantesList = []) => {
         const productoMap = new Map();
-        productosList.forEach((p) => productoMap.set(p.id_producto, { ...p, variantes: [] }));
-        variantesList.forEach((v) => {
-            const producto = productoMap.get(v.id_producto);
-            if (producto) {
-                producto.variantes.push({
-                    id_variante: v.id_variante,
-                    id_color: v.id_color,
-                    id_talla: v.id_talla,
-                    stock: v.stock,
-                    nombre_color: v.nombre_color,
-                    nombre_talla: v.nombre_talla,
-                    codigo_hex: v.codigo_hex,
-                });
-            }
+        productosList.forEach((p) => {
+            const pid = Number(p.id_producto);
+            productoMap.set(pid, { ...p, variantes: p.variantes || [] });
         });
+
+        if (variantesList && variantesList.length > 0) {
+            variantesList.forEach((v) => {
+                const pid = Number(v.id_producto);
+                const producto = productoMap.get(pid);
+                if (producto) {
+                    const exists = producto.variantes.some(ev => (ev.id_variante || ev.id_producto_variante) === (v.id_variante || v.id_producto_variante));
+                    if (!exists) {
+                        producto.variantes.push({
+                            id_variante: v.id_variante || v.id_producto_variante,
+                            id_color: v.id_color,
+                            id_talla: v.id_talla,
+                            stock: v.stock || v.stock_actual || 0,
+                            nombre_color: v.nombre_color || v.color,
+                            nombre_talla: v.nombre_talla || v.talla,
+                            codigo_hex: v.codigo_hex,
+                        });
+                    }
+                }
+            });
+        }
         return Array.from(productoMap.values());
     };
 
@@ -89,10 +101,10 @@ export default function PedidoEditar() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [usrs, clis, prods, vars, cols, tls] = await Promise.all([
+                const [usrs, clis, prodRes, vars, cols, tls] = await Promise.all([
                     getUsuarios(),
                     getClientes(),
-                    getProductos(),
+                    getProductos({ limit: 1000 }),
                     getVariantes(),
                     getColores(),
                     getTallas(),
@@ -102,7 +114,9 @@ export default function PedidoEditar() {
                 setClientes(clis || []);
                 setColores(cols || []);
                 setTallas(tls || []);
-                setProductos(combinarProductosConVariantes(prods || [], vars || []));
+
+                const prods = Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : [];
+                setProductos(combinarProductosConVariantes(prods, vars || []));
 
                 if (isEditing) {
                     const pedido = await getPedidoById(id);
@@ -129,7 +143,7 @@ export default function PedidoEditar() {
                 }
             } catch (err) {
                 console.error("Error cargando datos:", err);
-                showNotification("Error de sincronización con el servidor", "error");
+                showNotification("Error de sincronización", "error");
             } finally {
                 setLoading(false);
             }
@@ -137,7 +151,6 @@ export default function PedidoEditar() {
         fetchData();
     }, [isEditing, id, showNotification]);
 
-    // --- HANDLERS ---
     const handleUserChange = (userId) => {
         const selectedId = Number(userId);
         const existingClient = clientes.find(c => c.id_usuario === selectedId);
@@ -150,7 +163,7 @@ export default function PedidoEditar() {
                 direccion: existingClient.direccion_envio || "",
                 telefono: existingClient.telefono_contacto || ""
             }));
-            showNotification("Datos de contacto actualizados");
+            showNotification("Ficha de cliente cargada");
         } else {
             setForm(prev => ({
                 ...prev,
@@ -159,24 +172,43 @@ export default function PedidoEditar() {
                 direccion: "",
                 telefono: ""
             }));
-            if (userId) showNotification("Usuario nuevo. Por favor complete el envío.");
+            if (userId) showNotification("Usuario nuevo. Ingrese datos de despacho.");
         }
     };
-    
+
     const validateForm = () => {
         const errors = {};
         if (!form.id_usuario) errors.id_usuario = "Seleccione un cliente";
-        if (!form.direccion) errors.direccion = "Ingrese la dirección";
-        if (!form.telefono) errors.telefono = "Ingrese el teléfono";
+        if (!form.direccion || !form.direccion.trim()) errors.direccion = "Ingrese la dirección";
+
+        if (!form.telefono || !form.telefono.trim()) {
+            errors.telefono = "Ingrese el teléfono";
+        } else if (form.telefono.replace(/\D/g, '').length !== 10) {
+            errors.telefono = "El teléfono debe tener exactamente 10 dígitos";
+        }
+
         if (form.items.length === 0) errors.items = "Agregue al menos un producto";
-        
+
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isSubmitting || !validateForm()) return;
+        if (isSubmitting || !validateForm()) {
+            if (!validateForm()) toast.error("Por favor completa los campos obligatorios.");
+            return;
+        }
+
+        // Validar fecha de pedido (no futura)
+        if (form.fecha_venta) {
+            const orderDate = new Date(form.fecha_venta);
+            const today = new Date();
+            if (orderDate > today) {
+                toast.error("La fecha del pedido no puede ser futura.");
+                return;
+            }
+        }
 
         setIsSubmitting(true);
         try {
@@ -195,29 +227,31 @@ export default function PedidoEditar() {
 
             if (isEditing) {
                 await updatePedido(id, payload);
+                toast.success("Orden de compra actualizada");
                 showNotification("Orden de compra actualizada");
             } else {
                 await createPedido(payload);
+                toast.success("Orden de compra generada");
                 showNotification("Orden de compra generada");
             }
-            setTimeout(() => navigate(`${basePath}/pedidos`), 1500);
+            setTimeout(() => navigate(`${basePath}/pedidos`), 1000);
         } catch (err) {
-            showNotification(err?.response?.data?.mensaje || "Error al procesar la orden", "error");
+            const msg = err?.response?.data?.mensaje || "Error al procesar la orden";
+            toast.error(msg);
+            showNotification(msg, "error");
             setIsSubmitting(false);
         }
     };
 
-    
-
-    const totalEstimated = useMemo(() => 
+    const totalEstimated = useMemo(() =>
         form.items.reduce((acc, it) => acc + (it.qty * it.price), 0),
-    [form.items]);
+        [form.items]);
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
-               <div className="w-10 h-10 border-4 border-[#16315f]/10 border-t-[#16315f] rounded-full animate-spin"></div>
-               <p className="text-[10px] font-black tracking-widest text-[#16315f]">CARGANDO PEDIDO...</p>
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black tracking-widest text-[#16315f] uppercase">Sincronizando Orden...</p>
             </div>
         );
     }
@@ -235,9 +269,9 @@ export default function PedidoEditar() {
                         onAdd={(data) => {
                             const { product, variant, cantidad, precio_unitario } = data;
                             const variantData = product.variantes?.find(v => v.id_variante === variant.id_variante) || variant;
-                            
+
                             const existingItemIdx = form.items.findIndex(it => it.id_variante === variantData.id_variante);
-                            
+
                             if (existingItemIdx !== -1) {
                                 // Merge duplicate
                                 const newItems = [...form.items];
@@ -277,10 +311,10 @@ export default function PedidoEditar() {
                                 </button>
                                 <div>
                                     <h1 className="text-xl font-black text-[#16315f] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                                       {isEditing ? `Editar Pedido #${id}` : "Nuevo Pedido"}
+                                        {isEditing ? `Editar Pedido #${id}` : "Nuevo Pedido"}
                                     </h1>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                       {isEditing ? "Gestiona los detalles del pedido" : "Crea un nuevo pedido para un cliente"}
+                                        {isEditing ? "Gestiona los detalles del pedido" : "Crea un nuevo pedido para un cliente"}
                                     </p>
                                 </div>
                             </div>
@@ -301,10 +335,10 @@ export default function PedidoEditar() {
                                 <div className="lg:col-span-2">
                                     <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 ring-1 ring-slate-100/50 h-full">
                                         <h3 className="text-xl font-extrabold text-[#16315f] mb-8 flex items-center gap-3">
-                                          <User className="text-indigo-500" size={24} />
-                                          Datos del Cliente
+                                            <User className="text-indigo-500" size={24} />
+                                            Datos del Cliente
                                         </h3>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className={configUi.fieldGroup}>
                                                 <label className={configUi.fieldLabel}>Seleccionar Cliente *</label>
@@ -328,56 +362,56 @@ export default function PedidoEditar() {
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-4">
-                                               <div className={configUi.fieldGroup}>
-                                                  <label className={configUi.fieldLabel}>Fecha de Venta</label>
-                                                  <div className="relative">
-                                                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                     <input
-                                                         type="date"
-                                                         value={form.fecha_venta}
-                                                         onChange={e => setForm({ ...form, fecha_venta: e.target.value })}
-                                                         className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.fecha_venta && "border-rose-300")}
-                                                     />
-                                                  </div>
-                                               </div>
-                                               <div className={configUi.fieldGroup}>
-                                                  <label className={configUi.fieldLabel}>Forma de Pago</label>
-                                                  <div className="relative">
-                                                     <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />
-                                                     <input
-                                                         value="Contraentrega"
-                                                         disabled
-                                                         className={cn(configUi.fieldInput, "pl-12 h-14 bg-slate-50 cursor-not-allowed font-bold text-indigo-800")}
-                                                     />
-                                                  </div>
-                                               </div>
+                                                <div className={configUi.fieldGroup}>
+                                                    <label className={configUi.fieldLabel}>Fecha de Venta</label>
+                                                    <div className="relative">
+                                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                        <input
+                                                            type="date"
+                                                            value={form.fecha_venta}
+                                                            onChange={e => setForm({ ...form, fecha_venta: e.target.value })}
+                                                            className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.fecha_venta && "border-rose-300")}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className={configUi.fieldGroup}>
+                                                    <label className={configUi.fieldLabel}>Forma de Pago</label>
+                                                    <div className="relative">
+                                                        <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />
+                                                        <input
+                                                            value="Contraentrega"
+                                                            disabled
+                                                            className={cn(configUi.fieldInput, "pl-12 h-14 bg-slate-50 cursor-not-allowed font-bold text-indigo-800")}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <div className={configUi.fieldGroup}>
                                                 <label className={configUi.fieldLabel}>Dirección de Envío *</label>
                                                 <div className="relative">
-                                                   <MapPin className="absolute left-4 top-4 text-slate-400" size={18} />
-                                                   <textarea
-                                                       value={form.direccion}
-                                                       rows="1"
-                                                       onChange={e => setForm({ ...form, direccion: e.target.value })}
-                                                       placeholder="Cll, Cr, Barrio, Apto/Casa..."
-                                                       className={cn(configUi.fieldInput, "pl-12 pt-4 h-14 min-h-[56px] resize-none overflow-hidden leading-relaxed", formErrors.direccion && "border-rose-300")}
-                                                   />
+                                                    <MapPin className="absolute left-4 top-4 text-slate-400" size={18} />
+                                                    <textarea
+                                                        value={form.direccion}
+                                                        rows="1"
+                                                        onChange={e => setForm({ ...form, direccion: e.target.value })}
+                                                        placeholder="Cll, Cr, Barrio, Apto/Casa..."
+                                                        className={cn(configUi.fieldInput, "pl-12 pt-4 h-14 min-h-[56px] resize-none overflow-hidden leading-relaxed", formErrors.direccion && "border-rose-300")}
+                                                    />
                                                 </div>
                                             </div>
 
                                             <div className={configUi.fieldGroup}>
                                                 <label className={configUi.fieldLabel}>Teléfono *</label>
                                                 <div className="relative">
-                                                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                   <input
-                                                       type="text"
-                                                       value={form.telefono}
-                                                       onChange={e => setForm({ ...form, telefono: e.target.value.replace(/[^0-9+]/g, '') })}
-                                                       placeholder="+57 321..."
-                                                       className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.telefono && "border-rose-300")}
-                                                   />
+                                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                    <input
+                                                        type="text"
+                                                        value={form.telefono}
+                                                        onChange={e => setForm({ ...form, telefono: e.target.value.replace(/[^0-9+]/g, '') })}
+                                                        placeholder="+57 321..."
+                                                        className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.telefono && "border-rose-300")}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -387,34 +421,34 @@ export default function PedidoEditar() {
                                 <div className="lg:col-span-1">
                                     <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/50 h-full">
                                         <h3 className="text-xl font-extrabold text-[#16315f] mb-10 flex items-center gap-3">
-                                           <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100">
-                                              <DollarSign size={20} />
-                                           </div>
-                                           Resumen
+                                            <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100">
+                                                <DollarSign size={20} />
+                                            </div>
+                                            Resumen
                                         </h3>
 
                                         <div className="space-y-4 relative z-10 font-bold">
-                                           <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
-                                              <span>Subtotal</span>
-                                              <span className="text-slate-600 text-sm font-black">${totalEstimated.toLocaleString()}</span>
-                                           </div>
-                                           <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
-                                              <span>Envío</span>
-                                              <span className="text-emerald-500 text-sm italic font-black">Gratis</span>
-                                           </div>
-                                           <div className="flex justify-between items-center py-4 border-y border-slate-50 mt-4">
-                                              <span className="text-sm font-black uppercase tracking-tighter text-slate-400">Total</span>
-                                              <span className="text-2xl font-black tracking-tighter text-[#16315f]">${totalEstimated.toLocaleString()}</span>
-                                           </div>
-                                           
-                                           <div className="pt-4">
-                                              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                                 <div className="h-8 w-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
-                                                    <Clock size={16} />
-                                                 </div>
-                                                 <p className="text-[10px] font-bold text-slate-400 leading-tight">Estado: <span className="text-orange-500 uppercase">Pendiente</span></p>
-                                              </div>
-                                           </div>
+                                            <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
+                                                <span>Subtotal</span>
+                                                <span className="text-slate-600 text-sm font-black">${totalEstimated.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
+                                                <span>Envío</span>
+                                                <span className="text-emerald-500 text-sm italic font-black">Gratis</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-4 border-y border-slate-50 mt-4">
+                                                <span className="text-sm font-black uppercase tracking-tighter text-slate-400">Total</span>
+                                                <span className="text-2xl font-black tracking-tighter text-[#16315f]">${totalEstimated.toLocaleString()}</span>
+                                            </div>
+
+                                            <div className="pt-4">
+                                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+                                                    <div className="h-8 w-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500">
+                                                        <Clock size={16} />
+                                                    </div>
+                                                    <p className="text-[10px] font-bold text-slate-400 leading-tight">Estado: <span className="text-orange-500 uppercase">Pendiente</span></p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -424,11 +458,11 @@ export default function PedidoEditar() {
                             <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 ring-1 ring-slate-100/50 w-full font-bold">
                                 <div className="flex justify-between items-center mb-10">
                                     <div>
-                                       <h3 className="text-xl font-extrabold text-[#16315f] flex items-center gap-3">
-                                          <Package className="text-indigo-500" size={24} />
-                                          Productos
-                                       </h3>
-                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 ml-9">Artículos seleccionados para el pedido</p>
+                                        <h3 className="text-xl font-extrabold text-[#16315f] flex items-center gap-3">
+                                            <Package className="text-indigo-500" size={24} />
+                                            Productos
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 ml-9">Artículos seleccionados para el pedido</p>
                                     </div>
                                     <button onClick={() => setShowProductSelector(true)} type="button" className={cn(configUi.primaryButton, "h-12 bg-[#16315f] hover:bg-[#16315f]/90 shadow-lg shadow-blue-100")}>
                                         <Plus size={18} />
@@ -452,11 +486,11 @@ export default function PedidoEditar() {
                                             {form.items.length === 0 ? (
                                                 <tr>
                                                     <td colSpan="6" className="px-8 py-16 text-center">
-                                                       <div className="flex flex-col items-center gap-3 opacity-30 grayscale saturate-0 mb-4">
-                                                          <ShoppingCart size={40} strokeWidth={1} />
-                                                          <p className="text-xs font-black uppercase tracking-[0.2em] italic">No hay productos seleccionados</p>
-                                                       </div>
-                                                       {formErrors.items && <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest leading-none flex items-center justify-center gap-1.5"><AlertCircle size={12} /> {formErrors.items}</p>}
+                                                        <div className="flex flex-col items-center gap-3 opacity-30 grayscale saturate-0 mb-4">
+                                                            <ShoppingCart size={40} strokeWidth={1} />
+                                                            <p className="text-xs font-black uppercase tracking-[0.2em] italic">No hay productos seleccionados</p>
+                                                        </div>
+                                                        {formErrors.items && <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest leading-none flex items-center justify-center gap-1.5"><AlertCircle size={12} /> {formErrors.items}</p>}
                                                     </td>
                                                 </tr>
                                             ) : (
@@ -495,17 +529,18 @@ export default function PedidoEditar() {
                 )}
             </AnimatePresence>
 
-            {/* NOTIFICATION */}
+            {/* --- NOTIFICATIONS --- */}
             <AnimatePresence>
                 {notification.show && (
-                    <motion.div initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 100 }}
-                        className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold z-[100] flex items-center gap-3 border ${notification.type === "error" ? "bg-rose-600 border-rose-500" : "bg-[#16315f] border-indigo-400"}`}
-                    >
-                        {notification.type === "error" ? <AlertCircle size={24} /> : <CheckCircle size={24} />}
-                        <span className="text-sm tracking-tight">{notification.message}</span>
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                        className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+                            notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}>
+                        {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+                        {notification.message}
                     </motion.div>
                 )}
             </AnimatePresence>
         </div>
+        </div >
     );
 }

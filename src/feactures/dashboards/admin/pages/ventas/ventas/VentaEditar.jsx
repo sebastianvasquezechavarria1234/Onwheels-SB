@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { 
-  Search, Plus, Trash2, ArrowLeft, X, Save, 
-  CheckCircle, Package, User, DollarSign, AlertCircle,
-  Calendar, MapPin, Phone, ShoppingCart, Info, ChevronRight,
-  UserPlus, CreditCard, Clock
+import {
+    Search, Plus, Trash2, ArrowLeft, X, Save,
+    CheckCircle, Package, User, DollarSign, AlertCircle,
+    Calendar, MapPin, Phone, ShoppingCart, Info, ChevronRight,
+    UserPlus, CreditCard, Clock, AlertTriangle, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,10 +23,12 @@ import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
 import { configUi } from "../../configuracion/configUi";
 import ProductSelectorView from "../../compras/compras/ProductSelectorView";
+import { useToast } from "../../../../../../context/ToastContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 export default function VentaEditar() {
+    const toast = useToast();
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -40,7 +42,7 @@ export default function VentaEditar() {
     const [productos, setProductos] = useState([]);
     const [colores, setColores] = useState([]);
     const [tallas, setTallas] = useState([]);
-    
+
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
     const [form, setForm] = useState({
@@ -77,35 +79,32 @@ export default function VentaEditar() {
                 const pid = Number(v.id_producto);
                 const producto = productoMap.get(pid);
                 if (producto) {
-                    // Evitar duplicados si el backend ya los traía
-                    const exists = producto.variantes.some(ev => ev.id_variante === v.id_variante);
+                    const exists = producto.variantes.some(ev => (ev.id_variante || ev.id_producto_variante) === (v.id_variante || v.id_producto_variante));
                     if (!exists) {
                         producto.variantes.push({
-                            id_variante: v.id_variante,
+                            id_variante: v.id_variante || v.id_producto_variante,
                             id_color: v.id_color,
                             id_talla: v.id_talla,
-                            stock: v.stock,
-                            nombre_color: v.nombre_color,
-                            nombre_talla: v.nombre_talla,
+                            stock: v.stock || v.stock_actual || 0,
+                            nombre_color: v.nombre_color || v.color,
+                            nombre_talla: v.nombre_talla || v.talla,
                             codigo_hex: v.codigo_hex,
                         });
                     }
                 }
             });
         }
-        const final = Array.from(productoMap.values());
-        console.log("VentaEditar: Productos cargados y combinados:", final.length);
-        return final;
+        return Array.from(productoMap.values());
     };
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [usrs, clis, prods, vars, cols, tls] = await Promise.all([
+                const [usrs, clis, prodRes, vars, cols, tls] = await Promise.all([
                     getUsuarios(),
                     getClientes(),
-                    getProductos(),
+                    getProductos({ limit: 1000 }),
                     getVariantes(),
                     getColores(),
                     getTallas(),
@@ -115,7 +114,9 @@ export default function VentaEditar() {
                 setClientes(clis || []);
                 setColores(cols || []);
                 setTallas(tls || []);
-                setProductos(combinarProductosConVariantes(prods || [], vars || []));
+
+                const prods = Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : [];
+                setProductos(combinarProductosConVariantes(prods, vars || []));
 
                 if (isEditing) {
                     const venta = await getVentaById(id);
@@ -128,7 +129,7 @@ export default function VentaEditar() {
                         telefono: venta.telefono || foundClient?.telefono_contacto || "",
                         fecha_venta: venta.fecha_venta?.split("T")[0],
                         metodo_pago: venta.metodo_pago || "transferencia",
-                        estado: venta.estado || "Pendiente",
+                        estado: venta.estado || "Entregada",
                         items: venta.items ? venta.items.map(it => ({
                             ...it,
                             qty: it.cantidad,
@@ -150,7 +151,6 @@ export default function VentaEditar() {
         fetchData();
     }, [isEditing, id, showNotification]);
 
-    // --- HANDLERS ---
     const handleUserChange = (userId) => {
         const selectedId = Number(userId);
         const existingClient = clientes.find(c => c.id_usuario === selectedId);
@@ -179,17 +179,36 @@ export default function VentaEditar() {
     const validateForm = () => {
         const errors = {};
         if (!form.id_usuario) errors.id_usuario = "Seleccione un cliente";
-        if (!form.direccion) errors.direccion = "Ingrese la dirección";
-        if (!form.telefono) errors.telefono = "Ingrese el teléfono";
+        if (!form.direccion || !form.direccion.trim()) errors.direccion = "Ingrese la dirección";
+
+        if (!form.telefono || !form.telefono.trim()) {
+            errors.telefono = "Ingrese el teléfono";
+        } else if (form.telefono.replace(/\D/g, '').length !== 10) {
+            errors.telefono = "El teléfono debe tener exactamente 10 dígitos";
+        }
+
         if (form.items.length === 0) errors.items = "Agregue al menos un producto";
-        
+
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isSubmitting || !validateForm()) return;
+        if (isSubmitting || !validateForm()) {
+            if (!validateForm()) toast.error("Por favor completa los campos obligatorios.");
+            return;
+        }
+
+        // Validar fecha de venta (no futura)
+        if (form.fecha_venta) {
+            const saleDate = new Date(form.fecha_venta);
+            const today = new Date();
+            if (saleDate > today) {
+                toast.error("La fecha de venta no puede ser futura.");
+                return;
+            }
+        }
 
         setIsSubmitting(true);
         try {
@@ -209,33 +228,37 @@ export default function VentaEditar() {
 
             if (isEditing) {
                 await updateVenta(id, payload);
+                toast.success("Venta actualizada");
                 showNotification("Venta actualizada");
             } else {
                 await createVenta(payload);
+                toast.success("Venta registrada exitosamente");
                 showNotification("Venta registrada exitosamente");
             }
-            setTimeout(() => navigate(`${basePath}/ventas`), 1500);
+            setTimeout(() => navigate(`${basePath}/ventas`), 1000);
         } catch (err) {
-            showNotification(err?.response?.data?.mensaje || "Error al procesar la venta", "error");
+            const msg = err?.response?.data?.mensaje || "Error al procesar la venta";
+            toast.error(msg);
+            showNotification(msg, "error");
             setIsSubmitting(false);
         }
     };
 
-    const totalEstimated = useMemo(() => 
+    const totalEstimated = useMemo(() =>
         form.items.reduce((acc, it) => acc + (it.qty * it.price), 0),
-    [form.items]);
+        [form.items]);
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
-               <div className="w-10 h-10 border-4 border-[#16315f]/10 border-t-[#16315f] rounded-full animate-spin"></div>
-               <p className="text-[10px] font-black tracking-widest text-[#16315f]">CARGANDO VENTA...</p>
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black tracking-widest text-[#16315f] uppercase">Sincronizando Sistema de Ventas...</p>
             </div>
         );
     }
 
     return (
-        <div className={cn(configUi.pageShell, "!overflow-y-auto pb-24")}>
+        <div className={configUi.pageShell}>
             <AnimatePresence mode="wait">
                 {showProductSelector ? (
                     <ProductSelectorView
@@ -246,9 +269,9 @@ export default function VentaEditar() {
                         onAdd={(data) => {
                             const { product, variant, cantidad, precio_unitario } = data;
                             const variantData = product.variantes?.find(v => v.id_variante === variant.id_variante) || variant;
-                            
+
                             const existingItemIdx = form.items.findIndex(it => it.id_variante === variantData.id_variante);
-                            
+
                             if (existingItemIdx !== -1) {
                                 // Merge duplicate
                                 const newItems = [...form.items];
@@ -280,28 +303,34 @@ export default function VentaEditar() {
                         onClose={() => setShowProductSelector(false)}
                     />
                 ) : (
-                    <motion.div key="venta-form" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                        <div className={cn(configUi.headerRow, "sticky top-4 z-[30] !bg-white/80 backdrop-blur-xl border border-slate-100 p-4 rounded-3xl shadow-xl shadow-slate-200/50 mb-10")}>
-                            <div className="flex items-center gap-5">
-                                <button onClick={() => navigate(`${basePath}/ventas`)} className="group flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-[#16315f] hover:border-[#16315f]/20 hover:shadow-lg transition-all">
+                    <motion.div key="venta-form" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex flex-col h-full min-h-0">
+                        {/* Header Row */}
+                        <div className={configUi.headerRow + " mb-6"}>
+                            <div className={configUi.titleWrap}>
+                                <button
+                                    onClick={() => navigate(`${basePath}/ventas`)}
+                                    className={configUi.iconButton + " w-10 h-10 rounded-xl"}
+                                >
                                     <ArrowLeft size={20} />
                                 </button>
-                                <div>
-                                    <h1 className="text-xl font-black text-[#16315f] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
-                                       {isEditing ? `Editar Venta #${id}` : "Nueva Venta"}
-                                    </h1>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                       {isEditing ? "Modifica los detalles de la venta" : "Registra una nueva venta directa"}
-                                    </p>
-                                </div>
+                                <h1 className={configUi.title}>{isEditing ? `Editar Venta #${id}` : "Nueva Venta Directa"}</h1>
+                                <span className={configUi.countBadge}>ESTADO: {form.estado.toUpperCase()}</span>
                             </div>
-                            <div className="flex gap-3">
-                                <button onClick={() => navigate(`${basePath}/ventas`)} className={configUi.secondaryButton}>
-                                    Descartar
-                                </button>
-                                <button onClick={handleSubmit} disabled={isSubmitting} className={cn(configUi.primaryButton, "h-12 shadow-lg shadow-indigo-200")}>
-                                    <Save size={18} />
-                                    <span>{isSubmitting ? "Guardando..." : isEditing ? "Guardar Cambios" : "Completar Venta"}</span>
+
+                            <div className={configUi.toolbar}>
+                                <div className="px-6 border-r border-[#d7e5f8] flex flex-col items-end">
+                                    <p className="text-[9px] font-black text-[#6b84aa] uppercase tracking-widest leading-none mb-1">TOTAL VENTA</p>
+                                    <span className="text-xl font-black text-[#16315f] tabular-nums">
+                                        ${Number(totalEstimated).toLocaleString('es-CO')}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting || form.items.length === 0}
+                                    className={configUi.primaryButton}
+                                >
+                                    {isSubmitting ? <div className="w-5 h-5 rounded-full border-4 border-white/40 border-t-white animate-spin" /> : <Save size={18} />}
+                                    {isEditing ? "Actualizar Venta" : "Confirmar Venta"}
                                 </button>
                             </div>
                         </div>
@@ -315,7 +344,7 @@ export default function VentaEditar() {
                                             <User className="text-indigo-500" size={24} />
                                             Datos del Cliente
                                         </h3>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className={configUi.fieldGroup}>
                                                 <label className={configUi.fieldLabel}>Búsqueda de Usuario *</label>
@@ -420,7 +449,7 @@ export default function VentaEditar() {
                                                 <span className="text-sm font-black uppercase tracking-tighter text-slate-400">Total</span>
                                                 <span className="text-2xl font-black tracking-tighter text-[#16315f]">${totalEstimated.toLocaleString()}</span>
                                             </div>
-                                            
+
                                             <div className="pt-4">
                                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
                                                     <div className="h-8 w-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-500">
@@ -509,13 +538,14 @@ export default function VentaEditar() {
                 )}
             </AnimatePresence>
 
+            {/* --- NOTIFICATIONS --- */}
             <AnimatePresence>
                 {notification.show && (
-                    <motion.div initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 100 }}
-                        className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold z-[100] flex items-center gap-3 border ${notification.type === "error" ? "bg-rose-600 border-rose-500" : "bg-[#16315f] border-indigo-400"}`}
-                    >
-                        {notification.type === "error" ? <AlertCircle size={24} /> : <CheckCircle size={24} />}
-                        <span className="text-sm tracking-tight">{notification.message}</span>
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                        className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+                            notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}>
+                        {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+                        {notification.message}
                     </motion.div>
                 )}
             </AnimatePresence>
