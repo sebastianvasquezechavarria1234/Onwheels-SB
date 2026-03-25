@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { cn, configUi } from "../../configuracion/configUi";
 
-export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
+const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
     const location = useLocation();
     const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const productPath = basePath === '/custom' ? 'productos' : 'products';
@@ -271,3 +271,5 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
         </motion.div>
     );
 };
+
+export default ProductSelectorView;

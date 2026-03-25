@@ -75,20 +75,20 @@ const MetricCard = ({ title, value, trend, icon: Icon, color, delay, isPrimary }
         className={`relative p-6 rounded-[2rem] ${scheme.primary} shadow-xl ${scheme.shadow} flex flex-col justify-between h-full min-h-[160px]`}
       >
         <div className="flex justify-between items-start">
-          <h3 className="text-white/80 text-sm font-medium tracking-tight">{title}</h3>
+          <p className="text-white/80 !text-[12px] font-bold uppercase tracking-wider leading-none m-0 p-0">{title}</p>
           <div className="bg-white/20 p-2 rounded-full backdrop-blur-md">
-            <Icon size={18} className="text-white" />
+            <Icon size={16} className="text-white" />
           </div>
         </div>
-        <div className="mt-4">
-          <h1 className="text-4xl font-bold tracking-tight text-white">{value}</h1>
+        <div className="mt-2 text-left">
+          <p className="!text-[40px] font-black tracking-tight text-white m-0 p-0 leading-none">{value}</p>
           {trend !== undefined && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-white/90">
-              <span className="bg-white/20 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+            <div className="mt-2.5 flex items-center gap-1.5 text-xs text-white/90">
+              <span className="bg-white/20 px-2 py-0.5 rounded-full flex items-center gap-1 text-[10px] font-bold">
                 {trend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                 {Math.abs(trend)}%
               </span>
-              <span className="opacity-70 text-[10px]">vs. mes anterior</span>
+              <span className="opacity-70 text-[10px] font-medium tracking-tight">vs. mes anterior</span>
             </div>
           )}
         </div>
@@ -101,23 +101,23 @@ const MetricCard = ({ title, value, trend, icon: Icon, color, delay, isPrimary }
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={`relative p-6 rounded-[1.5rem] bg-white shadow-lg ${scheme.shadow} border-2 ${scheme.border} flex flex-col justify-between h-full min-h-[160px] hover:scale-[1.02] transition-transform duration-300`}
+      className={`relative p-6 rounded-[1.5rem] bg-white shadow-lg ${scheme.shadow} border-2 ${scheme.border} flex flex-col justify-between h-full min-h-[160px] hover:scale-[1.01] transition-transform duration-300`}
     >
       <div className="flex justify-between items-start">
-        <h3 className="text-slate-500 text-sm font-medium tracking-tight">{title}</h3>
+        <p className="text-slate-500 !text-[12px] font-bold uppercase tracking-wider leading-none m-0 p-0">{title}</p>
         <div className={`${scheme.iconBg} p-2 rounded-full`}>
-          <Icon size={18} />
+          <Icon size={16} />
         </div>
       </div>
-      <div className="mt-4">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-800">{value}</h1>
+      <div className="mt-2 text-left">
+        <p className="!text-[40px] font-black tracking-tight text-slate-800 m-0 p-0 leading-none">{value}</p>
         {trend !== undefined && (
-          <div className="mt-2 flex items-center gap-1.5">
-            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-bold ${trend >= 0 ? "bg-green-50 text-green-500" : "bg-red-50 text-red-500"}`}>
+          <div className="mt-2.5 flex items-center gap-1.5 text-left">
+            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black ${trend >= 0 ? "bg-green-50 text-green-500" : "bg-red-50 text-red-500"}`}>
               {trend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
               {Math.abs(trend)}%
             </div>
-            <span className="text-slate-400 text-[10px]">vs. mes anterior</span>
+            <span className="text-slate-400 text-[10px] font-medium tracking-tight">vs. mes anterior</span>
           </div>
         )}
       </div>
@@ -213,13 +213,13 @@ export default function Dashboard() {
         className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6"
       >
         <div>
-          <h1
-            className="text-3xl font-extrabold text-[#0F172A] tracking-tight mb-2"
-            style={{ fontFamily: '"Outfit", sans-serif' }}
+          <h2
+            className="text-2xl font-black text-[#0F172A] tracking-tight mb-1"
+            style={{ fontFamily: '"Outfit", sans-serif', fontSize: '24px', letterSpacing: '-0.5px' }}
           >
             Dashboard
-          </h1>
-          <p className="text-slate-400 text-xs font-medium">
+          </h2>
+          <p className="text-slate-400 text-[10px] font-medium">
             Resumen en tiempo real — {today}
           </p>
         </div>
@@ -291,7 +291,7 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-10">
             <div>
-              <h3 className="text-xs font-semibold text-slate-700">Ventas por Mes</h3>
+              <p className="text-xs font-bold text-slate-700 m-0 leading-none">Ventas por Mes</p>
               <p className="text-[8px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1.5">
                 Año {new Date().getFullYear()}
               </p>
@@ -359,7 +359,7 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-xs font-semibold text-slate-700">Distribución de Ventas</h3>
+              <p className="text-xs font-bold text-slate-700 m-0 leading-none">Distribución de Ventas</p>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1.5">
                 Por Categoría de Producto
               </p>
