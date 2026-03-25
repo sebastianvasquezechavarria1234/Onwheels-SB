@@ -220,10 +220,6 @@ function Pedidos() {
                     </div>
                   </td>
                 </tr>
-              </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan="7" className={configUi.emptyState}>Sincronizando órdenes de venta...</td></tr>
               ) : currentItems.length === 0 ? (
                 <tr><td colSpan="7" className={configUi.emptyState}>No se han encontrado pedidos registrados.</td></tr>
               ) : (
@@ -392,7 +388,7 @@ function Pedidos() {
                         />
                       </div>
                     )}
-                  </div>
+                  </form>
                 )}
               </div>
 

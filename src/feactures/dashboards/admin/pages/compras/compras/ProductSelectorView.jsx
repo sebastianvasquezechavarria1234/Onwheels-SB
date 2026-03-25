@@ -56,14 +56,9 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
             exit={{ opacity: 0, scale: 0.98 }}
             className={cn(configUi.modalPanel, "flex flex-col h-full min-h-0 border-[#bfd1f4] shadow-[0_20px_60px_-15px_rgba(34,58,99,0.3)]")}
         >
-            {/* Modal Header Style */}
             <div className={configUi.modalHeader}>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={onClose}
-                        className={configUi.actionButton}
-                        title="Volver"
-                    >
+                    <button onClick={onClose} className={configUi.actionButton} title="Volver">
                         <ArrowLeft size={18} />
                     </button>
                     <div>
@@ -86,9 +81,8 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                 </div>
             </div>
 
-            {/* Content Split Style like configUi.modalSplit */}
             <div className="flex-1 flex overflow-hidden min-h-0 bg-[#fbfdff]">
-                {/* Left: Product Selection List */}
+                {/* Left side: Product List */}
                 <div className="w-full md:w-[400px] flex flex-col border-r border-[#d7e5f8] bg-white text-left">
                     <div className="p-4 border-b border-[#f0f6ff] shrink-0">
                         <div className={configUi.searchWrap + " w-full"}>
@@ -119,7 +113,6 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                             setSelectedProduct(p);
                                             setSelectedVariant(null);
                                             setError("");
-                                            // BUG FIX: use sale price (precio), not cost (precio_compra)
                                             setNewItemData({ cantidad: 1, precio_unitario: p.precio || "" });
                                         }}
                                         className={cn(
@@ -152,135 +145,139 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                     </div>
                 </div>
 
-                {/* Right: Variant Config & Items Form */}
+                {/* Right side: Variant picker and Form */}
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className={configUi.modalContent + " space-y-8"}>
-                        {!selectedProduct ? (
-                            <div className="flex-1 flex flex-col items-center justify-center py-20 text-center opacity-30">
-                                <ShoppingCart size={64} />
-                                <div className="mt-4">
-                                    <h3 className="text-sm font-black uppercase tracking-widest text-[#16315f]">Seleccione un Producto</h3>
-                                    <p className="text-xs font-bold text-[#6a85ad] mt-1">Configure las variantes para añadir a la orden</p>
-                                </div>
-
-                                {/* Variant picker */}
-                                <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Selecciona variante (Color / Talla)</label>
-                                    {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
-                                        <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
-                                            Este producto no tiene variantes configuradas.
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {selectedProduct.variantes.map(v => {
-                                                const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
-                                                const outOfStock = v.stock <= 0;
-                                                return (
-                                                    <button
-                                                        key={v.id_variante || v.id_producto_variante}
-                                                        onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
-                                                        disabled={outOfStock}
-                                                        className={cn(
-                                                            "p-3 rounded-xl border text-left transition-all",
-                                                            outOfStock
-                                                                ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-                                                                : isVarSelected
-                                                                    ? "border-[#16315f] bg-[#16315f] text-white shadow-md"
-                                                                    : "border-[#d7e5f8] bg-[#fbfdff] text-[#5f7396] hover:border-[#9fbce7] hover:bg-[#f0f6ff]"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            {v.codigo_hex && (
-                                                                <div
-                                                                    className="w-3 h-3 rounded-full border border-white/40 shadow-sm shrink-0"
-                                                                    style={{ backgroundColor: v.codigo_hex }}
-                                                                />
-                                                            )}
-                                                            <span className="text-xs font-bold truncate">
-                                                                {v.nombre_color || v.color || 'Único'} / {v.nombre_talla || v.talla || 'Única'}
-                                                            </span>
-                                                        </div>
-                                                        <span className={cn("text-[10px] font-bold", isVarSelected ? "text-white/70" : outOfStock ? "text-rose-400" : "text-[#6b84aa]")}>
-                                                            {outOfStock ? "Sin stock" : `${v.stock} disponibles`}
-                                                        </span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className={configUi.formSection + " grid grid-cols-1 md:grid-cols-2 gap-6 relative"}>
-                                    <div className={configUi.fieldGroup}>
-                                        <label className={configUi.fieldLabel}>Cantidad a Ingresar</label>
-                                        <input
-                                            type="number"
-                                            value={newItemData.cantidad}
-                                            onChange={(e) => {
-                                                setNewItemData({ ...newItemData, cantidad: e.target.value });
-                                                setLocalError(null);
-                                            }}
-                                            className={configUi.fieldInput}
-                                            placeholder="0"
-                                        />
+                    <div className={configUi.modalContent + " flex-1 overflow-y-auto"}>
+                        <AnimatePresence mode="wait">
+                            {!selectedProduct ? (
+                                <motion.div
+                                    key="empty"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="h-full flex flex-col items-center justify-center py-20 text-center opacity-30"
+                                >
+                                    <ShoppingCart size={64} />
+                                    <div className="mt-4">
+                                        <h3 className="text-sm font-black uppercase tracking-widest text-[#16315f]">Seleccione un Producto</h3>
+                                        <p className="text-xs font-bold text-[#6a85ad] mt-1">Configure las variantes para añadir a la orden</p>
                                     </div>
-                                    <div className={configUi.fieldGroup}>
-                                        <label className={configUi.fieldLabel}>Costo Unitario</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">$</span>
-                                            <input
-                                                type="number"
-                                                value={newItemData.precio_unitario}
-                                                onChange={(e) => {
-                                                    setNewItemData({ ...newItemData, precio_unitario: e.target.value });
-                                                    setLocalError(null);
-                                                }}
-                                                className={configUi.fieldInput + " pl-8"}
-                                                placeholder="0.00"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="p-4 bg-[#f0f6ff] border border-[#d7e5f8] rounded-2xl flex items-center justify-between">
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="detail"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="space-y-8"
+                                >
                                     <div>
-                                        <div className="text-[10px] font-black text-[#6b84aa] uppercase tracking-widest">Subtotal estimado</div>
-                                        <div className="text-xl font-black text-[#16315f] mt-0.5">
-                                            ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
-                                        </div>
-                                        {error && (
-                                            <div className="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1 animate-bounce">
-                                                <AlertCircle size={12} />
-                                                {error}
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Selecciona variante (Color / Talla)</label>
+                                        {!selectedProduct.variantes || selectedProduct.variantes.length === 0 ? (
+                                            <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
+                                                Este producto no tiene variantes configuradas.
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {selectedProduct.variantes.map(v => {
+                                                    const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
+                                                    const outOfStock = v.stock <= 0;
+                                                    return (
+                                                        <button
+                                                            key={v.id_variante || v.id_producto_variante}
+                                                            onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
+                                                            disabled={outOfStock}
+                                                            className={cn(
+                                                                "p-3 rounded-xl border text-left transition-all",
+                                                                outOfStock
+                                                                    ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+                                                                    : isVarSelected
+                                                                        ? "border-[#16315f] bg-[#16315f] text-white shadow-md"
+                                                                        : "border-[#d7e5f8] bg-[#fbfdff] text-[#5f7396] hover:border-[#9fbce7] hover:bg-[#f0f6ff]"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                {v.codigo_hex && (
+                                                                    <div
+                                                                        className="w-3 h-3 rounded-full border border-white/40 shadow-sm shrink-0"
+                                                                        style={{ backgroundColor: v.codigo_hex }}
+                                                                    />
+                                                                )}
+                                                                <span className="text-xs font-bold truncate">
+                                                                    {v.nombre_color || v.color || 'Único'} / {v.nombre_talla || v.talla || 'Única'}
+                                                                </span>
+                                                            </div>
+                                                            <span className={cn("text-[10px] font-bold", isVarSelected ? "text-white/70" : outOfStock ? "text-rose-400" : "text-[#6b84aa]")}>
+                                                                {outOfStock ? "Sin stock" : `${v.stock} disponibles`}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>
-                                    <button
-                                        onClick={handleAddItem}
-                                        disabled={!newItemData.cantidad || !newItemData.precio_unitario}
-                                        className="flex items-center gap-2 px-5 py-3 bg-[#16315f] text-white text-xs font-black rounded-xl hover:bg-[#0d2248] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-95"
-                                    >
-                                        <ShoppingCart size={14} />
-                                        Agregar
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.div>
-                ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-100">
-                        <Package size={28} className="text-slate-300" />
+
+                                    <div className={configUi.formSection + " grid grid-cols-1 md:grid-cols-2 gap-6 relative"}>
+                                        <div className={configUi.fieldGroup}>
+                                            <label className={configUi.fieldLabel}>Cantidad a Ingresar</label>
+                                            <input
+                                                type="number"
+                                                value={newItemData.cantidad}
+                                                onChange={(e) => {
+                                                    setNewItemData({ ...newItemData, cantidad: e.target.value });
+                                                    setError("");
+                                                }}
+                                                className={configUi.fieldInput}
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <div className={configUi.fieldGroup}>
+                                            <label className={configUi.fieldLabel}>Precio Unitario</label>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">$</span>
+                                                <input
+                                                    type="number"
+                                                    value={newItemData.precio_unitario}
+                                                    onChange={(e) => {
+                                                        setNewItemData({ ...newItemData, precio_unitario: e.target.value });
+                                                        setError("");
+                                                    }}
+                                                    className={configUi.fieldInput + " pl-8"}
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-5 bg-[#f0f6ff] border border-[#d7e5f8] rounded-2xl flex items-center justify-between shadow-inner">
+                                        <div>
+                                            <div className="text-[10px] font-black text-[#6b84aa] uppercase tracking-widest">Subtotal estimado</div>
+                                            <div className="text-xl font-black text-[#16315f] mt-0.5">
+                                                ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
+                                            </div>
+                                            {error && (
+                                                <div className="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1 animate-pulse">
+                                                    <AlertCircle size={12} />
+                                                    {error}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={handleAddItem}
+                                            disabled={!newItemData.cantidad || !newItemData.precio_unitario || !selectedVariant}
+                                            className="flex items-center gap-2 px-6 py-3 bg-[#16315f] text-white text-xs font-black rounded-xl hover:bg-[#0d2248] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-95"
+                                        >
+                                            <ShoppingCart size={14} />
+                                            Agregar a la lista
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
-                    <h3 className="text-sm font-bold text-[#16315f]">Ningún producto seleccionado</h3>
-                    <p className="text-xs text-[#6b84aa] mt-2 max-w-[220px] leading-relaxed">Busca y selecciona un producto de la lista para elegir variante y cantidad.</p>
                 </div>
-                        )}
-            </AnimatePresence>
-        </div>
-            </div >
-        </motion.div >
+            </div>
+        </motion.div>
     );
 };
 

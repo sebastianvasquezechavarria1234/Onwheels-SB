@@ -224,13 +224,9 @@ function Ventas() {
                      </div>
                    </td>
                 </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan="7" className={configUi.emptyState}>Sincronizando base de datos...</td></tr>
-                ) : currentItems.length === 0 ? (
-                  <tr><td colSpan="7" className={configUi.emptyState}>Sin registros de ventas que coincidan.</td></tr>
-                ) : (
+              ) : currentItems.length === 0 ? (
+                <tr><td colSpan="7" className={configUi.emptyState}>Sin registros de ventas que coincidan.</td></tr>
+              ) : (
                   currentItems.map((v) => (
                     <tr key={v.id_venta} className={configUi.row}>
                       <td className={configUi.td}>
@@ -352,54 +348,52 @@ function Ventas() {
                 </div>
                 <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
               </div>
+              <div className={configUi.modalContent}>
+                {modal === 'cancelar' ? (
+                  <form id="cancel-form" onSubmit={handleCancel} className="space-y-4 py-1 text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 shadow-inner">
+                      <Ban size={32} strokeWidth={1.5} />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-black text-[#16315f]">¿Está seguro de anular esta factura?</p>
+                      <p className="text-[10px] text-slate-400 italic leading-tight">Esta acción revertirá los movimientos contables y de stock asociados.</p>
+                    </div>
 
-                <div className={configUi.modalContent}>
-                    {modal === 'cancelar' ? (
-                       <form id="cancel-form" onSubmit={handleCancel} className="space-y-4 py-1 text-center">
-                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 shadow-inner">
-                             <Ban size={32} strokeWidth={1.5} />
-                          </div>
-                          <div className="text-center space-y-1">
-                             <p className="text-sm font-black text-[#16315f]">¿Está seguro de anular esta factura?</p>
-                             <p className="text-[10px] text-slate-400 italic leading-tight">Esta acción revertirá los movimientos contables y de stock asociados.</p>
-                          </div>
-                          
-                          <div className={cn(configUi.fieldGroup, "text-left mt-6")}>
-                             <label className={configUi.fieldLabel}>Justificación Reglamentaria *</label>
-                             <textarea
-                               value={justificacion}
-                               onChange={(e) => setJustificacion(e.target.value)}
-                               placeholder="Describa el motivo del desestimiento..."
-                               className={cn(configUi.fieldInput, "min-h-[80px] pt-3 text-xs")}
-                               required
-                             />
-                             <p className="text-[10px] text-rose-500 font-bold mt-2 flex items-center gap-1">
-                                <AlertCircle size={10} /> Documentación requerida para auditoría fiscal.
-                             </p>
-                          </div>
-                       </form>
-                    ) : (
-                       <form id="status-form" onSubmit={handleStatusUpdate} className="space-y-8 py-4">
-                          <div className={configUi.fieldGroup}>
-                             <label className={configUi.fieldLabel}>Nuevo Estado Logístico</label>
-                             <div className="relative">
-                                <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <select
-                                  value={statusFormEstado}
-                                  onChange={(e) => setStatusFormEstado(e.target.value)}
-                                  className={cn(configUi.fieldSelect, "pl-12 h-14")}
-                                >
-                                  <option value="Pendiente">Pendiente</option>
-                                  <option value="Entregada">Entregada</option>
-                                  <option value="Cancelada">Cancelada</option>
-                                </select>
-                             </div>
-                             <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">El cambio de estado se reflejará en el panel del cliente en tiempo real.</p>
-                          </div>
-                        </div>
-                     </div>
-                  )}
-              </div>
+                    <div className={cn(configUi.fieldGroup, "text-left mt-6")}>
+                      <label className={configUi.fieldLabel}>Justificación Reglamentaria *</label>
+                      <textarea
+                        value={justificacion}
+                        onChange={(e) => setJustificacion(e.target.value)}
+                        placeholder="Describa el motivo del desestimiento..."
+                        className={cn(configUi.fieldInput, "min-h-[80px] pt-3 text-xs")}
+                        required
+                      />
+                      <p className="text-[10px] text-rose-500 font-bold mt-2 flex items-center gap-1">
+                        <AlertCircle size={10} /> Documentación requerida para auditoría fiscal.
+                      </p>
+                    </div>
+                  </form>
+                ) : (
+                  <form id="status-form" onSubmit={handleStatusUpdate} className="space-y-8 py-4">
+                    <div className={configUi.fieldGroup}>
+                      <label className={configUi.fieldLabel}>Nuevo Estado Logístico</label>
+                      <div className="relative">
+                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <select
+                          value={statusFormEstado}
+                          onChange={(e) => setStatusFormEstado(e.target.value)}
+                          className={cn(configUi.fieldSelect, "pl-12 h-14")}
+                        >
+                          <option value="Pendiente">Pendiente</option>
+                          <option value="Entregada">Entregada</option>
+                          <option value="Cancelada">Cancelada</option>
+                        </select>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">El cambio de estado se reflejará en el panel del cliente en tiempo real.</p>
+                    </div>
+                  </form>
+                )}
+              </div>          
 
               <div className={configUi.modalFooter}>
                 <button onClick={closeModal} className={configUi.secondaryButton}>Regresar</button>
