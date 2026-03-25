@@ -22,7 +22,7 @@ import {
 import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
 import { configUi } from "../../configuracion/configUi";
-import ProductSelectorView from "../../compras/compras/ProductSelectorView";
+import { ProductSelectorView } from "../../compras/compras/ProductSelectorView";
 import { useToast } from "../../../../../../context/ToastContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
@@ -409,20 +409,85 @@ export default function PedidoEditar() {
                                        <p className="text-[9px] font-bold text-[#6b84aa] mt-1">Explorar Catálogo de Productos</p>
                                     </div>
                                 </button>
-                                {formErrors.items && <p className="text-center text-xs font-bold text-rose-500">{formErrors.items}</p>}
+                                {formErrors.items && <p className="text-center text-xs font-bold text-rose-500 mt-2">{formErrors.items}</p>}
                             </div>
 
-                            <div className={configUi.fieldGroup}>
-                                <label className={configUi.fieldLabel}>Teléfono *</label>
-                                <div className="relative">
-                                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                   <input
-                                       type="text"
-                                       value={form.telefono}
-                                       onChange={e => setForm({ ...form, telefono: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                                       placeholder="+57 321..."
-                                       className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.telefono && "border-rose-300")}
-                                   />
+                            {/* Right: Items List Table */}
+                            <div className="xl:col-span-8 flex flex-col overflow-hidden min-h-0">
+                                <div className={configUi.tableCard}>
+                                    <div className="px-6 py-4 border-b border-[#d7e5f8] flex justify-between items-center bg-[#fbfdff]/50">
+                                        <span className={configUi.modalEyebrow}>Sincronización de Stock</span>
+                                        <span className={configUi.subtlePill}>{form.items.length} Referencias</span>
+                                    </div>
+                                    
+                                    <div className={configUi.tableScroll}>
+                                        <table className={configUi.table}>
+                                            <thead className={configUi.thead}>
+                                                <tr>
+                                                    <th className={configUi.th}>Producto / Variante</th>
+                                                    <th className={configUi.th + " text-center"}>Cant.</th>
+                                                    <th className={configUi.th + " text-right"}>Precio Un.</th>
+                                                    <th className={configUi.th + " text-right"}>Subtotal</th>
+                                                    <th className={configUi.th + " w-16"}></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-[#d7e5f8]">
+                                                {form.items.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={5} className={configUi.emptyState + " py-20"}>
+                                                            <div className="space-y-3 opacity-30 flex flex-col items-center">
+                                                                <ShoppingCart size={48} />
+                                                                <p className="text-xs font-black uppercase tracking-widest leading-none">Canasta Vacía</p>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    form.items.map((item, idx) => (
+                                                        <tr key={idx} className={configUi.row}>
+                                                            <td className={configUi.td}>
+                                                                <div className="flex flex-col">
+                                                                   <span className="font-bold uppercase leading-tight truncate max-w-[200px] text-[#16315f]">{item.nombre_producto}</span>
+                                                                   <span className="text-[10px] text-indigo-400 font-black tracking-tighter uppercase">{item.nombre_color} / {item.nombre_talla}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className={configUi.td + " text-center"}>
+                                                                <span className={configUi.subtlePill}>x{item.qty}</span>
+                                                            </td>
+                                                            <td className={configUi.td + " text-right font-bold text-slate-400 tabular-nums"}>
+                                                                ${Number(item.price).toLocaleString('es-CO')}
+                                                            </td>
+                                                            <td className={configUi.td + " text-right font-black text-[#16315f] tabular-nums"}>
+                                                                ${(item.qty * item.price).toLocaleString('es-CO')}
+                                                            </td>
+                                                            <td className={configUi.td + " text-right"}>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const newItems = [...form.items];
+                                                                        newItems.splice(idx, 1);
+                                                                        setForm(prev => ({ ...prev, items: newItems }));
+                                                                    }}
+                                                                    className={configUi.actionDangerButton}
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <div className="mt-auto px-6 py-6 border-t border-[#d7e5f8] bg-[#fbfdff] flex justify-between items-center">
+                                       <div className="flex items-center gap-2 text-emerald-600">
+                                          <CheckCircle size={18} />
+                                          <span className="text-[10px] font-black uppercase tracking-widest">Liquidación Verificada</span>
+                                       </div>
+                                       <div className="flex flex-col items-end">
+                                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Monto de Operación</p>
+                                          <p className="text-2xl font-black text-[#16315f] tabular-nums">${Number(totalEstimated).toLocaleString('es-CO')}</p>
+                                       </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -437,7 +502,7 @@ export default function PedidoEditar() {
                    className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3", 
                    notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}>
                   {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-                  {notification.message}
+                  <span className="tracking-tight">{notification.message}</span>
                 </motion.div>
               )}
             </AnimatePresence>

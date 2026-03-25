@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Eye, Plus, Search, ChevronLeft, ChevronRight,
-  ShoppingCart, Filter, Calendar, Download, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown
+  ShoppingCart, Filter, Calendar, Download, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
+  CheckCircle, AlertTriangle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import comprasService from "../../services/comprasService";

@@ -22,7 +22,7 @@ import {
 import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
 import { configUi } from "../../configuracion/configUi";
-import ProductSelectorView from "../../compras/compras/ProductSelectorView";
+import { ProductSelectorView } from "../../compras/compras/ProductSelectorView";
 import { useToast } from "../../../../../../context/ToastContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
@@ -508,7 +508,7 @@ export default function VentaEditar() {
                    className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3", 
                    notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}>
                   {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-                  {notification.message}
+                  <span className="tracking-tight">{notification.message}</span>
                 </motion.div>
               )}
             </AnimatePresence>
