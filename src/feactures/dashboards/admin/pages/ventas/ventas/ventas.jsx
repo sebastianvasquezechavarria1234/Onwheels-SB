@@ -4,7 +4,7 @@ import {
   Package, ChevronDown, Hash, ChevronLeft, ChevronRight,
   Search, Plus, Pencil, Trash2, Eye, Download, 
   ShoppingBag, Calendar, CreditCard, Info, Clock, AlertCircle,
-  TrendingUp, SlidersHorizontal, Ban
+  TrendingUp, SlidersHorizontal, Ban, X, CheckCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -144,7 +144,6 @@ function Ventas() {
     switch (estado) {
       case "Entregada": return "bg-emerald-50 text-emerald-700 border-emerald-100";
       case "Pendiente": return "bg-amber-50 text-amber-700 border-amber-100";
-      case "Procesada": return "bg-indigo-50 text-indigo-700 border-indigo-100";
       case "Cancelada": return "bg-rose-50 text-rose-700 border-rose-100";
       default: return "bg-slate-100 text-slate-600 border-slate-200";
     }
@@ -254,18 +253,27 @@ function Ventas() {
                         ${(Number(v.total) || 0).toLocaleString()}
                       </td>
                       <td className={`${configUi.td} text-center`}>
-                        <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
-                          {v.estado}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
+                            {v.estado}
+                          </span>
+                          {v.estado === "Cancelada" && v.motivo_cancelacion && (
+                            <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
+                              Motivo: {v.motivo_cancelacion}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className={`${configUi.td} text-right`}>
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => navigate(`${basePath}/ventas/detalle/${v.id_venta}`)} className={configUi.actionButton} title="Detalle">
                             <Eye size={14} />
                           </button>
-                          <button onClick={() => openModal("status", v)} className={cn(configUi.actionButton, "hover:bg-indigo-50 hover:text-indigo-600")} title="Estado">
-                            <Package size={14} />
-                          </button>
+                          {v.estado !== "Cancelada" && (
+                            <button onClick={() => openModal("status", v)} className={cn(configUi.actionButton, "hover:bg-indigo-50 hover:text-indigo-600")} title="Estado">
+                              <Package size={14} />
+                            </button>
+                          )}
                           {v.estado !== "Cancelada" && (
                             <button onClick={() => openModal("cancelar", v)} className={cn(configUi.actionButton, "hover:bg-rose-50 hover:text-rose-600")} title="Anular">
                               <Ban size={14} />
@@ -325,7 +333,7 @@ function Ventas() {
             onClick={closeModal}
           >
             <motion.div
-              className={configUi.modalPanel}
+              className={cn(configUi.modalPanel, modal === 'cancelar' ? "max-w-md" : "max-w-lg")}
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -348,22 +356,22 @@ function Ventas() {
 
                 <div className={configUi.modalContent}>
                     {modal === 'cancelar' ? (
-                       <form id="cancel-form" onSubmit={handleCancel} className="space-y-6 py-2 text-center">
-                          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-rose-50 text-rose-600 shadow-inner">
-                             <Ban size={40} strokeWidth={1.5} />
+                       <form id="cancel-form" onSubmit={handleCancel} className="space-y-4 py-1 text-center">
+                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 shadow-inner">
+                             <Ban size={32} strokeWidth={1.5} />
                           </div>
-                          <div className="text-center space-y-2">
-                             <p className="text-base font-black text-[#16315f]">¿Está seguro de anular esta factura?</p>
-                             <p className="text-xs text-slate-400 italic">Esta acción revertirá los movimientos contables y de stock asociados.</p>
+                          <div className="text-center space-y-1">
+                             <p className="text-sm font-black text-[#16315f]">¿Está seguro de anular esta factura?</p>
+                             <p className="text-[10px] text-slate-400 italic leading-tight">Esta acción revertirá los movimientos contables y de stock asociados.</p>
                           </div>
                           
-                          <div className={cn(configUi.fieldGroup, "text-left mt-8")}>
+                          <div className={cn(configUi.fieldGroup, "text-left mt-6")}>
                              <label className={configUi.fieldLabel}>Justificación Reglamentaria *</label>
                              <textarea
                                value={justificacion}
                                onChange={(e) => setJustificacion(e.target.value)}
-                               placeholder="Describa el motivo del desestimiento o error en factura..."
-                               className={cn(configUi.fieldInput, "min-h-[120px] pt-4")}
+                               placeholder="Describa el motivo del desestimiento..."
+                               className={cn(configUi.fieldInput, "min-h-[80px] pt-3 text-xs")}
                                required
                              />
                              <p className="text-[10px] text-rose-500 font-bold mt-2 flex items-center gap-1">
@@ -383,7 +391,6 @@ function Ventas() {
                                   className={cn(configUi.fieldSelect, "pl-12 h-14")}
                                 >
                                   <option value="Pendiente">Pendiente</option>
-                                  <option value="Procesada">Procesada</option>
                                   <option value="Entregada">Entregada</option>
                                   <option value="Cancelada">Cancelada</option>
                                 </select>

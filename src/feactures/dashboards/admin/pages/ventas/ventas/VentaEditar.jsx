@@ -241,23 +241,40 @@ export default function VentaEditar() {
                     <ProductSelectorView
                         key="product-selector"
                         allProducts={productos}
+                        checkStock={true}
+                        currentItems={form.items}
                         onAdd={(data) => {
                             const { product, variant, cantidad, precio_unitario } = data;
                             const variantData = product.variantes?.find(v => v.id_variante === variant.id_variante) || variant;
-                            const newItem = {
-                                id_producto: product.id_producto,
-                                nombre_producto: product.nombre_producto,
-                                id_variante: variantData.id_variante,
-                                id_color: variantData.id_color,
-                                nombre_color: variantData.nombre_color,
-                                id_talla: variantData.id_talla,
-                                nombre_talla: variantData.nombre_talla,
-                                qty: cantidad,
-                                price: precio_unitario,
-                                stockMax: variantData.stock
-                            };
-                            setForm(prev => ({ ...prev, items: [...prev.items, newItem] }));
-                            showNotification("Producto añadido", "success");
+                            
+                            const existingItemIdx = form.items.findIndex(it => it.id_variante === variantData.id_variante);
+                            
+                            if (existingItemIdx !== -1) {
+                                // Merge duplicate
+                                const newItems = [...form.items];
+                                newItems[existingItemIdx] = {
+                                    ...newItems[existingItemIdx],
+                                    qty: newItems[existingItemIdx].qty + cantidad
+                                };
+                                setForm(prev => ({ ...prev, items: newItems }));
+                                showNotification("Cantidad actualizada", "success");
+                            } else {
+                                // Add new
+                                const newItem = {
+                                    id_producto: product.id_producto,
+                                    nombre_producto: product.nombre_producto,
+                                    id_variante: variantData.id_variante,
+                                    id_color: variantData.id_color,
+                                    nombre_color: variantData.nombre_color,
+                                    id_talla: variantData.id_talla,
+                                    nombre_talla: variantData.nombre_talla,
+                                    qty: cantidad,
+                                    price: precio_unitario,
+                                    stockMax: variantData.stock
+                                };
+                                setForm(prev => ({ ...prev, items: [...prev.items, newItem] }));
+                                showNotification("Producto añadido", "success");
+                            }
                             setShowProductSelector(false);
                         }}
                         onClose={() => setShowProductSelector(false)}
@@ -289,202 +306,202 @@ export default function VentaEditar() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                            <div className="lg:col-span-2 space-y-10">
-                                <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 ring-1 ring-slate-100/50">
-                                    <h3 className="text-xl font-extrabold text-[#16315f] mb-8 flex items-center gap-3">
-                                      <User className="text-indigo-500" size={24} />
-                                      Datos del Cliente
-                                    </h3>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Búsqueda de Usuario *</label>
-                                            <div className="relative">
-                                                <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                <select
-                                                    value={form.id_usuario}
-                                                    onChange={e => handleUserChange(e.target.value)}
-                                                    className={cn(configUi.fieldSelect, "pl-12 h-14", formErrors.id_usuario && "border-rose-300 bg-rose-50/50")}
-                                                >
-                                                    <option value="">Buscar perfil de usuario...</option>
-                                                    {usuarios.map(u => (
-                                                        <option key={u.id_usuario} value={u.id_usuario}>
-                                                            {u.nombre_completo} ({u.documento || "Doc —"})
-                                                        </option>
-                                                    ))}
-                                                </select>
+                        <div className="space-y-10">
+                            {/* TOP ROW: CLIENT + SUMMARY */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                                <div className="lg:col-span-2">
+                                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 ring-1 ring-slate-100/50 h-full">
+                                        <h3 className="text-xl font-extrabold text-[#16315f] mb-8 flex items-center gap-3">
+                                            <User className="text-indigo-500" size={24} />
+                                            Datos del Cliente
+                                        </h3>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Búsqueda de Usuario *</label>
+                                                <div className="relative">
+                                                    <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                    <select
+                                                        value={form.id_usuario}
+                                                        onChange={e => handleUserChange(e.target.value)}
+                                                        className={cn(configUi.fieldSelect, "pl-12 h-14", formErrors.id_usuario && "border-rose-300 bg-rose-50/50")}
+                                                    >
+                                                        <option value="">Buscar perfil de usuario...</option>
+                                                        {usuarios.map(u => (
+                                                            <option key={u.id_usuario} value={u.id_usuario}>
+                                                                {u.nombre_completo} ({u.documento || "Doc —"})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                {formErrors.id_usuario && <p className="text-[10px] text-rose-500 font-bold mt-2 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.id_usuario}</p>}
+                                                <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">Información del cliente para el registro de la venta.</p>
                                             </div>
-                                            {formErrors.id_usuario && <p className="text-[10px] text-rose-500 font-bold mt-2 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.id_usuario}</p>}
-                                            <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">Información del cliente para el registro de la venta.</p>
-                                        </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                           <div className={configUi.fieldGroup}>
-                                              <label className={configUi.fieldLabel}>Fecha</label>
-                                              <div className="relative">
-                                                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                 <input
-                                                     type="date"
-                                                     value={form.fecha_venta}
-                                                     onChange={e => setForm({ ...form, fecha_venta: e.target.value })}
-                                                     className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.fecha_venta && "border-rose-300")}
-                                                 />
-                                              </div>
-                                           </div>
-                                           <div className={configUi.fieldGroup}>
-                                              <label className={configUi.fieldLabel}>Método de Recaudo</label>
-                                              <div className="relative">
-                                                 <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />
-                                                 <select
-                                                     value={form.metodo_pago}
-                                                     onChange={e => setForm({ ...form, metodo_pago: e.target.value })}
-                                                     className={cn(configUi.fieldSelect, "pl-12 h-14 font-bold text-indigo-800")}
-                                                 >
-                                                     <option value="transferencia">Transferencia</option>
-                                                     <option value="efectivo">Efectivo</option>
-                                                 </select>
-                                              </div>
-                                           </div>
-                                        </div>
-
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Dirección de Entrega *</label>
-                                            <div className="relative">
-                                               <MapPin className="absolute left-4 top-4 text-slate-400" size={18} />
-                                               <textarea
-                                                   value={form.direccion}
-                                                   rows="1"
-                                                   onChange={e => setForm({ ...form, direccion: e.target.value })}
-                                                   placeholder="Ingrese la dirección..."
-                                                   className={cn(configUi.fieldInput, "pl-12 pt-4 h-14 min-h-[56px] resize-none overflow-hidden leading-relaxed", formErrors.direccion && "border-rose-300")}
-                                               />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className={configUi.fieldGroup}>
+                                                    <label className={configUi.fieldLabel}>Fecha</label>
+                                                    <div className="relative">
+                                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                        <input
+                                                            type="date"
+                                                            value={form.fecha_venta}
+                                                            onChange={e => setForm({ ...form, fecha_venta: e.target.value })}
+                                                            className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.fecha_venta && "border-rose-300")}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className={configUi.fieldGroup}>
+                                                    <label className={configUi.fieldLabel}>Método de Recaudo</label>
+                                                    <div className="relative">
+                                                        <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />
+                                                        <select
+                                                            value={form.metodo_pago}
+                                                            onChange={e => setForm({ ...form, metodo_pago: e.target.value })}
+                                                            className={cn(configUi.fieldSelect, "pl-12 h-14 font-bold text-indigo-800")}
+                                                        >
+                                                            <option value="transferencia">Transferencia</option>
+                                                            <option value="efectivo">Efectivo</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Teléfono de Contacto *</label>
-                                            <div className="relative">
-                                               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                               <input
-                                                   type="text"
-                                                   value={form.telefono}
-                                                   onChange={e => setForm({ ...form, telefono: e.target.value.replace(/[^0-9+]/g, '') })}
-                                                   placeholder="+57 3..."
-                                                   className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.telefono && "border-rose-300")}
-                                               />
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Dirección de Entrega *</label>
+                                                <div className="relative">
+                                                    <MapPin className="absolute left-4 top-4 text-slate-400" size={18} />
+                                                    <textarea
+                                                        value={form.direccion}
+                                                        rows="1"
+                                                        onChange={e => setForm({ ...form, direccion: e.target.value })}
+                                                        placeholder="Ingrese la dirección..."
+                                                        className={cn(configUi.fieldInput, "pl-12 pt-4 h-14 min-h-[56px] resize-none overflow-hidden leading-relaxed", formErrors.direccion && "border-rose-300")}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Teléfono de Contacto *</label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                    <input
+                                                        type="text"
+                                                        value={form.telefono}
+                                                        onChange={e => setForm({ ...form, telefono: e.target.value.replace(/[^0-9+]/g, '') })}
+                                                        placeholder="+57 3..."
+                                                        className={cn(configUi.fieldInput, "pl-12 h-14", formErrors.telefono && "border-rose-300")}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 ring-1 ring-slate-100/50">
-                                    <div className="flex justify-between items-center mb-10">
-                                        <div>
-                                           <h3 className="text-xl font-extrabold text-[#16315f] flex items-center gap-3">
-                                              <Package className="text-indigo-500" size={24} />
-                                              Productos
-                                           </h3>
-                                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 ml-9">Artículos agregados a la venta</p>
-                                        </div>
-                                        <button onClick={() => setShowProductSelector(true)} type="button" className={cn(configUi.primaryButton, "h-12 bg-[#16315f] hover:bg-[#16315f]/90 shadow-lg shadow-blue-100")}>
-                                            <Plus size={18} />
-                                            <span>Agregar Artículos</span>
-                                        </button>
-                                    </div>
+                                <div className="lg:col-span-1">
+                                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/50 h-full">
+                                        <h3 className="text-xl font-extrabold text-[#16315f] mb-10 flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100">
+                                                <DollarSign size={20} />
+                                            </div>
+                                            Resumen
+                                        </h3>
 
-                                    <div className="overflow-hidden border border-slate-50 rounded-3xl">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-50 text-slate-400 font-extrabold uppercase text-[10px] tracking-widest">
-                                                <tr>
-                                                    <th className="px-8 py-5">Item</th>
-                                                    <th className="px-6 py-5">Especificación</th>
-                                                    <th className="px-6 py-5 text-center">Cant.</th>
-                                                    <th className="px-6 py-5 text-right">Unitario</th>
-                                                    <th className="px-6 py-5 text-right">Subtotal</th>
-                                                    <th className="px-8 py-5 text-right w-[80px]"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-50">
-                                                {form.items.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan="6" className="px-8 py-16 text-center">
-                                                           <div className="flex flex-col items-center gap-3 opacity-30 grayscale saturate-0 mb-4">
-                                                              <ShoppingCart size={40} strokeWidth={1} />
-                                                              <p className="text-xs font-black uppercase tracking-[0.2em] italic">Sin artículos vinculados</p>
-                                                           </div>
-                                                           {formErrors.items && <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest leading-none flex items-center justify-center gap-1.5"><AlertCircle size={12} /> {formErrors.items}</p>}
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    form.items.map((item, idx) => (
-                                                        <tr key={idx} className="group hover:bg-slate-50/50 transition-colors duration-300">
-                                                            <td className="px-8 py-6 font-extrabold text-[#16315f] tracking-tight">{item.nombre_producto}</td>
-                                                            <td className="px-6 py-6 font-bold text-slate-500 text-xs">
-                                                                {item.nombre_color} / {item.nombre_talla}
-                                                            </td>
-                                                            <td className="px-6 py-6 text-center font-black text-slate-700 font-mono">{item.qty}</td>
-                                                            <td className="px-6 py-6 text-right font-bold text-slate-400 text-sm">${item.price.toLocaleString()}</td>
-                                                            <td className="px-6 py-6 text-right font-black text-[#16315f] text-base tracking-tighter shadow-indigo-50/50">
-                                                                ${(item.qty * item.price).toLocaleString()}
-                                                            </td>
-                                                            <td className="px-8 py-6 text-right">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const newItems = [...form.items];
-                                                                        newItems.splice(idx, 1);
-                                                                        setForm({ ...form, items: newItems });
-                                                                    }}
-                                                                    className="h-10 w-10 flex items-center justify-center rounded-xl text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
+                                        <div className="space-y-4 relative z-10 font-bold">
+                                            <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
+                                                <span>Subtotal</span>
+                                                <span className="text-slate-600 text-sm font-black">${totalEstimated.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
+                                                <span>Impuestos</span>
+                                                <span className="text-emerald-500 text-sm italic font-black">$0</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-4 border-y border-slate-50 mt-4">
+                                                <span className="text-sm font-black uppercase tracking-tighter text-slate-400">Total</span>
+                                                <span className="text-2xl font-black tracking-tighter text-[#16315f]">${totalEstimated.toLocaleString()}</span>
+                                            </div>
+                                            
+                                            <div className="pt-4">
+                                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+                                                    <div className="h-8 w-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-500">
+                                                        <Clock size={16} />
+                                                    </div>
+                                                    <p className="text-[10px] font-bold text-slate-400 leading-tight">Estado: <span className="text-emerald-500 italic">Entregada</span></p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-10">
-                                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl shadow-slate-200/50">
-                                    <h3 className="text-xl font-extrabold text-[#16315f] mb-10 flex items-center gap-3">
-                                       <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 border border-indigo-100">
-                                          <DollarSign size={20} />
-                                       </div>
-                                       Resumen
-                                    </h3>
-
-                                    <div className="space-y-6 relative z-10 font-bold">
-                                       <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
-                                          <span>Subtotal</span>
-                                          <span className="text-slate-600 text-sm font-black">${totalEstimated.toLocaleString()}</span>
-                                       </div>
-                                       <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
-                                          <span>Impuestos</span>
-                                          <span className="text-emerald-500 text-sm italic font-black">$0</span>
-                                       </div>
-                                       <div className="flex justify-between items-center py-6 border-y border-slate-50 mt-4">
-                                          <span className="text-sm font-black uppercase tracking-tighter text-slate-400">Total</span>
-                                          <span className="text-4xl font-black tracking-tighter text-[#16315f]">${totalEstimated.toLocaleString()}</span>
-                                       </div>
-                                       
-                                       <div className="pt-4 flex flex-col gap-4">
-                                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
-                                             <div className="h-8 w-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-500">
-                                                <Clock size={16} />
-                                             </div>
-                                             <p className="text-[10px] font-bold text-slate-400 leading-tight">Estado de la operación: <span className="text-emerald-500 italic">Entregada</span></p>
-                                          </div>
-                                          <button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-16 bg-[#16315f] text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-[#0d2248] transition-all flex items-center justify-center gap-2 active:scale-95">
-                                             {isSubmitting ? "Guardando..." : isEditing ? "Guardar Cambios" : "Completar Venta"}
-                                             <ChevronRight size={20} className="text-white/50" />
-                                          </button>
-                                       </div>
+                            {/* BOTTOM ROW: PRODUCTS (Full Width) */}
+                            <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 ring-1 ring-slate-100/50 w-full font-bold">
+                                <div className="flex justify-between items-center mb-10">
+                                    <div>
+                                        <h3 className="text-xl font-extrabold text-[#16315f] flex items-center gap-3">
+                                            <Package className="text-indigo-500" size={24} />
+                                            Productos
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 ml-9">Artículos agregados a la venta</p>
                                     </div>
+                                    <button onClick={() => setShowProductSelector(true)} type="button" className={cn(configUi.primaryButton, "h-12 bg-[#16315f] hover:bg-[#16315f]/90 shadow-lg shadow-blue-100")}>
+                                        <Plus size={18} />
+                                        <span>Agregar Artículos</span>
+                                    </button>
+                                </div>
+
+                                <div className="overflow-hidden border border-slate-50 rounded-3xl">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 text-slate-400 font-extrabold uppercase text-[10px] tracking-widest">
+                                            <tr>
+                                                <th className="px-8 py-5">Item</th>
+                                                <th className="px-6 py-5">Especificación</th>
+                                                <th className="px-6 py-5 text-center">Cant.</th>
+                                                <th className="px-6 py-5 text-right">Unitario</th>
+                                                <th className="px-6 py-5 text-right">Subtotal</th>
+                                                <th className="px-8 py-5 text-right font-black uppercase tracking-widest text-slate-300">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {form.items.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="6" className="px-8 py-16 text-center">
+                                                        <div className="flex flex-col items-center gap-3 opacity-30 grayscale saturate-0 mb-4">
+                                                            <ShoppingCart size={40} strokeWidth={1} />
+                                                            <p className="text-xs font-black uppercase tracking-[0.2em] italic">Sin artículos vinculados</p>
+                                                        </div>
+                                                        {formErrors.items && <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest leading-none flex items-center justify-center gap-1.5"><AlertCircle size={12} /> {formErrors.items}</p>}
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                form.items.map((item, idx) => (
+                                                    <tr key={idx} className="group hover:bg-slate-50/50 transition-colors duration-300">
+                                                        <td className="px-8 py-6 font-extrabold text-[#16315f] tracking-tight">{item.nombre_producto}</td>
+                                                        <td className="px-6 py-6 font-bold text-slate-500 text-xs">
+                                                            {item.nombre_color} / {item.nombre_talla}
+                                                        </td>
+                                                        <td className="px-6 py-6 text-center font-black text-slate-700 font-mono">{item.qty}</td>
+                                                        <td className="px-6 py-6 text-right font-bold text-slate-400 text-sm">${item.price.toLocaleString()}</td>
+                                                        <td className="px-6 py-6 text-right font-black text-[#16315f] text-base tracking-tighter shadow-indigo-50/50">
+                                                            ${(item.qty * item.price).toLocaleString()}
+                                                        </td>
+                                                        <td className="px-8 py-6 text-right">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newItems = [...form.items];
+                                                                    newItems.splice(idx, 1);
+                                                                    setForm({ ...form, items: newItems });
+                                                                }}
+                                                                className="h-10 w-10 flex items-center justify-center rounded-xl text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all shadow-sm border border-rose-100/50 opacity-100"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

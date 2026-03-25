@@ -10,6 +10,13 @@ export const EventsContent = () => {
   const [futureEvents, setFutureEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const API_URL = import.meta.env.VITE_REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3000';
+
+  const getImageUrl = (url) => {
+    if (!url) return "https://images.unsplash.com/photo-1564429238961-bf8f8bfa8c75?w=500&q=80";
+    if (url.startsWith("http") || url.startsWith("data:image")) return url;
+    return `${API_URL}${url}`;
+  };
 
   // Filters State
   const [categories, setCategories] = useState([]);
@@ -352,7 +359,7 @@ export const EventsContent = () => {
                     {/* Imagen */}
                     <div className="relative h-44 overflow-hidden bg-zinc-100 shrink-0">
                       <img
-                        src={event.imagen || "https://images.unsplash.com/photo-1564429238961-bf8f8bfa8c75?w=500&q=80"}
+                        src={getImageUrl(event.imagen)}
                         alt={event.nombre_evento}
                         className="w-full h-full object-cover"
                       />

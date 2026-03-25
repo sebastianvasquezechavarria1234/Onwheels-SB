@@ -11,6 +11,14 @@ export const UpcomingEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const API_URL = import.meta.env.VITE_REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:3000';
+
+  const getImageUrl = (url) => {
+    if (!url) return "/bg_eventosL.jpg";
+    if (url.startsWith("http") || url.startsWith("data:image")) return url;
+    return `${API_URL}${url}`;
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -23,13 +31,23 @@ export const UpcomingEvents = () => {
         const allEvents = Array.isArray(data) ? data : [];
 
         const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         const futureEvents = allEvents
           .filter((e) => {
             const rawDate = e?.fecha_evento || e?.fecha;
             if (!rawDate) return false;
+            
+            // Si la fecha viene como YYYY-MM-DD, New Date(rawDate) puede interpretarlo como UTC.
+            // Para asegurar consistencia local, podemos parsearlo manualmente si es necesario, 
+            // pero al menos compararemos contra el inicio del día de hoy.
             const eventDate = new Date(rawDate);
-            return !isNaN(eventDate) && eventDate >= now;
+            if (isNaN(eventDate)) return false;
+            
+            // Normalizar eventDate al inicio del día para la comparación
+            const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+            
+            return eventDay >= today;
           })
           .sort(
             (a, b) =>
@@ -96,7 +114,7 @@ export const UpcomingEvents = () => {
                   {/* Event Thumbnail */}
                   <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 mr-6 bg-zinc-800 border border-zinc-700">
                     <img
-                      src={event?.imagen || "/bg_eventosL.jpg"}
+                      src={getImageUrl(event?.imagen)}
                       alt={event?.nombre_evento}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
@@ -104,10 +122,10 @@ export const UpcomingEvents = () => {
 
                   <div className="flex flex-col items-center justify-center w-14 h-14 bg-zinc-800 rounded-lg group-hover:bg-[var(--color-blue)] transition-colors shrink-0 mr-6">
                     <span className="text-xl font-bold text-white leading-none">
-                      {day}
+                      {isNaN(dateObj.getDate()) ? "--" : dateObj.getDate()}
                     </span>
                     <span className="text-[10px] text-gray-400 group-hover:text-blue-100 uppercase leading-none mt-1">
-                      {month}
+                      {isNaN(dateObj.getDate()) ? "???" : month}
                     </span>
                   </div>
 

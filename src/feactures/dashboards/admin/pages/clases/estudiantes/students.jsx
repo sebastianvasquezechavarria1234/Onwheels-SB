@@ -117,10 +117,36 @@ const Students = () => {
     setFormErrors({});
   };
 
+  const validateStep = (step) => {
+    const errors = {};
+    if (step === 1) {
+      if (modal === "add" && !formData.id_usuario) errors.id_usuario = "Debes vincular un usuario base";
+      if (!formData.nombre_completo?.trim()) errors.nombre_completo = "El nombre es obligatorio";
+      if (!formData.email?.trim()) errors.email = "El email es obligatorio";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = "Email no válido";
+      if (!formData.telefono?.trim()) errors.telefono = "El teléfono es obligatorio";
+    }
+    if (step === 2) {
+      if (!formData.documento?.trim()) errors.documento = "El documento es obligatorio";
+      if (!formData.edad) errors.edad = "La edad es obligatoria";
+      else if (parseInt(formData.edad) <= 0) errors.edad = "Edad no válida";
+    }
+    if (step === 3) {
+      if (!formData.acudiente_nombre?.trim()) errors.acudiente_nombre = "Nombre del acudiente es obligatorio";
+      if (!formData.acudiente_telefono?.trim()) errors.acudiente_telefono = "Teléfono del acudiente es obligatorio";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validateStep(3)) {
+      showNotification("Por favor, corrige los errores antes de finalizar", "error");
+      return;
+    }
     try {
       if (modal === 'add') {
-        if (!formData.id_usuario) throw new Error("Debes seleccionar un usuario para vincular al estudiante");
         await crearEstudiante(formData);
         showNotification("Estudiante registrado con éxito");
       } else if (modal === 'edit') {
@@ -340,7 +366,7 @@ const Students = () => {
               onClick={closeModal}
           >
             <motion.div
-                className={`${configUi.modalPanel} ${modal === 'delete' ? 'max-w-sm' : 'max-w-4xl'}`}
+                className={`${configUi.modalPanel} ${modal === 'delete' ? 'max-w-sm' : 'max-w-3xl'}`}
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -491,52 +517,12 @@ const Students = () => {
                                 {currentStep === 1 && (
                                     <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
                                         <p className="text-[10px] font-bold text-[#16315f] uppercase tracking-widest italic border-l-2 border-[#16315f] pl-2 leading-none">Información Básica del Estudiante</p>
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Nombre Completo *</label>
-                                            <div className="relative">
-                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <input
-                                                    type="text"
-                                                    className={`${configUi.fieldInput} !pl-10`}
-                                                    value={formData.nombre_completo}
-                                                    onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
-                                                    placeholder="Ej: Juan Sebastián Pérez"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className={configUi.fieldGroup}>
-                                                <label className={configUi.fieldLabel}>Email *</label>
-                                                <div className="relative">
-                                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                    <input
-                                                        type="email"
-                                                        className={`${configUi.fieldInput} !pl-10`}
-                                                        value={formData.email}
-                                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                        placeholder="juan@ejemplo.com"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className={configUi.fieldGroup}>
-                                                <label className={configUi.fieldLabel}>Teléfono *</label>
-                                                <div className="relative">
-                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                    <input
-                                                        type="text"
-                                                        className={`${configUi.fieldInput} !pl-10`}
-                                                        value={formData.telefono}
-                                                        onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                                                        placeholder="300 000 0000"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
+                                        
                                         {modal === 'add' && (
                                             <div className={configUi.fieldGroup}>
                                                 <label className={configUi.fieldLabel}>Vincular Usuario (Cuenta base) *</label>
                                                 <select
-                                                    className={configUi.fieldSelect}
+                                                    className={cn(configUi.fieldSelect, formErrors.id_usuario && "border-red-300 bg-red-50/20")}
                                                     value={formData.id_usuario || ""}
                                                     onChange={(e) => {
                                                         const uId = e.target.value;
@@ -563,9 +549,55 @@ const Students = () => {
                                                         </option>
                                                     ))}
                                                 </select>
+                                                {formErrors.id_usuario && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.id_usuario}</p>}
                                                 <p className="text-[10px] text-slate-400 font-medium mt-1 ml-1 italic">Requerido. Los campos base se autocompletarán.</p>
                                             </div>
                                         )}
+
+                                        <div className={configUi.fieldGroup}>
+                                            <label className={configUi.fieldLabel}>Nombre Completo *</label>
+                                            <div className="relative">
+                                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    className={cn(configUi.fieldInput, "!pl-10", formErrors.nombre_completo && "border-red-300 bg-red-50/20")}
+                                                    value={formData.nombre_completo}
+                                                    onChange={(e) => setFormData({ ...formData, nombre_completo: e.target.value })}
+                                                    placeholder="Ej: Juan Sebastián Pérez"
+                                                />
+                                            </div>
+                                            {formErrors.nombre_completo && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.nombre_completo}</p>}
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Email *</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="email"
+                                                        className={cn(configUi.fieldInput, "!pl-10", formErrors.email && "border-red-300 bg-red-50/20")}
+                                                        value={formData.email}
+                                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                        placeholder="juan@ejemplo.com"
+                                                    />
+                                                </div>
+                                                {formErrors.email && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.email}</p>}
+                                            </div>
+                                            <div className={configUi.fieldGroup}>
+                                                <label className={configUi.fieldLabel}>Teléfono *</label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        className={cn(configUi.fieldInput, "!pl-10", formErrors.telefono && "border-red-300 bg-red-50/20")}
+                                                        value={formData.telefono}
+                                                        onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                                                        placeholder="300 000 0000"
+                                                    />
+                                                </div>
+                                                {formErrors.telefono && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.telefono}</p>}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 
@@ -591,11 +623,12 @@ const Students = () => {
                                                     <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                                     <input
                                                         type="text"
-                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        className={cn(configUi.fieldInput, "!pl-10", formErrors.documento && "border-red-300 bg-red-50/20")}
                                                         value={formData.documento}
                                                         onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
                                                     />
                                                 </div>
+                                                {formErrors.documento && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.documento}</p>}
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -612,16 +645,17 @@ const Students = () => {
                                                 </select>
                                             </div>
                                             <div className={configUi.fieldGroup}>
-                                                <label className={configUi.fieldLabel}>Años / Edad</label>
+                                                <label className={configUi.fieldLabel}>Años / Edad *</label>
                                                 <div className="relative">
                                                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                                     <input
                                                         type="number"
-                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        className={cn(configUi.fieldInput, "!pl-10", formErrors.edad && "border-red-300 bg-red-50/20")}
                                                         value={formData.edad}
                                                         onChange={(e) => setFormData({ ...formData, edad: e.target.value })}
                                                     />
                                                 </div>
+                                                {formErrors.edad && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.edad}</p>}
                                             </div>
                                             <div className={configUi.fieldGroup}>
                                                 <label className={configUi.fieldLabel}>Experiencia</label>
@@ -643,17 +677,18 @@ const Students = () => {
                                     <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
                                          <p className="text-[10px] font-bold text-[#16315f] uppercase tracking-widest italic border-l-2 border-[#16315f] pl-2 leading-none">Seguridad y Salud</p>
                                          <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Acudiente de Emergencia</label>
+                                            <label className={configUi.fieldLabel}>Acudiente de Emergencia *</label>
                                             <div className="relative">
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                                 <input
                                                     type="text"
-                                                    className={`${configUi.fieldInput} !pl-10`}
+                                                    className={cn(configUi.fieldInput, "!pl-10", formErrors.acudiente_nombre && "border-red-300 bg-red-50/20")}
                                                     value={formData.acudiente_nombre}
                                                     onChange={(e) => setFormData({ ...formData, acudiente_nombre: e.target.value })}
                                                     placeholder="Nombre del contacto..."
                                                 />
                                             </div>
+                                            {formErrors.acudiente_nombre && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.acudiente_nombre}</p>}
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className={configUi.fieldGroup}>
@@ -670,16 +705,17 @@ const Students = () => {
                                                 </select>
                                             </div>
                                             <div className={configUi.fieldGroup}>
-                                                <label className={configUi.fieldLabel}>Teléfono Acudiente</label>
+                                                <label className={configUi.fieldLabel}>Teléfono Acudiente *</label>
                                                 <div className="relative">
                                                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                                                      <input
                                                         type="text"
-                                                        className={`${configUi.fieldInput} !pl-10`}
+                                                        className={cn(configUi.fieldInput, "!pl-10", formErrors.acudiente_telefono && "border-red-300 bg-red-50/20")}
                                                         value={formData.acudiente_telefono}
                                                         onChange={(e) => setFormData({ ...formData, acudiente_telefono: e.target.value })}
                                                     />
                                                 </div>
+                                                {formErrors.acudiente_telefono && <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1"><AlertCircle size={10} /> {formErrors.acudiente_telefono}</p>}
                                             </div>
                                         </div>
                                         <div className={configUi.fieldGroup}>
@@ -714,7 +750,15 @@ const Students = () => {
                                     <button onClick={() => setCurrentStep(p => p - 1)} className={configUi.secondaryButton}>Atrás</button>
                                 )}
                                 {currentStep < 3 ? (
-                                    <button onClick={() => setCurrentStep(p => p + 1)} className={configUi.primarySoftButton}>Siguiente</button>
+                                    <button
+                                        onClick={() => {
+                                            if (validateStep(currentStep)) setCurrentStep(p => p + 1);
+                                            else showNotification("Completa los campos obligatorios", "error");
+                                        }}
+                                        className={configUi.primarySoftButton}
+                                    >
+                                        Siguiente
+                                    </button>
                                 ) : (
                                     <button onClick={handleSave} className={configUi.primarySoftButton}>
                                         {modal === 'add' ? 'Registrar Miembro' : 'Actualizar Perfil'}

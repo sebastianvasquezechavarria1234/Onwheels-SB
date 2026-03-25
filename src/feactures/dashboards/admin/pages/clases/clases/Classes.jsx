@@ -1,3 +1,4 @@
+
 // src/feactures/dashboards/admin/pages/clases/clases/Clases.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
@@ -57,6 +58,9 @@ export const Clases = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Requested: 10 items per page
 
+  const [formErrors, setFormErrors] = useState({});
+  const [formStep, setFormStep] = useState(1);
+
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
@@ -104,6 +108,14 @@ export const Clases = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user types
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const filteredAndSorted = useMemo(() => {
@@ -167,19 +179,68 @@ export const Clases = () => {
     URL.revokeObjectURL(url);
   };
 
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.descripcion?.trim()) errors.descripcion = "La descripción es obligatoria";
+    if (!formData.id_nivel) errors.id_nivel = "Seleccione un nivel";
+    if (!formData.id_sede) errors.id_sede = "Seleccione una sede";
+    if (!formData.dia_semana) errors.dia_semana = "Seleccione el día";
+    if (!formData.hora_inicio) errors.hora_inicio = "Hora inicio requerida";
+    if (!formData.hora_fin) errors.hora_fin = "Hora fin requerida";
+    
+    if (formData.hora_inicio && formData.hora_fin) {
+      if (formData.hora_inicio >= formData.hora_fin) {
+        errors.hora_fin = "Debe ser posterior al inicio";
+      }
+    }
+
+    const cupo = parseInt(formData.cupo_maximo);
+    if (!formData.cupo_maximo || isNaN(cupo) || cupo <= 0) {
+      errors.cupo_maximo = "Debe ser un número positivo";
+    }
+
+    if (formData.instructores.length === 0) {
+      errors.instructores = "Asigne al menos un instructor";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateStep = (step) => {
+    const errors = {};
+    if (step === 1) {
+      if (!formData.descripcion?.trim()) errors.descripcion = "La descripción es obligatoria";
+      if (!formData.id_nivel) errors.id_nivel = "Seleccione un nivel";
+      if (!formData.id_sede) errors.id_sede = "Seleccione una sede";
+    } else if (step === 2) {
+      if (!formData.dia_semana) errors.dia_semana = "Seleccione el día";
+      if (!formData.hora_inicio) errors.hora_inicio = "Hora inicio requerida";
+      if (!formData.hora_fin) errors.hora_fin = "Hora fin requerida";
+      if (formData.hora_inicio && formData.hora_fin && formData.hora_inicio >= formData.hora_fin) {
+        errors.hora_fin = "Debe ser posterior al inicio";
+      }
+      const cupo = parseInt(formData.cupo_maximo);
+      if (!formData.cupo_maximo || isNaN(cupo) || cupo <= 0) {
+        errors.cupo_maximo = "Debe ser un número positivo";
+      }
+      if (formData.instructores.length === 0) {
+        errors.instructores = "Asigne al menos un instructor";
+      }
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // --- CRUD OPERATIONS ---
   const handleCreate = async () => {
     try {
-      if (!formData.id_nivel || !formData.id_sede || formData.instructores.length === 0) {
-        showNotification("Nivel, sede e instructores son obligatorios", "error");
+      if (!validateForm()) {
+        showNotification("Por favor corrija los errores en el formulario", "error");
         return;
       }
       const id_nivel = parseInt(formData.id_nivel);
       const id_sede = parseInt(formData.id_sede);
-      if (isNaN(id_nivel) || isNaN(id_sede)) {
-        showNotification("Nivel y sede deben ser números válidos", "error");
-        return;
-      }
       const formatTime = (time) => { if (!time) return null; return time.length === 5 ? `${time}:00` : time; };
 
       const payload = {
@@ -207,12 +268,12 @@ export const Clases = () => {
   const handleEdit = async () => {
     try {
       if (!selectedClase) return;
-      const id_nivel = parseInt(formData.id_nivel);
-      const id_sede = parseInt(formData.id_sede);
-      if (isNaN(id_nivel) || isNaN(id_sede)) {
-        showNotification("Nivel y sede deben ser números válidos", "error");
+      if (!validateForm()) {
+        showNotification("Por favor corrija los errores en el formulario", "error");
         return;
       }
+      const id_nivel = parseInt(formData.id_nivel);
+      const id_sede = parseInt(formData.id_sede);
       const formatTime = (time) => { if (!time) return null; return time.length === 5 ? `${time}:00` : time; };
 
       const payload = {
@@ -277,6 +338,8 @@ export const Clases = () => {
     } else {
       setFormData(defaultData);
     }
+    setFormErrors({});
+    setFormStep(1);
   };
 
   const closeModal = () => {
@@ -287,6 +350,8 @@ export const Clases = () => {
       cupo_maximo: "", dia_semana: "", descripcion: "", estado: "Disponible",
       hora_inicio: "", hora_fin: "", url_imagen: ""
     });
+    setFormErrors({});
+    setFormStep(1);
   };
 
   const handleFileUpload = async (e) => {
@@ -317,6 +382,13 @@ export const Clases = () => {
       instructores: [...prev.instructores, { id_instructor: parseInt(idInstructor), rol_instructor: "Principal" }],
       instructorTemporal: ""
     }));
+    if (formErrors.instructores) {
+      setFormErrors(prev => {
+        const newErrs = { ...prev };
+        delete newErrs.instructores;
+        return newErrs;
+      });
+    }
   };
 
   const handleEliminarInstructor = (index) => {
@@ -579,238 +651,325 @@ export const Clases = () => {
                     </div>
                   ) : (
                     <div className="flex flex-col lg:flex-row gap-8">
-                      {/* Left: Image Preview & Instructors */}
-                      <div className="w-full lg:w-1/3 space-y-4">
-                        <div className="w-full aspect-video bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center overflow-hidden shadow-inner group relative">
-                          {formData.url_imagen ? (
-                            <img src={formData.url_imagen} alt="Preview" className="w-full h-full object-cover transition duration-500 group-hover:scale-110" />
-                          ) : (
-                            <div className="flex flex-col items-center gap-2 text-slate-300">
-                              <ImageIcon size={48} strokeWidth={1} />
-                              <span className="text-[10px] font-bold uppercase tracking-widest italic">Sin Imagen</span>
-                            </div>
-                          )}
-                          {uploading && (
-                             <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                                <TrendingUp className="animate-spin text-[#16315f]" size={24} />
-                             </div>
-                          )}
-                        </div>
-                        
-                        {modal !== "ver" && (
-                          <div className="space-y-3">
-                            <label className={configUi.fieldLabel}>Imagen de la Clase</label>
-                            <div className="flex flex-col gap-2">
-                              <div className="relative">
-                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                                <input
-                                  type="text"
-                                  name="url_imagen"
-                                  value={formData.url_imagen}
-                                  onChange={handleChange}
-                                  className={configUi.fieldInput}
-                                  placeholder="URL de imagen..."
-                                />
+                        {formStep === 1 ? (
+                          <>
+                            {/* Step 1 Left: Image Preview */}
+                            <div className="w-full lg:w-1/3 space-y-4">
+                              <div className="w-full aspect-square bg-slate-50 rounded-[2.5rem] border border-slate-100 flex items-center justify-center overflow-hidden shadow-inner group relative">
+                                {formData.url_imagen ? (
+                                  <img src={formData.url_imagen} alt="Preview" className="w-full h-full object-cover transition duration-500 group-hover:scale-110" />
+                                ) : (
+                                  <div className="flex flex-col items-center gap-2 text-slate-300">
+                                    <ImageIcon size={64} strokeWidth={1} />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] italic">Sin Arte Visual</span>
+                                  </div>
+                                )}
+                                {uploading && (
+                                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                                    <TrendingUp className="animate-spin text-[#16315f]" size={32} />
+                                  </div>
+                                )}
                               </div>
-                              <label className="cursor-pointer flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-[#16315f] py-2 rounded-xl transition shadow-sm font-bold text-xs uppercase tracking-wider">
-                                <Upload size={16} />
-                                {uploading ? "Subiendo..." : "Subir Archivo"}
-                                <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" disabled={uploading} />
-                              </label>
-                            </div>
-                          </div>
-                        )}
 
-                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50">
-                          <p className="text-[10px] text-blue-800 font-bold uppercase tracking-widest mb-2 italic">Instructores Asignados</p>
-                          <div className="flex flex-wrap gap-2">
-                            {formData.instructores.length === 0 ? (
-                              <p className="text-xs text-blue-400 italic">Ninguno asignado</p>
-                            ) : (
-                              formData.instructores.map((inst, idx) => (
-                                <div key={idx} className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-blue-100 shadow-sm animate-in fade-in zoom-in duration-200">
-                                  <span className="text-xs font-bold text-[#16315f]">
-                                    {instructores.find(i => i.id_instructor == inst.id_instructor)?.nombre_completo || "Instructor"}
-                                  </span>
-                                  {modal !== "ver" && (
-                                    <button type="button" onClick={() => handleEliminarInstructor(idx)} className="text-red-400 hover:text-red-600 transition">
-                                      <X size={12} />
-                                    </button>
+                              {modal !== "ver" && (
+                                <div className="space-y-4">
+                                  <label className={configUi.fieldLabel}>Identidad Visual de la Clase</label>
+                                  <div className="flex flex-col gap-3">
+                                    <div className="relative">
+                                      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                      <input
+                                        type="text"
+                                        name="url_imagen"
+                                        value={formData.url_imagen}
+                                        onChange={handleChange}
+                                        className={cn(configUi.fieldInput, "pl-12")}
+                                        placeholder="URL de imagen externa..."
+                                      />
+                                    </div>
+                                    <label className="cursor-pointer flex items-center justify-center gap-3 bg-[#16315f]/5 hover:bg-[#16315f]/10 text-[#16315f] py-3 rounded-2xl transition-all shadow-sm font-black text-[10px] uppercase tracking-widest border border-[#16315f]/10">
+                                      <Upload size={18} />
+                                      {uploading ? "Sincronizando..." : "Cargar Archivo Local"}
+                                      <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" disabled={uploading} />
+                                    </label>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Step 1 Right: Basic Info */}
+                            <div className="flex-1 space-y-6">
+                              <div className={configUi.fieldGroup}>
+                                <label className={configUi.fieldLabel}>Nombre de la Clase / Descripción Breve</label>
+                                {modal === "ver" ? (
+                                  <div className={configUi.readOnlyField}>{formData.descripcion}</div>
+                                ) : (
+                                  <input
+                                    type="text"
+                                    name="descripcion"
+                                    value={formData.descripcion}
+                                    onChange={handleChange}
+                                    className={cn(configUi.fieldInput, formErrors.descripcion && "border-red-300 bg-red-50/20")}
+                                    placeholder="Ej: Yoga Hatha Dinámico"
+                                  />
+                                )}
+                                {formErrors.descripcion && (
+                                  <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 flex items-center gap-1 animate-in slide-in-from-left-2">
+                                    <AlertCircle size={12} /> {formErrors.descripcion}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Nivel Académico</label>
+                                  {modal === "ver" ? (
+                                    <div className={configUi.readOnlyField}>{niveles.find(n => n.id_nivel == formData.id_nivel)?.nombre_nivel || "—"}</div>
+                                  ) : (
+                                    <select name="id_nivel" value={formData.id_nivel} onChange={handleChange} className={cn(configUi.fieldSelect, formErrors.id_nivel && "border-red-300 bg-red-50/20")}>
+                                      <option value="">Seleccionar Nivel</option>
+                                      {niveles.map(n => <option key={n.id_nivel} value={n.id_nivel}>{n.nombre_nivel}</option>)}
+                                    </select>
+                                  )}
+                                  {formErrors.id_nivel && (
+                                    <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 flex items-center gap-1 animate-in slide-in-from-left-2">
+                                      <AlertCircle size={12} /> {formErrors.id_nivel}
+                                    </p>
                                   )}
                                 </div>
-                              ))
-                            )}
-                          </div>
-                          {modal !== "ver" && (
-                            <div className="mt-4 flex gap-2">
-                              <select
-                                name="instructorTemporal"
-                                value={formData.instructorTemporal}
-                                onChange={handleChange}
-                                className={`${configUi.fieldSelect} !py-1.5 !text-xs !bg-white`}
-                              >
-                                <option value="">+ Agregar</option>
-                                {instructores.filter(i => !formData.instructores.find(fi => fi.id_instructor == i.id_instructor)).map(i => (
-                                  <option key={i.id_instructor} value={i.id_instructor}>{i.nombre_completo}</option>
-                                ))}
-                              </select>
-                              <button
-                                type="button"
-                                onClick={handleAgregarInstructor}
-                                className="px-3 bg-[#16315f] text-white rounded-lg text-xs font-bold shadow-md hover:bg-[#16315f]/90 transition"
-                              >
-                                Add
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right: Form Fields */}
-                      <div className="flex-1 space-y-4">
-                        <div className={configUi.fieldGroup}>
-                          <label className={configUi.fieldLabel}>Nombre / Descripción</label>
-                          {modal === "ver" ? (
-                            <div className={configUi.readOnlyField}>{formData.descripcion}</div>
-                          ) : (
-                            <input
-                              type="text"
-                              name="descripcion"
-                              value={formData.descripcion}
-                              onChange={handleChange}
-                              className={configUi.fieldInput}
-                              placeholder="Ej: Yoga para Iniciantes"
-                            />
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className={configUi.fieldGroup}>
-                            <label className={configUi.fieldLabel}>Nivel</label>
-                            {modal === "ver" ? (
-                              <div className={configUi.readOnlyField}>{niveles.find(n => n.id_nivel == formData.id_nivel)?.nombre_nivel || "—"}</div>
-                            ) : (
-                              <select name="id_nivel" value={formData.id_nivel} onChange={handleChange} className={configUi.fieldSelect}>
-                                <option value="">Seleccionar</option>
-                                {niveles.map(n => <option key={n.id_nivel} value={n.id_nivel}>{n.nombre_nivel}</option>)}
-                              </select>
-                            )}
-                          </div>
-                          <div className={configUi.fieldGroup}>
-                            <label className={configUi.fieldLabel}>Sede</label>
-                            {modal === "ver" ? (
-                              <div className={configUi.readOnlyField}>{sedes.find(s => s.id_sede == formData.id_sede)?.nombre_sede || "—"}</div>
-                            ) : (
-                              <select name="id_sede" value={formData.id_sede} onChange={handleChange} className={configUi.fieldSelect}>
-                                <option value="">Seleccionar</option>
-                                {sedes.map(s => <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>)}
-                              </select>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className={configUi.fieldGroup}>
-                            <label className={configUi.fieldLabel}>Día</label>
-                            {modal === "ver" ? (
-                              <div className={configUi.readOnlyField}>{formData.dia_semana || "—"}</div>
-                            ) : (
-                              <select name="dia_semana" value={formData.dia_semana} onChange={handleChange} className={configUi.fieldSelect}>
-                                <option value="">Seleccionar</option>
-                                {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(d => (
-                                  <option key={d} value={d}>{d}</option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                          <div className={configUi.fieldGroup}>
-                            <label className={configUi.fieldLabel}>Cupo Máximo</label>
-                            {modal === "ver" ? (
-                              <div className={configUi.readOnlyField}>{formData.cupo_maximo}</div>
-                            ) : (
-                              <input
-                                type="number"
-                                name="cupo_maximo"
-                                value={formData.cupo_maximo}
-                                onChange={handleChange}
-                                className={configUi.fieldInput}
-                                placeholder="0"
-                                min="1"
-                              />
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className={configUi.fieldGroup}>
-                            <label className={configUi.fieldLabel}>Hora Inicio</label>
-                            {modal === "ver" ? (
-                              <div className={configUi.readOnlyField}>{formData.hora_inicio || "—"}</div>
-                            ) : (
-                              <input type="time" name="hora_inicio" value={formData.hora_inicio} onChange={handleChange} className={configUi.fieldInput} />
-                            )}
-                          </div>
-                          <div className={configUi.fieldGroup}>
-                            <label className={configUi.fieldLabel}>Hora Fin</label>
-                            {modal === "ver" ? (
-                              <div className={configUi.readOnlyField}>{formData.hora_fin || "—"}</div>
-                            ) : (
-                              <input type="time" name="hora_fin" value={formData.hora_fin} onChange={handleChange} className={configUi.fieldInput} />
-                            )}
-                          </div>
-                        </div>
-
-                        <div className={configUi.fieldGroup}>
-                          <label className={configUi.fieldLabel}>Estado</label>
-                          {modal === "ver" ? (
-                            <div className="mt-1">
-                              <span className={cn(configUi.pill, formData.estado === "Disponible" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600")}>
-                                {formData.estado}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex bg-slate-100 p-1.5 rounded-2xl w-max gap-1">
-                              {["Disponible", "Ocupado", "Cancelado"].map(st => (
-                                <button
-                                  type="button"
-                                  key={st}
-                                  onClick={() => setFormData(p => ({ ...p, estado: st }))}
-                                  className={cn(
-                                    "px-4 py-1.5 text-xs font-bold rounded-xl transition duration-300",
-                                    formData.estado === st ? "bg-white text-[#16315f] shadow-sm" : "text-slate-500 hover:bg-white/50"
+                                <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Sede de Entrenamiento</label>
+                                  {modal === "ver" ? (
+                                    <div className={configUi.readOnlyField}>{sedes.find(s => s.id_sede == formData.id_sede)?.nombre_sede || "—"}</div>
+                                  ) : (
+                                    <select name="id_sede" value={formData.id_sede} onChange={handleChange} className={cn(configUi.fieldSelect, formErrors.id_sede && "border-red-300 bg-red-50/20")}>
+                                      <option value="">Seleccionar Sede</option>
+                                      {sedes.map(s => <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>)}
+                                    </select>
                                   )}
-                                >
-                                  {st}
-                                </button>
-                              ))}
+                                  {formErrors.id_sede && (
+                                    <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 flex items-center gap-1 animate-in slide-in-from-left-2">
+                                      <AlertCircle size={12} /> {formErrors.id_sede}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 mt-auto">
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-2 italic">Resumen de registro</p>
+                                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                                  Inicia el proceso configurando la identidad y ubicación de la clase. En el siguiente paso definiremos horarios e instructores.
+                                </p>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* Step 2 Left: Instructors */}
+                            <div className="w-full lg:w-1/3 space-y-6">
+                              <div className="p-6 bg-indigo-50/50 rounded-[2.5rem] border border-indigo-100/50 shadow-inner">
+                                <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                                  <User size={14} /> Cuerpo Técnico / Instructores
+                                </p>
+                                <div className="space-y-3">
+                                  {formData.instructores.length === 0 ? (
+                                    <div className="py-8 text-center border-2 border-dashed border-indigo-100 rounded-3xl">
+                                      <p className="text-xs text-indigo-300 italic font-bold">Sin asignaciones</p>
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col gap-2">
+                                      {formData.instructores.map((inst, idx) => (
+                                        <div key={idx} className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-indigo-50 shadow-sm transition hover:shadow-md animate-in slide-in-from-bottom-2">
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-black text-indigo-600 border border-indigo-200">
+                                              {instructores.find(i => i.id_instructor == inst.id_instructor)?.nombre_completo.charAt(0)}
+                                            </div>
+                                            <span className="text-xs font-black text-[#16315f]">
+                                              {instructores.find(i => i.id_instructor == inst.id_instructor)?.nombre_completo}
+                                            </span>
+                                          </div>
+                                          {modal !== "ver" && (
+                                            <button type="button" onClick={() => handleEliminarInstructor(idx)} className="h-7 w-7 flex items-center justify-center rounded-lg text-rose-300 hover:bg-rose-50 hover:text-rose-600 transition-colors">
+                                              <X size={14} />
+                                            </button>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  
+                                  {formErrors.instructores && (
+                                    <p className="text-[10px] text-red-500 font-bold mt-2 ml-1 flex items-center gap-1 animate-pulse">
+                                      <AlertCircle size={10} /> {formErrors.instructores}
+                                    </p>
+                                  )}
 
-                <div className={configUi.modalFooter}>
-                  <span className="text-xs text-slate-400 font-medium italic">
-                    {modal === "ver" ? "Visualización de solo lectura." : "Asegúrate de verificar los horarios antes de guardar."}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <button onClick={closeModal} className={configUi.secondaryButton}>
-                      {modal === "ver" ? "Cerrar" : "Cancelar"}
-                    </button>
-                    {modal === "crear" && (
-                      <button onClick={handleCreate} className={configUi.primarySoftButton}>Crear Clase</button>
-                    )}
-                    {modal === "editar" && (
-                      <button onClick={handleEdit} className={configUi.primarySoftButton}>Actualizar</button>
-                    )}
-                    {modal === "eliminar" && (
-                      <button onClick={handleDelete} className={configUi.dangerButton}>Confirmar</button>
+                                  {modal !== "ver" && (
+                                    <div className="mt-6 space-y-3">
+                                      <select
+                                        name="instructorTemporal"
+                                        value={formData.instructorTemporal}
+                                        onChange={handleChange}
+                                        className={cn(configUi.fieldSelect, "!h-12 !bg-white/80 backdrop-blur-sm border-none shadow-sm")}
+                                      >
+                                        <option value="">Buscar Instructor...</option>
+                                        {instructores.filter(i => !formData.instructores.find(fi => fi.id_instructor == i.id_instructor)).map(i => (
+                                          <option key={i.id_instructor} value={i.id_instructor}>{i.nombre_completo}</option>
+                                        ))}
+                                      </select>
+                                      <button
+                                        type="button"
+                                        onClick={handleAgregarInstructor}
+                                        className="w-full h-12 bg-white text-[#16315f] border-2 border-indigo-100 rounded-2xl text-xs font-black uppercase tracking-widest shadow-sm hover:bg-indigo-50 hover:border-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                      >
+                                        <Plus size={16} /> Vincular Staff
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Step 2 Right: Schedule & More */}
+                            <div className="flex-1 space-y-6">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Planificación (Día)</label>
+                                  {modal === "ver" ? (
+                                    <div className={configUi.readOnlyField}>{formData.dia_semana || "—"}</div>
+                                  ) : (
+                                    <select name="dia_semana" value={formData.dia_semana} onChange={handleChange} className={cn(configUi.fieldSelect, formErrors.dia_semana && "border-red-300 bg-red-50/20")}>
+                                      <option value="">Seleccionar Día</option>
+                                      {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(d => (
+                                        <option key={d} value={d}>{d}</option>
+                                      ))}
+                                    </select>
+                                  )}
+                                  {formErrors.dia_semana && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1"><AlertCircle size={10} className="inline mr-1" /> {formErrors.dia_semana}</p>}
+                                </div>
+                                <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Capacidad (Cupos)</label>
+                                  {modal === "ver" ? (
+                                    <div className={configUi.readOnlyField}>{formData.cupo_maximo}</div>
+                                  ) : (
+                                    <input
+                                      type="number"
+                                      name="cupo_maximo"
+                                      value={formData.cupo_maximo}
+                                      onChange={handleChange}
+                                      className={cn(configUi.fieldInput, formErrors.cupo_maximo && "border-red-300 bg-red-50/20")}
+                                      placeholder="Cantidad de alumnos..."
+                                    />
+                                  )}
+                                  {formErrors.cupo_maximo && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1"><AlertCircle size={10} className="inline mr-1" /> {formErrors.cupo_maximo}</p>}
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Bloque Horario (Inicio)</label>
+                                  {modal === "ver" ? (
+                                    <div className={configUi.readOnlyField}>{formData.hora_inicio || "—"}</div>
+                                  ) : (
+                                    <input type="time" name="hora_inicio" value={formData.hora_inicio} onChange={handleChange} className={cn(configUi.fieldInput, formErrors.hora_inicio && "border-red-300 bg-red-50/20")} />
+                                  )}
+                                  {formErrors.hora_inicio && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1"><AlertCircle size={10} className="inline mr-1" /> {formErrors.hora_inicio}</p>}
+                                </div>
+                                <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Bloque Horario (Fin)</label>
+                                  {modal === "ver" ? (
+                                    <div className={configUi.readOnlyField}>{formData.hora_fin || "—"}</div>
+                                  ) : (
+                                    <input type="time" name="hora_fin" value={formData.hora_fin} onChange={handleChange} className={cn(configUi.fieldInput, formErrors.hora_fin && "border-red-300 bg-red-50/20")} />
+                                  )}
+                                  {formErrors.hora_fin && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1"><AlertCircle size={10} className="inline mr-1" /> {formErrors.hora_fin}</p>}
+                                </div>
+                              </div>
+
+                              <div className={configUi.fieldGroup}>
+                                <label className={configUi.fieldLabel}>Disponibilidad Operativa</label>
+                                {modal === "ver" ? (
+                                  <div className="mt-2">
+                                    <span className={cn(configUi.pill, formData.estado === "Disponible" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600", "px-4")}>
+                                      {formData.estado}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="flex bg-slate-100 p-1.5 rounded-2xl w-max gap-1">
+                                    {["Disponible", "Ocupado", "Cancelado"].map(st => (
+                                      <button
+                                        type="button"
+                                        key={st}
+                                        onClick={() => setFormData(p => ({ ...p, estado: st }))}
+                                        className={cn(
+                                          "px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition duration-300",
+                                          formData.estado === st ? "bg-white text-[#16315f] shadow-md scale-[1.02]" : "text-slate-500 hover:bg-white/50"
+                                        )}
+                                      >
+                                        {st}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
+
+                  <div className={configUi.modalFooter}>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className={cn("h-1.5 w-6 rounded-full transition-all duration-300", formStep === 1 ? "bg-[#16315f]" : "bg-slate-200")} />
+                        <div className={cn("h-1.5 w-6 rounded-full transition-all duration-300", formStep === 2 ? "bg-[#16315f]" : "bg-slate-200")} />
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-4">
+                        Paso {formStep} de 2
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {formStep === 2 && (
+                        <button
+                          onClick={() => setFormStep(1)}
+                          className={cn(configUi.secondaryButton, "px-6 h-12")}
+                        >
+                          Atrás
+                        </button>
+                      )}
+                      
+                      <button onClick={closeModal} className={configUi.secondaryButton}>
+                        {modal === "ver" ? "Cerrar" : "Cancelar"}
+                      </button>
+
+                      {modal !== "ver" && modal !== "eliminar" && formStep === 1 && (
+                        <button
+                          onClick={() => {
+                            if (validateStep(1)) setFormStep(2);
+                            else showNotification("Completa los campos obligatorios", "error");
+                          }}
+                          className={cn(configUi.primaryButton, "px-8 h-12")}
+                        >
+                          Siguiente
+                        </button>
+                      ) || (
+                        <>
+                          {modal === "crear" && formStep === 2 && (
+                            <button onClick={handleCreate} className={cn(configUi.primaryButton, "px-8 h-12")}>Finalizar Registro</button>
+                          )}
+                          {modal === "editar" && formStep === 2 && (
+                            <button onClick={handleEdit} className={cn(configUi.primaryButton, "px-8 h-12")}>Actualizar Clase</button>
+                          )}
+                        </>
+                      )}
+
+                      {modal === "eliminar" && (
+                        <button onClick={handleDelete} className={configUi.dangerButton}>Confirmar Eliminación</button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
             </motion.div>
           </motion.div>
         )}

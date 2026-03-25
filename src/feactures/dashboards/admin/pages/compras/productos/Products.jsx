@@ -124,30 +124,32 @@ export default function Productos({ renderLayout = true }) {
 
   const validateVariantsInline = () => {
     // Determine whether user interacted with currentVariant
-    const isInteractingWithTallas = currentVariant.tallas.some(t => t.talla.trim() !== "" || String(t.cantidad).trim() !== "");
-    const isInteracting = isInteractingWithTallas || (currentVariant.color && currentVariant.color !== "");
+    const hasColor = currentVariant.color && currentVariant.color.trim() !== "" && currentVariant.color !== "—";
+    const hasAnyTallaData = currentVariant.tallas.some(t => 
+      (t.talla && t.talla.trim() !== "" && t.talla !== "—") || 
+      (String(t.cantidad).trim() !== "")
+    );
+    
+    const isInteracting = hasColor || hasAnyTallaData;
 
     if (!isInteracting) {
       setVariantError("");
       return true;
     }
 
-    const isIncomplete = currentVariant.tallas.some(t =>
-      (t.talla.trim() !== "" && String(t.cantidad).trim() === "") ||
-      (t.talla.trim() === "" && String(t.cantidad).trim() !== "")
-    );
+    // Si tiene color pero no tallas, o tiene tallas pero no color, es válido.
+    // Solo es inválido si una talla tiene cantidad pero no nombre, o viceversa, 
+    // A MENOS que sea la única talla y el producto sea "solo color".
+    
+    const validTallas = currentVariant.tallas.filter(t => {
+      const hasTallaName = t.talla && t.talla.trim() !== "" && t.talla !== "—";
+      const hasQty = String(t.cantidad).trim() !== "";
+      // Es válido si: (tiene nombre y cantidad) O (tiene cantidad y NO hay opciones de talla, o sea es "solo color")
+      return (hasTallaName && hasQty) || (!hasTallaName && hasQty && hasColor);
+    });
 
-    if (isIncomplete) {
-      setVariantError("No puede guardar variantes incompletas. Complete la información de talla y cantidad.");
-      return false;
-    }
-
-    const validTallas = currentVariant.tallas.filter(
-      (t) => t.talla.trim() !== "" && String(t.cantidad).trim() !== "" && Number(t.cantidad) >= 0
-    );
-
-    if (validTallas.length === 0) {
-      setVariantError("Debe agregar al menos una variante válida.");
+    if (validTallas.length === 0 && !hasColor) {
+      setVariantError("Debe agregar al menos una variante válida (Color o Talla con cantidad).");
       return false;
     }
 
@@ -399,15 +401,32 @@ export default function Productos({ renderLayout = true }) {
       // Flatten grouped variants for backend
       const flatVariants = [];
       for (const v of variants) {
-        if (!v.tallas) continue;
+        const colorObj = colores.find(c => c.nombre_color === v.color);
+        const id_color = colorObj?.id_color || null;
+
+        if (!v.tallas || v.tallas.length === 0) {
+          // Caso: Solo color (sin tallas en el agrupamiento)
+          if (id_color) {
+            flatVariants.push({
+              id_color: id_color,
+              id_talla: null,
+              stock: 0
+            });
+          }
+          continue;
+        }
+
         for (const t of v.tallas) {
-          const colorObj = colores.find(c => c.nombre_color === v.color);
           const tallaObj = tallas.find(tt => tt.nombre_talla === t.talla);
-          flatVariants.push({
-            id_color: colorObj?.id_color,
-            id_talla: tallaObj?.id_talla,
-            stock: Number(t.cantidad)
-          });
+          const id_talla = tallaObj?.id_talla || null;
+
+          if (id_color || id_talla) {
+            flatVariants.push({
+              id_color: id_color,
+              id_talla: id_talla,
+              stock: Number(t.cantidad) || 0
+            });
+          }
         }
       }
       formData.append("variantes", JSON.stringify(flatVariants));
@@ -458,7 +477,7 @@ export default function Productos({ renderLayout = true }) {
       showNotification("Producto eliminado con éxito");
     } catch (err) {
       console.error("eliminar producto error:", err);
-      const msg = err.response?.data?.message || err.response?.data?.error || err.message || "Error al eliminar";
+      const msg = err.response?.data?.mensaje || err.response?.data?.error || err.message || "Error al eliminar";
       showNotification(msg, "error");
     } finally {
       setIsDeleteConfirmOpen(false);
@@ -490,12 +509,15 @@ export default function Productos({ renderLayout = true }) {
       if (!validateVariantsInline()) return;
 
       const validTallas = currentVariant.tallas.filter(
-        (t) => t.talla?.toString().trim() && Number(t.cantidad) >= 0
+        (t) => (t.talla?.toString().trim() && t.talla !== "—") || String(t.cantidad).trim() !== ""
       );
 
       const newGrouping = {
-        color: currentVariant.color,
-        tallas: validTallas.map(t => ({ talla: t.talla, cantidad: Number(t.cantidad) }))
+        color: (currentVariant.color && currentVariant.color !== "—") ? currentVariant.color : "—",
+        tallas: validTallas.map(t => ({ 
+          talla: (t.talla && t.talla !== "—") ? t.talla : "—", 
+          cantidad: Number(t.cantidad) || 0 
+        }))
       };
 
       setVariants(prev => {

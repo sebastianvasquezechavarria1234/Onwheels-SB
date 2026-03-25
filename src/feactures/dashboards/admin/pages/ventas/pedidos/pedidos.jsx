@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   Package, ChevronDown, Hash, ChevronLeft, ChevronRight,
   Search, Plus, Pencil, Trash2, Eye, Download,
-  ShoppingBag, Calendar, CreditCard, Info, Clock, AlertCircle
+  ShoppingBag, Calendar, CreditCard, Info, Clock, AlertCircle, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -144,7 +144,6 @@ function Pedidos() {
     switch (estado) {
       case "Entregada": return "bg-emerald-50 text-emerald-700 border-emerald-100";
       case "Pendiente": return "bg-amber-50 text-amber-700 border-amber-100";
-      case "Procesada": return "bg-indigo-50 text-indigo-700 border-indigo-100";
       case "Cancelada": return "bg-rose-50 text-rose-700 border-rose-100";
       default: return "bg-slate-100 text-slate-600 border-slate-200";
     }
@@ -254,9 +253,16 @@ function Pedidos() {
                         ${(Number(v.total) || 0).toLocaleString()}
                       </td>
                       <td className={`${configUi.td} text-center`}>
-                        <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
-                          {v.estado}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
+                            {v.estado}
+                          </span>
+                          {v.estado === "Cancelada" && v.motivo_cancelacion && (
+                            <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
+                              Motivo: {v.motivo_cancelacion}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className={`${configUi.td} text-right`}>
                         <div className="flex items-center justify-end gap-1">
@@ -268,9 +274,11 @@ function Pedidos() {
                               <Pencil size={14} />
                             </button>
                           )}
-                          <button onClick={() => openModal("status", v)} className={cn(configUi.actionButton, "hover:bg-indigo-50 hover:text-indigo-600")} title="Estado">
-                            <Package size={14} />
-                          </button>
+                          {v.estado !== "Cancelada" && (
+                            <button onClick={() => openModal("status", v)} className={cn(configUi.actionButton, "hover:bg-indigo-50 hover:text-indigo-600")} title="Estado">
+                              <Package size={14} />
+                            </button>
+                          )}
                           <button onClick={() => openModal("eliminar", v)} className={cn(configUi.actionButton, "hover:bg-rose-50 hover:text-rose-600")} title="Eliminar">
                             <Trash2 size={14} />
                           </button>
@@ -368,7 +376,6 @@ function Pedidos() {
                             className={cn(configUi.fieldSelect, "pl-10")}
                           >
                             <option value="Pendiente">Pendiente</option>
-                            <option value="Procesada">Procesada</option>
                             <option value="Entregada">Entregada</option>
                             <option value="Cancelada">Cancelada</option>
                           </select>

@@ -99,24 +99,30 @@ export const ProductDetailsContent = () => {
     }
   });
 
+  // Detect if product has color or size options
+  const hasColorOptions = uniqueColors.length > 0;
+  const hasSizeOptions = (variantes || []).some(v => v.id_talla);
+
   let availableSizes = [];
-  if (selectedColor) {
-    availableSizes = variantes
-      .filter((v) => v.id_color === selectedColor.id && v.stock > 0)
+  if (hasSizeOptions) {
+    availableSizes = (variantes || [])
+      .filter((v) => (!hasColorOptions || v.id_color === selectedColor?.id) && (v.stock > 0 || v.stock === null))
       .map((v) => ({ id: v.id_talla, name: v.nombre_talla, stock: v.stock, id_variante: v.id_variante }));
   }
 
-  const currentVariant = selectedColor && selectedSize
-    ? variantes.find((v) => v.id_color === selectedColor.id && v.id_talla === selectedSize.id)
-    : null;
+  const currentVariant = (variantes || []).find((v) => {
+    const matchColor = hasColorOptions ? (v.id_color === selectedColor?.id) : (!v.id_color);
+    const matchSize = hasSizeOptions ? (v.id_talla === selectedSize?.id) : (!v.id_talla);
+    return matchColor && matchSize;
+  });
 
   const handleAddToCart = () => {
     if (variantes.length > 0) {
-      if (!selectedColor) {
+      if (hasColorOptions && !selectedColor) {
         toast.error("Por favor selecciona un color");
         return;
       }
-      if (!selectedSize) {
+      if (hasSizeOptions && !selectedSize) {
         toast.error("Por favor selecciona una talla");
         return;
       }
@@ -173,9 +179,15 @@ export const ProductDetailsContent = () => {
       return;
     }
 
-    if (variantes.length > 0 && (!selectedColor || !selectedSize)) {
-      toast.error("Selecciona color y talla para comprar");
-      return;
+    if (variantes.length > 0) {
+      if (hasColorOptions && !selectedColor) {
+        toast.error("Selecciona un color para comprar");
+        return;
+      }
+      if (hasSizeOptions && !selectedSize) {
+        toast.error("Selecciona una talla para comprar");
+        return;
+      }
     }
 
     try {
@@ -260,7 +272,7 @@ export const ProductDetailsContent = () => {
             </p>
 
             {/* Selectors */}
-            {uniqueColors.length > 0 && (
+            {hasColorOptions && (
               <div className="mb-8">
                 <span className="block text-xs font-bold text-[#9CA3AF] uppercase tracking-widest mb-4">Seleccionar Color</span>
                 <div className="flex flex-wrap gap-3">
@@ -281,16 +293,16 @@ export const ProductDetailsContent = () => {
               </div>
             )}
 
-            {uniqueColors.length > 0 && (
+            {hasSizeOptions && (
               <div className="mb-8 transition-opacity duration-300">
                 <div className="flex justify-between items-center mb-4">
                   <span className="block text-xs font-bold text-[#9CA3AF] uppercase tracking-widest">Seleccionar Talla</span>
-                  {!selectedColor && (
+                  {hasColorOptions && !selectedColor && (
                     <span className="text-xs text-red-400 font-medium">* Elige color primero</span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {selectedColor ? (
+                  {(!hasColorOptions || selectedColor) ? (
                     availableSizes.map((s) => (
                       <button
                         key={s.id}
@@ -300,7 +312,7 @@ export const ProductDetailsContent = () => {
                           ${selectedSize?.id === s.id
                             ? 'bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/30 scale-105'
                             : 'bg-[#121821] text-[#9CA3AF] border-gray-800 hover:border-gray-500 hover:text-white'}
-                          ${s.stock === 0 ? 'opacity-30 cursor-not-allowed bg-black decoration-slice line-through' : ''}
+                          ${s.stock === 0 ? 'opacity-30 cursor-not-allowed decoration-slice line-through' : ''}
                         `}
                       >
                         {s.name}

@@ -286,7 +286,7 @@ export default function VentaDetalle() {
                             <div className="space-y-4">
                                <label className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Dictamen de Cancelación:</label>
                                <div className="p-6 bg-black/10 rounded-3xl border border-white/5 italic text-sm font-medium leading-relaxed">
-                                  "{venta.justificacion_cancelacion || "Se procedió con la anulación por solicitud administrativa."}"
+                                  "{venta.motivo_cancelacion || "Se procedió con la anulación por solicitud administrativa."}"
                                </div>
                             </div>
                         </div>

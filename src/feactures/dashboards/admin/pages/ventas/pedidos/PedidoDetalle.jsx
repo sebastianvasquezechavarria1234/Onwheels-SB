@@ -299,10 +299,23 @@ export default function PedidoDetalle() {
             </div>
           </div>
           
-          <div className="flex items-center gap-3 px-8 text-slate-400">
-             <Info size={16} />
-             <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed italic italic">Esta visualización es un resumen digital. Para efectos legales use la factura impresa.</p>
-          </div>
+          {/* ANULACIÓN INFO (SOLO SI CANCELADA) */}
+          {(venta.estado === "Cancelada") && (
+              <div className="bg-rose-600 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
+                  <h3 className="text-lg font-extrabold mb-6 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center text-white backdrop-blur-md">
+                          <AlertCircle size={20} />
+                      </div>
+                      Registro de Anulación
+                  </h3>
+                  <div className="space-y-4">
+                      <label className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Dictamen de Cancelación:</label>
+                      <div className="p-6 bg-black/10 rounded-3xl border border-white/5 italic text-sm font-medium leading-relaxed">
+                          "{venta.motivo_cancelacion || "Se procedió con la anulación del pedido por solicitud administrativa."}"
+                      </div>
+                  </div>
+              </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { X, Search, Package, Plus, Image as ImageIcon, ExternalLink, ArrowLeft, CheckCircle, ShoppingCart } from "lucide-react";
+import { X, Search, Package, Plus, Image as ImageIcon, ExternalLink, ArrowLeft, CheckCircle, ShoppingCart, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { cn, configUi } from "../../configUi";
 
-export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
+export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = false, currentItems = [] }) => {
     const location = useLocation();
     const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const productPath = basePath === '/custom' ? 'productos' : 'products';
@@ -14,6 +14,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
     const [selectedVariant, setSelectedVariant] = useState(null);
     // BUG FIX: default to sale price (precio) not cost (precio_compra)
     const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
+    const [error, setError] = useState("");
 
     const filteredProducts = allProducts.filter(p =>
         p.nombre_producto?.toLowerCase().includes(productSearch.toLowerCase()) ||
@@ -23,12 +24,30 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
     const handleAddItem = () => {
         if (!selectedProduct || !selectedVariant) return;
 
+        const cantidad = parseInt(newItemData.cantidad) || 0;
+        if (cantidad <= 0) {
+            setError("La cantidad debe ser mayor a 0");
+            return;
+        }
+
+        if (checkStock) {
+            const existingItem = currentItems.find(it => it.id_variante === selectedVariant.id_variante);
+            const existingQty = existingItem ? existingItem.qty : 0;
+            const totalQty = existingQty + cantidad;
+
+            if (totalQty > selectedVariant.stock) {
+                setError(`Stock insuficiente. Ya tienes ${existingQty} en la lista. Máximo disponible: ${selectedVariant.stock}`);
+                return;
+            }
+        }
+
         onAdd({
             product: selectedProduct,
             variant: selectedVariant,
-            cantidad: parseInt(newItemData.cantidad) || 1,
+            cantidad: cantidad,
             precio_unitario: parseFloat(newItemData.precio_unitario) || 0
         });
+        setError("");
     };
 
     return (
@@ -98,6 +117,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
                                         onClick={() => {
                                             setSelectedProduct(p);
                                             setSelectedVariant(null);
+                                            setError("");
                                             // BUG FIX: use sale price (precio), not cost (precio_compra)
                                             setNewItemData({ cantidad: 1, precio_unitario: p.precio || "" });
                                         }}
@@ -177,7 +197,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
                                                 return (
                                                     <button
                                                         key={v.id_variante || v.id_producto_variante}
-                                                        onClick={() => { if (!outOfStock) setSelectedVariant(v); }}
+                                                        onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
                                                         disabled={outOfStock}
                                                         className={cn(
                                                             "p-3 rounded-xl border text-left transition-all",
@@ -252,6 +272,12 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts }) => {
                                                     <div className="text-xl font-black text-[#16315f] mt-0.5">
                                                         ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
                                                     </div>
+                                                    {error && (
+                                                        <div className="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1 animate-bounce">
+                                                            <AlertCircle size={12} />
+                                                            {error}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <button
                                                     onClick={handleAddItem}
