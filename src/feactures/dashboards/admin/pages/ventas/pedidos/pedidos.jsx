@@ -377,7 +377,6 @@ function Pedidos() {
                       <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">Los pedidos en estado Entregada impactan el stock final.</p>
                     </div>
 
-<<<<<<< HEAD
                     <AnimatePresence>
                       {statusFormEstado === 'Cancelada' && (
                         <motion.div 
@@ -398,20 +397,6 @@ function Pedidos() {
                       )}
                     </AnimatePresence>
                   </div>
-=======
-                    {statusFormEstado === 'Cancelada' && (
-                      <div className={configUi.fieldGroup}>
-                        <label className={configUi.fieldLabel}>Justificación Reglamentaria</label>
-                        <textarea
-                          value={cancelJustificacion}
-                          onChange={(e) => setCancelJustificacion(e.target.value)}
-                          placeholder="Describa el motivo de cancelación..."
-                          className={cn(configUi.fieldTextarea, "h-24 pt-4")}
-                        />
-                      </div>
-                    )}
-                  </form>
->>>>>>> 9c6bd4a6080a40daef3990d855cfce188d7a1d80
                 )}
               </div>
 
