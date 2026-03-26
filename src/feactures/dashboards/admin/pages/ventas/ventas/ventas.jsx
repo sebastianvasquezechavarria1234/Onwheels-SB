@@ -181,8 +181,8 @@ function Ventas() {
             {filtered.length} FACTURAS
           </span>
           <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-wider">
-             <TrendingUp size={12} />
-             CAJA: ${filtered.filter(v => v.estado !== 'Cancelada').reduce((acc, v) => acc + (Number(v.total) || 0), 0).toLocaleString()}
+            <TrendingUp size={12} />
+            CAJA: ${filtered.filter(v => v.estado !== 'Cancelada').reduce((acc, v) => acc + (Number(v.total) || 0), 0).toLocaleString()}
           </div>
         </div>
 
@@ -197,19 +197,19 @@ function Ventas() {
               className={configUi.inputWithIcon}
             />
           </div>
-          
+
           <div className="relative w-full sm:w-auto">
-             <select 
-               value={clienteFiltro}
-               onChange={(e) => { setClienteFiltro(e.target.value); setCurrentPage(1); }}
-               className={cn(configUi.select, "w-full min-w-[200px] h-12")}
-             >
-                <option value="todos">Todos los Clientes</option>
-                {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre_completo}</option>)}
-             </select>
-             <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
-               <ChevronDown size={18} />
-             </div>
+            <select
+              value={clienteFiltro}
+              onChange={(e) => { setClienteFiltro(e.target.value); setCurrentPage(1); }}
+              className={cn(configUi.select, "w-full min-w-[200px] h-12")}
+            >
+              <option value="todos">Todos los Clientes</option>
+              {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre_completo}</option>)}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
+              <ChevronDown size={18} />
+            </div>
           </div>
 
           <button onClick={() => fetchData()} className={configUi.iconButton} title="Refrescar">
@@ -245,12 +245,12 @@ function Ventas() {
             <tbody className="divide-y divide-[#d7e5f8]">
               {loading ? (
                 <tr>
-                   <td colSpan="7" className="p-20 text-center">
-                     <div className="flex flex-col items-center gap-4">
-                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Facturación...</p>
-                     </div>
-                   </td>
+                  <td colSpan="7" className={configUi.emptyState}>
+                    <div className="flex flex-col items-center gap-4 p-20">
+                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando base de datos...</p>
+                    </div>
+                  </td>
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr><td colSpan="7" className={configUi.emptyState}>Sin registros de ventas que coincidan.</td></tr>
@@ -263,173 +263,173 @@ function Ventas() {
                     </td>
                     <td className={configUi.td}>
                       <div className="flex items-center gap-3">
-                         <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
-                            <Calendar size={16} />
-                         </div>
-                         <div className="flex flex-col">
-                            <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
-                            <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-                               <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                          <Calendar size={16} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                            <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
 =======
                   currentItems.map((v) => (
                     <tr key={v.id_venta} className={configUi.row}>
-                      <td className={configUi.td}>
-                        <span className="text-xs font-extrabold text-[#16315f] font-mono">#{v.id_venta}</span>
-                      </td>
-                      <td className={configUi.td}>
-                        <div className="flex items-center gap-3">
-                           <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
-                              <Calendar size={16} />
-                           </div>
-                           <div className="flex flex-col">
-                              <span className="text-xs font-bold text-[#16315f]">{new Date(v.fecha_venta).toLocaleDateString()}</span>
-                              <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-                                 <Clock size={10} /> {new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                           </div>
-                        </div>
-                      </td>
-                      <td className={configUi.td}>
-                        <div className="flex flex-col">
-                           <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
-                           <span className="text-[10px] text-slate-400 font-medium">Método: {v.metodo_pago?.toUpperCase()}</span>
-                        </div>
-                      </td>
-                      <td className={`${configUi.td} text-center`}>
-                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
-                           <Package size={12} className="text-slate-400" />
-                           <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
-                        </div>
-                      </td>
-                      <td className={`${configUi.td} text-center font-extrabold text-[#16315f] text-sm`}>
-                        ${(Number(v.total) || 0).toLocaleString()}
-                      </td>
-                      <td className={`${configUi.td} text-center`}>
-                        <div className="flex flex-col items-center gap-1">
-                          <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
-                            {v.estado}
-                          </span>
-                          {v.estado === "Cancelada" && v.motivo_cancelacion && (
-                            <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
-                              Motivo: {v.motivo_cancelacion}
+                              <td className={configUi.td}>
+                                <span className="text-xs font-extrabold text-[#16315f] font-mono">#{v.id_venta}</span>
+                              </td>
+                              <td className={configUi.td}>
+                                <div className="flex items-center gap-3">
+                                  <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                                    <Calendar size={16} />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-[#16315f]">{new Date(v.fecha_venta).toLocaleDateString()}</span>
+                                    <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                                      <Clock size={10} /> {new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className={configUi.td}>
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
+                                  <span className="text-[10px] text-slate-400 font-medium">Método: {v.metodo_pago?.toUpperCase()}</span>
+                                </div>
+                              </td>
+                              <td className={`${configUi.td} text-center`}>
+                                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                                  <Package size={12} className="text-slate-400" />
+                                  <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
+                                </div>
+                              </td>
+                              <td className={`${configUi.td} text-center font-extrabold text-[#16315f] text-sm`}>
+                                ${(Number(v.total) || 0).toLocaleString()}
+                              </td>
+                              <td className={`${configUi.td} text-center`}>
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
+                                    {v.estado}
+                                  </span>
+                                  {v.estado === "Cancelada" && v.motivo_cancelacion && (
+                                    <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
+                                      Motivo: {v.motivo_cancelacion}
 >>>>>>> 9c6bd4a6080a40daef3990d855cfce188d7a1d80
-                            </span>
+                                    </span>
                          </div>
-                      </div>
-                    </td>
-                    <td className={configUi.td}>
-                      <div className="flex flex-col">
-                         <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
-                         <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
-                      </div>
-                    </td>
-                    <td className={`${configUi.td} text-center`}>
-                      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
-                         <Package size={12} className="text-slate-400" />
-                         <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
-                      </div>
-                    </td>
-                    <td className={`${configUi.td} text-right font-extrabold text-[#16315f] text-sm tabular-nums`}>
-                      ${(Number(v.total) || 0).toLocaleString()}
-                    </td>
-                    <td className={`${configUi.td} text-center`}>
-                      <div className="flex flex-col items-center gap-1">
-                        <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border", getStatusStyle(v.estado))}>
-                          {v.estado}
-                        </span>
-                        {v.estado === "Cancelada" && v.motivo_cancelacion && (
-                          <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
-                            {v.motivo_cancelacion}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className={`${configUi.td} text-right`}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => navigate(`${basePath}/ventas/detalle/${v.id_venta}`)} className={configUi.actionButton} title="Detalle">
-                          <Eye size={14} />
-                        </button>
-                        {v.estado !== "Cancelada" && (
-                          <button onClick={() => openModal("status", v)} className={configUi.actionButton} title="Estado">
-                            <Package size={14} />
-                          </button>
-                        )}
-                        {v.estado !== "Cancelada" && (
-                          <button onClick={() => openModal("cancelar", v)} className={configUi.actionDangerButton} title="Anular">
-                            <Ban size={14} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                              </div>
+                            </td>
+                            <td className={configUi.td}>
+                              <div className="flex flex-col">
+                                <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
+                                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
+                              </div>
+                            </td>
+                            <td className={`${configUi.td} text-center`}>
+                              <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                                <Package size={12} className="text-slate-400" />
+                                <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
+                              </div>
+                            </td>
+                            <td className={`${configUi.td} text-right font-extrabold text-[#16315f] text-sm tabular-nums`}>
+                              ${(Number(v.total) || 0).toLocaleString()}
+                            </td>
+                            <td className={`${configUi.td} text-center`}>
+                              <div className="flex flex-col items-center gap-1">
+                                <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border", getStatusStyle(v.estado))}>
+                                  {v.estado}
+                                </span>
+                                {v.estado === "Cancelada" && v.motivo_cancelacion && (
+                                  <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
+                                    {v.motivo_cancelacion}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className={`${configUi.td} text-right`}>
+                              <div className="flex items-center justify-end gap-1">
+                                <button onClick={() => navigate(`${basePath}/ventas/detalle/${v.id_venta}`)} className={configUi.actionButton} title="Detalle">
+                                  <Eye size={14} />
+                                </button>
+                                {v.estado !== "Cancelada" && (
+                                  <button onClick={() => openModal("status", v)} className={configUi.actionButton} title="Estado">
+                                    <Package size={14} />
+                                  </button>
+                                )}
+                                {v.estado !== "Cancelada" && (
+                                  <button onClick={() => openModal("cancelar", v)} className={configUi.actionDangerButton} title="Anular">
+                                    <Ban size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          ))
               )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer */}
-        {totalPages > 1 && (
-          <div className={configUi.paginationBar}>
-            <p className="text-sm font-bold text-[#6b84aa]">
-              Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
-            </p>
-            <div className="flex items-center gap-2">
-              <button 
-                disabled={currentPage === 1} 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                className={configUi.paginationButton}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button 
-                disabled={currentPage === totalPages} 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
-                className={configUi.paginationButton}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Modales */}
-      <AnimatePresence>
-        {modal && (
-          <motion.div
-            className={configUi.modalBackdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
-          >
-            <motion.div
-              className={cn(configUi.modalPanel, modal === 'cancelar' ? "max-w-md" : "max-w-lg")}
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={configUi.modalHeader}>
-                <div>
-                  <h3 className={configUi.modalTitle}>
-                    {modal === 'cancelar' ? 'Anulación de Factura' : 'Control Operativo'}
-                  </h3>
-                  <p className={configUi.modalSubtitle}>ID Factura: #{selectedVenta?.id_venta}</p>
-                </div>
-                <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
-              </div>
-              <div className={configUi.modalContent}>
-                {modal === 'cancelar' ? (
-                  <form id="cancel-form" onSubmit={handleCancel} className="space-y-4 py-1 text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 shadow-inner">
-                      <Ban size={32} strokeWidth={1.5} />
+                        </tbody>
+                      </table>
                     </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-sm font-black text-[#16315f]">¿Está seguro de anular esta factura?</p>
-                      <p className="text-[10px] text-slate-400 italic leading-tight">Esta acción revertirá los movimientos contables y de stock asociados.</p>
-                    </div>
+
+                    {/* Pagination Footer */}
+                    {totalPages > 1 && (
+                      <div className={configUi.paginationBar}>
+                        <p className="text-sm font-bold text-[#6b84aa]">
+                          Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className={configUi.paginationButton}
+                          >
+                            <ChevronLeft size={18} />
+                          </button>
+                          <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            className={configUi.paginationButton}
+                          >
+                            <ChevronRight size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+      {/* Modales */ }
+                  < AnimatePresence >
+                  { modal && (
+                    <motion.div
+                      className={configUi.modalBackdrop}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={closeModal}
+                    >
+                      <motion.div
+                        className={cn(configUi.modalPanel, modal === 'cancelar' ? "max-w-md" : "max-w-lg")}
+                        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className={configUi.modalHeader}>
+                          <div>
+                            <h3 className={configUi.modalTitle}>
+                              {modal === 'cancelar' ? 'Anulación de Factura' : 'Control Operativo'}
+                            </h3>
+                            <p className={configUi.modalSubtitle}>ID Factura: #{selectedVenta?.id_venta}</p>
+                          </div>
+                          <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
+                        </div>
+                        <div className={configUi.modalContent}>
+                          {modal === 'cancelar' ? (
+                            <form id="cancel-form" onSubmit={handleCancel} className="space-y-4 py-1 text-center">
+                              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 shadow-inner">
+                                <Ban size={32} strokeWidth={1.5} />
+                              </div>
+                              <div className="text-center space-y-1">
+                                <p className="text-sm font-black text-[#16315f]">¿Está seguro de anular esta factura?</p>
+                                <p className="text-[10px] text-slate-400 italic leading-tight">Esta acción revertirá los movimientos contables y de stock asociados.</p>
+                              </div>
 
 <<<<<<< HEAD
                 <div className={configUi.modalContent}>
@@ -524,23 +524,24 @@ function Ventas() {
                   <button onClick={handleStatusUpdate} className={configUi.primaryButton}>Actualizar Registro</button>
                 )}
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div >
+          </motion.div >
+        )
+}
+      </AnimatePresence >
 
-      <AnimatePresence>
-        {notification.show && (
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-            className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3", 
-            notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
-          >
-            {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-            {notification.message}
-          </motion.div>
-        )}
-      </AnimatePresence>
+  <AnimatePresence>
+    {notification.show && (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+        className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+          notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
+      >
+        {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+        {notification.message}
+      </motion.div>
+    )}
+  </AnimatePresence>
     </div >
   );
 }
