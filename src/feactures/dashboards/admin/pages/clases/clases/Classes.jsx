@@ -408,6 +408,27 @@ export const Clases = () => {
     setFormData(prev => ({ ...prev, instructores: prev.instructores.filter((_, i) => i !== index) }));
   };
 
+  const toggleDia = (dia) => {
+    setFormData(prev => {
+      const currentDays = prev.dia_semana ? prev.dia_semana.split(", ").filter(Boolean) : [];
+      let newDays;
+      if (currentDays.includes(dia)) {
+        newDays = currentDays.filter(d => d !== dia);
+      } else {
+        const order = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+        newDays = [...currentDays, dia].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+      }
+      return { ...prev, dia_semana: newDays.join(", ") };
+    });
+    if (formErrors.dia_semana) {
+      setFormErrors(prev => {
+        const newErrs = { ...prev };
+        delete newErrs.dia_semana;
+        return newErrs;
+      });
+    }
+  };
+
   return (
     <>
       <div className={configUi.pageShell}>
@@ -845,17 +866,41 @@ export const Clases = () => {
                             {/* Step 2 Right: Schedule & More */}
                             <div className="flex-1 space-y-6">
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div className={configUi.fieldGroup}>
-                                  <label className={configUi.fieldLabel}>Planificación (Día)</label>
+                                <div className={cn(configUi.fieldGroup, "col-span-full")}>
+                                  <label className={configUi.fieldLabel}>Planificación Semanal (Días de Clase)</label>
                                   {modal === "ver" ? (
-                                    <div className={configUi.readOnlyField}>{formData.dia_semana || "—"}</div>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                      {formData.dia_semana ? (
+                                        formData.dia_semana.split(", ").map(day => (
+                                          <span key={day} className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-wider rounded-lg border border-indigo-100">
+                                            {day}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span className="text-slate-400 italic text-xs">Sin días definidos</span>
+                                      )}
+                                    </div>
                                   ) : (
-                                    <select name="dia_semana" value={formData.dia_semana} onChange={handleChange} className={cn(configUi.fieldSelect, formErrors.dia_semana && "border-red-300 bg-red-50/20")}>
-                                      <option value="">Seleccionar Día</option>
-                                      {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(d => (
-                                        <option key={d} value={d}>{d}</option>
-                                      ))}
-                                    </select>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                                      {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(d => {
+                                        const isSelected = formData.dia_semana?.split(", ").includes(d);
+                                        return (
+                                          <button
+                                            type="button"
+                                            key={d}
+                                            onClick={() => toggleDia(d)}
+                                            className={cn(
+                                              "h-10 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border shrink-0",
+                                              isSelected
+                                                ? "bg-[#16315f] text-white border-[#16315f] shadow-sm shadow-[#16315f]/20"
+                                                : "bg-white text-slate-500 border-slate-200 hover:border-indigo-200 hover:bg-slate-50"
+                                            )}
+                                          >
+                                            {d.substring(0, 3)}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
                                   )}
                                   {formErrors.dia_semana && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1"><AlertCircle size={10} className="inline mr-1" /> {formErrors.dia_semana}</p>}
                                 </div>

@@ -167,10 +167,10 @@ export default function Sedes() {
     };
 
     try {
-      if (modal === "add") {
+      if (modal === "crear") {
         await createSede(payload);
         showNotification("Sede creada con éxito");
-      } else if (modal === "edit" && selected) {
+      } else if (modal === "editar" && selected) {
         await updateSede(selected.id_sede, payload);
         showNotification("Sede actualizada");
       }
@@ -261,7 +261,7 @@ export default function Sedes() {
         <div className={configUi.headerRow}>
           <div className={configUi.titleWrap}>
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
-               Sedes
+              Sedes
             </h2>
             <span className={configUi.countBadge}>{sedes.length} sedes</span>
           </div>
@@ -307,7 +307,7 @@ export default function Sedes() {
             </div>
 
             <button
-              onClick={() => openModal("add")}
+              onClick={() => openModal("crear")}
               className={`${configUi.primaryButton} whitespace-nowrap`}
             >
               <Plus size={18} />
@@ -358,9 +358,9 @@ export default function Sedes() {
                         <td className={`${configUi.td} text-gray-600`}>{s.telefono}</td>
                         <td className={`${configUi.td} text-right`}>
                           <div className="flex items-center justify-end gap-1.5">
-                            <button onClick={() => openModal("details", s)} className={configUi.actionButton} title="Ver"><Eye size={14} strokeWidth={2.5} /></button>
-                            <button onClick={() => openModal("edit", s)} className={configUi.actionButton} title="Editar"><Pencil size={14} strokeWidth={2.5} /></button>
-                            <button onClick={() => openModal("delete", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} strokeWidth={2.5} /></button>
+                            <button onClick={() => openModal("ver", s)} className={configUi.actionButton} title="Ver Detalle"><Eye size={14} strokeWidth={2.5} /></button>
+                            <button onClick={() => openModal("editar", s)} className={configUi.actionButton} title="Editar"><Pencil size={14} strokeWidth={2.5} /></button>
+                            <button onClick={() => openModal("eliminar", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} strokeWidth={2.5} /></button>
                           </div>
                         </td>
                       </tr>
@@ -434,12 +434,12 @@ export default function Sedes() {
                     <div className={configUi.modalHeader}>
                       <div>
                         <h3 className={configUi.modalTitle}>
-                          {modal === "crear" ? "Nueva Sede" :
-                            modal === "editar" ? "Editar Sede" :
-                              modal === "ver" ? "Detalles de Sede" : "Eliminar Sede"}
+                          {modal === "crear" ? "Registrar Nueva Sede" :
+                            modal === "editar" ? "Modificar Información de Sede" :
+                              modal === "ver" ? "Detalle de la Sede" : "Eliminar Sede"}
                         </h3>
                         <p className={configUi.modalSubtitle}>
-                          {modal === "eliminar" ? "Confirme si desea remover esta ubicación." : "Información de la ubicación física."}
+                          {modal === "eliminar" ? "Confirme si desea remover esta ubicación." : "Gestión de la ubicación física y contacto."}
                         </p>
                       </div>
                       <button onClick={closeModal} className={configUi.modalClose} disabled={submitting}>
@@ -448,7 +448,7 @@ export default function Sedes() {
                     </div>
 
                     <div className={configUi.modalContent}>
-                      {modal === "delete" || modal === "eliminar" ? (
+                      {modal === "eliminar" ? (
                         <div className="py-4 text-center">
                           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
                             <Trash2 size={30} />
@@ -458,7 +458,7 @@ export default function Sedes() {
                             ¿Estás seguro de eliminar la sede <span className="font-bold text-[#d44966]">{selected?.nombre_sede}</span>?
                             <br />Esta acción no se puede deshacer.
                           </p>
-                          
+
                           <ModalErrorAlert error={modalError} />
                         </div>
                       ) : (
@@ -551,17 +551,17 @@ export default function Sedes() {
                         <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>
                           {modal === "ver" ? "Cerrar" : "Cancelar"}
                         </button>
-                        {(modal === "crear" || modal === "add") && (
+                        {modal === "crear" && (
                           <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
-                            {submitting ? "Creando..." : "Crear Sede"}
+                            {submitting ? "Creando..." : "Registrar Sede"}
                           </button>
                         )}
-                        {(modal === "editar" || modal === "edit") && (
+                        {modal === "editar" && (
                           <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
                             {submitting ? "Actualizando..." : "Guardar Cambios"}
                           </button>
                         )}
-                        {(modal === "eliminar" || modal === "delete") && !modalError && (
+                        {modal === "eliminar" && !modalError && (
                           <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>
                             {submitting ? "Eliminando..." : "Confirmar Eliminación"}
                           </button>

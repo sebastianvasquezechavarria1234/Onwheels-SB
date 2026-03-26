@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { AdminLayout } from "../layout/AdminLayout"
-import { Mail, Phone, User, Edit, Save, X, Camera } from "lucide-react"
+import { Mail, Phone, User, Edit, Save, X, Camera, Star, Zap, MapPin, Shield } from "lucide-react"
 import api from "../../../../services/api"
+
+const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 export const AdminProfile = () => {
   const [userData, setUserData] = useState(null)
@@ -14,7 +16,7 @@ export const AdminProfile = () => {
   const [formData, setFormData] = useState({
     nombre_completo: "",
     telefono: "",
-    email: "", // Generalmente el email no se debería editar tan fácil, pero lo pondré como disabled si se desea
+    email: "", 
     documento: "",
     tipo_documento: "",
     foto_perfil: null
@@ -26,18 +28,15 @@ export const AdminProfile = () => {
 
   const fetchUserData = async () => {
     try {
-      // 1. Obtener ID del usuario del localStorage
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}")
       if (!storedUser.id_usuario) {
         setLoading(false)
         return
       }
 
-      // 2. Llamada real a la API
       const response = await api.get(`/usuarios/${storedUser.id_usuario}`)
       setUserData(response.data)
 
-      // Inicializar form data
       setFormData({
         nombre_completo: response.data.nombre_completo || "",
         telefono: response.data.telefono || "",
@@ -66,33 +65,24 @@ export const AdminProfile = () => {
     try {
       if (!userData?.id_usuario) return
 
-      // Llamada a la API para actualizar
-      // Nota: El backend espera currentPassword si se cambia la contraseña. 
-      // Aquí estamos editando perfil básico, así que solo enviamos datos básicos.
       await api.put(`/usuarios/${userData.id_usuario}`, {
         nombre_completo: formData.nombre_completo,
         telefono: formData.telefono,
-        // email: formData.email, // Depende si permitimos cambiar email
-        // documento: formData.documento // Depende si permitimos cambiar documento
       })
 
-      // Subir foto si la hay
       if (formData.foto_perfil) {
         const formDataImg = new FormData();
         formDataImg.append("foto_perfil", formData.foto_perfil);
         const photoRes = await api.post(`/usuarios/${userData.id_usuario}/foto`, formDataImg);
         
-        // Actualizar user en local storage
         const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
         currentUserData.foto_perfil = photoRes.data?.foto_perfil || photoRes.data?.secure_url;
         localStorage.setItem("user", JSON.stringify(currentUserData));
         window.dispatchEvent(new Event("storage")); 
       }
 
-      // Actualizar vista y cerrar edición
       await fetchUserData()
       setEditing(false)
-      // Mostrar feedback de éxito (ajustar según librería de UI)
       alert("Perfil actualizado correctamente")
     } catch (error) {
       console.error("Error updating profile:", error)
@@ -104,8 +94,8 @@ export const AdminProfile = () => {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        <div className="min-h-screen bg-[#0B0F14] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A8A]"></div>
         </div>
       </AdminLayout>
     )
@@ -113,175 +103,197 @@ export const AdminProfile = () => {
 
   return (
     <AdminLayout>
-      <section className="p-[30px] pt-[150px] w-full flex flex-col items-center">
-
-        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm p-8 border border-gray-100">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 font-primary">Mi Perfil</h2>
-            {!editing && (
-              <button
-                onClick={() => setEditing(true)}
-                className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
-              >
-                <Edit size={18} />
-                <span>Editar</span>
-              </button>
-            )}
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
+        <div className="max-w-[800px] mx-auto px-4 sm:px-6">
+          
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
+                <User className="text-[#3b82f6]" size={36} />
+                Mi Perfil
+              </h2>
+              <p className="text-[#9CA3AF] mt-2 font-medium">Panel Administrativo • Gestiona tu identidad</p>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center mb-8">
-            <div className="relative group cursor-pointer">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-50 bg-emerald-100 flex items-center justify-center shadow-sm">
-                {userData?.preview_foto || userData?.foto_perfil || userData?.imagen ? (
-                  <img src={userData.preview_foto || userData.foto_perfil || userData.imagen} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <User size={48} className="text-emerald-400" />
+          <div className="bg-[#121821] border border-gray-800 rounded-[2rem] p-8 md:p-12 shadow-xl hover:shadow-[#1E3A8A]/5 hover:border-gray-700 transition-all group relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#1E3A8A]/10 rounded-full blur-[80px] group-hover:bg-[#1E3A8A]/20 transition-all pointer-events-none"></div>
+
+            <div className="flex flex-col md:flex-row gap-10 items-center md:items-start relative z-10">
+
+              {/* Avatar Section */}
+              <div className="flex flex-col items-center">
+                <div className="relative group/avatar cursor-pointer">
+                  <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/20 bg-[#0B0F14] flex items-center justify-center">
+                    {userData?.preview_foto || userData?.foto_perfil || userData?.imagen ? (
+                      <img
+                        src={userData.preview_foto || userData.foto_perfil || userData.imagen}
+                        alt="Avatar"
+                        className="w-full h-full object-cover group-hover/avatar:opacity-50 transition-all"
+                      />
+                    ) : (
+                      <User size={64} className="text-gray-700" />
+                    )}
+                    
+                    <label className={cn(
+                        "absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer text-white",
+                        editing && "opacity-100"
+                    )}>
+                      <Camera className="text-white drop-shadow-lg" size={32} />
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                         if(e.target.files && e.target.files[0]) {
+                            setFormData(p => ({...p, foto_perfil: e.target.files[0]}));
+                            setUserData(p => ({...p, preview_foto: URL.createObjectURL(e.target.files[0])}));
+                         }
+                      }} />
+                    </label>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 bg-[#1E3A8A] text-white w-10 h-10 rounded-full border-4 border-[#121821] flex items-center justify-center shadow-md">
+                    <Shield size={16} fill="currentColor" />
+                  </div>
+                </div>
+                {editing && (
+                  <span className="mt-4 text-[10px] font-bold text-[#3b82f6] uppercase tracking-wider animate-pulse">
+                    Cambiar imagen
+                  </span>
                 )}
               </div>
-              {/* Overlay para cambiar foto (visual por ahora) */}
-              {editing && (
-                <label className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer">
-                  <Camera size={28} />
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                    if(e.target.files && e.target.files[0]) {
-                       setFormData(p => ({...p, foto_perfil: e.target.files[0]}));
-                       setUserData(p => ({...p, preview_foto: URL.createObjectURL(e.target.files[0])}));
-                    }
-                  }} />
-                </label>
+
+              {/* Info Section */}
+              <div className="flex-1 text-center md:text-left w-full">
+                <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                  <span className={cn(
+                      "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all",
+                      userData?.estado ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"
+                  )}>
+                    <Zap size={10} fill="currentColor" />
+                    {userData?.estado ? "Panel Activo" : "Cuenta Restringida"}
+                  </span>
+                </div>
+
+                {!editing ? (
+                  <>
+                    <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">
+                      {userData?.nombre_completo || "Administrador"}
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 text-left">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <Phone size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
+                        </div>
+                        <span className="font-medium text-white pl-5">{userData?.telefono || "No especificado"}</span>
+                      </div>
+
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 text-left">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <Mail size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Email</span>
+                        </div>
+                        <span className="font-medium text-white pl-5 break-all">{userData?.email || "No especificado"}</span>
+                      </div>
+
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2 text-left">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <MapPin size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Documento de Identidad</span>
+                        </div>
+                        <span className="font-medium text-white pl-5">{userData?.tipo_documento} {userData?.documento}</span>
+                      </div>
+
+                      <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2 text-left">
+                        <div className="flex items-center gap-2 text-[#9CA3AF]">
+                          <Shield size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Jerarquía</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 pl-5 mt-2">
+                          {userData?.roles && userData.roles.length > 0 ? (
+                            userData.roles.map((rol, idx) => (
+                              <span key={idx} className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-[#1E3A8A]/30">
+                                {rol.nombre_rol || rol}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-sm font-medium text-gray-400">Sin roles registrados</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <form onSubmit={handleSubmit} className="w-full space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-2 block">Nombre Completo</label>
+                        <input
+                          type="text"
+                          name="nombre_completo"
+                          value={formData.nombre_completo}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#0B0F14] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#3b82f6] transition-all font-medium"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-2 block">Teléfono</label>
+                        <input
+                          type="tel"
+                          name="telefono"
+                          value={formData.telefono}
+                          onChange={handleInputChange}
+                          className="w-full bg-[#0B0F14] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#3b82f6] transition-all font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-2 block opacity-50">Email (Sólo lectura)</label>
+                        <input
+                          type="email"
+                          value={formData.email}
+                          disabled
+                          className="w-full bg-[#0B0F14]/50 border border-gray-800 rounded-xl px-4 py-3 text-gray-500 cursor-not-allowed font-medium"
+                        />
+                      </div>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-10 pt-8 border-t border-gray-800 flex flex-col sm:flex-row gap-4 justify-end h-[60px]">
+              {!editing ? (
+                <button 
+                  onClick={() => setEditing(true)}
+                  className="px-8 py-3 bg-[#1E3A8A] text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 flex items-center justify-center gap-2 group"
+                >
+                  <Edit size={14} className="group-hover:rotate-12 transition-transform" />
+                  Editar Mi Perfil
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(false)}
+                    className="px-8 py-3 bg-[#0B0F14] border border-gray-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+                  >
+                    <X size={14} />
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                  >
+                    <Save size={14} />
+                    Confirmar Cambios
+                  </button>
+                </>
               )}
             </div>
 
-            <div className="mt-4 text-center">
-              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${userData?.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                {userData?.estado ? 'Cuenta Activa' : 'Cuenta Inactiva'}
-              </span>
-              <h3 className="mt-2 text-xl font-bold text-gray-900">{userData?.nombre_completo}</h3>
-              <p className="text-gray-500">{userData?.email}</p>
-            </div>
           </div>
-
-          {!editing ? (
-            // VISTA DE LECTURA
-            <div className="grid gap-6">
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                  <Phone size={20} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">Teléfono</p>
-                  <p className="text-gray-900 font-medium">{userData?.telefono || "No registrado"}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                  <User size={20} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">Documento</p>
-                  <p className="text-gray-900 font-medium">
-                    {userData?.tipo_documento} {userData?.documento}
-                  </p>
-                </div>
-              </div>
-
-              {/* Roles */}
-              <div className="p-4 bg-gray-50 rounded-2xl">
-                <p className="text-sm text-gray-500 font-medium mb-3">Roles asignados</p>
-                <div className="flex flex-wrap gap-2">
-                  {userData?.roles?.map((rol, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium">
-                      {rol.nombre_rol || rol}
-                    </span>
-                  ))}
-                  {(!userData?.roles || userData.roles.length === 0) && (
-                    <span className="text-gray-400 text-sm italic">Sin roles asignados</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            // VISTA DE EDICIÓN
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                  <input
-                    type="text"
-                    name="nombre_completo"
-                    value={formData.nombre_completo}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                  <input
-                    type="tel"
-                    name="telefono"
-                    value={formData.telefono}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo Doc.</label>
-                    <input
-                      type="text"
-                      value={formData.tipo_documento}
-                      disabled
-                      className="w-full px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Número Doc.</label>
-                    <input
-                      type="text"
-                      value={formData.documento}
-                      disabled
-                      className="w-full px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    disabled
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">El email no se puede editar.</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <X size={18} />
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
-                >
-                  <Save size={18} />
-                  Guardar Cambios
-                </button>
-              </div>
-            </form>
-          )}
-
         </div>
       </section>
     </AdminLayout>

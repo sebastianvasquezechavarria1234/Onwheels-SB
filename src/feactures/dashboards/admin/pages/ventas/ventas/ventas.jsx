@@ -181,8 +181,8 @@ function Ventas() {
             {filtered.length} FACTURAS
           </span>
           <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-wider">
-             <TrendingUp size={12} />
-             CAJA: ${filtered.filter(v => v.estado !== 'Cancelada').reduce((acc, v) => acc + (Number(v.total) || 0), 0).toLocaleString()}
+            <TrendingUp size={12} />
+            CAJA: ${filtered.filter(v => v.estado !== 'Cancelada').reduce((acc, v) => acc + (Number(v.total) || 0), 0).toLocaleString()}
           </div>
         </div>
 
@@ -197,19 +197,19 @@ function Ventas() {
               className={configUi.inputWithIcon}
             />
           </div>
-          
+
           <div className="relative w-full sm:w-auto">
-             <select 
-               value={clienteFiltro}
-               onChange={(e) => { setClienteFiltro(e.target.value); setCurrentPage(1); }}
-               className={cn(configUi.select, "w-full min-w-[200px] h-12")}
-             >
-                <option value="todos">Todos los Clientes</option>
-                {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre_completo}</option>)}
-             </select>
-             <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
-               <ChevronDown size={18} />
-             </div>
+            <select
+              value={clienteFiltro}
+              onChange={(e) => { setClienteFiltro(e.target.value); setCurrentPage(1); }}
+              className={cn(configUi.select, "w-full min-w-[200px] h-12")}
+            >
+              <option value="todos">Todos los Clientes</option>
+              {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre_completo}</option>)}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
+              <ChevronDown size={18} />
+            </div>
           </div>
 
           <button onClick={() => fetchData()} className={configUi.iconButton} title="Refrescar">
@@ -245,12 +245,12 @@ function Ventas() {
             <tbody className="divide-y divide-[#d7e5f8]">
               {loading ? (
                 <tr>
-                   <td colSpan="7" className="p-20 text-center">
-                     <div className="flex flex-col items-center gap-4">
-                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Facturación...</p>
-                     </div>
-                   </td>
+                  <td colSpan="7" className={configUi.emptyState}>
+                    <div className="flex flex-col items-center gap-4 p-20">
+                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando base de datos...</p>
+                    </div>
+                  </td>
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr><td colSpan="7" className={configUi.emptyState}>Sin registros de ventas que coincidan.</td></tr>
@@ -262,27 +262,27 @@ function Ventas() {
                     </td>
                     <td className={configUi.td}>
                       <div className="flex items-center gap-3">
-                         <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
-                            <Calendar size={16} />
-                         </div>
-                         <div className="flex flex-col">
-                            <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
-                            <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-                               <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
-                            </span>
-                         </div>
+                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                          <Calendar size={16} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                            <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className={configUi.td}>
                       <div className="flex flex-col">
-                         <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
-                         <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
+                        <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
                       </div>
                     </td>
                     <td className={`${configUi.td} text-center`}>
                       <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
-                         <Package size={12} className="text-slate-400" />
-                         <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
+                        <Package size={12} className="text-slate-400" />
+                        <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
                       </div>
                     </td>
                     <td className={`${configUi.td} text-right font-extrabold text-[#16315f] text-sm tabular-nums`}>
@@ -331,16 +331,16 @@ function Ventas() {
               Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
             </p>
             <div className="flex items-center gap-2">
-              <button 
-                disabled={currentPage === 1} 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 className={configUi.paginationButton}
               >
                 <ChevronLeft size={18} />
               </button>
-              <button 
-                disabled={currentPage === totalPages} 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 className={configUi.paginationButton}
               >
                 <ChevronRight size={18} />
@@ -387,7 +387,6 @@ function Ventas() {
                       <p className="text-sm font-black text-[#16315f] uppercase tracking-tight">¿Confirmar anulación de factura?</p>
                       <p className="text-[11px] text-slate-400 font-medium leading-relaxed">Esta acción revertirá los movimientos contables y reintegrará el stock de los productos asociados.</p>
                     </div>
-                    
                     <div className={cn(configUi.fieldGroup, "text-left mt-6")}>
                       <label className={configUi.fieldLabel}>Justificación Reglamentaria *</label>
                       <textarea
@@ -439,17 +438,17 @@ function Ventas() {
 
       <AnimatePresence>
         {notification.show && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-            className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3", 
-            notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
+            className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+              notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
           >
             {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
             {notification.message}
           </motion.div>
         )}
       </AnimatePresence>
-    </div >
+    </div>
   );
 }
 

@@ -453,6 +453,14 @@ export default function Eventos() {
                                   </div>
                                   {formErrors.hora_aproximada_fin && <p className="text-[10px] text-red-500 font-bold mt-1">{formErrors.hora_aproximada_fin}</p>}
                                </div>
+
+                               <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Estado del Evento</label>
+                                  <select name="estado" value={form.estado} onChange={handleChange} disabled={modal === "ver"} className={configUi.fieldSelect}>
+                                     <option value="activo">Activo</option>
+                                     <option value="inactivo">Inactivo</option>
+                                  </select>
+                               </div>
                             </div>
                           ) : (
                             <div className="space-y-4">

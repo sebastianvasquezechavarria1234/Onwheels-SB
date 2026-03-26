@@ -11,11 +11,13 @@ import {
   AlertTriangle,
   Lock,
   Pencil,
-  RefreshCw
+  RefreshCw,
+  MapPin
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { configUi, cn } from "../../admin/pages/configuracion/configUi";
 import { useAuth } from "../../dinamico/context/AuthContext";
+
 
 export const CustomProfile = () => {
   const { user, refreshUser } = useAuth();
@@ -30,6 +32,7 @@ export const CustomProfile = () => {
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
+
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -71,142 +74,137 @@ export const CustomProfile = () => {
   }
 
   return (
-    <div className={configUi.pageShell}>
-        {/* Header */}
-        <div className={configUi.headerRow}>
-          <div className={configUi.titleWrap}>
-            <h2 className={configUi.title}>Mi Perfil</h2>
-            <span className={configUi.countBadge}>
-              CONFIGURACIÓN PERSONAL
-            </span>
-          </div>
-          <div className={configUi.toolbar}>
-            <button 
-              onClick={() => refreshUser()} 
-              className={cn(configUi.secondaryButton, "px-4")}
-            >
-              <RefreshCw size={14} />
-              Sincronizar
-            </button>
-          </div>
+    <div className={cn(configUi.pageShell, "pt-[160px] bg-[#0B0F14]")}>
+      {/* Header */}
+      <div className={configUi.headerRow}>
+        <div className={configUi.titleWrap}>
+          <h2 className={cn(configUi.title, "!text-white")}>Mi Perfil</h2>
+          <span className={configUi.countBadge}>CONFIGURACIÓN PERSONAL</span>
         </div>
+      </div>
 
-        <div className="flex-1 flex flex-col lg:flex-row gap-8 mt-6 overflow-hidden">
-          {/* Left Side - Avatar & Summary */}
-          <div className="w-full lg:w-80 flex flex-col gap-6">
-            <div className={cn(configUi.tableCard, "p-8 items-center text-center")}>
-              <div className="relative group/avatar">
-                <div className={cn(
-                  "w-36 h-36 rounded-[2.5rem] overflow-hidden border-4 border-indigo-50 shadow-xl bg-slate-50 flex items-center justify-center mx-auto transition-all",
-                  loading && "opacity-50 grayscale"
-                )}>
-                  {user.foto_perfil ? (
-                    <img src={user.foto_perfil} alt="Avatar" className="w-full h-full object-cover group-hover/avatar:opacity-40 transition-all duration-300" />
-                  ) : (
-                    <User size={64} className="text-slate-200" />
-                  )}
-                  <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer z-10">
-                    <div className="bg-[#16315f]/80 p-3 rounded-2xl text-white backdrop-blur-sm">
-                       {loading ? <RefreshCw size={24} className="animate-spin" /> : <Camera size={24} />}
-                    </div>
-                    <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={loading} />
-                  </label>
-                </div>
-                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-2xl border-4 border-white flex items-center justify-center shadow-lg">
-                  <Star size={16} fill="currentColor" />
-                </div>
+      <div className="mt-6 bg-[#121821] border border-gray-800 rounded-[2rem] p-8 md:p-12 shadow-xl hover:shadow-[#1E3A8A]/5 hover:border-gray-700 transition-all group relative overflow-hidden">
+        {/* Background Decoration */}
+        <div className="absolute -top-32 -right-32 w-64 h-64 bg-[#1E3A8A]/10 rounded-full blur-[80px] group-hover:bg-[#1E3A8A]/20 transition-all pointer-events-none"></div>
+
+        <div className="flex flex-col md:flex-row gap-10 items-center md:items-start relative z-10">
+          {/* Avatar Section */}
+          <div className="flex flex-col items-center">
+            <div className="relative group/avatar cursor-pointer">
+              <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[#1E3A8A] shadow-lg shadow-[#1E3A8A]/20 bg-[#0B0F14] flex items-center justify-center relative">
+                {loading ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
+                    <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                  </div>
+                ) : null}
+                <img
+                  src={user?.foto_perfil || "/placeholder.svg?height=144&width=144"}
+                  alt="Avatar"
+                  className={cn("w-full h-full object-cover transition-all", loading ? "opacity-30" : "group-hover/avatar:opacity-50")}
+                />
+                <label className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer z-10">
+                  <Camera className="text-white" size={32} />
+                  <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={loading} />
+                </label>
               </div>
-              
-              <h3 className="text-xl font-black text-[#16315f] mt-6 uppercase tracking-tight">{user.nombre_completo || user.nombre || "Usuario"}</h3>
-              <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] font-black uppercase text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 italic">
-                <Zap size={12} fill="currentColor" />
-                Miembro Activo
+              <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-full border-4 border-[#121821] flex items-center justify-center shadow-md">
+                <Star size={16} fill="currentColor" />
               </div>
             </div>
+            <span className="mt-4 text-xs font-bold text-[#3b82f6] uppercase tracking-wider">
+              Haz clic para cambiar tu foto
+            </span>
+          </div>
 
-            <div className={cn(configUi.tableCard, "p-6")}>
-               <h4 className={configUi.fieldLabel}>Roles e Insignias</h4>
-               <div className="flex flex-wrap gap-2 mt-4">
-                  {user.roles?.map(role => (
-                    <span key={role} className={configUi.subtlePill}>
-                      {role}
-                    </span>
-                  )) || (
-                    <span className={configUi.subtlePill}>
+          {/* Info Section */}
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                <Zap size={10} fill="currentColor" />
+                Cuenta Activa
+              </span>
+            </div>
+
+            <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">
+              {user.nombre_completo || user.nombre || "Usuario"}
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <Phone size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
+                </div>
+                <span className="font-medium text-white pl-5">{user.telefono || "No especificado"}</span>
+              </div>
+
+              <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <Mail size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Email</span>
+                </div>
+                <span className="font-medium text-white pl-5 break-all">{user.email || "No especificado"}</span>
+              </div>
+
+              <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <MapPin size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Dirección</span>
+                </div>
+                <span className="font-medium text-white pl-5">{user.direccion || "No especificada"}</span>
+              </div>
+
+              <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">
+                <div className="flex items-center gap-2 text-[#9CA3AF]">
+                  <Shield size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Roles Asignados</span>
+                </div>
+                <div className="flex flex-wrap gap-2 pl-5 mt-2">
+                  {user.roles && user.roles.length > 0 ? (
+                    user.roles.map((role) => (
+                      <span
+                        key={typeof role === "object" ? role.nombre_rol : role}
+                        className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-[#1E3A8A]/30"
+                      >
+                        {typeof role === "object" ? role.nombre_rol : role}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-[#1E3A8A]/30">
                       {user.rol || "Sin roles"}
                     </span>
                   )}
-               </div>
-            </div>
-          </div>
-
-          {/* Right Side - Details */}
-          <div className="flex-1 min-w-0">
-            <div className={cn(configUi.tableCard, "h-full")}>
-               <div className={configUi.modalHeader}>
-                  <h3 className="text-sm font-black text-[#16315f] uppercase tracking-widest">Información de Contacto</h3>
-               </div>
-               <div className="p-8 space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className={configUi.fieldGroup}>
-                      <label className={configUi.fieldLabel}>Correo Electrónico</label>
-                      <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-[#16315f] font-bold text-sm">
-                         <Mail size={16} className="text-slate-400" />
-                         <span className="truncate">{user.email || "No especificado"}</span>
-                      </div>
-                    </div>
-
-                    <div className={configUi.fieldGroup}>
-                      <label className={configUi.fieldLabel}>Número Telefónico</label>
-                      <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-[#16315f] font-bold text-sm">
-                         <Phone size={16} className="text-slate-400" />
-                         <span>{user.telefono || user.phone || "Sin registrar"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={configUi.fieldGroup}>
-                     <label className={configUi.fieldLabel}>Estado de Seguridad</label>
-                     <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                           <Shield size={20} className="text-indigo-400" />
-                           <div className="flex flex-col">
-                              <span className="text-xs font-black text-[#16315f] uppercase">Protección de Datos</span>
-                              <span className="text-[10px] text-slate-500 font-medium">Contraseña encriptada y sesión segura</span>
-                           </div>
-                        </div>
-                        <CheckCircle size={20} className="text-emerald-500" />
-                     </div>
-                  </div>
-               </div>
-
-               <div className={cn(configUi.modalFooter, "mt-auto")}>
-                  <button className={configUi.secondaryButton}>
-                     <Lock size={16} className="mr-2" />
-                     Cambiar Contraseña
-                  </button>
-                  <button className={configUi.primaryButton}>
-                     <Pencil size={16} className="mr-2" />
-                     Actualizar Datos
-                  </button>
-               </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Notifications */}
-        <AnimatePresence>
-          {notification.show && (
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3", 
-              notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
-            >
-              {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-              {notification.message}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Actions */}
+        <div className="mt-10 pt-8 border-t border-gray-800 flex flex-col sm:flex-row gap-4 justify-end">
+          <button className="px-6 py-3 bg-[#0B0F14] border border-gray-700 text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-gray-800 transition-all flex items-center justify-center gap-2">
+            Cambiar Contraseña
+          </button>
+          <button className="px-6 py-3 bg-[#1E3A8A] text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-blue-800 transition-all shadow-lg shadow-[#1E3A8A]/20 flex items-center justify-center gap-2">
+            Editar Perfil
+          </button>
+        </div>
+      </div>
+
+      {/* Notifications */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
+            className={`fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3 ${notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500"}`}
+          >
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+

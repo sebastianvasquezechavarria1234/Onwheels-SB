@@ -19,8 +19,19 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { BtnSideBar } from "../../BtnSideBar";
 import { canView, canManage } from "../../../../utils/permissions";
+import { useAuth } from "../../dinamico/context/AuthContext";
 
 export const CustomSidebar = ({ isCollapsed, toggleSidebar }) => {
+  const { user } = useAuth();
+  
+  const userName = user?.nombre_completo || user?.nombre || "Usuario";
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
   const [openModule, setOpenModule] = useState(
     () => localStorage.getItem("customOpenModule") || null
   );
@@ -112,25 +123,43 @@ export const CustomSidebar = ({ isCollapsed, toggleSidebar }) => {
         {isCollapsed ? <ChevronRight size={16} /> : <ChevronRight size={16} className="rotate-180" />}
       </button>
 
-      <div className={`flex flex-col items-center justify-center transition-all duration-300 mb-4 gap-2.5
-        ${isCollapsed ? "scale-90" : "px-1"}
-      `}>
-        {!isCollapsed ? (
-          <div className="w-full rounded-xl border border-[#2a3d55] bg-[#16283e] px-3 py-2">
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-lg bg-[#2b64d8] flex items-center justify-center text-white font-black text-xs tracking-wide">
-                SB
-              </div>
-              <div className="leading-tight">
-                <p className="text-[13px] font-black uppercase tracking-wide text-slate-100">Performance</p>
-                <p className="text-[10px] font-medium text-slate-400">Dashboard</p>
-              </div>
+      {/* ── PERFIL DE USUARIO ──────────── */}
+      {!isCollapsed ? (
+        <div className="px-4 py-4 mb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[13px] flex-shrink-0 overflow-hidden border border-white/10"
+              style={{ background: user?.foto_perfil ? "transparent" : "linear-gradient(135deg,#7c3aed,#a855f7)" }}
+            >
+              {user?.foto_perfil ? (
+                <img src={user.foto_perfil} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="leading-none min-w-0">
+              <p className="text-[13px] font-bold text-white truncate">{userName}</p>
+              <p className="text-[10px] text-white/35 mt-1 capitalize whitespace-nowrap">
+                {user?.roles && user.roles.length > 0 ? (typeof user.roles[0] === 'object' ? user.roles[0].nombre_rol : user.roles[0]) : "Cliente"}
+              </p>
             </div>
           </div>
-        ) : (
-          <div className="h-11 w-11 rounded-xl bg-[#2b64d8] flex items-center justify-center text-white font-black text-xs tracking-wide">SB</div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex justify-center py-4 mb-2 border-b border-white/5">
+           <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-xs overflow-hidden border border-white/10"
+            style={{ background: user?.foto_perfil ? "transparent" : "linear-gradient(135deg,#7c3aed,#a855f7)" }}
+          >
+            {user?.foto_perfil ? (
+              <img src={user.foto_perfil} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
+          </div>
+        </div>
+      )}
+
 
       <div className="sidebar flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
         <li className="list-none">

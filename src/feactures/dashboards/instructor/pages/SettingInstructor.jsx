@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { InstructorLayout } from "../../../landing/instructor/layout/InstructorLayout";
 import { Mail, Phone, Lock, CheckCircle, User, Shield, Camera, Star, Zap } from "lucide-react";
+import apiAxios from "../../../../services/api";
 
 const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000/api';
 
@@ -70,15 +71,29 @@ export const SettingInstructor = () => {
     const fetchUserData = async () => {
       try {
         const userId = getCurrentUserId();
-        if (!userId) { window.location.href = '/login'; return; }
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
         const data = await api.getUsuario(userId);
         setUserData(data);
-        setEditData({ nombre_completo: data.nombre_completo || "", telefono: data.telefono || "", foto_perfil: null });
-      } catch (err) { console.error('Error fetching user', err); }
-      finally { setLoading(false); }
+
+        // Protegemos el estado de edición para evitar que el reseteo automático borre cambios en curso o fotos seleccionadas
+        if (!isEditingProfile) {
+          setEditData({ 
+            nombre_completo: data.nombre_completo || data.nombre || "", 
+            telefono: data.telefono || "", 
+            foto_perfil: null 
+          });
+        }
+      } catch (err) { 
+        console.error('Error fetching user', err); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     fetchUserData();
-  }, []);
+  }, [isEditingProfile]); // Dependencia clave para manejar re-cargas
 
   const ENTER_DUR = 400, VISIBLE_DUR = 3500, EXIT_DUR = 400;
 
@@ -169,17 +184,10 @@ export const SettingInstructor = () => {
       if (editData.foto_perfil) {
          const formDataImg = new FormData();
          formDataImg.append("foto_perfil", editData.foto_perfil);
-         const token = getCurrentUserToken();
-         const photoRes = await fetch(`${API_BASE_URL}/usuarios/${userId}/foto`, {
-           method: "POST",
-           headers: { Authorization: `Bearer ${token}` },
-           body: formDataImg
-         });
-         if (!photoRes.ok) {
-           const errData = await photoRes.json();
-           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
-         }
-         const photoData = await photoRes.json();
+         
+         const photoRes = await apiAxios.post(`/usuarios/${userId}/foto`, formDataImg);
+         const photoData = photoRes.data;
+
          // Update user in local storage
          const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
          currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
@@ -265,7 +273,7 @@ export const SettingInstructor = () => {
 
   return (
     <InstructorLayout>
-      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px] md:pt-10">
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
         <div className="max-w-[800px] mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">
             <div>

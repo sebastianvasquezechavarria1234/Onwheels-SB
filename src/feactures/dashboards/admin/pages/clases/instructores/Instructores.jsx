@@ -324,8 +324,12 @@ export const Instructores = () => {
                     <tr key={inst.id_instructor} className={configUi.row}>
                       <td className={configUi.td}>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-[#16315f] font-bold text-sm shadow-sm border border-slate-100">
-                            {inst.nombre_completo?.substring(0, 2).toUpperCase()}
+                          <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-[#16315f] font-bold text-sm shadow-sm border border-slate-100 overflow-hidden">
+                            {inst.foto_perfil ? (
+                              <img src={inst.foto_perfil} alt={inst.nombre_completo} className="h-full w-full object-cover" />
+                            ) : (
+                              <span>{(inst.nombre_completo || "I")[0].toUpperCase()}</span>
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-[#16315f] text-sm leading-tight mb-0.5 truncate">{inst.nombre_completo}</p>
@@ -463,8 +467,12 @@ export const Instructores = () => {
                       {/* Left Sidebar (Profile Info) */}
                       <div className="w-full lg:w-1/3 space-y-4">
                         <div className="w-full aspect-square bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center overflow-hidden shadow-inner p-6 text-center">
-                          <div className="h-24 w-24 rounded-full bg-white shadow-xl flex items-center justify-center text-[#16315f] border-4 border-slate-100 mb-4 transition duration-500 hover:rotate-6">
-                            <User size={48} strokeWidth={1} />
+                          <div className="h-24 w-24 rounded-full bg-white shadow-xl flex items-center justify-center text-[#16315f] border-4 border-slate-100 mb-4 transition duration-500 hover:rotate-6 overflow-hidden">
+                            {selectedInstructor?.foto_perfil ? (
+                              <img src={selectedInstructor.foto_perfil} alt="Profile" className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="text-3xl font-bold">{(selectedInstructor?.nombre_completo || "I")[0].toUpperCase()}</span>
+                            )}
                           </div>
                           {modal === "crear" ? (
                             <div className="space-y-1">

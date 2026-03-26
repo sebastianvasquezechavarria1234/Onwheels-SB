@@ -7,7 +7,7 @@ import { useToast } from "../../../../context/ToastContext";
 
 export const Setting = () => {
   const toast = useToast();
-  const { user: authUser } = useAuth();
+  const { user: authUser, refreshUser } = useAuth();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -72,24 +72,31 @@ export const Setting = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userId = getCurrentUserId();
-        if (!userId) {
-          setLoading(false);
-          return;
-        }
+        const userId = authUser?.id_usuario || authUser?.id;
+        if (!userId) return;
+
         const data = await userApi.getUsuario(userId);
         setUserData(data);
-        setEditData({ 
-          nombre_completo: data.nombre_completo || data.nombre || "", 
-          telefono: data.telefono || "", 
-          fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : "",
-          foto_perfil: null 
-        });
-      } catch (err) { console.error('Error fetching user', err); }
-      finally { setLoading(false); }
+
+        // SOLO actualizar el formulario de edición si NO estamos ya editando
+        // Esto evita que la foto seleccionada desaparezca si el auth context se refresca en segundo plano
+        if (!isEditingProfile) {
+          setEditData({ 
+            nombre_completo: data.nombre_completo || data.nombre || "", 
+            telefono: data.telefono || "", 
+            fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : "",
+            foto_perfil: null 
+          });
+        }
+      } catch (err) { 
+        console.error('Error fetching user', err); 
+      } finally { 
+        setLoading(false); 
+      }
     };
-    fetchUserData();
-  }, [authUser]);
+    
+    if (authUser) fetchUserData();
+  }, [authUser, isEditingProfile]); // Añadido isEditingProfile para manejar re-cargas controladas
 
   const ENTER_DUR = 400, VISIBLE_DUR = 3500, EXIT_DUR = 400;
 
@@ -186,39 +193,49 @@ export const Setting = () => {
     try {
       const userId = getCurrentUserId();
       if (!userId) throw new Error("No se encontró el usuario autenticado");
+
       const updateData = { 
         nombre: editData.nombre_completo, 
         telefono: editData.telefono,
-        fecha_nacimiento: editData.fecha_nacimiento
+        fecha_nacimiento: editData.fecha_nacimiento || null
       };
-      const response = await userApi.updateUsuario(userId, updateData);
       
+      // 1. Actualizar datos básicos
+      const response = await userApi.updateUsuario(userId, updateData);
+      let newFotoUrl = response.usuario?.foto_perfil || userData?.foto_perfil;
+
+      // 2. Subir foto si la hay
       if (editData.foto_perfil) {
          const formDataImg = new FormData();
          formDataImg.append("foto_perfil", editData.foto_perfil);
-         const token = localStorage.getItem('token');
-         const photoRes = await fetch(`${import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000/api'}/usuarios/${userId}/foto`, {
-           method: "POST",
-           headers: { Authorization: `Bearer ${token}` },
-           body: formDataImg
-         });
-         if (!photoRes.ok) {
-           const errData = await photoRes.json();
-           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
-         }
-         const photoData = await photoRes.json();
+         
+         const photoRes = await api.post(`/usuarios/${userId}/foto`, formDataImg);
+         newFotoUrl = photoRes.data.foto_perfil || photoRes.data.secure_url;
+
+         // Actualizar usuario en localStorage para que otros componentes (como el Header) se enteren
          const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
-         currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
+         currentUserData.foto_perfil = newFotoUrl;
          localStorage.setItem("user", JSON.stringify(currentUserData));
          window.dispatchEvent(new Event("storage"));
       }
 
-      const finalData = await userApi.getUsuario(userId);
-      setUserData(finalData);
-
+      // 3. Actualizar estado local inmediatamente con lo más reciente
+      // Combinamos la respuesta del updateUsuario con la nueva foto para no depender de otro fetch inmediato
+      const finalUpdatedUser = {
+        ...response.usuario,
+        foto_perfil: newFotoUrl
+      };
+      
+      setUserData(finalUpdatedUser);
       toast.success("Perfil actualizado correctamente");
       setSuccessMessage("Perfil actualizado correctamente");
+      
+      // 4. Salir del modo edición solo después de que todo esté en su lugar
       setIsEditingProfile(false);
+      
+      // Opcionalmente refrescamos todo el auth context
+      if (refreshUser) refreshUser();
+
     } catch (err) {
       console.error(err);
       const msg = err?.mensaje || "Error al actualizar el perfil. Por favor intente nuevamente.";
@@ -299,7 +316,7 @@ export const Setting = () => {
 
   return (
     <StudentLayout>
-      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px] md:pt-10">
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
         <div className="max-w-[800px] mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">

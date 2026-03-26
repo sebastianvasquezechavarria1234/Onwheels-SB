@@ -30,6 +30,7 @@ export const CustomCheckout = () => {
 
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
     const [isSuccess, setIsSuccess] = useState(false);
+    const [finalOrder, setFinalOrder] = useState(null);
 
     const showNotification = useCallback((message, type = "success") => {
         setNotification({ show: true, message, type });
@@ -38,9 +39,18 @@ export const CustomCheckout = () => {
 
     const onConfirm = async (e) => {
         e.preventDefault();
+        
+        // Guardar resumen antes de que submitOrder limpie el carrito
+        const summary = {
+            items: [...cart.items],
+            total: cart.total,
+            itemCount: cart.itemCount
+        };
+
         const result = await submitOrder();
 
         if (result.success) {
+            setFinalOrder({ ...summary, id: result.orderId });
             showNotification("¡Compra realizada exitosamente!", "success");
             setIsSuccess(true);
         } else {
@@ -92,13 +102,13 @@ export const CustomCheckout = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col xl:flex-row gap-8 mt-6 overflow-hidden">
-                {/* Left Column - Form or Success */}
-                <div className="flex-1 min-w-0">
-                    {isSuccess ? (
-                        <div className={cn(configUi.tableCard, "p-12 text-center flex flex-col items-center justify-center min-h-[450px]")}>
-                            <div className="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-emerald-100 shadow-lg shadow-emerald-500/5">
-                                <CheckCircle size={48} className="text-emerald-500" />
+        <div className="flex flex-col xl:flex-row gap-8 mt-6 overflow-hidden">
+            {/* Left Column - Form or Success */}
+            <div className="flex-1 min-w-0">
+                {isSuccess ? (
+                    <div className={cn(configUi.tableCard, "p-12 text-center flex flex-col items-center justify-center min-h-[450px]")}>
+                        <div className="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-emerald-100 shadow-lg shadow-emerald-500/5">
+                            <CheckCircle size={48} className="text-emerald-500" />
                             </div>
                             <h3 className="text-2xl font-black text-[#16315f] mb-4 uppercase tracking-tighter">¡Tu pedido está en camino!</h3>
                             <p className="text-slate-500 mb-10 font-medium max-w-sm leading-relaxed">

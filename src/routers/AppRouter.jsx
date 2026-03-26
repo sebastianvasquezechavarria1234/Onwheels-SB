@@ -59,6 +59,7 @@ import { AdminCheckout } from "../feactures/dashboards/admin/pages/AdminCheckout
 import { Setting } from "../feactures/dashboards/student/pages/Setting"
 import { MyPurchases } from "../feactures/dashboards/student/pages/MyPurchases"
 import { MyClasses } from "../feactures/dashboards/student/pages/MyClasses"
+import StudentPurchaseDetail from "../feactures/dashboards/student/pages/StudentPurchaseDetail"
 
 // Dashboard instructor
 import { SettingInstructor } from "../feactures/dashboards/instructor/pages/SettingInstructor"
@@ -124,6 +125,7 @@ import { CustomAbout } from "../feactures/landing/custom/pages/CustomAbout"
 import { CustomTraining } from "../feactures/landing/custom/pages/CustomTraining"
 import { CustomProfile } from "../feactures/dashboards/custom/pages/CustomProfile"
 import { CustomMyPurchases } from "../feactures/dashboards/custom/pages/CustomMyPurchases"
+import CustomPurchaseDetail from "../feactures/dashboards/custom/pages/CustomPurchaseDetail"
 import { CustomPurchases } from "../feactures/landing/custom/pages/CustomPurchases"
 import { CustomDashboard } from "../feactures/dashboards/custom/pages/CustomDashboard"
 import CategoriaProductos from "../feactures/dashboards/admin/pages/compras/categoria-productos/categoria-productos"
@@ -275,6 +277,7 @@ const AppRouter = () => {
           <Route path="student/setting" element={<Setting />} />
           <Route path="student/myClasses" element={<MyClasses />} />
           <Route path="student/myPurchases" element={<MyPurchases />} />
+          <Route path="student/myPurchases/:id" element={<StudentPurchaseDetail />} />
           <Route path="student/home" element={<StudentHome />} />
           <Route path="student/events" element={<StudentEvents />} />
           <Route path="student/store" element={<StudentStore />} />
@@ -332,6 +335,7 @@ const AppRouter = () => {
           <Route path="custom/training" element={<CustomTraining />} />
           <Route path="custom/store/product/:id" element={withAnimation(CustomProductDetail)} />
           <Route path="custom/purchases" element={<CustomPurchases />} />
+
 
           {/* Dashboard personalizado (con sidebar via CustomLayoutWrapper) */}
           <Route element={<CustomLayoutWrapper />}>

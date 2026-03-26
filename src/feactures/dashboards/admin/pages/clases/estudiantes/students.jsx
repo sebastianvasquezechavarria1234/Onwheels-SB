@@ -327,10 +327,10 @@ const Students = () => {
                       <td className={configUi.td}>
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 flex items-center justify-center text-[#16315f] font-bold text-sm shadow-sm border border-slate-100 overflow-hidden">
-                            {s.foto_url ? (
-                              <img src={s.foto_url} alt={s.nombre_completo} className="h-full w-full object-cover" />
+                            {s.foto_perfil ? (
+                              <img src={s.foto_perfil} alt={s.nombre_completo} className="h-full w-full object-cover" />
                             ) : (
-                              <User size={20} />
+                              <span>{(s.nombre_completo || "U")[0].toUpperCase()}</span>
                             )}
                           </div>
                           <div className="min-w-0">
@@ -472,11 +472,11 @@ const Students = () => {
                       {/* Sidebar Perfil */}
                       <div className="w-full lg:w-1/3 space-y-4">
                         <div className="w-full aspect-square bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center overflow-hidden shadow-inner p-6 text-center">
-                          <div className="h-24 w-24 rounded-full bg-white shadow-xl flex items-center justify-center text-[#16315f] border-4 border-slate-100 mb-4 overflow-hidden">
-                            {details?.foto_url ? (
-                              <img src={details.foto_url} className="h-full w-full object-cover" alt="Profile" />
+                          <div className="h-24 w-24 rounded-full bg-white shadow-xl flex items-center justify-center text-[#16315f] border-4 border-slate-100 mb-4 overflow-hidden font-bold">
+                            {details?.foto_perfil ? (
+                              <img src={details.foto_perfil} className="h-full w-full object-cover" alt="Profile" />
                             ) : (
-                              <User size={48} strokeWidth={1} />
+                              <span className="text-3xl">{(details?.nombre_completo || "U")[0].toUpperCase()}</span>
                             )}
                           </div>
                           <div className="space-y-1">

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { 
-    Search, ShoppingCart, Plus, Minus, ArrowLeft, Package, 
+import {
+    Search, ShoppingCart, Plus, Minus, ArrowLeft, Package,
     CheckCircle, AlertTriangle, X, ChevronRight, Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,7 +9,7 @@ import { useToast } from "../../../../../../context/ToastContext";
 
 /**
  * ProductSelectorView
- * 
+ *
  * Reusable modal-like view to browse and select products with their variants (size/color).
  * Used in Compras, Pedidos and Ventas.
  */
@@ -24,7 +24,7 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
     // Filter products based on search
     const filteredProducts = useMemo(() => {
         if (!searchQuery) return allProducts;
-        return allProducts.filter(p => 
+        return allProducts.filter(p =>
             p.nombre_producto?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.referencia?.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -62,9 +62,9 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
     };
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="flex flex-col h-full overflow-hidden bg-slate-50/30 rounded-[2.5rem]"
         >
@@ -107,8 +107,8 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                                 onClick={() => handleSelectProduct(p)}
                                 className={cn(
                                     "w-full p-4 rounded-2xl border transition-all flex items-center gap-4 text-left group",
-                                    selectedProduct?.id_producto === p.id_producto 
-                                        ? "bg-[#16315f] border-[#16315f] text-white shadow-lg shadow-blue-100" 
+                                    selectedProduct?.id_producto === p.id_producto
+                                        ? "bg-[#16315f] border-[#16315f] text-white shadow-lg shadow-blue-100"
                                         : "bg-white border-transparent hover:border-indigo-100 hover:bg-indigo-50/50 text-[#16315f]"
                                 )}
                             >
@@ -139,7 +139,7 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                 <div className="flex-1 overflow-y-auto p-10 bg-slate-50/30 custom-scrollbar relative">
                     <AnimatePresence mode="wait">
                         {selectedProduct ? (
-                            <motion.div 
+                            <motion.div
                                 key={selectedProduct.id_producto}
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -216,13 +216,13 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                                 {/* Form Panel */}
                                 <AnimatePresence>
                                     {selectedVariant && (
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0, y: 30 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             className="overflow-hidden rounded-[2.5rem] bg-[#16315f] text-white shadow-2xl shadow-indigo-900/40 relative"
                                         >
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            
+
                                             <div className="p-8 pb-4 grid grid-cols-2 gap-10">
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between opacity-60">
@@ -230,20 +230,20 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                                                         <span className="text-[10px] font-black">{selectedVariant.stock_actual || 0} Disponibles</span>
                                                     </div>
                                                     <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-2 border border-white/10 transition-colors focus-within:bg-white/15">
-                                                        <button 
-                                                            onClick={() => setQty(Math.max(1, qty - 1))} 
+                                                        <button
+                                                            onClick={() => setQty(Math.max(1, qty - 1))}
                                                             className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-90"
                                                         >
                                                             <Minus size={18} />
                                                         </button>
-                                                        <input 
-                                                            type="number" 
-                                                            value={qty} 
+                                                        <input
+                                                            type="number"
+                                                            value={qty}
                                                             onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
                                                             className="flex-1 bg-transparent text-center font-black text-2xl border-none focus:ring-0 p-0"
                                                         />
-                                                        <button 
-                                                            onClick={() => setQty(qty + 1)} 
+                                                        <button
+                                                            onClick={() => setQty(qty + 1)}
                                                             className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-90"
                                                         >
                                                             <Plus size={18} />
@@ -255,9 +255,9 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Precio Unitario Ajustado</label>
                                                     <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-3 pl-6 border border-white/10 focus-within:bg-white/15">
                                                         <span className="text-xl font-black opacity-30">$</span>
-                                                        <input 
-                                                            type="number" 
-                                                            value={priceField} 
+                                                        <input
+                                                            type="number"
+                                                            value={priceField}
                                                             onChange={(e) => setPriceField(e.target.value)}
                                                             className="flex-1 bg-transparent font-black text-2xl border-none focus:ring-0 p-0 tabular-nums"
                                                         />
@@ -270,7 +270,7 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                                                     <p className="text-[10px] font-black uppercase tracking-[0.22em] opacity-50 mb-1">Impacto Total</p>
                                                     <p className="text-3xl font-black tabular-nums tracking-tighter leading-none">${(qty * priceField).toLocaleString()}</p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={handleAddItem}
                                                     className="h-20 px-12 rounded-[1.8rem] bg-white text-[#16315f] font-black uppercase tracking-widest flex items-center gap-4 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-black/20 group"
                                                 >
