@@ -1,29 +1,21 @@
 import React, { useState, useMemo } from "react";
-import { 
-    Search, ShoppingCart, Plus, Minus, ArrowLeft, Package, 
+import {
+    Search, ShoppingCart, Plus, Minus, ArrowLeft, Package,
     CheckCircle, AlertTriangle, X, ChevronRight, Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, configUi } from "../../configuracion/configUi";
 import { useToast } from "../../../../../../context/ToastContext";
 
-<<<<<<< HEAD
 /**
  * ProductSelectorView
- * 
+ *
  * Reusable modal-like view to browse and select products with their variants (size/color).
  * Used in Compras, Pedidos and Ventas.
  */
 export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkStock = false }) => {
     const toast = useToast();
     const [searchQuery, setSearchQuery] = useState("");
-=======
-export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = false, currentItems = [] }) => {
-    const location = useLocation();
-    const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
-
-    const [productSearch, setProductSearch] = useState("");
->>>>>>> 9c6bd4a6080a40daef3990d855cfce188d7a1d80
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [qty, setQty] = useState(1);
@@ -32,7 +24,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
     // Filter products based on search
     const filteredProducts = useMemo(() => {
         if (!searchQuery) return allProducts;
-        return allProducts.filter(p => 
+        return allProducts.filter(p =>
             p.nombre_producto?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.referencia?.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -70,13 +62,12 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
     };
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="flex flex-col h-full overflow-hidden bg-slate-50/30 rounded-[2.5rem]"
         >
-<<<<<<< HEAD
             {/* Header / Search */}
             <div className="bg-white px-8 py-6 border-b border-indigo-50 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -116,8 +107,8 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                 onClick={() => handleSelectProduct(p)}
                                 className={cn(
                                     "w-full p-4 rounded-2xl border transition-all flex items-center gap-4 text-left group",
-                                    selectedProduct?.id_producto === p.id_producto 
-                                        ? "bg-[#16315f] border-[#16315f] text-white shadow-lg shadow-blue-100" 
+                                    selectedProduct?.id_producto === p.id_producto
+                                        ? "bg-[#16315f] border-[#16315f] text-white shadow-lg shadow-blue-100"
                                         : "bg-white border-transparent hover:border-indigo-100 hover:bg-indigo-50/50 text-[#16315f]"
                                 )}
                             >
@@ -148,7 +139,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                 <div className="flex-1 overflow-y-auto p-10 bg-slate-50/30 custom-scrollbar relative">
                     <AnimatePresence mode="wait">
                         {selectedProduct ? (
-                            <motion.div 
+                            <motion.div
                                 key={selectedProduct.id_producto}
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -225,13 +216,13 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                 {/* Form Panel */}
                                 <AnimatePresence>
                                     {selectedVariant && (
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0, y: 30 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             className="overflow-hidden rounded-[2.5rem] bg-[#16315f] text-white shadow-2xl shadow-indigo-900/40 relative"
                                         >
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                                            
+
                                             <div className="p-8 pb-4 grid grid-cols-2 gap-10">
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between opacity-60">
@@ -239,20 +230,20 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                                         <span className="text-[10px] font-black">{selectedVariant.stock_actual || 0} Disponibles</span>
                                                     </div>
                                                     <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-2 border border-white/10 transition-colors focus-within:bg-white/15">
-                                                        <button 
-                                                            onClick={() => setQty(Math.max(1, qty - 1))} 
+                                                        <button
+                                                            onClick={() => setQty(Math.max(1, qty - 1))}
                                                             className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-90"
                                                         >
                                                             <Minus size={18} />
                                                         </button>
-                                                        <input 
-                                                            type="number" 
-                                                            value={qty} 
+                                                        <input
+                                                            type="number"
+                                                            value={qty}
                                                             onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
                                                             className="flex-1 bg-transparent text-center font-black text-2xl border-none focus:ring-0 p-0"
                                                         />
-                                                        <button 
-                                                            onClick={() => setQty(qty + 1)} 
+                                                        <button
+                                                            onClick={() => setQty(qty + 1)}
                                                             className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-90"
                                                         >
                                                             <Plus size={18} />
@@ -264,9 +255,9 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Precio Unitario Ajustado</label>
                                                     <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-3 pl-6 border border-white/10 focus-within:bg-white/15">
                                                         <span className="text-xl font-black opacity-30">$</span>
-                                                        <input 
-                                                            type="number" 
-                                                            value={priceField} 
+                                                        <input
+                                                            type="number"
+                                                            value={priceField}
                                                             onChange={(e) => setPriceField(e.target.value)}
                                                             className="flex-1 bg-transparent font-black text-2xl border-none focus:ring-0 p-0 tabular-nums"
                                                         />
@@ -279,7 +270,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                                     <p className="text-[10px] font-black uppercase tracking-[0.22em] opacity-50 mb-1">Impacto Total</p>
                                                     <p className="text-3xl font-black tabular-nums tracking-tighter leading-none">${(qty * priceField).toLocaleString()}</p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={handleAddItem}
                                                     className="h-20 px-12 rounded-[1.8rem] bg-white text-[#16315f] font-black uppercase tracking-widest flex items-center gap-4 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-black/20 group"
                                                 >
@@ -311,217 +302,6 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                             </div>
                         )}
                     </AnimatePresence>
-=======
-            <div className={configUi.modalHeader}>
-                <div className="flex items-center gap-4">
-                    <button onClick={onClose} className={configUi.actionButton} title="Volver">
-                        <ArrowLeft size={18} />
-                    </button>
-                    <div>
-                        <h2 className={configUi.modalTitle}>Seleccionar Productos</h2>
-                        <p className={configUi.modalSubtitle}>Añadir ítems a la orden actual</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={onClose} className={configUi.modalClose}><X size={20} /></button>
-                </div>
-            </div>
-
-            <div className="flex-1 flex overflow-hidden min-h-0 bg-[#fbfdff]">
-                {/* Left side: Product List */}
-                <div className="w-full md:w-[400px] flex flex-col border-r border-[#d7e5f8] bg-white text-left">
-                    <div className="p-4 border-b border-[#f0f6ff] shrink-0">
-                        <div className={configUi.searchWrap + " w-full"}>
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                placeholder="Filtrar por nombre o referencia..."
-                                className={configUi.inputWithIcon + " py-2.5"}
-                                value={productSearch}
-                                onChange={(e) => setProductSearch(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
-                        {filteredProducts.length === 0 ? (
-                            <div className={configUi.emptyState + " py-20"}>
-                                <Package size={32} className="mx-auto opacity-20 mb-2" />
-                                <p className="text-[10px] font-black uppercase tracking-widest">Sin coincidencias</p>
-                            </div>
-                        ) : (
-                            filteredProducts.map(p => {
-                                const isSelected = selectedProduct?.id_producto === p.id_producto;
-                                const totalStock = (p.variantes || []).reduce((acc, v) => acc + (v.stock || 0), 0);
-                                return (
-                                    <button
-                                        key={p.id_producto}
-                                        onClick={() => {
-                                            setSelectedProduct(p);
-                                            setSelectedVariant(null);
-                                            setError("");
-                                            setNewItemData({ cantidad: 1, precio_unitario: p.precio || "" });
-                                        }}
-                                        className={cn(
-                                            "w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
-                                            isSelected
-                                                ? "bg-[#16315f] border-[#16315f] shadow-md"
-                                                : "bg-white border-[#d7e5f8] hover:bg-[#f0f6ff] hover:border-[#9fbce7]"
-                                        )}
-                                    >
-                                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
-                                            {p.imagen || p.url_imagen || (p.imagenes && p.imagenes[0]?.url_imagen) ? (
-                                                <img src={p.imagen || p.url_imagen || p.imagenes[0]?.url_imagen} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <ImageIcon size={18} className="text-slate-300" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className={cn("text-xs font-bold truncate", isSelected ? "text-white" : "text-[#16315f]")}>{p.nombre_producto}</h4>
-                                            <div className={cn("flex items-center gap-2 mt-0.5 text-[10px] font-bold", isSelected ? "text-white/60" : "text-[#6b84aa]")}>
-                                                <span>{p.variantes?.length || 0} variantes</span>
-                                                <span>·</span>
-                                                <span className={(!isSelected && totalStock <= 5) ? "text-rose-400" : ""}>{totalStock} en stock</span>
-                                            </div>
-                                        </div>
-                                        {isSelected && <CheckCircle size={16} className="text-white/80 shrink-0" />}
-                                    </button>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
-
-                {/* Right side: Variant picker and Form */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className={configUi.modalContent + " flex-1 overflow-y-auto"}>
-                        <AnimatePresence mode="wait">
-                            {!selectedProduct ? (
-                                <motion.div
-                                    key="empty"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="h-full flex flex-col items-center justify-center py-20 text-center opacity-30"
-                                >
-                                    <ShoppingCart size={64} />
-                                    <div className="mt-4">
-                                        <h3 className="text-sm font-black uppercase tracking-widest text-[#16315f]">Seleccione un Producto</h3>
-                                        <p className="text-xs font-bold text-[#6a85ad] mt-1">Configure las variantes para añadir a la orden</p>
-                                    </div>
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="detail"
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="space-y-8"
-                                >
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Selecciona variante (Color / Talla)</label>
-                                        {!selectedProduct.variantes || selectedProduct.variantes.length === 0 ? (
-                                            <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
-                                                Este producto no tiene variantes configuradas.
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                {selectedProduct.variantes.map(v => {
-                                                    const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
-                                                    const outOfStock = v.stock <= 0;
-                                                    return (
-                                                        <button
-                                                            key={v.id_variante || v.id_producto_variante}
-                                                            onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
-                                                            disabled={outOfStock}
-                                                            className={cn(
-                                                                "p-3 rounded-xl border text-left transition-all",
-                                                                outOfStock
-                                                                    ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-                                                                    : isVarSelected
-                                                                        ? "border-[#16315f] bg-[#16315f] text-white shadow-md"
-                                                                        : "border-[#d7e5f8] bg-[#fbfdff] text-[#5f7396] hover:border-[#9fbce7] hover:bg-[#f0f6ff]"
-                                                            )}
-                                                        >
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                {v.codigo_hex && (
-                                                                    <div
-                                                                        className="w-3 h-3 rounded-full border border-white/40 shadow-sm shrink-0"
-                                                                        style={{ backgroundColor: v.codigo_hex }}
-                                                                    />
-                                                                )}
-                                                                <span className="text-xs font-bold truncate">
-                                                                    {v.nombre_color || v.color || 'Único'} / {v.nombre_talla || v.talla || 'Única'}
-                                                                </span>
-                                                            </div>
-                                                            <span className={cn("text-[10px] font-bold", isVarSelected ? "text-white/70" : outOfStock ? "text-rose-400" : "text-[#6b84aa]")}>
-                                                                {outOfStock ? "Sin stock" : `${v.stock} disponibles`}
-                                                            </span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className={configUi.formSection + " grid grid-cols-1 md:grid-cols-2 gap-6 relative"}>
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Cantidad a Ingresar</label>
-                                            <input
-                                                type="number"
-                                                value={newItemData.cantidad}
-                                                onChange={(e) => {
-                                                    setNewItemData({ ...newItemData, cantidad: e.target.value });
-                                                    setError("");
-                                                }}
-                                                className={configUi.fieldInput}
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Precio Unitario</label>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">$</span>
-                                                <input
-                                                    type="number"
-                                                    value={newItemData.precio_unitario}
-                                                    onChange={(e) => {
-                                                        setNewItemData({ ...newItemData, precio_unitario: e.target.value });
-                                                        setError("");
-                                                    }}
-                                                    className={configUi.fieldInput + " pl-8"}
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-5 bg-[#f0f6ff] border border-[#d7e5f8] rounded-2xl flex items-center justify-between shadow-inner">
-                                        <div>
-                                            <div className="text-[10px] font-black text-[#6b84aa] uppercase tracking-widest">Subtotal estimado</div>
-                                            <div className="text-xl font-black text-[#16315f] mt-0.5">
-                                                ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
-                                            </div>
-                                            {error && (
-                                                <div className="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1 animate-pulse">
-                                                    <AlertCircle size={12} />
-                                                    {error}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <button
-                                            onClick={handleAddItem}
-                                            disabled={!newItemData.cantidad || !newItemData.precio_unitario || !selectedVariant}
-                                            className="flex items-center gap-2 px-6 py-3 bg-[#16315f] text-white text-xs font-black rounded-xl hover:bg-[#0d2248] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-95"
-                                        >
-                                            <ShoppingCart size={14} />
-                                            Agregar a la lista
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
->>>>>>> 9c6bd4a6080a40daef3990d855cfce188d7a1d80
                 </div>
             </div>
         </motion.div>
