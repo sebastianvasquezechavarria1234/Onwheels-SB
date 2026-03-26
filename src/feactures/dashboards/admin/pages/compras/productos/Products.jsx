@@ -48,8 +48,6 @@ export default function Productos({ renderLayout = true }) {
   const [productoToDelete, setProductoToDelete] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [paginaActual, setPaginaActual] = useState(1);
-  const [totalPaginas, setTotalPaginas] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const productosPorPagina = 10;
   
   const [productForm, setProductForm] = useState({
@@ -174,37 +172,21 @@ export default function Productos({ renderLayout = true }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      cargarDatos();
-    }, 300);
-    return () => clearTimeout(delayDebounceFn);
-  }, [paginaActual, busqueda, filtroCategoria]);
+    cargarDatos();
+  }, []);
 
   const cargarDatos = async () => {
     try {
       setLoading(true);
       const [resProds, cats, cols, tls, vars] = await Promise.all([
-        getProductos({ 
-          page: paginaActual, 
-          limit: productosPorPagina, 
-          search: busqueda,
-          id_categoria: filtroCategoria 
-        }),
+        getProductos(), // Fetch all
         getCategorias(),
         getColores(),
         getTallas(),
         getVariantes(),
       ]);
       
-      if (resProds && resProds.data) {
-        setProductos(resProds.data);
-        setTotalPaginas(resProds.totalPages || 1);
-        setTotalItems(resProds.total || 0);
-      } else {
-        setProductos(Array.isArray(resProds) ? resProds : []);
-        setTotalPaginas(1);
-        setTotalItems(Array.isArray(resProds) ? resProds.length : 0);
-      }
+      setProductos(Array.isArray(resProds) ? resProds : (resProds.data || []));
       
       setCategorias(cats || []);
       setColores(cols || []);
@@ -580,19 +562,62 @@ export default function Productos({ renderLayout = true }) {
       showNotification("Error creando talla: " + (err.message || err), "error");
     }
   };
+  const filtered = React.useMemo(() => {
+    return (productos || []).filter(p => {
+      const q = busqueda.toLowerCase();
+      const matchesSearch = (p.nombre_producto || "").toLowerCase().includes(q) || 
+                           (p.descripcion || "").toLowerCase().includes(q);
+      const matchesCategory = filtroCategoria === "" || Number(p.id_categoria) === Number(filtroCategoria);
+      return matchesSearch && matchesCategory;
+    });
+  }, [productos, busqueda, filtroCategoria]);
+
+  const totalFiltered = filtered.length;
+  const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / productosPorPagina));
+  const currentItems = filtered.slice((paginaActual - 1) * productosPorPagina, paginaActual * productosPorPagina);
+
+  const handleDownload = () => {
+    if (!filtered || filtered.length === 0) return;
+    const header = ["ID", "Nombre Producto", "Categoria", "Descripcion", "Estado", "Precio Compra", "Precio Venta", "Descuento", "Stock Total"];
+    const csvData = filtered.map(p => {
+      const totalStock = (variantesGlobales || []).filter(v => v.id_producto === p.id_producto).reduce((acc, v) => acc + (v.stock || 0), 0);
+      return [
+        p.id_producto,
+        `"${p.nombre_producto}"`,
+        `"${getCategoriaNombre(p.id_categoria)}"`,
+        `"${(p.descripcion || "").replace(/"/g, '""')}"`,
+        p.estado ? "Activo" : "Inactivo",
+        p.precio_compra,
+        p.precio,
+        p.descuento_producto || 0,
+        totalStock
+      ].join(",");
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "reporte_productos_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const getCategoriaNombre = (idCat) => {
-    const cat = categorias.find((c) => c.id_categoria === idCat);
+    const cat = categorias.find((c) => c.id_categoria === Number(idCat));
     return cat ? cat.nombre_categoria : "—";
   };
   const getTallaNombre = (idTalla) => {
-    const t = tallas.find(t => t.id_talla === idTalla);
+    const t = tallas.find(t => t.id_talla === Number(idTalla));
     return t ? t.nombre_talla : "—";
   };
 
   const getColorNombre = (idColor) => {
-    const c = colores.find(c => c.id_color === idColor);
+    const c = colores.find(c => c.id_color === Number(idColor));
     return c ? c.nombre_color : "—";
   };
+
   const content = (
     <>
       <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
@@ -634,6 +659,7 @@ export default function Productos({ renderLayout = true }) {
 
             {/* Download Button */}
             <button
+               onClick={handleDownload}
                className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
             >
               <Download size={20} />
@@ -676,7 +702,7 @@ export default function Productos({ renderLayout = true }) {
                        </div>
                     </td>
                   </tr>
-                ) : productos.length === 0 ? (
+                ) : currentItems.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="p-20 text-center">
                        <div className="flex flex-col items-center gap-3 opacity-20">
@@ -686,7 +712,7 @@ export default function Productos({ renderLayout = true }) {
                     </td>
                   </tr>
                 ) : (
-                  productos.map((p, idx) => {
+                  currentItems.map((p, idx) => {
                     const totalStock = (variantesGlobales || []).filter(v => v.id_producto === p.id_producto).reduce((acc, v) => acc + (v.stock || 0), 0);
                     return (
                       <tr key={p.id_producto} className="group hover:bg-[#f8fbff] transition-all">
@@ -747,10 +773,10 @@ export default function Productos({ renderLayout = true }) {
           </div>
 
             {/* Footer Pagination */}
-            {totalPaginas > 0 && (
+            {totalPaginasLocal > 1 && (
               <div className="border-t border-[#d7e5f8] px-5 py-4 bg-[#fbfdff] flex items-center justify-between mt-auto">
                 <p className="text-sm font-bold text-[#6b84aa]">
-                  Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginas}</span>
+                  Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginasLocal}</span>
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -761,8 +787,8 @@ export default function Productos({ renderLayout = true }) {
                     <ChevronLeft size={18} />
                   </button>
                   <button
-                    disabled={paginaActual === totalPaginas}
-                    onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaActual === totalPaginasLocal}
+                    onClick={() => setPaginaActual((p) => Math.min(totalPaginasLocal, p + 1))}
                     className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#bfd1f4] bg-white text-[#6a85ad] hover:bg-[#f8fbff] hover:text-[#16315f] disabled:opacity-50 transition shadow-sm"
                   >
                     <ChevronRight size={18} />
@@ -770,6 +796,7 @@ export default function Productos({ renderLayout = true }) {
                 </div>
               </div>
             )}
+
           </div>
         </div>
 
@@ -1131,7 +1158,7 @@ export default function Productos({ renderLayout = true }) {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white rounded-[2.5rem] shadow-2xl relative overflow-hidden max-w-5xl w-full border border-slate-200"
+                className="bg-white rounded-[2.5rem] shadow-2xl relative overflow-hidden max-w-4xl w-full border border-slate-200"
                 initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >

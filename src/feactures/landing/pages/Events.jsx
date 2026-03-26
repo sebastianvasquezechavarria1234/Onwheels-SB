@@ -417,26 +417,40 @@ export const EventsContent = () => {
                         </p>
                       )}
 
-                      {/* Google Forms / URLs */}
-                      {event.google_forms && Array.isArray(event.google_forms) && event.google_forms.length > 0 && (
+                      {/* Link de Inscripción */}
+                      {(event.google_forms || event.link_google_forms) && (
                         <div className="mt-2 pt-3 border-t border-zinc-100 mb-4">
-                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight mb-2 flex items-center gap-1.5">
-                            <Info size={11} className="text-(--color-blue)" />
-                            Si deseas inscribirte a este evento, llena el formulario:
-                          </p>
                           <div className="flex flex-col gap-2">
-                            {event.google_forms.map((url, idx) => (
-                              <a
-                                key={idx}
-                                href={url.startsWith('http') ? url : `https://${url}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 bg-(--color-blue) text-white py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
-                              >
-                                <Globe size={14} />
-                                LLenar Formulario {event.google_forms.length > 1 ? `(${idx + 1})` : ""}
-                              </a>
-                            ))}
+                            {/* Caso 1: google_forms es un array */}
+                            {Array.isArray(event.google_forms) && event.google_forms.length > 0 ? (
+                              event.google_forms.map((url, idx) => (
+                                <a
+                                  key={idx}
+                                  href={url.startsWith('http') ? url : `https://${url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center gap-2 bg-(--color-blue) text-white py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                                >
+                                  <Globe size={14} />
+                                  Inscribirme al evento {event.google_forms.length > 1 ? `(${idx + 1})` : ""}
+                                </a>
+                              ))
+                            ) : (
+                              /* Caso 2: google_forms o link_google_forms es un string */
+                              (typeof event.google_forms === 'string' || typeof event.link_google_forms === 'string') && (
+                                <a
+                                  href={(event.google_forms || event.link_google_forms).startsWith('http') 
+                                    ? (event.google_forms || event.link_google_forms) 
+                                    : `https://${event.google_forms || event.link_google_forms}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center gap-2 bg-(--color-blue) text-white py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                                >
+                                  <Globe size={14} />
+                                  Inscribirme al evento
+                                </a>
+                              )
+                            )}
                           </div>
                         </div>
                       )}
@@ -498,15 +512,49 @@ export const EventsContent = () => {
                     <span className="text-xl font-black text-white leading-none">{day}</span>
                     <span className="text-[9px] text-zinc-500 uppercase font-bold mt-0.5">{month}</span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-sm text-white truncate mb-1">
-                      {event.nombre_evento}
-                    </h4>
-                    <p className="text-xs text-zinc-500 flex items-center gap-1.5 truncate">
-                      <MapPin size={10} className="shrink-0" />
-                      {event.nombre_sede || "Por definir"}
-                    </p>
-                  </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-white truncate mb-1">
+                        {event.nombre_evento}
+                      </h4>
+                      <p className="text-xs text-zinc-500 flex items-center gap-1.5 truncate">
+                        <MapPin size={10} className="shrink-0" />
+                        {event.nombre_sede || "Por definir"}
+                      </p>
+                      
+                      {/* Botón rápido de inscripción */}
+                      {(event.google_forms || event.link_google_forms) && (
+                        <div className="mt-2.5">
+                          {Array.isArray(event.google_forms) && event.google_forms.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {event.google_forms.map((url, idx) => (
+                                <a
+                                  key={idx}
+                                  href={url.startsWith('http') ? url : `https://${url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center gap-1.5 bg-(--color-blue) text-white py-1.5 px-3 rounded-lg text-[9px] font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                                >
+                                  Inscribirme {event.google_forms.length > 1 ? `(${idx + 1})` : ""}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            (typeof event.google_forms === 'string' || typeof event.link_google_forms === 'string') && (
+                              <a
+                                href={(event.google_forms || event.link_google_forms).startsWith('http') 
+                                  ? (event.google_forms || event.link_google_forms) 
+                                  : `https://${event.google_forms || event.link_google_forms}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-1.5 bg-(--color-blue) text-white py-1.5 px-3 rounded-lg text-[9px] font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                              >
+                                Inscribirme al evento
+                              </a>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </div>
                 </div>
               );
             })}
@@ -557,6 +605,38 @@ export const EventsContent = () => {
                         <span className="flex items-center gap-1 truncate"><MapPin size={10} /> {event.nombre_sede}</span>
                       )}
                     </div>
+
+                    {/* Botón rápido desde calendario */}
+                    {(event.google_forms || event.link_google_forms) && (
+                      <div className="mt-3">
+                        {Array.isArray(event.google_forms) && event.google_forms.length > 0 ? (
+                          event.google_forms.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url.startsWith('http') ? url : `https://${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-1.5 bg-(--color-blue) text-white py-1.5 px-3 rounded-lg text-[9px] font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                            >
+                              Inscribirme al evento {event.google_forms.length > 1 ? `(${idx + 1})` : ""}
+                            </a>
+                          ))
+                        ) : (
+                          (typeof event.google_forms === 'string' || typeof event.link_google_forms === 'string') && (
+                            <a
+                              href={(event.google_forms || event.link_google_forms).startsWith('http') 
+                                ? (event.google_forms || event.link_google_forms) 
+                                : `https://${event.google_forms || event.link_google_forms}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-1.5 bg-(--color-blue) text-white py-1.5 px-3 rounded-lg text-[9px] font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                            >
+                              Inscribirme al evento
+                            </a>
+                          )
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (

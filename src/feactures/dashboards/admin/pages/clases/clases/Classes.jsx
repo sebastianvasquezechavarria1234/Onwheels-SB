@@ -165,17 +165,30 @@ export const Clases = () => {
   };
 
   const exportCSV = () => {
-    const headers = ["ID", "Descripción", "Nivel", "Sede", "Día", "Inicio", "Fin", "Cupo", "Estado"];
+    if (!filteredAndSorted || filteredAndSorted.length === 0) return;
+    const headers = ["ID", "Descripcion", "Nivel", "Sede", "Dia", "Inicio", "Fin", "Cupo", "Estado"];
     const rows = filteredAndSorted.map(c =>
-      [c.id_clase, c.descripcion, c.nombre_nivel, c.nombre_sede, c.dia_semana, c.hora_inicio, c.hora_fin, c.cupo_maximo, c.estado].join(",")
+      [
+        c.id_clase, 
+        `"${c.descripcion}"`, 
+        `"${c.nombre_nivel}"`, 
+        `"${c.nombre_sede}"`, 
+        `"${c.dia_semana}"`, 
+        c.hora_inicio, 
+        c.hora_fin, 
+        c.cupo_maximo, 
+        c.estado
+      ].join(",")
     );
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "clases.csv";
+    a.download = "reporte_clases_onwheels.csv";
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 

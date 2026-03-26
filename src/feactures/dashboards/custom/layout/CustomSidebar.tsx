@@ -1,166 +1,154 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
-import {
-  Users,
-  Shield,
-  Package,
-  ShoppingCart,
-  Calendar,
-  MapPin,
-  BookOpen,
-  UserCheck,
-  FileText,
-  CreditCard,
-  LogOut,
-  UserPlus,
-  ChartBarIncreasing,
-  ChevronRight,
+import React, { useState } from "react";
+import { 
+  Users, 
+  Shield, 
+  Package, 
+  ShoppingCart, 
+  Calendar, 
+  MapPin, 
+  BookOpen, 
+  UserCheck, 
+  FileText, 
+  CreditCard, 
   LayoutDashboard,
-} from "lucide-react"
-import { canView, canManage, getUserPermissions } from "../../../../utils/permissions"
+  ChevronRight,
+  ChartBarIncreasing
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BtnSideBar } from "../../BtnSideBar";
+import { canView, canManage } from "../../../../utils/permissions";
+import { useAuth } from "../../dinamico/context/AuthContext";
 
-// ─── Ítem del sidebar (estilo captura: navy oscuro, hover sutil, activo azul) ─
-const SidebarItem = ({ title, link, icon, isActive }) => (
-  <Link
-    to={link}
-    className="flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group text-[13px] font-semibold"
-    style={{
-      color:      isActive ? "#fff" : "rgba(255,255,255,0.5)",
-      background: isActive ? "rgba(59,130,246,0.18)" : "transparent",
-    }}
-    onMouseEnter={e => {
-      if (!isActive) {
-        e.currentTarget.style.background = "rgba(255,255,255,0.06)"
-        e.currentTarget.style.color      = "rgba(255,255,255,0.9)"
-      }
-    }}
-    onMouseLeave={e => {
-      if (!isActive) {
-        e.currentTarget.style.background = "transparent"
-        e.currentTarget.style.color      = "rgba(255,255,255,0.5)"
-      }
-    }}
-  >
-    <div className="flex items-center gap-3">
-      <span style={{ color: isActive ? "#60a5fa" : "rgba(255,255,255,0.3)" }}>
-        {icon}
-      </span>
-      {title}
-    </div>
-    {isActive && (
-      <span
-        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ background: "linear-gradient(135deg,#3b82f6,#06b6d4)" }}
-      />
-    )}
-  </Link>
-)
+export const CustomSidebar = ({ isCollapsed, toggleSidebar }) => {
+  const { user } = useAuth();
+  
+  const userName = user?.nombre_completo || user?.nombre || "Usuario";
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
-// ─── Logo SB con gradiente (idéntico a la captura) ──────────────────────────
-const SBLogo = () => (
-  <div
-    style={{
-      width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-      background: "linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      boxShadow: "0 4px 16px rgba(59,130,246,0.4)",
-    }}
-  >
-    <span style={{ color: "#fff", fontWeight: 900, fontSize: 15, letterSpacing: "-0.5px" }}>
-      SB
-    </span>
-  </div>
-)
+  const [openModule, setOpenModule] = useState(
+    () => localStorage.getItem("customOpenModule") || null
+  );
 
-export const CustomSidebar = () => {
-  const location = useLocation()
-  const [permissions, setPermissions] = useState([])
+  const openOnly = (key) => {
+    setOpenModule((prev) => {
+      const next = prev === key ? null : key;
+      if (next) localStorage.setItem("customOpenModule", next);
+      else localStorage.removeItem("customOpenModule");
+      return next;
+    });
+  };
 
-  useEffect(() => {
-    const perms = getUserPermissions()
-    setPermissions(perms)
-  }, [])
+  const hasAccess = (resource: string) => {
+    return canView(resource) || canManage(resource);
+  };
 
-  const sidebarConfig = [
+  const listVariants = {
+    initial: { opacity: 0, height: 0, y: -6 },
+    animate: {
+      opacity: 1,
+      height: "auto",
+      y: 0,
+      transition: { type: "spring", stiffness: 320, damping: 26 },
+    },
+    exit: { opacity: 0, height: 0, y: -6 },
+  };
+
+  const darkSubItemClass = "!text-slate-300 hover:!bg-[#1f2f45] !rounded-lg";
+  const darkSubIconClass = "!bg-transparent !border !border-[#2a3b52] !text-slate-400 group-hover:!bg-[#2b64d8] group-hover:!border-[#2b64d8] group-hover:!text-white !w-8 !h-8";
+  const darkSubTextClass = "!text-[13px] !font-normal !text-slate-300 group-hover:!text-white !tracking-normal !translate-x-0";
+
+  const modules = [
     {
-      section: "Administración",
+      key: "admin",
+      label: "Configuración",
+      icon: <Shield size={isCollapsed ? 20 : 18} />,
       items: [
-        { title: "Usuarios",       link: "/custom/usuarios",  icon: <Users size={16} />,           permission: "usuarios" },
-        { title: "Roles y Permisos",link: "/custom/roles",   icon: <Shield size={16} />,           permission: "roles" },
-      ],
+        { title: "Usuarios", link: "/custom/usuarios", icon: <Users size={16} />, permission: "usuarios" },
+        { title: "Roles", link: "/custom/roles", icon: <Shield size={16} />, permission: "roles" },
+      ]
     },
     {
-      section: "Comercial",
+      key: "comercial",
+      label: "Compras",
+      icon: <Package size={isCollapsed ? 20 : 18} />,
       items: [
-        { title: "Productos",   link: "/custom/productos",   icon: <Package size={16} />,          permission: "productos" },
-        { title: "Categorías",  link: "/custom/categorias",  icon: <ChartBarIncreasing size={16}/>, permission: "categoria_productos" },
-        { title: "Proveedores", link: "/custom/proveedores", icon: <UserCheck size={16} />,        permission: "proveedores" },
-        { title: "Compras",     link: "/custom/compras",     icon: <ShoppingCart size={16} />,     permission: "compras" },
-        { title: "Ventas",      link: "/custom/ventas",      icon: <ShoppingCart size={16} />,     permission: "ventas" },
-      ],
+        { title: "Productos", link: "/custom/productos", icon: <Package size={16} />, permission: "productos" },
+        { title: "Categorías", link: "/custom/categorias", icon: <ChartBarIncreasing size={16} />, permission: "categoria_productos" },
+        { title: "Proveedores", link: "/custom/proveedores", icon: <UserCheck size={16} />, permission: "proveedores" },
+        { title: "Compras", link: "/custom/compras", icon: <ShoppingCart size={16} />, permission: "compras" },
+        { title: "Ventas", link: "/custom/ventas", icon: <ShoppingCart size={16} />, permission: "ventas" },
+      ]
     },
     {
-      section: "Gestión de Eventos",
+      key: "eventos",
+      label: "Gestión de Eventos",
+      icon: <Calendar size={isCollapsed ? 20 : 18} />,
       items: [
         { title: "Eventos", link: "/custom/eventos", icon: <Calendar size={16} />, permission: "eventos" },
-        { title: "Sedes",   link: "/custom/sedes",   icon: <MapPin size={16} />,   permission: "sedes" },
-      ],
+        { title: "Sedes", link: "/custom/sedes", icon: <MapPin size={16} />, permission: "sedes" },
+      ]
     },
     {
-      section: "Academia",
+      key: "academia",
+      label: "Clases",
+      icon: <BookOpen size={isCollapsed ? 20 : 18} />,
       items: [
-        { title: "Clases",        link: "/custom/clases",          icon: <BookOpen size={16} />,  permission: "clases" },
-        { title: "Inscripciones", link: "/custom/preinscripciones",icon: <FileText size={16} />,  permission: "preinscripciones" },
-        { title: "Matrículas",    link: "/custom/matriculas",      icon: <CreditCard size={16} />, permission: "matriculas" },
-        { title: "Planes",        link: "/custom/planes",          icon: <FileText size={16} />,  permission: "planes" },
-      ],
-    },
-  ]
-
-  const hasAccess = (resource: string | undefined) => {
-    if (!resource) return true
-    return canView(resource) || canManage(resource)
-  }
-
-  // Obtener usuario del localStorage
-  const user = (() => {
-    try { return JSON.parse(localStorage.getItem("user") || "{}") } catch { return {} }
-  })()
-  const userName  = user?.nombre_completo || "Usuario"
-  const userRole  = user?.rol             || "Cliente"
-  const initials  = userName.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
+        { title: "Clases", link: "/custom/clases", icon: <BookOpen size={16} />, permission: "clases" },
+        { title: "Inscripciones", link: "/custom/preinscripciones", icon: <FileText size={16} />, permission: "preinscripciones" },
+        { title: "Matrículas", link: "/custom/matriculas", icon: <CreditCard size={16} />, permission: "matriculas" },
+        { title: "Planes", link: "/custom/planes", icon: <FileText size={16} />, permission: "planes" },
+      ]
+    }
+  ];
 
   return (
-    <aside
-      className="w-[260px] h-screen flex flex-col sticky top-0 overflow-hidden"
-      style={{
-        background:   "#0d1436",
-        borderRight:  "1px solid rgba(255,255,255,0.07)",
-        boxShadow:    "4px 0 40px rgba(0,0,0,0.4)",
-      }}
+    <nav
+      className={`flex flex-col h-full bg-gradient-to-b from-[#102035] via-[#13263d] to-[#101c2f] rounded-[1.5rem] shadow-[0_18px_45px_-10px_rgba(5,10,20,0.55)] border border-[#23364e] z-20 relative
+        ${isCollapsed ? "px-2 py-5" : "px-3 py-5"}
+      `}
     >
-      {/* ── LOGO / MARCA ──────────────────────────────────────── */}
-      <div className="px-5 py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <Link to="/custom/home" className="flex items-center gap-3 select-none">
-          <SBLogo />
-          <div className="leading-none">
-            <p className="text-[14px] font-black text-white uppercase tracking-tight">
-              Performance
-            </p>
-            <p className="text-[10px] text-white/30 uppercase tracking-[0.18em] mt-0.5">
-              Dashboard
-            </p>
-          </div>
-        </Link>
-      </div>
+      {/* Toggle Button */}
+      <button
+        onClick={toggleSidebar}
+        className="absolute -right-3 top-8 bg-[#1e3250] shadow-lg rounded-full p-1.5 text-slate-300 hover:text-white border border-[#30445f] z-30 transition-all hover:scale-110"
+        title={isCollapsed ? "Expandir" : "Colapsar"}
+      >
+        {isCollapsed ? <ChevronRight size={16} /> : <ChevronRight size={16} className="rotate-180" />}
+      </button>
 
       {/* ── PERFIL DE USUARIO ──────────── */}
-      <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[13px] flex-shrink-0 overflow-hidden border border-white/10"
+      {!isCollapsed ? (
+        <div className="px-4 py-4 mb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[13px] flex-shrink-0 overflow-hidden border border-white/10"
+              style={{ background: user?.foto_perfil ? "transparent" : "linear-gradient(135deg,#7c3aed,#a855f7)" }}
+            >
+              {user?.foto_perfil ? (
+                <img src={user.foto_perfil} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="leading-none min-w-0">
+              <p className="text-[13px] font-bold text-white truncate">{userName}</p>
+              <p className="text-[10px] text-white/35 mt-1 capitalize whitespace-nowrap">
+                {user?.roles && user.roles.length > 0 ? (typeof user.roles[0] === 'object' ? user.roles[0].nombre_rol : user.roles[0]) : "Cliente"}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex justify-center py-4 mb-2 border-b border-white/5">
+           <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-xs overflow-hidden border border-white/10"
             style={{ background: user?.foto_perfil ? "transparent" : "linear-gradient(135deg,#7c3aed,#a855f7)" }}
           >
             {user?.foto_perfil ? (
@@ -169,70 +157,104 @@ export const CustomSidebar = () => {
               initials
             )}
           </div>
-          <div className="leading-none min-w-0">
-            <p className="text-[13px] font-bold text-white truncate">{userName}</p>
-            <p className="text-[10px] text-white/35 mt-1 capitalize">
-              {user?.roles && user.roles.length > 0 ? (typeof user.roles[0] === 'object' ? user.roles[0].nombre_rol : user.roles[0]) : "Invitado"}
-            </p>
-          </div>
         </div>
-      </div>
+      )}
 
-      {/* ── NAV ───────────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-        {sidebarConfig.map((group, gIdx) => {
-          const visible = group.items.filter(i => hasAccess(i.permission))
-          if (!visible.length) return null
+
+      <div className="sidebar flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+        <li className="list-none">
+          <BtnSideBar
+            title="Dashboard"
+            link="/custom/home"
+            isCollapsed={isCollapsed}
+            itemClassName="!rounded-xl !text-slate-200 hover:!bg-[#1f2f45]"
+            iconClassName="!bg-transparent !border !border-[#2a3b52] !text-[#8aaeea] group-hover:!bg-[#2b64d8] group-hover:!border-[#2b64d8] group-hover:!text-white"
+            textClassName="!text-[15px] !font-semibold !text-slate-200 group-hover:!text-white !tracking-normal"
+          >
+            <LayoutDashboard size={20} />
+          </BtnSideBar>
+        </li>
+
+        {!isCollapsed && (
+          <p className="px-3 mt-3 mb-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500 opacity-90">
+            Menú
+          </p>
+        )}
+
+        {modules.map((mod) => {
+          const visibleItems = mod.items.filter(item => hasAccess(item.permission));
+          if (visibleItems.length === 0) return null;
+
           return (
-            <div key={gIdx}>
-              {/* Etiqueta sección — igual "MENÚ" de la captura */}
-              <p
-                className="text-[9.5px] font-bold uppercase tracking-[0.18em] px-3 mb-1.5"
-                style={{ color: "rgba(255,255,255,0.22)" }}
+            <div
+              key={mod.key}
+              className={`sidebar-transition rounded-xl transition-all ${openModule === mod.key ? "bg-[#1c2d43] border border-[#2c4058]" : "border border-transparent"}
+                ${isCollapsed ? "mb-2" : "p-1.5"}
+              `}
+            >
+              <button
+                onClick={() => openOnly(mod.key)}
+                className={`w-full flex items-center transition-all duration-300 group rounded-xl
+                  ${isCollapsed ? "justify-center p-3" : "justify-between p-2.5 hover:bg-[#24374e]"}
+                `}
               >
-                {group.section}
-              </p>
-              <div className="space-y-0.5">
-                {visible.map((item, iIdx) => (
-                  <SidebarItem
-                    key={`${gIdx}-${iIdx}`}
-                    title={item.title}
-                    link={item.link}
-                    icon={item.icon}
-                    isActive={location.pathname === item.link}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </nav>
+                <div className={`flex items-center ${isCollapsed ? "justify-center w-full" : "gap-3"}`}>
+                  <div className={`
+                    transition-all duration-300 flex items-center justify-center shrink-0
+                    ${isCollapsed ? "w-9 h-9 rounded-xl" : "w-8 h-8 rounded-xl"}
+                    ${openModule === mod.key
+                      ? "text-white bg-[#2b64d8] shadow-md"
+                      : "text-slate-400 bg-transparent border border-[#2a3b52] group-hover:text-white group-hover:bg-[#2b64d8] group-hover:border-[#2b64d8]"}
+                  `}>
+                    {mod.icon}
+                  </div>
+                  {!isCollapsed && (
+                    <h4 className={`text-[14px] md:text-[15px] font-semibold transition-all duration-300 whitespace-nowrap overflow-hidden tracking-normal
+                      ${openModule === mod.key ? "text-slate-100" : "text-slate-300 group-hover:text-white"}
+                    `}>
+                      {mod.label}
+                    </h4>
+                  )}
+                </div>
+                {!isCollapsed && (
+                  <motion.div
+                    animate={{ rotate: openModule === mod.key ? 90 : 0 }}
+                    className="text-slate-500"
+                  >
+                    <ChevronRight size={14} />
+                  </motion.div>
+                )}
+              </button>
 
-      {/* ── CERRAR SESIÓN ─────────────────────────────────────── */}
-      <div className="px-4 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-        <Link
-          to="/custom/home"
-          className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200"
-          style={{
-            color:      "rgba(255,255,255,0.45)",
-            background: "rgba(255,255,255,0.05)",
-            border:     "1px solid rgba(255,255,255,0.08)",
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = "rgba(239,68,68,0.12)"
-            e.currentTarget.style.color      = "#f87171"
-            e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)"
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background  = "rgba(255,255,255,0.05)"
-            e.currentTarget.style.color        = "rgba(255,255,255,0.45)"
-            e.currentTarget.style.borderColor  = "rgba(255,255,255,0.08)"
-          }}
-        >
-          <LogOut size={15} />
-          <span>Salir</span>
-        </Link>
+              <AnimatePresence>
+                {openModule === mod.key && !isCollapsed && (
+                  <motion.ul
+                    variants={listVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="mt-1.5 space-y-1.5 px-1.5 mb-2"
+                  >
+                    {visibleItems.map((item, idx) => (
+                      <BtnSideBar 
+                        key={idx}
+                        title={item.title} 
+                        link={item.link} 
+                        isCollapsed={isCollapsed} 
+                        itemClassName={darkSubItemClass} 
+                        iconClassName={darkSubIconClass} 
+                        textClassName={darkSubTextClass}
+                      >
+                        {item.icon}
+                      </BtnSideBar>
+                    ))}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </div>
-    </aside>
-  )
-}
+    </nav>
+  );
+};

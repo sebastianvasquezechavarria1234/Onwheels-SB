@@ -335,15 +335,15 @@ const AppRouter = () => {
           <Route path="custom/training" element={<CustomTraining />} />
           <Route path="custom/store/product/:id" element={withAnimation(CustomProductDetail)} />
           <Route path="custom/purchases" element={<CustomPurchases />} />
-          <Route path="custom/profile" element={<CustomProfile />} />
-          <Route path="custom/my-purchases" element={<CustomMyPurchases />} />
-          <Route path="custom/my-purchases/:id" element={<CustomPurchaseDetail />} />
-          <Route path="custom/cart" element={<CustomShoppingCart />} />
-          <Route path="custom/checkout" element={<CustomCheckout />} />
+
 
           {/* Dashboard personalizado (con sidebar via CustomLayoutWrapper) */}
           <Route element={<CustomLayoutWrapper />}>
             <Route path="custom/dashboard" element={<CustomDashboard />} />
+            <Route path="custom/profile" element={<CustomProfile />} />
+            <Route path="custom/my-purchases" element={<CustomMyPurchases />} />
+            <Route path="custom/cart" element={<CustomShoppingCart />} />
+            <Route path="custom/checkout" element={<CustomCheckout />} />
             <Route path="custom/usuarios" element={<Usuarios />} />
             <Route path="custom/roles" element={<Roles />} />
             <Route path="custom/productos" element={<Products />} />
