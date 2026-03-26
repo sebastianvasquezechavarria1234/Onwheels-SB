@@ -457,7 +457,7 @@ const Roles = () => {
       <AnimatePresence>
         {modalType && modalType !== "delete" && (
           <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className={`${configUi.modalPanel} ${modalType === "permisos" ? "max-w-5xl" : "max-w-3xl"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+            <motion.div className={`${configUi.modalPanel} ${modalType === "permisos" ? "max-w-4xl" : "max-w-3xl"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
               <div className={modalType === "permisos" ? configUi.modalSplit : configUi.modalSplitCompact}>
                 <div className={configUi.modalSide}>
                   <div>

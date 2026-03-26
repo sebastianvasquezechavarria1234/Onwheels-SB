@@ -609,7 +609,7 @@ export default function Usuarios() {
             onClick={closeModal}
           >
             <motion.div
-              className={`${configUi.modalPanel} max-w-5xl`}
+              className={`${configUi.modalPanel} ${modal === "eliminar" ? "max-w-md" : "max-w-3xl"}`}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}

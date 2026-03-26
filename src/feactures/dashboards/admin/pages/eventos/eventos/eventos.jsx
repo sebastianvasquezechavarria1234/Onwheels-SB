@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Search, Plus, Pen, Trash2, Eye, X, Calendar, MapPin, Hash, ArrowUpDown, 
   ChevronLeft, ChevronRight, Clock, Award, Tag, Image as ImageIcon, Globe, 
-  ChevronDown, AlertCircle, CheckCircle2, Layout, Info
+  ChevronDown, AlertCircle, CheckCircle, Layout, Info
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -55,7 +55,7 @@ export default function Eventos() {
     descripcion: "",
     imagen_evento: "",
     estado: "activo",
-    link_google_forms: "",
+    google_forms: "",
   });
 
   // Validation
@@ -148,7 +148,7 @@ export default function Eventos() {
         descripcion: evento.descripcion || "",
         imagen_evento: evento.imagen_evento || "",
         estado: evento.estado || "activo",
-        link_google_forms: evento.link_google_forms || "",
+        google_forms: (Array.isArray(evento.google_forms) ? evento.google_forms[0] : (evento.google_forms || "")),
       });
     } else {
       setForm({
@@ -162,7 +162,7 @@ export default function Eventos() {
         descripcion: "",
         imagen_evento: "",
         estado: "activo",
-        link_google_forms: "",
+        google_forms: "",
       });
     }
     setFormErrors({});
@@ -398,7 +398,7 @@ export default function Eventos() {
                        <div className="flex-1 space-y-4">
                           {modal !== "ver" && (
                             <div className="flex items-center gap-2 mb-6">
-                               <div className={cn("h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition", step === 1 ? "bg-[#16315f] text-white shadow-md shadow-blue-100" : "bg-green-100 text-green-600")}><CheckCircle2 size={step === 2 ? 16 : 0}/> {step === 1 && "1"}</div>
+                               <div className={cn("h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition", step === 1 ? "bg-[#16315f] text-white shadow-md shadow-blue-100" : "bg-green-100 text-green-600")}><CheckCircle size={step === 2 ? 16 : 0}/> {step === 1 && "1"}</div>
                                <div className="h-0.5 w-12 bg-slate-100 rounded" />
                                <div className={cn("h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition", step === 2 ? "bg-[#16315f] text-white shadow-md shadow-blue-100" : "bg-slate-100 text-slate-400")}>2</div>
                             </div>
@@ -476,7 +476,7 @@ export default function Eventos() {
                                   <label className={configUi.fieldLabel}>Link Inscripciones (Google Forms)</label>
                                   <div className="relative">
                                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                     <input name="link_google_forms" value={form.link_google_forms} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10")} placeholder="https://forms.gle/..." />
+                                     <input name="google_forms" value={form.google_forms} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10")} placeholder="https://forms.gle/..." />
                                   </div>
                                </div>
 

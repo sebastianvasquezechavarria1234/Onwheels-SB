@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
-  User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle2, AlertCircle,
+  User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle, AlertCircle,
   Briefcase, TrendingUp, Download, IdCard
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

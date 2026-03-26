@@ -21,11 +21,10 @@ import {
 } from "../../services/productosServices";
 import { getUsuarios } from "../../services/usuariosServices";
 import { getClientes } from "../../services/clientesServices";
-import { configUi } from "../../configuracion/configUi";
+import { configUi, cn } from "../../configuracion/configUi";
 import { ProductSelectorView } from "../../compras/compras/ProductSelectorView";
 import { useToast } from "../../../../../../context/ToastContext";
 
-const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 export default function PedidoEditar() {
     const toast = useToast();
@@ -541,6 +540,5 @@ export default function PedidoEditar() {
                 )}
             </AnimatePresence>
         </div>
-        </div >
     );
-}
+};

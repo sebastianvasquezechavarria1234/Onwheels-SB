@@ -1131,7 +1131,7 @@ export default function Productos({ renderLayout = true }) {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white rounded-[2.5rem] shadow-2xl relative overflow-hidden max-w-5xl w-full border border-slate-200"
+                className="bg-white rounded-[2.5rem] shadow-2xl relative overflow-hidden max-w-4xl w-full border border-slate-200"
                 initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >

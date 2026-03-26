@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Plus, X, Eye, Mail, Trash2, Calendar, Users, Send, Search, Hash,
-  ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle2, AlertCircle, Info
+  ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle, AlertCircle, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -304,7 +304,7 @@ export default function EnviarCorreosMasivos() {
                               <span className="text-xs font-black text-[#16315f] uppercase tracking-wide">{r.nombre_rol}</span>
                               <p className="text-[10px] text-[#5b7398] font-bold">{r.cantidad_usuarios} usuarios</p>
                             </div>
-                            {rolesSeleccionados.some(s => s.idRol === r.id_rol) && <CheckCircle2 size={16} className="text-blue-500" />}
+                            {rolesSeleccionados.some(s => s.idRol === r.id_rol) && <CheckCircle size={16} className="text-blue-500" />}
                           </button>
                         ))}
                       </div>
