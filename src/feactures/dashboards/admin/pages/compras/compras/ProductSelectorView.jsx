@@ -7,7 +7,6 @@ import { cn, configUi } from "../../configuracion/configUi";
 export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = false, currentItems = [] }) => {
     const location = useLocation();
     const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
-    const productPath = basePath === '/custom' ? 'productos' : 'products';
 
     const [productSearch, setProductSearch] = useState("");
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -62,21 +61,11 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                         <ArrowLeft size={18} />
                     </button>
                     <div>
-                        <h2 className={configUi.modalTitle}>Catálogo de Activos</h2>
-                        <p className={configUi.modalSubtitle}>Sincronización de Stock Entrante</p>
+                        <h2 className={configUi.modalTitle}>Seleccionar Productos</h2>
+                        <p className={configUi.modalSubtitle}>Añadir ítems a la orden actual</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <a
-                        href={`${basePath}/${productPath}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={configUi.secondaryButton + " gap-2 h-10 px-4"}
-                    >
-                        <Plus size={14} />
-                        Nuevo Registro
-                        <ExternalLink size={12} className="opacity-40" />
-                    </a>
                     <button onClick={onClose} className={configUi.modalClose}><X size={20} /></button>
                 </div>
             </div>

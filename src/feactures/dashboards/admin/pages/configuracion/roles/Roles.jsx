@@ -63,16 +63,8 @@ const Roles = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getRoles({ page: currentPage, limit: itemsPerPage, search });
-      if (res && res.data) {
-        setRoles(res.data);
-        setTotalPages(res.totalPages || 1);
-        setTotalItems(res.total || 0);
-      } else {
-        setRoles(Array.isArray(res) ? res : []);
-        setTotalPages(1);
-        setTotalItems(Array.isArray(res) ? res.length : 0);
-      }
+      const res = await getRoles(); // Fetch all
+      setRoles(Array.isArray(res) ? res : (res.data || []));
     } catch (err) {
       setError("Error al cargar los roles. Inténtalo de nuevo.");
       console.error(err);
@@ -253,32 +245,39 @@ const Roles = () => {
     }
   };
 
+  const filteredRoles = React.useMemo(() => {
+    return roles.filter(r => {
+      const matchesSearch = r.nombre_rol.toLowerCase().includes(search.toLowerCase());
+      const matchesType = filterType === "Todos los roles" || 
+                         (filterType === "Activos" && r.estado) || 
+                         (filterType === "Inactivos" && !r.estado);
+      return matchesSearch && matchesType;
+    });
+  }, [roles, search, filterType]);
+
+  const totalFiltered = filteredRoles.length;
+  const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
+  const currentItems = filteredRoles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const handleDownload = () => {
-    // Generate CSV from current items
-    if (!roles || roles.length === 0) return;
+    if (!filteredRoles || filteredRoles.length === 0) return;
     const header = ["ID", "Nombre Rol", "Descripcion", "Estado"];
-    const csvData = currentItems.map(r => [
+    const csvData = filteredRoles.map(r => [
       r.id_rol,
-      r.nombre_rol,
-      r.descripcion || "",
+      `"${r.nombre_rol}"`,
+      `"${r.descripcion || ""}"`,
       r.estado ? "Activo" : "Inactivo"
     ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...csvData].join("\n");
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "roles_report_onwheels.csv");
+    link.setAttribute("download", "reporte_roles_onwheels.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-
-  const currentItems = roles.filter(r => {
-    if (filterType === "Activos") return r.estado === true;
-    if (filterType === "Inactivos") return r.estado === false;
-    return true; // Todos los roles
-  });
 
   const groupedPermissions = groupPermissionsByModule(permisosTotales);
 
@@ -291,7 +290,7 @@ const Roles = () => {
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
                Roles
             </h2>
-            <span className={configUi.countBadge}>{totalItems} roles</span>
+            <span className={configUi.countBadge}>{totalFiltered} roles</span>
           </div>
 
           <div className={configUi.toolbar}>
@@ -420,10 +419,10 @@ const Roles = () => {
           </div>
 
           {/* Pagination Footer */}
-          {totalPages > 0 && (
+          {totalPagesLocal > 1 && (
             <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
-                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPagesLocal}</span>
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -434,8 +433,8 @@ const Roles = () => {
                   <ChevronLeft size={18} />
                 </button>
                 <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPagesLocal}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPagesLocal, p + 1))}
                   className={configUi.paginationButton}
                 >
                   <ChevronRight size={18} />

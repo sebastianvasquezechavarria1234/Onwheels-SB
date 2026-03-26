@@ -173,7 +173,7 @@ const CompraEditar = () => {
                 showNotification("Registro actualizado correctamente");
             } else {
                 await comprasService.createCompra(payload);
-                showNotification("Adquisición registrada con éxito");
+                showNotification("Compra registrada con éxito");
             }
             setTimeout(() => navigate(`${basePath}/compras`), 1000);
         } catch (err) {
@@ -238,7 +238,7 @@ const CompraEditar = () => {
                                 >
                                     <ArrowLeft size={20} />
                                 </button>
-                                <h1 className={configUi.title}>{isEditing ? `Modificar Compra #${id}` : "Nueva Adquisición"}</h1>
+                                <h1 className={configUi.title}>{isEditing ? `Modificar Compra #${id}` : "Nueva Compra"}</h1>
                                 <span className={configUi.countBadge}>ESTADO: {isEditing ? "AJUSTE" : "EN CURSO"}</span>
                             </div>
 
@@ -316,8 +316,8 @@ const CompraEditar = () => {
                                       <PlusCircle size={22} />
                                     </div>
                                     <div className="text-center">
-                                       <p className="text-sm font-black text-[#16315f] uppercase tracking-tight">Vincular Artículos</p>
-                                       <p className="text-[10px] text-[#6b84aa] mt-1 font-bold">Explorar Catálogo de Productos</p>
+                                       <p className="text-sm font-black text-[#16315f] uppercase tracking-tight">Agregar Producto</p>
+                                       <p className="text-[10px] text-[#6b84aa] mt-1 font-bold">Seleccionar del catálogo</p>
                                     </div>
                                 </button>
                                 {errors.items && <p className="text-center text-xs font-bold text-rose-500 mt-2">{errors.items}</p>}

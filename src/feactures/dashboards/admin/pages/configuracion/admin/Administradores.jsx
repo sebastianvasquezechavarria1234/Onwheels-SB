@@ -44,18 +44,10 @@ export const Administradores = () => {
       setLoading(true);
       setError(null);
       const [adminsRes, usuariosData] = await Promise.all([
-        getAdministradores({ page: currentPage, limit: itemsPerPage, search }),
+        getAdministradores(), // Fetch all
         getUsuariosSoloConRolCliente()
       ]);
-      if (adminsRes && adminsRes.data) {
-        setAdministradores(adminsRes.data);
-        setTotalPages(adminsRes.totalPages || 1);
-        setTotalItems(adminsRes.total || 0);
-      } else {
-        setAdministradores(Array.isArray(adminsRes) ? adminsRes : []);
-        setTotalPages(1);
-        setTotalItems(Array.isArray(adminsRes) ? adminsRes.length : 0);
-      }
+      setAdministradores(Array.isArray(adminsRes) ? adminsRes : (adminsRes.data || []));
       setUsuariosDisponibles(Array.isArray(usuariosData) ? usuariosData : []);
     } catch (err) {
       console.error("Error cargando administradores:", err);
@@ -64,7 +56,7 @@ export const Administradores = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, search]);
+  }, []);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -180,31 +172,42 @@ export const Administradores = () => {
     });
   };
 
+  const filteredAdmins = React.useMemo(() => {
+    return administradores.filter(a => {
+      const q = search.toLowerCase();
+      const matchesSearch = a.nombre_completo.toLowerCase().includes(q) || 
+                           a.email.toLowerCase().includes(q) ||
+                           (a.area || "").toLowerCase().includes(q);
+      
+      if (filterType === "Superadmin") return matchesSearch && a.tipo_admin?.toLowerCase() === "superadmin";
+      if (filterType === "Soporte") return matchesSearch && a.tipo_admin?.toLowerCase() === "soporte";
+      return matchesSearch;
+    });
+  }, [administradores, search, filterType]);
+
+  const totalFiltered = filteredAdmins.length;
+  const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
+  const currentItems = filteredAdmins.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const handleDownload = () => {
-    if (!administradores || administradores.length === 0) return;
+    if (!filteredAdmins || filteredAdmins.length === 0) return;
     const header = ["Nombre Completo", "Email", "Tipo Admin", "Area"];
-    const csvData = currentItems.map(a => [
+    const csvData = filteredAdmins.map(a => [
       `"${a.nombre_completo}"`,
       a.email,
       a.tipo_admin || "General",
-      a.area || ""
+      `"${a.area || ""}"`
     ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...csvData].join("\n");
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "administradores_report_onwheels.csv");
+    link.setAttribute("download", "reporte_administradores_onwheels.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-
-  const currentItems = administradores.filter(a => {
-    if (filterType === "Superadmin") return a.tipo_admin?.toLowerCase() === "superadmin";
-    if (filterType === "Soporte") return a.tipo_admin?.toLowerCase() === "soporte";
-    return true; // Todos los admins
-  });
 
   return (
     <>
@@ -215,7 +218,7 @@ export const Administradores = () => {
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
               Admin y Personal
             </h2>
-            <span className={configUi.countBadge}>{totalItems} registros</span>
+            <span className={configUi.countBadge}>{totalFiltered} registros</span>
           </div>
 
           <div className={configUi.toolbar}>
@@ -338,10 +341,10 @@ export const Administradores = () => {
           </div>
 
           {/* Pagination Footer */}
-          {totalPages > 0 && (
+          {totalPagesLocal > 1 && (
             <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
-                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPagesLocal}</span>
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -352,8 +355,8 @@ export const Administradores = () => {
                   <ChevronLeft size={18} />
                 </button>
                 <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPagesLocal}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPagesLocal, p + 1))}
                   className={configUi.paginationButton}
                 >
                   <ChevronRight size={18} />

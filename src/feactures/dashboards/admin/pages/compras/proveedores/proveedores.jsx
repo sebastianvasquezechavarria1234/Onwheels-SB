@@ -14,10 +14,8 @@ export default function Proveedores() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   
-  // Backend Pagination State
+  // Frontend Filtration & Pagination State
   const [paginaActual, setPaginaActual] = useState(1);
-  const [totalPaginas, setTotalPaginas] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const itemsPorPagina = 10;
 
   const [modalType, setModalType] = useState(null);
@@ -40,29 +38,15 @@ export default function Proveedores() {
 
   useEffect(() => {
     fetchData();
-  }, [paginaActual, search]);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/proveedores", {
-        params: {
-          page: paginaActual,
-          limit: itemsPorPagina,
-          search: search
-        }
-      });
+      const res = await api.get("/proveedores"); // Fetch all
       
       const data = res.data;
-      if (data && data.proveedores) {
-        setProveedores(data.proveedores);
-        setTotalPaginas(data.totalPages || 1);
-        setTotalItems(data.totalProveedores || 0);
-      } else {
-        setProveedores(Array.isArray(data) ? data : []);
-        setTotalPaginas(1);
-        setTotalItems(Array.isArray(data) ? data.length : 0);
-      }
+      setProveedores(Array.isArray(data) ? data : (data.proveedores || []));
     } catch (err) {
       setError(err.message);
       showNotification("Error al cargar proveedores", "error");
@@ -116,6 +100,41 @@ export default function Proveedores() {
     }
   };
 
+  const filtered = React.useMemo(() => {
+    return proveedores.filter(p => {
+      const q = search.toLowerCase();
+      return (p.nombre_proveedor || "").toLowerCase().includes(q) || 
+             (p.nit || "").toLowerCase().includes(q) ||
+             (p.email || "").toLowerCase().includes(q);
+    });
+  }, [proveedores, search]);
+
+  const totalFiltered = filtered.length;
+  const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
+  const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
+
+  const handleDownload = () => {
+    if (!filtered || filtered.length === 0) return;
+    const header = ["Nombre Proveedor", "NIT", "Email", "Telefono", "Direccion"];
+    const csvData = filtered.map(p => [
+      `"${p.nombre_proveedor}"`,
+      p.nit,
+      p.email,
+      p.telefono || "",
+      `"${p.direccion || ""}"`
+    ].join(","));
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "reporte_proveedores_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   const handleDelete = async () => {
     try {
       await api.delete(`/proveedores/${selected.nit}`);
@@ -134,10 +153,10 @@ export default function Proveedores() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-2xl font-bold text-[#040529] font-['Outfit'] tracking-tight">
-              Aliados Estratégicos
+              Proveedores Estratégicos
             </h2>
             <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
-              <span>{totalItems} proveedores totales</span>
+              <span>{totalFiltered} proveedores totales</span>
               <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
               <span>Gestión de suministros</span>
             </div>
@@ -145,7 +164,7 @@ export default function Proveedores() {
           
           <div className="flex items-center gap-3">
              <button
-              onClick={() => {/* Lógica de descarga */}}
+              onClick={handleDownload}
               className="p-2.5 text-gray-400 hover:text-[#040529] hover:bg-gray-50 rounded-xl transition-all border border-gray-200 shadow-sm"
               title="Descargar Reporte"
             >
@@ -194,11 +213,11 @@ export default function Proveedores() {
                     <td colSpan="3" className="p-20 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
-                        <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Sincronizando aliados...</p>
+                        <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Sincronizando proveedores...</p>
                       </div>
                     </td>
                   </tr>
-                ) : proveedores.length === 0 ? (
+                 ) : currentItems.length === 0 ? (
                   <tr>
                     <td colSpan="3" className="p-20 text-center space-y-4">
                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto border border-slate-100">
@@ -208,7 +227,7 @@ export default function Proveedores() {
                     </td>
                   </tr>
                 ) : (
-                  proveedores.map((p) => (
+                  currentItems.map((p) => (
                     <tr key={p.nit} className="group hover:bg-[#f8fbff] transition-all">
                       <td className="px-3 py-2 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm">
                         <div className="flex flex-col">
@@ -244,7 +263,7 @@ export default function Proveedores() {
 
           <div className="shrink-0 border-t border-[#d7e5f8] px-5 py-4 bg-[#fbfdff] flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-[#6b84aa]">
-              Mostrando <span className="font-bold text-[#16315f]">{proveedores.length}</span> de <span className="font-bold text-[#16315f]">{totalItems}</span> registros
+              Mostrando <span className="font-bold text-[#16315f]">{currentItems.length}</span> de <span className="font-bold text-[#16315f]">{totalFiltered}</span> registros
             </div>
             
             <div className="flex items-center gap-2">
@@ -257,7 +276,7 @@ export default function Proveedores() {
               </button>
               
               <div className="flex items-center gap-1">
-                {[...Array(totalPaginas)].map((_, i) => (
+                {[...Array(totalPaginasLocal)].map((_, i) => (
                   <button
                     key={i + 1}
                     onClick={() => setPaginaActual(i + 1)}
@@ -273,8 +292,8 @@ export default function Proveedores() {
               </div>
 
               <button
-                disabled={paginaActual === totalPaginas}
-                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                disabled={paginaActual === totalPaginasLocal}
+                onClick={() => setPaginaActual(p => Math.min(totalPaginasLocal, p + 1))}
                 className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
               >
                 <ChevronRight size={20} />
@@ -310,7 +329,7 @@ export default function Proveedores() {
                 <div className="flex justify-between items-center mb-10">
                   <div className="space-y-1">
                      <h3 className="text-2xl font-black text-slate-800 tracking-tight">
-                       {modalType === "add" ? "Nuevo Aliado" : modalType === "edit" ? "Editar Aliado" : modalType === "details" ? "Ficha de Proveedor" : "Eliminar Registro"}
+                       {modalType === "add" ? "Nuevo Proveedor" : modalType === "edit" ? "Editar Proveedor" : modalType === "details" ? "Ficha de Proveedor" : "Eliminar Registro"}
                      </h3>
                      <p className="text-xs text-slate-400 font-medium">{modalType === "add" || modalType === "edit" ? "Complete la información comercial" : "Resumen de perfil comercial"}</p>
                   </div>
@@ -323,7 +342,7 @@ export default function Proveedores() {
                       <Trash2 size={32} className="text-rose-500" />
                     </div>
                     <div>
-                      <p className="text-slate-400 text-sm font-medium leading-relaxed">¿Confirmas la baja permanente del aliado <span className="text-slate-900 font-bold">"{selected?.nombre_proveedor}"</span>?</p>
+                      <p className="text-slate-400 text-sm font-medium leading-relaxed">¿Confirmas la baja permanente del proveedor <span className="text-slate-900 font-bold">"{selected?.nombre_proveedor}"</span>?</p>
                     </div>
                      <div className="flex flex-col gap-3">
                        <button onClick={handleDelete} className="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg active:scale-95">Eliminar Proveedor</button>
@@ -384,7 +403,7 @@ export default function Proveedores() {
                              <Briefcase size={28} className="text-white" />
                           </div>
                           <div className="space-y-2">
-                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Estado Aliado</p>
+                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Estado Proveedor</p>
                              <span className="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-500/30 inline-block">Verificado</span>
                           </div>
                        </div>
@@ -490,7 +509,7 @@ export default function Proveedores() {
                           <>
                             <button onClick={() => setCurrentStep(1)} className="flex-1 py-3.5 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Volver</button>
                             <button onClick={handleSave} className="flex-[2] py-3.5 bg-[#040529] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#040529]/10 hover:bg-[#040529]/90 transition-all active:scale-95">
-                              {modalType === "add" ? "Registrar Aliado" : "Guardar Cambios"}
+                              {modalType === "add" ? "Registrar Proveedor" : "Guardar Cambios"}
                             </button>
                           </>
                         )}

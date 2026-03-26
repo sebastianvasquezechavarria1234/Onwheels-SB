@@ -116,6 +116,31 @@ function Ventas() {
     }
   };
 
+  const handleDownload = () => {
+    if (!filtered || filtered.length === 0) return;
+    const header = ["ID Venta", "Fecha", "Cliente", "Metodo Pago", "Total", "Estado"];
+    const csvData = filtered.map(v => [
+      v.id_venta,
+      new Date(v.fecha_venta).toLocaleDateString(),
+      `"${getClienteNombre(v.id_cliente)}"`,
+      v.metodo_pago?.toUpperCase() || "",
+      v.total || 0,
+      `"${v.estado}"`
+    ].join(","));
+
+    const csvLines = [header.join(","), ...csvData];
+    const csvContent = "\uFEFF" + csvLines.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "reporte_ventas_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // --- FILTRADO Y PAGINACIÓN ---
   const getClienteNombre = (id_cliente) => {
     const cliente = clientes.find((c) => c.id_cliente === id_cliente);
@@ -190,6 +215,10 @@ function Ventas() {
 
           <button onClick={() => fetchData()} className={configUi.iconButton} title="Refrescar">
             <Clock size={20} />
+          </button>
+
+          <button onClick={handleDownload} className={configUi.iconButton} title="Descargar Reporte">
+            <Download size={20} />
           </button>
 
           <button onClick={() => navigate(`${basePath}/ventas/crear`)} className={configUi.primaryButton}>

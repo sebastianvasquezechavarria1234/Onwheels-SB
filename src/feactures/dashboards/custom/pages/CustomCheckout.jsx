@@ -1,8 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, AlertTriangle, ShoppingBag, ArrowLeft, CheckCircle, Home } from "lucide-react";
+import { 
+  Check, 
+  AlertTriangle, 
+  ShoppingBag, 
+  ArrowLeft, 
+  CheckCircle, 
+  Home, 
+  MapPin, 
+  CreditCard,
+  Truck,
+  Package
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCheckout } from "../../../../hooks/useCheckout";
+import { configUi, cn } from "../../admin/pages/configuracion/configUi";
 
 export const CustomCheckout = () => {
     const navigate = useNavigate();
@@ -19,10 +31,10 @@ export const CustomCheckout = () => {
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
     const [isSuccess, setIsSuccess] = useState(false);
 
-    const showNotification = (message, type = "success") => {
+    const showNotification = useCallback((message, type = "success") => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: "", type: "" }), 4000);
-    };
+    }, []);
 
     const onConfirm = async (e) => {
         e.preventDefault();
@@ -38,217 +50,252 @@ export const CustomCheckout = () => {
 
     if (loading) {
         return (
-            <div className="pt-24 min-h-screen flex items-center justify-center bg-[#0B0F14]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E3A8A]"></div>
+            <div className="flex-1 flex items-center justify-center">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
             </div>
         );
     }
 
-    if (cart.items.length === 0) {
+    if (cart.items.length === 0 && !isSuccess) {
         return (
-            <div className="pt-24 min-h-screen flex flex-col items-center justify-center bg-[#0B0F14] text-white">
-                <ShoppingBag size={48} className="text-gray-500 mb-6" />
-                <h3 className="text-2xl font-black mb-4">El carrito está vacío</h3>
-                <button onClick={() => navigate("/custom/cart")} className="text-[#1E3A8A] hover:underline font-bold">
-                    Volver al carrito
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                <ShoppingBag size={64} className="text-slate-200 mb-6" />
+                <h3 className="text-xl font-black text-[#16315f] uppercase tracking-tight">Tu carrito está vacío</h3>
+                <p className="text-slate-400 mt-2 mb-8 max-w-xs font-medium">Parece que aún no has agregado artículos para procesar.</p>
+                <button onClick={() => navigate("/custom/cart")} className={configUi.primaryButton}>
+                    Volver al Carrito
                 </button>
             </div>
         );
     }
 
     return (
-        <>
-            <div className="bg-[#0B0F14] min-h-screen text-white font-primary pb-24">
-                <section className="pt-8 max-w-7xl mx-auto px-4 sm:px-6 flex gap-10 max-lg:flex-col">
-                    <div className="w-[65%] max-lg:w-full">
-                        <div className="mb-6">
-                            <button
-                                onClick={() => navigate(isSuccess ? `/custom/dashboard` : `/custom/cart`)}
-                                className="flex items-center gap-2 text-[#9CA3AF] hover:text-white mb-6 tracking-wider text-xs font-bold transition-colors"
-                            >
-                                <ArrowLeft size={16} />
-                                {isSuccess ? "Volver al dashboard" : "Volver al carrito"}
-                            </button>
-                            <h2 className="text-3xl font-black text-white tracking-tight">{isSuccess ? "Compra exitosa" : "Información de envío y pago"}</h2>
-                        </div>
+        <div className={configUi.pageShell}>
+            {/* Header */}
+            <div className={configUi.headerRow}>
+                <div className={configUi.titleWrap}>
+                    <h2 className={configUi.title}>{isSuccess ? "Confirmación" : "Finalizar Compra"}</h2>
+                    <span className={configUi.countBadge}>
+                        {isSuccess ? "PEDIDO RECIBIDO" : "PROCESO DE PAGO"}
+                    </span>
+                </div>
+                <div className={configUi.toolbar}>
+                    {!isSuccess && (
+                        <button 
+                            onClick={() => navigate("/custom/cart")} 
+                            className={configUi.secondaryButton}
+                        >
+                            <ArrowLeft size={16} />
+                            Regresar al Carrito
+                        </button>
+                    )}
+                </div>
+            </div>
 
-                        {isSuccess ? (
-                            <div className="p-8 bg-[#121821] border border-emerald-500/30 rounded-[2rem] shadow-xl text-center flex flex-col items-center justify-center min-h-[400px]">
-                                <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/5">
-                                    <CheckCircle size={48} className="text-emerald-400" />
-                                </div>
-                                <h3 className="text-2xl font-black text-white mb-4">¡Tu pedido está confirmado!</h3>
-                                <p className="text-[#9CA3AF] mb-8 font-medium max-w-sm">Hemos recibido tu solicitud y enviado un correo con los detalles.</p>
-                                <button
-                                    onClick={() => navigate(`/custom/dashboard`)}
-                                    className="flex items-center justify-center gap-2 px-8 py-4 bg-[#1E3A8A] text-white rounded-2xl hover:bg-blue-800 transition-all shadow-xl shadow-[#1E3A8A]/20 font-black tracking-widest text-xs group"
-                                >
-                                    <Home size={18} className="group-hover:-translate-y-0.5 transition-transform" />
-                                    Volver al dashboard
-                                </button>
+            <div className="flex flex-col xl:flex-row gap-8 mt-6 overflow-hidden">
+                {/* Left Column - Form or Success */}
+                <div className="flex-1 min-w-0">
+                    {isSuccess ? (
+                        <div className={cn(configUi.tableCard, "p-12 text-center flex flex-col items-center justify-center min-h-[450px]")}>
+                            <div className="w-24 h-24 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mb-8 border border-emerald-100 shadow-lg shadow-emerald-500/5">
+                                <CheckCircle size={48} className="text-emerald-500" />
                             </div>
-                        ) : (
-                            <form onSubmit={onConfirm} className="p-8 bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl">
-                            {/* Información de Envío */}
+                            <h3 className="text-2xl font-black text-[#16315f] mb-4 uppercase tracking-tighter">¡Tu pedido está en camino!</h3>
+                            <p className="text-slate-500 mb-10 font-medium max-w-sm leading-relaxed">
+                                Hemos recibido la información de tu compra satisfactoriamente. Pronto recibirás un mensaje de confirmación.
+                            </p>
+                            <button
+                                onClick={() => navigate(`/custom/home`)}
+                                className={cn(configUi.primaryButton, "px-10 py-5 text-sm")}
+                            >
+                                <Home size={18} className="mr-2" />
+                                Ir al Panel principal
+                            </button>
+                        </div>
+                    ) : (
+                        <form onSubmit={onConfirm} className={cn(configUi.tableCard, "p-8")}>
+                            {/* Shipping Info */}
                             <div className="mb-10">
-                                <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
-                                    📍 Información de Envío
+                                <h3 className="text-sm font-black text-[#16315f] mb-6 flex items-center gap-2 uppercase tracking-widest">
+                                    <MapPin size={18} className="text-indigo-400" />
+                                    Logística de Entrega
                                 </h3>
                                 <div className="grid grid-cols-1 gap-6">
-                                    <label className="block">
-                                        <p className="mb-2 text-sm font-bold text-[#9CA3AF] tracking-wider">Dirección completa *</p>
+                                    <div className={configUi.fieldGroup}>
+                                        <label className={configUi.fieldLabel}>Dirección de Envío *</label>
                                         <input
                                             type="text"
                                             name="direccion"
                                             value={form.direccion}
                                             onChange={handleInputChange}
-                                            className={`w-full bg-[#0B0F14] border px-4 py-3 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#1E3A8A] transition-all ${errors.direccion ? 'border-red-500' : 'border-gray-800 focus:border-transparent'}`}
-                                            placeholder="Calle 123 #45-67, Medellín, Antioquia"
+                                            className={cn(configUi.input, errors.direccion && "border-rose-300 bg-rose-50/30 font-bold")}
+                                            placeholder="Calle, Número, Ciudad, Departamento"
                                         />
                                         {errors.direccion && (
-                                            <p className="text-red-500 text-xs font-bold mt-2">{errors.direccion}</p>
+                                            <p className="text-rose-500 text-[10px] font-black uppercase tracking-widest mt-2 ml-1 flex items-center gap-1">
+                                                <AlertTriangle size={10} /> {errors.direccion}
+                                            </p>
                                         )}
-                                    </label>
+                                    </div>
 
-                                    <label className="block">
-                                        <p className="mb-2 text-sm font-bold text-[#9CA3AF] tracking-wider">Teléfono de contacto *</p>
+                                    <div className={configUi.fieldGroup}>
+                                        <label className={configUi.fieldLabel}>Teléfono de Contacto *</label>
                                         <input
                                             type="tel"
                                             name="telefono"
                                             value={form.telefono}
                                             onChange={handleInputChange}
-                                            className={`w-full bg-[#0B0F14] border px-4 py-3 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#1E3A8A] transition-all ${errors.telefono ? 'border-red-500' : 'border-gray-800 focus:border-transparent'}`}
-                                            placeholder="+57 300 123 4567"
+                                            className={cn(configUi.input, errors.telefono && "border-rose-300 bg-rose-50/30 font-bold")}
+                                            placeholder="+57 300 000 0000"
                                         />
                                         {errors.telefono && (
-                                            <p className="text-red-500 text-xs font-bold mt-2">{errors.telefono}</p>
+                                            <p className="text-rose-500 text-[10px] font-black uppercase tracking-widest mt-2 ml-1 flex items-center gap-1">
+                                                <AlertTriangle size={10} /> {errors.telefono}
+                                            </p>
                                         )}
-                                    </label>
+                                    </div>
 
-                                    <label className="block">
-                                        <p className="mb-2 text-sm font-bold text-[#9CA3AF] tracking-wider">Instrucciones de entrega (opcional)</p>
+                                    <div className={configUi.fieldGroup}>
+                                        <label className={configUi.fieldLabel}>Notas Adicionales</label>
                                         <textarea
                                             name="instrucciones_entrega"
                                             value={form.instrucciones_entrega}
                                             onChange={handleInputChange}
-                                            className="w-full bg-[#0B0F14] border border-gray-800 focus:border-transparent px-4 py-3 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#1E3A8A] transition-all"
-                                            rows={3}
-                                            placeholder="Ej: Tocar el timbre, dejar con el portero, etc."
+                                            className={cn(configUi.input, "min-h-[100px] resize-none")}
+                                            placeholder="Ej: Tocar timbre, tercer piso, entregar a portería..."
                                         />
-                                    </label>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Método de Pago */}
-                            <div className="mb-10">
-                                <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
-                                    💳 Método de Pago
+                            {/* Payment Method */}
+                            <div className="mb-10 pt-10 border-t border-slate-100">
+                                <h3 className="text-sm font-black text-[#16315f] mb-6 flex items-center gap-2 uppercase tracking-widest">
+                                    <CreditCard size={18} className="text-indigo-400" />
+                                    Forma de Pago
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {["Contraentrega", "Transferencia"].map((metodo) => (
                                         <label
                                             key={metodo}
-                                            className={`flex items-center justify-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${form.metodo_pago === metodo
-                                                ? "border-[#1E3A8A] bg-[#1E3A8A]/10 text-white shadow-inner shadow-[#1E3A8A]/20"
-                                                : "border-gray-800 bg-[#0B0F14] text-[#9CA3AF] hover:border-gray-600 hover:text-white"
-                                                }`}
+                                            className={cn(
+                                                "flex items-center gap-4 p-5 border rounded-2xl cursor-pointer transition-all duration-300 group",
+                                                form.metodo_pago === metodo
+                                                    ? "border-[#16315f] bg-[#16315f]/5 text-[#16315f] shadow-sm ring-1 ring-[#16315f]/10"
+                                                    : "border-slate-100 bg-slate-50/50 text-slate-400 hover:border-slate-300 hover:bg-slate-50"
+                                            )}
                                         >
+                                            <div className={cn(
+                                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                                                form.metodo_pago === metodo ? "border-[#16315f]" : "border-slate-300 group-hover:border-slate-400"
+                                            )}>
+                                                {form.metodo_pago === metodo && <div className="w-2.5 h-2.5 rounded-full bg-[#16315f]" />}
+                                            </div>
                                             <input
                                                 type="radio"
                                                 name="metodo_pago"
                                                 value={metodo}
                                                 checked={form.metodo_pago === metodo}
                                                 onChange={handleInputChange}
-                                                className="w-4 h-4 accent-[#1E3A8A]"
+                                                className="hidden"
                                             />
-                                            <span className="font-bold text-sm tracking-wide">{metodo}</span>
+                                            <span className="font-black text-xs uppercase tracking-widest">{metodo}</span>
                                         </label>
                                     ))}
                                 </div>
-
-
                             </div>
 
-                            {/* Botón de Confirmar */}
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="w-full flex items-center justify-center gap-3 px-6 py-5 bg-[#DC2626] text-white rounded-2xl hover:bg-red-700 transition-all font-black tracking-widest text-sm shadow-xl shadow-[#DC2626]/20 disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className={cn(
+                                    configUi.primaryButton, 
+                                    "w-full py-5 text-sm uppercase tracking-[0.2em] font-black shadow-2xl shadow-indigo-200 mt-4",
+                                    submitting && "opacity-60 cursor-not-allowed"
+                                )}
                             >
-                                <Check size={20} className="group-hover:scale-110 transition-transform" />
-                                {submitting ? "Procesando..." : `Pagar $${cart.total.toLocaleString()}`}
+                                {submitting ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        PROCESANDO...
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <Check size={18} />
+                                        CONFIRMAR COMPRA: ${cart.total.toLocaleString()}
+                                    </div>
+                                )}
                             </button>
                         </form>
-                        )}
-                    </div>
+                    )}
+                </div>
 
-                    {/* Resumen del Pedido */}
-                    <div className="w-[35%] lg:mt-16 max-lg:w-full">
-                        <div className="sticky top-24 bg-[#121821] border border-gray-800 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#1E3A8A] rounded-full -mr-16 -mt-16 opacity-10 blur-2xl"></div>
+                {/* Right Column - Summary */}
+                <div className="w-full xl:w-[400px] shrink-0">
+                    <div className={cn(configUi.tableCard, "p-8 sticky top-6")}>
+                        <h3 className="text-sm font-black text-[#16315f] mb-6 uppercase tracking-widest flex items-center gap-2">
+                            <ShoppingBag size={18} className="text-indigo-400" />
+                            Resumen del Pedido
+                        </h3>
 
-                            <h3 className="text-xl font-black text-white mb-6 tracking-tight relative z-10">Resumen del pedido</h3>
-
-                            <div className="mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2 relative z-10">
-                                {cart.items.map((item) => (
-                                    <div key={item.id_variante} className="flex gap-4 mb-4 pb-4 border-b border-gray-800 last:border-0">
-                                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-[#0B0F14] border border-gray-800 flex-shrink-0 flex items-center justify-center">
-                                            {item.imagen ? (
-                                                <img src={item.imagen} alt={item.nombre_producto} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <ShoppingBag size={24} className="text-gray-600" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                            <h4 className="font-bold text-sm text-white truncate">{item.nombre_producto}</h4>
-                                            <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mt-0.5">
-                                                {item.nombre_color} / {item.nombre_talla}
-                                            </p>
-                                            <div className="flex justify-between items-center mt-2">
-                                                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-md">x{item.qty}</span>
-                                                <span className="font-black text-sm text-white">${(item.qty * item.price).toLocaleString()}</span>
-                                            </div>
+                        <div className="space-y-4 mb-8 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                            {cart.items.map((item) => (
+                                <div key={item.id_variante} className="flex gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-slate-100 flex-shrink-0 flex items-center justify-center">
+                                        {item.imagen ? (
+                                            <img src={item.imagen} alt={item.nombre_producto} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Package size={24} className="text-slate-200" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-xs text-[#16315f] truncate uppercase">{item.nombre_producto}</h4>
+                                        <p className="text-[10px] text-slate-400 font-bold tracking-widest mt-1 uppercase">
+                                            {item.nombre_color} • {item.nombre_talla}
+                                        </p>
+                                        <div className="flex justify-between items-end mt-2">
+                                            <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">x{item.qty}</span>
+                                            <span className="font-black text-sm text-[#16315f]">${(item.qty * item.price).toLocaleString()}</span>
                                         </div>
                                     </div>
-                                ))}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="space-y-4 pt-6 border-t border-slate-100">
+                            <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                                <p>Subtotal ({cart.itemCount} {cart.itemCount === 1 ? 'artículo' : 'artículos'})</p>
+                                <p className="text-[#16315f]">${cart.total.toLocaleString()}</p>
                             </div>
-
-                            <div className="space-y-4 pt-6 border-t border-gray-800 relative z-10">
-                                <div className="flex justify-between text-sm font-bold text-[#9CA3AF] tracking-wide">
-                                    <p>Subtotal ({cart.itemCount} {cart.itemCount === 1 ? 'item' : 'items'})</p>
-                                    <p className="text-white">${cart.total.toLocaleString()}</p>
-                                </div>
-                                <div className="flex justify-between text-sm font-bold text-[#9CA3AF] tracking-wide">
-                                    <p>Envío</p>
-                                    <p className="text-emerald-400">GRATIS</p>
-                                </div>
-                                <div className="flex justify-between items-baseline pt-6 border-t border-gray-800">
-                                    <p className="font-black text-lg text-white tracking-tighter">Total</p>
-                                    <div className="text-right">
-                                        <p className="font-black text-3xl text-emerald-400 leading-none">${cart.total.toLocaleString()}</p>
-                                        <span className="text-[10px] text-[#9CA3AF] uppercase font-black tracking-widest mt-1 block">COP</span>
-                                    </div>
+                            <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                                <p className="flex items-center gap-1.5"><Truck size={12} /> Envío Logístico</p>
+                                <p className="text-emerald-500 font-black italic">BONIFICADO</p>
+                            </div>
+                            <div className="flex justify-between items-end pt-6 border-t-2 border-dashed border-slate-100">
+                                <p className="font-black text-xs text-slate-400 uppercase tracking-[.2em] mb-1">Total Final</p>
+                                <div className="text-right leading-none">
+                                    <p className="font-black text-3xl text-[#16315f] tracking-tighter">${cart.total.toLocaleString()}</p>
+                                    <span className="text-[9px] text-slate-300 uppercase font-black tracking-[.3em] mt-1 block">COP / NETO</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
 
-            {/* Notificación */}
+            {/* Notifications */}
             <AnimatePresence>
                 {notification.show && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 50 }}
-                        className={`fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl text-white font-medium z-50 max-w-md ${notification.type === "error" ? "bg-red-600" : "bg-green-600"
-                            }`}
+                    <motion.div 
+                        initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                        className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3", 
+                        notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
                     >
+                        {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
                         {notification.message}
                     </motion.div>
                 )}
             </AnimatePresence>
-        </>
+        </div>
     );
 };

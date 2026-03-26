@@ -304,6 +304,34 @@ const MatriculasAdmin = () => {
     }
   };
 
+  const handleDownload = () => {
+    if (!filtered || filtered.length === 0) return;
+    const header = ["ID", "Estudiante", "Documento", "Clase", "Nivel", "Plan", "Precio", "Pagado", "Vence", "Estado"];
+    const csvData = filtered.map(m => [
+      m.id_matricula,
+      `"${m.nombre_completo}"`,
+      `"${m.documento}"`,
+      `"${m.nombre_clase}"`,
+      `"${m.nombre_nivel}"`,
+      `"${m.nombre_plan}"`,
+      m.precio_plan,
+      m.total_pagado || 0,
+      m.fecha_fin ? new Date(m.fecha_fin).toLocaleDateString() : "—",
+      m.estado
+    ].join(","));
+
+    const csvContent = "\uFEFF" + [header.join(","), ...csvData].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "reporte_matriculas_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <div className={configUi.pageShell}>
@@ -330,7 +358,11 @@ const MatriculasAdmin = () => {
             </div>
 
             {/* Actions */}
-            <button className={configUi.iconButton} title="Descargar Reporte">
+            <button 
+              onClick={handleDownload}
+              className={configUi.iconButton} 
+              title="Descargar Reporte"
+            >
               <Download size={20} />
             </button>
 
