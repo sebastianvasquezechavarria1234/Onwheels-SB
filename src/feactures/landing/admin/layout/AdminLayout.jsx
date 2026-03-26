@@ -11,7 +11,6 @@ export const AdminLayout = ({ children }) => {
   return (
     <main className="min-h-screen flex flex-col">
       <AdminHeader />
-
       <div className="flex-grow">{children}</div>
 
       <Footer />

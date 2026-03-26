@@ -61,7 +61,7 @@ const UsersPurchaseDetail = () => {
     return (
         <UsersLayout>
             <div className="bg-[#0B0F14] min-h-screen text-white font-primary pb-24">
-                <div className="max-w-7xl mx-auto px-4 pt-12">
+                <div className="max-w-7xl mx-auto px-4 pt-[160px]">
                     {/* Header con botón volver */}
                     <button
                         onClick={() => navigate(-1)}

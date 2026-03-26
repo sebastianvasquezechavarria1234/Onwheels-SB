@@ -156,18 +156,24 @@ export const CustomSidebar = () => {
         </Link>
       </div>
 
-      {/* ── PERFIL DE USUARIO (igual que la captura) ──────────── */}
+      {/* ── PERFIL DE USUARIO ──────────── */}
       <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[13px] flex-shrink-0"
-            style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[13px] flex-shrink-0 overflow-hidden border border-white/10"
+            style={{ background: user?.foto_perfil ? "transparent" : "linear-gradient(135deg,#7c3aed,#a855f7)" }}
           >
-            {initials}
+            {user?.foto_perfil ? (
+              <img src={user.foto_perfil} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
           <div className="leading-none min-w-0">
             <p className="text-[13px] font-bold text-white truncate">{userName}</p>
-            <p className="text-[10px] text-white/35 mt-0.5">{userRole}</p>
+            <p className="text-[10px] text-white/35 mt-1 capitalize">
+              {user?.roles && user.roles.length > 0 ? (typeof user.roles[0] === 'object' ? user.roles[0].nombre_rol : user.roles[0]) : "Invitado"}
+            </p>
           </div>
         </div>
       </div>

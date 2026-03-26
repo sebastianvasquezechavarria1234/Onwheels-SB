@@ -38,6 +38,24 @@ const Sidebar = () => {
     setOpenModule(openModule === module ? null : module);
   };
 
+  // Obtener usuario del localStorage
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+  const userName = user?.nombre_completo || "Usuario";
+  const userRole = user?.roles && user.roles.length > 0 ? user.roles[0].nombre_rol || user.roles[0] : "Invitado";
+  const userPhoto = user?.foto_perfil;
+  const initials = userName
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
   // NOTE: diseño tipo tarjeta clara con avatar superior y botón circular inferior
   return (
     <aside className="w-64 min-h-screen p-4">
@@ -45,15 +63,19 @@ const Sidebar = () => {
         {/* Header */}
         <div className="px-6 py-6 flex items-center gap-3 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#0a1a33] flex items-center justify-center text-white font-extrabold">
-              P
+            <div className="w-12 h-12 rounded-full bg-[#0a1a33] flex items-center justify-center text-white font-extrabold overflow-hidden border-2 border-slate-100 shrink-0">
+              {userPhoto ? (
+                <img src={userPhoto} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span>{initials || "U"}</span>
+              )}
             </div>
-            <div>
-              <div className="text-sm font-extrabold text-[#081a2b]">
-                primer admin
+            <div className="min-w-0">
+              <div className="text-sm font-extrabold text-[#081a2b] truncate">
+                {userName}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
-                Administrador
+              <div className="text-[11px] text-slate-400 mt-0.5 capitalize truncate">
+                {userRole}
               </div>
             </div>
           </div>

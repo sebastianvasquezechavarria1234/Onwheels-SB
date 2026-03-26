@@ -18,6 +18,7 @@ export const CustomCheckout = () => {
 
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
     const [isSuccess, setIsSuccess] = useState(false);
+    const [finalOrder, setFinalOrder] = useState(null);
 
     const showNotification = (message, type = "success") => {
         setNotification({ show: true, message, type });
@@ -26,9 +27,18 @@ export const CustomCheckout = () => {
 
     const onConfirm = async (e) => {
         e.preventDefault();
+        
+        // Guardar resumen antes de que submitOrder limpie el carrito
+        const summary = {
+            items: [...cart.items],
+            total: cart.total,
+            itemCount: cart.itemCount
+        };
+
         const result = await submitOrder();
 
         if (result.success) {
+            setFinalOrder({ ...summary, id: result.orderId });
             showNotification("¡Compra realizada exitosamente!", "success");
             setIsSuccess(true);
         } else {
@@ -44,7 +54,7 @@ export const CustomCheckout = () => {
         );
     }
 
-    if (cart.items.length === 0) {
+    if (cart.items.length === 0 && !isSuccess) {
         return (
             <div className="pt-24 min-h-screen flex flex-col items-center justify-center bg-[#0B0F14] text-white">
                 <ShoppingBag size={48} className="text-gray-500 mb-6" />
@@ -73,19 +83,46 @@ export const CustomCheckout = () => {
                         </div>
 
                         {isSuccess ? (
-                            <div className="p-8 bg-[#121821] border border-emerald-500/30 rounded-[2rem] shadow-xl text-center flex flex-col items-center justify-center min-h-[400px]">
-                                <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/5">
-                                    <CheckCircle size={48} className="text-emerald-400" />
+                            <div className="space-y-6">
+                                <div className="p-8 bg-[#121821] border border-emerald-500/30 rounded-[2rem] shadow-xl text-center flex flex-col items-center justify-center relative overflow-hidden">
+                                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full translate-x-10 -translate-y-10" />
+                                    <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/5">
+                                        <CheckCircle size={40} className="text-emerald-400" />
+                                    </div>
+                                    <h3 className="text-2xl font-black text-white mb-2">¡Pedido #{(finalOrder?.id || "").toString().padStart(4, '0')} confirmado!</h3>
+                                    <p className="text-[#9CA3AF] mb-8 font-medium max-w-sm">Gracias por tu compra. Hemos registrado tu pedido exitosamente.</p>
+                                    
+                                    <div className="w-full max-w-md bg-[#0B0F14] rounded-2xl p-6 border border-gray-800 text-left">
+                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1E3A8A] mb-4">Resumen de Artículos</h4>
+                                        <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                            {finalOrder?.items.map((item, idx) => (
+                                                <div key={idx} className="flex justify-between items-center text-sm">
+                                                    <span className="text-[#9CA3AF] truncate pr-4 font-bold">{item.qty}x {item.nombre_producto}</span>
+                                                    <span className="text-white font-black shrink-0">${(item.qty * item.price).toLocaleString()}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t border-gray-800 flex justify-between items-center">
+                                            <span className="text-xs font-black uppercase text-white">Total Pagado</span>
+                                            <span className="text-xl font-black text-emerald-400">${finalOrder?.total.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-10 flex flex-col sm:flex-row gap-4 w-full justify-center">
+                                        <button
+                                            onClick={() => navigate(`/custom/my-purchases`)}
+                                            className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-2xl hover:bg-white/10 transition-all font-black tracking-widest text-[10px] uppercase shadow-xl"
+                                        >
+                                            Ver mis compras
+                                        </button>
+                                        <button
+                                            onClick={() => navigate(`/custom/store`)}
+                                            className="px-8 py-4 bg-[#1E3A8A] text-white rounded-2xl hover:bg-blue-800 transition-all font-black tracking-widest text-[10px] uppercase shadow-xl shadow-[#1E3A8A]/20"
+                                        >
+                                            Seguir comprando
+                                        </button>
+                                    </div>
                                 </div>
-                                <h3 className="text-2xl font-black text-white mb-4">¡Tu pedido está confirmado!</h3>
-                                <p className="text-[#9CA3AF] mb-8 font-medium max-w-sm">Hemos recibido tu solicitud y enviado un correo con los detalles.</p>
-                                <button
-                                    onClick={() => navigate(`/custom/dashboard`)}
-                                    className="flex items-center justify-center gap-2 px-8 py-4 bg-[#1E3A8A] text-white rounded-2xl hover:bg-blue-800 transition-all shadow-xl shadow-[#1E3A8A]/20 font-black tracking-widest text-xs group"
-                                >
-                                    <Home size={18} className="group-hover:-translate-y-0.5 transition-transform" />
-                                    Volver al dashboard
-                                </button>
                             </div>
                         ) : (
                             <form onSubmit={onConfirm} className="p-8 bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl">

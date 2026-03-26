@@ -509,8 +509,12 @@ export default function Usuarios() {
                       </td>
                       <td className={configUi.td}>
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#223a63] text-[#eff6ff] shadow-sm">
-                            <User size={18} />
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#223a63] text-[#eff6ff] shadow-sm overflow-hidden font-bold text-sm border border-slate-100">
+                            {u.foto_perfil ? (
+                              <img src={u.foto_perfil} alt={u.nombre_completo} className="h-full w-full object-cover" />
+                            ) : (
+                              <span>{(u.nombre_completo || "U")[0].toUpperCase()}</span>
+                            )}
                           </div>
                           <div>
                             <p className="text-sm font-bold leading-tight text-[#16315f]">{u.nombre_completo}</p>

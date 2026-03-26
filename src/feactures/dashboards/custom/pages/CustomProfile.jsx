@@ -2,16 +2,22 @@
 
 import { CustomLayout } from "../../../landing/custom/layout/CustomLayout"
 import { useEffect, useState } from "react"
-import { Phone, Mail, Shield, User, Camera, Star, Zap } from "lucide-react"
+import { Phone, Mail, Shield, User, Camera, Star, Zap, MapPin } from "lucide-react"
 
 export const CustomProfile = () => {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
+    const getUserData = () => {
+      const userData = localStorage.getItem("user")
+      if (userData) {
+        setUser(JSON.parse(userData))
+      }
     }
+    getUserData()
+    // Listen for storage changes in the same tab
+    window.addEventListener("storage", getUserData)
+    return () => window.removeEventListener("storage", getUserData)
   }, [])
 
   const handlePhotoUpload = async (e) => {
@@ -112,7 +118,7 @@ export const CustomProfile = () => {
                 </div>
 
                 <h4 className="text-3xl font-black text-white mb-6 uppercase tracking-tight">
-                  {user.nombre_completo || user.name || "Usuario"}
+                  {user.nombre_completo || "Usuario"}
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -121,7 +127,7 @@ export const CustomProfile = () => {
                       <Phone size={14} />
                       <span className="text-[10px] font-bold uppercase tracking-wider">Teléfono</span>
                     </div>
-                    <span className="font-medium text-white pl-5">{user.phone || "No especificado"}</span>
+                    <span className="font-medium text-white pl-5">{user.telefono || "No especificado"}</span>
                   </div>
 
                   <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1">
@@ -134,14 +140,22 @@ export const CustomProfile = () => {
 
                   <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">
                     <div className="flex items-center gap-2 text-[#9CA3AF]">
+                      <MapPin size={14} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Dirección</span>
+                    </div>
+                    <span className="font-medium text-white pl-5">{user.direccion || "No especificada"}</span>
+                  </div>
+
+                  <div className="bg-[#0B0F14] p-4 rounded-2xl border border-gray-800/50 flex flex-col gap-1 md:col-span-2">
+                    <div className="flex items-center gap-2 text-[#9CA3AF]">
                       <Shield size={14} />
                       <span className="text-[10px] font-bold uppercase tracking-wider">Roles Asignados</span>
                     </div>
                     <div className="flex flex-wrap gap-2 pl-5 mt-2">
                       {user.roles && user.roles.length > 0 ? (
                         user.roles.map(role => (
-                          <span key={role} className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-[#1E3A8A]/30">
-                            {role}
+                          <span key={typeof role === 'object' ? role.nombre_rol : role} className="bg-[#1E3A8A]/20 text-[#3b82f6] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border border-[#1E3A8A]/30">
+                            {typeof role === 'object' ? role.nombre_rol : role}
                           </span>
                         ))
                       ) : (

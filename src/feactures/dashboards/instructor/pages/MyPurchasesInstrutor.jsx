@@ -16,7 +16,9 @@ export const MyPurchasesInstrutor = () => {
         const fetchPurchases = async () => {
             try {
                 const { data } = await api.get("/ventas/mis-compras");
-                setCompras(data);
+                // Ordenar por fecha_venta descendente
+                const sorted = data.sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta));
+                setCompras(sorted);
             } catch (error) {
                 console.error("Error fetching purchases:", error);
             } finally {
@@ -48,7 +50,7 @@ export const MyPurchasesInstrutor = () => {
 
     return (
         <InstructorLayout>
-            <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px]">
+            <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
                 <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 pb-6 border-b border-gray-800">
@@ -96,7 +98,7 @@ export const MyPurchasesInstrutor = () => {
                                             <Package size={28} className="text-[#3b82f6]" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Orden #{c.id_venta}</p>
+                                            <p className="text-[10px] text-[#9CA3AF] font-bold tracking-wider mb-1">Orden #{compras.length - compras.indexOf(c)}</p>
                                             <div className="flex items-center gap-2 text-white font-medium">
                                                 <Calendar size={14} className="text-gray-500" />
                                                 <span>{formatDate(c.fecha_venta)}</span>

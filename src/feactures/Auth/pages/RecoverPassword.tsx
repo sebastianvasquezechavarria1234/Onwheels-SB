@@ -17,9 +17,8 @@ export const RecoverPassword = () => {
         setMessage("");
 
         try {
-            // Mocking existing functionality as per previous implementation logic
-            // Assuming 'api' is correctly configured
-            const response = await api.post("/auth/forgot-password", { email });
+            // Updated endpoint to match backend (request-password-reset)
+            const response = await api.post("/auth/request-password-reset", { email });
             setMessage(response.data.message || "Si el correo existe, recibirás instrucciones.");
         } catch (err: any) {
             console.error(err);

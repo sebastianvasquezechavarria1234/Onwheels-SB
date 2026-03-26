@@ -151,7 +151,7 @@ export const MyClasses = () => {
 
     return (
         <StudentLayout>
-            <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px]">
+            <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
                 <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 pb-6 border-b border-gray-800">
                         <div>

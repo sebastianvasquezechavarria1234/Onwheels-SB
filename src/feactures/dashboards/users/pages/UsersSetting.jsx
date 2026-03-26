@@ -65,17 +65,24 @@ export const UsersSetting = () => {
         if (!userId) return; // Wait for authUser to be ready
         const data = await userApi.getUsuario(userId);
         setUserData(data);
-        setEditData({ 
-          nombre_completo: data.nombre_completo || data.nombre || "", 
-          telefono: data.telefono || "", 
-          fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : "",
-          foto_perfil: null 
-        });
-      } catch (err) { console.error('Error fetching user', err); }
-      finally { setLoading(false); }
+
+        // SOLO actualizar el formulario si NO estamos ya editando
+        if (!isEditingProfile) {
+          setEditData({ 
+            nombre_completo: data.nombre_completo || data.nombre || "", 
+            telefono: data.telefono || "", 
+            fecha_nacimiento: data.fecha_nacimiento ? data.fecha_nacimiento.split('T')[0] : "",
+            foto_perfil: null 
+          });
+        }
+      } catch (err) { 
+        console.error('Error fetching user', err); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     if (authUser) fetchUserData();
-  }, [authUser]);
+  }, [authUser, isEditingProfile]); // Dependencia clave para evitar pérdidas de estado
 
   const ENTER_DUR = 400, VISIBLE_DUR = 3500, EXIT_DUR = 400;
 
@@ -171,7 +178,7 @@ export const UsersSetting = () => {
       const updateData = { 
         nombre: editData.nombre_completo, 
         telefono: editData.telefono,
-        fecha_nacimiento: editData.fecha_nacimiento
+        fecha_nacimiento: editData.fecha_nacimiento || null
       };
       const response = await userApi.updateUsuario(userId, updateData);
       
@@ -179,17 +186,10 @@ export const UsersSetting = () => {
       if (editData.foto_perfil) {
          const formDataImg = new FormData();
          formDataImg.append("foto_perfil", editData.foto_perfil);
-         const token = localStorage.getItem('token');
-         const photoRes = await fetch(`${import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3000/api'}/usuarios/${userId}/foto`, {
-           method: "POST",
-           headers: { Authorization: `Bearer ${token}` },
-           body: formDataImg
-         });
-         if (!photoRes.ok) {
-           const errData = await photoRes.json();
-           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
-         }
-         const photoData = await photoRes.json();
+         
+         const photoRes = await api.post(`/usuarios/${userId}/foto`, formDataImg);
+         const photoData = photoRes.data;
+
          // Update user in local storage
          const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
          currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
@@ -283,7 +283,7 @@ export const UsersSetting = () => {
 
   return (
     <UsersLayout>
-      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[100px] md:pt-10">
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
         <div className="max-w-[800px] mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">
