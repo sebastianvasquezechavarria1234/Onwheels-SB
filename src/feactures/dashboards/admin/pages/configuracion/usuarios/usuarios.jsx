@@ -47,8 +47,6 @@ export default function Usuarios() {
   const [search, setSearch] = useState("");
   const [formErrors, setFormErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
   const [filterType, setFilterType] = useState("Todos los usuarios");
 
@@ -69,26 +67,17 @@ export default function Usuarios() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Cargar usuarios y roles
+  // Cargar usuarios y roles (Una sola vez o cuando se requiera resetear)
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
       const [resUsuarios, dataRoles] = await Promise.all([
-        getUsuarios({ page: currentPage, limit: itemsPerPage, search }),
+        getUsuarios(), // Sin params, el backend retorna todos los usuarios
         getRoles()
       ]);
 
-      if (resUsuarios && resUsuarios.data) {
-        setUsuarios(resUsuarios.data);
-        setTotalPages(resUsuarios.totalPages || 1);
-        setTotalItems(resUsuarios.total || 0);
-      } else {
-        setUsuarios(Array.isArray(resUsuarios) ? resUsuarios : []);
-        setTotalPages(1);
-        setTotalItems(Array.isArray(resUsuarios) ? resUsuarios.length : 0);
-      }
-
+      setUsuarios(Array.isArray(resUsuarios) ? resUsuarios : []);
       // getRoles sin params devuelve array directo
       setRoles(Array.isArray(dataRoles) ? dataRoles : []);
     } catch (err) {
@@ -101,12 +90,8 @@ export default function Usuarios() {
   };
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchData();
-    }, 300);
-    return () => clearTimeout(delayDebounceFn);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, search]);
+    fetchData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -376,37 +361,57 @@ export default function Usuarios() {
   };
 
   const handleDownload = () => {
-    if (!usuarios || usuarios.length === 0) return;
+    if (!filteredUsers || filteredUsers.length === 0) return;
     const header = ["ID", "Nombre Completo", "Email", "Telefono", "Roles"];
-    const csvData = currentItems.map(u => [
+    const csvData = filteredUsers.map(u => [
       u.id_usuario,
-      `"${u.nombre_completo}"`,
-      u.email,
+      `"${u.nombre_completo || ""}"`,
+      u.email || "",
       u.telefono || "",
       `"${getRolNombres(u.roles)}"`
     ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...csvData].join("\n");
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "usuarios_report_onwheels.csv");
+    link.setAttribute("download", "reporte_usuarios_onwheels.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const currentItems = usuarios.filter(u => {
-    if (filterType === "Clientes") {
-      const isClient = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("cliente") || r.nombre_rol?.toLowerCase().includes("estudiante"));
-      return isClient;
+  const filteredUsers = React.useMemo(() => {
+    return usuarios.filter(u => {
+      if (filterType === "Clientes") {
+        const isClient = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("cliente") || r.nombre_rol?.toLowerCase().includes("estudiante"));
+        if (!isClient) return false;
+      } else if (filterType === "Instructores") {
+        const isInstr = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("instructor"));
+        if (!isInstr) return false;
+      }
+      
+      if (search) {
+        const q = search.toLowerCase();
+        const matchesNombre = u.nombre_completo?.toLowerCase().includes(q);
+        const matchesEmail = u.email?.toLowerCase().includes(q);
+        const matchesDoc = u.documento?.toLowerCase().includes(q);
+        if (!matchesNombre && !matchesEmail && !matchesDoc) return false;
+      }
+      return true;
+    });
+  }, [usuarios, filterType, search]);
+
+  const totalFiltered = filteredUsers.length;
+  const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
+  const currentItems = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Para asegurar que no nos quedemos en una página vacía
+  useEffect(() => {
+    if (currentPage > totalPagesLocal) {
+      setCurrentPage(totalPagesLocal);
     }
-    if (filterType === "Instructores") {
-      const isInstr = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("instructor"));
-      return isInstr;
-    }
-    return true; // Todos los usuarios
-  });
+  }, [currentPage, totalPagesLocal]);
 
   return (
     <>
@@ -417,7 +422,7 @@ export default function Usuarios() {
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
                Usuarios
             </h2>
-            <span className={configUi.countBadge}>{totalItems} usuarios</span>
+            <span className={configUi.countBadge}>{totalFiltered} usuarios</span>
           </div>
 
           <div className={configUi.toolbar}>
@@ -556,10 +561,10 @@ export default function Usuarios() {
           </div>
 
           {/* Footer Pagination */}
-          {totalPages > 0 && (
+          {totalPagesLocal > 0 && (
             <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
-                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPagesLocal}</span>
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -570,8 +575,8 @@ export default function Usuarios() {
                   <ChevronLeft size={18} />
                 </button>
                 <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPagesLocal}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPagesLocal, p + 1))}
                   className={configUi.paginationButton}
                 >
                   <ChevronRight size={18} />

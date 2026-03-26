@@ -228,16 +228,21 @@ export const Instructores = () => {
   };
 
   const exportCSV = () => {
+    if (!filteredAndSorted || filteredAndSorted.length === 0) return;
     const headers = ["Nombre", "Email", "Documento", "Especialidad", "Experiencia", "Estado"];
     const rows = filteredAndSorted.map(i => [
-      i.nombre_completo, i.email, i.documento || "N/A", i.especialidad, i.anios_experiencia, i.estado ? "Activo" : "Inactivo"
+      `"${i.nombre_completo}"`, `"${i.email}"`, `"${i.documento || "N/A"}"`, `"${i.especialidad}"`, i.anios_experiencia, i.estado ? "Activo" : "Inactivo"
     ].join(","));
-    const blob = new Blob([[headers.join(","), ...rows].join("\n")], { type: "text/csv" });
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `instructores_onwheels.csv`;
-    a.click();
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "reporte_instructores_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (

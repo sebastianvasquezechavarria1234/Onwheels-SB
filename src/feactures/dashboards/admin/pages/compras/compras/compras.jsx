@@ -17,11 +17,9 @@ const Compras = () => {
   const [proveedores, setProveedores] = useState([]);
   const [search, setSearch] = useState("");
   const [proveedorFilter, setProveedorFilter] = useState("");
-  
-  // Backend Pagination State
+
+  // Frontend Filtration & Pagination
   const [paginaActual, setPaginaActual] = useState(1);
-  const [totalPaginas, setTotalPaginas] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const itemsPorPagina = 10;
 
   const [selected, setSelected] = useState(null);
@@ -36,33 +34,17 @@ const Compras = () => {
   }, []);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchData();
-    }, 300);
-    return () => clearTimeout(delayDebounceFn);
-  }, [paginaActual, search, proveedorFilter]);
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const coreData = await comprasService.getAllCompras({
-        page: paginaActual,
-        limit: itemsPorPagina,
-        search: search,
-        id_proveedor: proveedorFilter
-      });
+      const coreData = await comprasService.getAllCompras(); // Fetch all
       const dataProv = await comprasService.getProveedores();
-      
-      if (coreData && coreData.compras) {
-        setCompras(coreData.compras);
-        setTotalPaginas(coreData.totalPages || 1);
-        setTotalItems(coreData.totalCompras || 0);
-      } else {
-        setCompras(Array.isArray(coreData) ? coreData : []);
-        setTotalPaginas(1);
-        setTotalItems(Array.isArray(coreData) ? coreData.length : 0);
-      }
-      
+
+      setCompras(Array.isArray(coreData) ? coreData : (coreData.compras || []));
+
       setProveedores(Array.isArray(dataProv) ? dataProv : []);
     } catch (err) {
       showNotification("Error de conexión: No se pudieron sincronizar los datos", "error");
@@ -81,14 +63,53 @@ const Compras = () => {
     setTimeout(() => setSelected(null), 200);
   };
 
+  const getProveedorNombre = (id_proveedor) => {
+    const p = proveedores.find(item => item.id_proveedor === id_proveedor);
+    return p ? (p.nombre_empresa || p.nombre_proveedor) : "N/A";
+  };
+
+  const filtered = React.useMemo(() => {
+    return compras.filter((c) => {
+      const matchesSearch = String(c.id_compra).includes(search) ||
+        getProveedorNombre(c.id_proveedor).toLowerCase().includes(search.toLowerCase());
+      const matchesProv = !proveedorFilter || String(c.id_proveedor) === String(proveedorFilter);
+      return matchesSearch && matchesProv;
+    });
+  }, [compras, search, proveedorFilter, proveedores]);
+
+  const totalFiltered = filtered.length;
+  const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
+  const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
+
+  const handleDownload = () => {
+    if (!filtered || filtered.length === 0) return;
+    const header = ["ID Compra", "Fecha", "Proveedor", "Total", "Estado"];
+    const csvData = filtered.map(c => [
+      c.id_compra,
+      new Date(c.fecha_compra).toLocaleDateString(),
+      `"${getProveedorNombre(c.id_proveedor)}"`,
+      c.total || 0,
+      `"${c.estado}"`
+    ].join(","));
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "reporte_compras_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className={configUi.pageShell}>
       {/* Header Section */}
       <div className={configUi.headerRow}>
         <div className={configUi.titleWrap}>
-          <h2 className={configUi.title}>Historial de Compras</h2>
+          <h2 className={configUi.title}>Compras</h2>
           <span className={configUi.countBadge}>
-            {totalItems} REGISTROS
+            {totalFiltered} REGISTROS
           </span>
         </div>
 
@@ -125,18 +146,19 @@ const Compras = () => {
           </div>
 
           {/* Download Button */}
-          <button className={configUi.iconButton} title="Descargar Reporte">
+          <button onClick={handleDownload} className={configUi.iconButton} title="Descargar Reporte">
             <Download size={20} />
           </button>
 
-          {/* New Purchase Button */}
-          <Link
-            to={`${basePath}/compras/crear`}
-            className={configUi.primaryButton}
-          >
-            <Plus size={18} />
-            Nueva Adquisición
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to={`${basePath}/compras/crear`}
+              className={configUi.primaryButton}
+            >
+              <Plus size={18} />
+              <span>Nueva Compra</span>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -160,57 +182,45 @@ const Compras = () => {
                   <td colSpan="6" className="p-20 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sincronizando Archivos...</p>
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Facturación...</p>
                     </div>
                   </td>
                 </tr>
-              ) : compras.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className={configUi.emptyState}>
-                    <div className="flex flex-col items-center gap-3 opacity-20">
-                       <Briefcase size={48} />
-                       <p className="text-xs font-black uppercase tracking-widest">Sin registros encontrados</p>
-                    </div>
-                  </td>
-                </tr>
+              ) : currentItems.length === 0 ? (
+                <tr><td colSpan="6" className={configUi.emptyState}>Sin registros de compras que coincidan.</td></tr>
               ) : (
-                compras.map((c, idx) => (
+                currentItems.map((c) => (
                   <tr key={c.id_compra} className={configUi.row}>
-                    <td className={configUi.td + " text-center"}>
-                      <span className="text-[10px] font-black text-slate-300">{(paginaActual - 1) * itemsPorPagina + idx + 1}</span>
+                    <td className={configUi.td}>
+                      <span className="text-xs font-extrabold text-[#16315f] font-mono">#{c.id_compra}</span>
                     </td>
                     <td className={configUi.td}>
-                      <div className="flex flex-col">
-                         <span className="font-bold text-[#16315f] uppercase tracking-tight">#ORDEN-{c.id_compra.toString().padStart(5, '0')}</span>
-                         <span className="text-[10px] text-[#6b84aa] flex items-center gap-1 mt-0.5">
-                           <Calendar size={12} className="opacity-40" />
-                           {new Date(c.fecha_compra).toLocaleDateString('es-CO')}
-                         </span>
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                          <Calendar size={16} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-[#16315f]">{new Date(c.fecha_compra).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </td>
                     <td className={configUi.td}>
-                      <div className="flex flex-col">
-                         <span className="font-bold text-[#16315f]">{c.nombre_empresa || c.nombre_proveedor || "—"}</span>
-                         <span className="text-[10px] text-[#6b84aa] truncate max-w-[200px]">{c.email || "Sin contacto"}</span>
+                      <div className="flex flex-col text-sm text-[#16315f]">
+                        <span className="font-bold">{getProveedorNombre(c.id_proveedor)}</span>
+                        <span className="text-[10px] text-[#6b84aa]">ID: {c.id_proveedor}</span>
                       </div>
                     </td>
-                    <td className={configUi.td + " text-center"}>
-                      <span className={configUi.subtlePill}>
-                         {c.items?.length || 0} UNI
+                    <td className={`${configUi.td} text-center font-extrabold text-[#16315f]`}>
+                      ${(Number(c.total) || 0).toLocaleString()}
+                    </td>
+                    <td className={`${configUi.td} text-center`}>
+                      <span className={cn(configUi.pill, "bg-emerald-50 text-emerald-700 border-emerald-100", "border shadow-sm")}>
+                        {c.estado}
                       </span>
                     </td>
-                    <td className={configUi.td + " text-right font-bold tabular-nums"}>
-                        ${Number(c.total_compra).toLocaleString('es-CO')}
-                    </td>
-                    <td className={configUi.td + " text-right"}>
+                    <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openDetails(c)}
-                          className={configUi.actionButton}
-                          title="Ver detalles"
-                        >
-                          <Eye size={16} />
-                        </button>
+                        <button onClick={() => openDetails(c)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -221,42 +231,44 @@ const Compras = () => {
         </div>
 
         {/* --- Pagination Footer --- */}
-        <div className={configUi.paginationBar}>
-          <p className="text-sm font-bold text-[#6b84aa]">
-            Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginas}</span>
-          </p>
-          
-          <div className="flex items-center gap-2">
-            <button
-              disabled={paginaActual === 1}
-              onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-              className={configUi.paginationButton}
-            >
-              <ChevronLeft size={18} />
-            </button>
-            
-            <button
-              disabled={paginaActual === totalPaginas}
-              onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-              className={configUi.paginationButton}
-            >
-              <ChevronRight size={18} />
-            </button>
+        {totalPaginasLocal > 1 && (
+          <div className={configUi.paginationBar}>
+            <p className="text-sm font-bold text-[#6b84aa]">
+              Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginasLocal}</span>
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                disabled={paginaActual === 1}
+                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                className={configUi.paginationButton}
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              <button
+                disabled={paginaActual === totalPaginasLocal}
+                onClick={() => setPaginaActual(p => Math.min(totalPaginasLocal, p + 1))}
+                className={configUi.paginationButton}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* --- Details Modal --- */}
       <AnimatePresence>
         {modalOpen && selected && (
-          <motion.div 
+          <motion.div
             className={configUi.modalBackdrop}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeDetails}
           >
-            <motion.div 
+            <motion.div
               className={cn(configUi.modalPanel, "max-w-4xl")}
               initial={{ scale: 0.95, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -265,8 +277,8 @@ const Compras = () => {
             >
               <div className={configUi.modalHeader}>
                 <div>
-                   <h3 className={configUi.modalTitle}>Detalle de Transacción</h3>
-                   <p className={configUi.modalSubtitle}>ID Factura: #ORDEN-{selected.id_compra.toString().padStart(5, '0')}</p>
+                  <h3 className={configUi.modalTitle}>Detalle de Transacción</h3>
+                  <p className={configUi.modalSubtitle}>ID Factura: #ORDEN-{selected.id_compra.toString().padStart(5, '0')}</p>
                 </div>
                 <button onClick={closeDetails} className={configUi.modalClose}><X size={20} /></button>
               </div>
@@ -308,10 +320,10 @@ const Compras = () => {
                         {selected.items?.map((item, idx) => (
                           <tr key={idx} className="text-[12px] text-[#16315f]">
                             <td className="px-5 py-3">
-                               <div className="flex flex-col">
-                                  <span className="font-bold uppercase">{item.nombre_producto}</span>
-                                  <span className="text-[10px] text-[#6b84aa]">{item.nombre_variante}</span>
-                               </div>
+                              <div className="flex flex-col">
+                                <span className="font-bold uppercase">{item.nombre_producto}</span>
+                                <span className="text-[10px] text-[#6b84aa]">{item.nombre_variante}</span>
+                              </div>
                             </td>
                             <td className="px-5 py-3 text-center font-bold">x{item.cantidad}</td>
                             <td className="px-5 py-3 text-right tabular-nums text-[#6b84aa]">${Number(item.precio_unitario).toLocaleString('es-CO')}</td>
@@ -325,11 +337,11 @@ const Compras = () => {
               </div>
 
               <div className={configUi.modalFooter}>
-                 <button onClick={closeDetails} className={configUi.secondaryButton}>Cerrar Detalle</button>
-                 <div className="flex items-center gap-3">
-                    <span className="text-[11px] font-bold text-[#6b84aa]">TOTAL LIQUIDADO:</span>
-                    <span className="text-xl font-black text-[#16315f]">${Number(selected.total_compra).toLocaleString('es-CO')}</span>
-                 </div>
+                <button onClick={closeDetails} className={configUi.secondaryButton}>Cerrar Detalle</button>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-bold text-[#6b84aa]">TOTAL LIQUIDADO:</span>
+                  <span className="text-xl font-black text-[#16315f]">${Number(selected.total_compra).toLocaleString('es-CO')}</span>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -339,13 +351,13 @@ const Compras = () => {
       {/* --- NOTIFICATIONS --- */}
       <AnimatePresence>
         {notification.show && (
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            exit={{ opacity: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0 }}
             className={cn(
-               "fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
-               notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500"
+              "fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+              notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500"
             )}
           >
             {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}

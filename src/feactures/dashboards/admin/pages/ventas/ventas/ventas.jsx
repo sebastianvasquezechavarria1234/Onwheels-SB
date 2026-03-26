@@ -116,6 +116,31 @@ function Ventas() {
     }
   };
 
+  const handleDownload = () => {
+    if (!filtered || filtered.length === 0) return;
+    const header = ["ID Venta", "Fecha", "Cliente", "Metodo Pago", "Total", "Estado"];
+    const csvData = filtered.map(v => [
+      v.id_venta,
+      new Date(v.fecha_venta).toLocaleDateString(),
+      `"${getClienteNombre(v.id_cliente)}"`,
+      v.metodo_pago?.toUpperCase() || "",
+      v.total || 0,
+      `"${v.estado}"`
+    ].join(","));
+
+    const csvLines = [header.join(","), ...csvData];
+    const csvContent = "\uFEFF" + csvLines.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "reporte_ventas_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // --- FILTRADO Y PAGINACIÓN ---
   const getClienteNombre = (id_cliente) => {
     const cliente = clientes.find((c) => c.id_cliente === id_cliente);
@@ -191,6 +216,10 @@ function Ventas() {
             <Clock size={20} />
           </button>
 
+          <button onClick={handleDownload} className={configUi.iconButton} title="Descargar Reporte">
+            <Download size={20} />
+          </button>
+
           <button onClick={() => navigate(`${basePath}/ventas/crear`)} className={configUi.primaryButton}>
             <Plus size={18} />
             Venta Directa
@@ -226,6 +255,7 @@ function Ventas() {
               ) : currentItems.length === 0 ? (
                 <tr><td colSpan="7" className={configUi.emptyState}>Sin registros de ventas que coincidan.</td></tr>
               ) : (
+<<<<<<< HEAD
                 currentItems.map((v) => (
                   <tr key={v.id_venta} className={configUi.row}>
                     <td className={configUi.td}>
@@ -240,6 +270,49 @@ function Ventas() {
                             <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
                             <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
                                <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+=======
+                  currentItems.map((v) => (
+                    <tr key={v.id_venta} className={configUi.row}>
+                      <td className={configUi.td}>
+                        <span className="text-xs font-extrabold text-[#16315f] font-mono">#{v.id_venta}</span>
+                      </td>
+                      <td className={configUi.td}>
+                        <div className="flex items-center gap-3">
+                           <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                              <Calendar size={16} />
+                           </div>
+                           <div className="flex flex-col">
+                              <span className="text-xs font-bold text-[#16315f]">{new Date(v.fecha_venta).toLocaleDateString()}</span>
+                              <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                                 <Clock size={10} /> {new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                           </div>
+                        </div>
+                      </td>
+                      <td className={configUi.td}>
+                        <div className="flex flex-col">
+                           <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
+                           <span className="text-[10px] text-slate-400 font-medium">Método: {v.metodo_pago?.toUpperCase()}</span>
+                        </div>
+                      </td>
+                      <td className={`${configUi.td} text-center`}>
+                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                           <Package size={12} className="text-slate-400" />
+                           <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
+                        </div>
+                      </td>
+                      <td className={`${configUi.td} text-center font-extrabold text-[#16315f] text-sm`}>
+                        ${(Number(v.total) || 0).toLocaleString()}
+                      </td>
+                      <td className={`${configUi.td} text-center`}>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
+                            {v.estado}
+                          </span>
+                          {v.estado === "Cancelada" && v.motivo_cancelacion && (
+                            <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
+                              Motivo: {v.motivo_cancelacion}
+>>>>>>> 9c6bd4a6080a40daef3990d855cfce188d7a1d80
                             </span>
                          </div>
                       </div>
@@ -347,7 +420,18 @@ function Ventas() {
                 </div>
                 <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
               </div>
+              <div className={configUi.modalContent}>
+                {modal === 'cancelar' ? (
+                  <form id="cancel-form" onSubmit={handleCancel} className="space-y-4 py-1 text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 shadow-inner">
+                      <Ban size={32} strokeWidth={1.5} />
+                    </div>
+                    <div className="text-center space-y-1">
+                      <p className="text-sm font-black text-[#16315f]">¿Está seguro de anular esta factura?</p>
+                      <p className="text-[10px] text-slate-400 italic leading-tight">Esta acción revertirá los movimientos contables y de stock asociados.</p>
+                    </div>
 
+<<<<<<< HEAD
                 <div className={configUi.modalContent}>
                     {modal === 'cancelar' ? (
                        <div className="space-y-6 py-2 text-center">
@@ -394,6 +478,43 @@ function Ventas() {
                        </div>
                     )}
                 </div>
+=======
+                    <div className={cn(configUi.fieldGroup, "text-left mt-6")}>
+                      <label className={configUi.fieldLabel}>Justificación Reglamentaria *</label>
+                      <textarea
+                        value={justificacion}
+                        onChange={(e) => setJustificacion(e.target.value)}
+                        placeholder="Describa el motivo del desestimiento..."
+                        className={cn(configUi.fieldInput, "min-h-[80px] pt-3 text-xs")}
+                        required
+                      />
+                      <p className="text-[10px] text-rose-500 font-bold mt-2 flex items-center gap-1">
+                        <AlertCircle size={10} /> Documentación requerida para auditoría fiscal.
+                      </p>
+                    </div>
+                  </form>
+                ) : (
+                  <form id="status-form" onSubmit={handleStatusUpdate} className="space-y-8 py-4">
+                    <div className={configUi.fieldGroup}>
+                      <label className={configUi.fieldLabel}>Nuevo Estado Logístico</label>
+                      <div className="relative">
+                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <select
+                          value={statusFormEstado}
+                          onChange={(e) => setStatusFormEstado(e.target.value)}
+                          className={cn(configUi.fieldSelect, "pl-12 h-14")}
+                        >
+                          <option value="Pendiente">Pendiente</option>
+                          <option value="Entregada">Entregada</option>
+                          <option value="Cancelada">Cancelada</option>
+                        </select>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">El cambio de estado se reflejará en el panel del cliente en tiempo real.</p>
+                    </div>
+                  </form>
+                )}
+              </div>          
+>>>>>>> 9c6bd4a6080a40daef3990d855cfce188d7a1d80
 
               <div className={configUi.modalFooter}>
                 <button onClick={closeModal} className={configUi.secondaryButton}>Cerrar</button>
