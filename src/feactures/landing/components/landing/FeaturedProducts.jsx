@@ -7,7 +7,7 @@ import { useAuth } from "../../../dashboards/dinamico/context/AuthContext";
 import { getStoreHomePath, getProductDetailPath } from "../../../../utils/roleHelpers";
 
 export const FeaturedProducts = () => {
-    const API_URL = "http://localhost:3000";
+    const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:3000";
     const { user } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);

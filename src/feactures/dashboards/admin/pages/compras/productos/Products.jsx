@@ -26,7 +26,7 @@ function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-const API_URL = "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
 export default function Productos({ renderLayout = true }) {
   console.log("🚀 [Antigravity] Products.jsx v2 - Grouped Variants Fixed");
