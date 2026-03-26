@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Eye, Plus, Search, Pencil, Trash2, X, User,
   ChevronLeft, ChevronRight, Hash, TrendingUp,
-  SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
+  SlidersHorizontal, ArrowUpDown, Download, AlertCircle, CheckCircle, Ban,
   Image as ImageIcon, Link as LinkIcon, Upload, LayoutGrid, List
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,6 +20,7 @@ import {
 } from "../../services/clasesService";
 
 import { configUi, cn } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 export const Clases = () => {
   // --- ESTADOS ---
@@ -55,6 +56,7 @@ export const Clases = () => {
   const [sortDirection, setSortDirection] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Requested: 10 items per page
+  const [statusFilter, setStatusFilter] = useState("Todos");
 
   const [formErrors, setFormErrors] = useState({});
   const [formStep, setFormStep] = useState(1);
@@ -126,6 +128,13 @@ export const Clases = () => {
         (c.nombre_nivel || "").toLowerCase().includes(q) ||
         (c.nombre_sede || "").toLowerCase().includes(q) ||
         (c.instructores || []).some(i => i.nombre_instructor?.toLowerCase().includes(q))
+      );
+    }
+
+    if (statusFilter !== "Todos") {
+      result = result.filter(c => 
+        String(c.estado).toLowerCase() === statusFilter.toLowerCase() ||
+        (statusFilter === "Disponible" && c.estado === true)
       );
     }
     result.sort((a, b) => {
@@ -453,22 +462,18 @@ export const Clases = () => {
               />
             </div>
 
-            {/* Filter Dropdown (Sorted by fields as placeholders for now, matching Admin style) */}
-            <div className="relative hidden md:block">
-              <select
-                value={sortField}
-                onChange={(e) => { setSortField(e.target.value); setCurrentPage(1); }}
-                className={configUi.select}
-              >
-                <option value="descripcion">Nombre</option>
-                <option value="nombre_nivel">Nivel</option>
-                <option value="nombre_sede">Sede</option>
-                <option value="cupo_maximo">Cupo</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
-              </div>
-            </div>
+            {/* Filter Dropdown */}
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Disponible", value: "Disponible", icon: CheckCircle, color: "#10b981" },
+                { label: "Ocupado", value: "Ocupado", icon: AlertCircle, color: "#f59e0b" },
+                { label: "Cancelado", value: "Cancelado", icon: Ban, color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
 
             {/* Download Button */}
             <button

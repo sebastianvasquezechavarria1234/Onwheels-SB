@@ -2,17 +2,15 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../../../../../services/api";
-
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   
   // Frontend Filtration & Pagination State
   const [paginaActual, setPaginaActual] = useState(1);
@@ -103,11 +101,17 @@ export default function Proveedores() {
   const filtered = React.useMemo(() => {
     return proveedores.filter(p => {
       const q = search.toLowerCase();
-      return (p.nombre_proveedor || "").toLowerCase().includes(q) || 
-             (p.nit || "").toLowerCase().includes(q) ||
-             (p.email || "").toLowerCase().includes(q);
+      const matchesSearch = (p.nombre_proveedor || "").toLowerCase().includes(q) || 
+                           (p.nit || "").toLowerCase().includes(q) ||
+                           (p.email || "").toLowerCase().includes(q);
+      
+      const matchesStatus = statusFilter === "Todos" || 
+                           (statusFilter === "Verificado" && p.estado === "Verificado") ||
+                           (statusFilter === "Pendiente" && p.estado !== "Verificado");
+      
+      return matchesSearch && matchesStatus;
     });
-  }, [proveedores, search]);
+  }, [proveedores, search, statusFilter]);
 
   const totalFiltered = filtered.length;
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
@@ -192,6 +196,17 @@ export default function Proveedores() {
               className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl focus:bg-white focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition-all text-sm text-[#16315f]"
             />
           </div>
+
+          <FilterDropdown
+            value={statusFilter}
+            onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
+            options={[
+              { label: "Todos los Estados", value: "Todos" },
+              { label: "Verificados", value: "Verificado", color: "#10b981" },
+              { label: "Pendientes", value: "Pendiente", color: "#f59e0b" }
+            ]}
+            placeholder="Estado"
+          />
         </div>
       </div>
 

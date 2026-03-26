@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/compras/productos/Products.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock, Download, ChevronDown, TrendingUp, PlusCircle, AlertTriangle, FileText, Upload, Package } from "lucide-react";
+import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock, Download, ChevronDown, TrendingUp, PlusCircle, AlertTriangle, FileText, Upload, Package, Layers, Box } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getProductos,
@@ -18,13 +18,10 @@ import {
 import { getCategorias } from "../../services/categoriasService";
 import { canManage } from "../../../../../../utils/permissions";
 
-import { configUi } from "../../configuracion/configUi";
+import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
 
 const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
@@ -32,6 +29,7 @@ export default function Productos({ renderLayout = true }) {
   console.log("🚀 [Antigravity] Products.jsx v2 - Grouped Variants Fixed");
   const [busqueda, setBusqueda] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   const [filtroPrecio, setFiltroPrecio] = useState("");
   const [filtroAlfabetico, setFiltroAlfabetico] = useState("");
   const [productos, setProductos] = useState([]);
@@ -568,9 +566,13 @@ export default function Productos({ renderLayout = true }) {
       const matchesSearch = (p.nombre_producto || "").toLowerCase().includes(q) || 
                            (p.descripcion || "").toLowerCase().includes(q);
       const matchesCategory = filtroCategoria === "" || Number(p.id_categoria) === Number(filtroCategoria);
-      return matchesSearch && matchesCategory;
+      const matchesStatus = statusFilter === "Todos" || 
+                           (statusFilter === "Activo" && p.estado) ||
+                           (statusFilter === "Inactivo" && !p.estado);
+                           
+      return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [productos, busqueda, filtroCategoria]);
+  }, [productos, busqueda, filtroCategoria, statusFilter]);
 
   const totalFiltered = filtered.length;
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / productosPorPagina));
@@ -641,20 +643,32 @@ export default function Productos({ renderLayout = true }) {
             </div>
 
             {/* Filter Dropdown */}
-            <div className="relative hidden md:block">
-              <select
+            <div className="flex items-center gap-2">
+              <FilterDropdown
                 value={filtroCategoria}
-                onChange={(e) => { setFiltroCategoria(e.target.value); setPaginaActual(1); }}
-                className="appearance-none bg-white border border-[#bfd1f4] text-[#16315f] py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] cursor-pointer w-48"
-              >
-                <option value="">Todas las categorías</option>
-                {categorias.map(c => (
-                  <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                <ChevronDown size={18} />
-              </div>
+                onChange={(val) => { setFiltroCategoria(val); setPaginaActual(1); }}
+                options={[
+                  { label: "Todas las Categorías", value: "" },
+                  ...categorias.map(c => ({ 
+                    label: c.nombre_categoria, 
+                    value: String(c.id_categoria),
+                    icon: Layers
+                  }))
+                ]}
+                placeholder="Categoría"
+              />
+
+              <FilterDropdown
+                value={statusFilter}
+                onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
+                options={[
+                  { label: "Todos los Estados", value: "Todos" },
+                  { label: "Activos", value: "Activo", color: "#10b981" },
+                  { label: "Inactivos", value: "Inactivo", color: "#64748b" }
+                ]}
+                placeholder="Estado"
+                icon={Box}
+              />
             </div>
 
             {/* Download Button */}

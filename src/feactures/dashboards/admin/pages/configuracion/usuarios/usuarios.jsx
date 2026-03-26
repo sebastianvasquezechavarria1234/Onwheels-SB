@@ -16,6 +16,8 @@ import { getRoles } from "../../services/RolesService";
 import { canManage } from "../../../../../../utils/permissions";
 import { cn, configUi } from "../configUi";
 import ModalErrorAlert from "../ModalErrorAlert";
+import FilterDropdown from "../FilterDropdown";
+import { Check } from "lucide-react";
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -48,7 +50,8 @@ export default function Usuarios() {
   const [formErrors, setFormErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [filterType, setFilterType] = useState("Todos los usuarios");
+  const [filterType, setFilterType] = useState("Todos");
+  const [filterStatus, setFilterStatus] = useState("Todos");
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -383,12 +386,23 @@ export default function Usuarios() {
 
   const filteredUsers = React.useMemo(() => {
     return usuarios.filter(u => {
+      // Filter by Type (Role)
       if (filterType === "Clientes") {
-        const isClient = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("cliente") || r.nombre_rol?.toLowerCase().includes("estudiante"));
+        const isClient = u.roles?.some(r => 
+          r.nombre_rol?.toLowerCase().includes("cliente") || 
+          r.nombre_rol?.toLowerCase().includes("estudiante")
+        );
         if (!isClient) return false;
       } else if (filterType === "Instructores") {
         const isInstr = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("instructor"));
         if (!isInstr) return false;
+      }
+
+      // Filter by Status (assuming estado exists as boolean or string)
+      if (filterStatus !== "Todos") {
+        const isActive = u.estado === true || u.estado === "Activo" || u.estado === "activo";
+        if (filterStatus === "Activo" && !isActive) return false;
+        if (filterStatus === "Inactivo" && isActive) return false;
       }
       
       if (search) {
@@ -400,7 +414,7 @@ export default function Usuarios() {
       }
       return true;
     });
-  }, [usuarios, filterType, search]);
+  }, [usuarios, filterType, filterStatus, search]);
 
   const totalFiltered = filteredUsers.length;
   const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
@@ -438,20 +452,29 @@ export default function Usuarios() {
               />
             </div>
 
-            {/* Filter Dropdown */}
-            <div className="relative hidden md:block">
-              <select
+            {/* Filter Dropdowns */}
+            <div className="flex items-center gap-2">
+              <FilterDropdown
                 value={filterType}
-                onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-                className={configUi.select}
-              >
-                <option value="Todos los usuarios">Todos los usuarios</option>
-                <option value="Clientes">Clientes</option>
-                <option value="Instructores">Instructores</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
-              </div>
+                onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
+                options={[
+                  { label: "Todos los Roles", value: "Todos" },
+                  { label: "Clientes", value: "Clientes", icon: User },
+                  { label: "Instructores", value: "Instructores", icon: Briefcase }
+                ]}
+                placeholder="Filtrar por Rol"
+              />
+              
+              <FilterDropdown
+                value={filterStatus}
+                onChange={(val) => { setFilterStatus(val); setCurrentPage(1); }}
+                options={[
+                  { label: "Todos los Estados", value: "Todos" },
+                  { label: "Activos", value: "Activo", color: "#10b981" },
+                  { label: "Inactivos", value: "Inactivo", color: "#ef4444" }
+                ]}
+                placeholder="Estado"
+              />
             </div>
 
             {/* Download Button */}

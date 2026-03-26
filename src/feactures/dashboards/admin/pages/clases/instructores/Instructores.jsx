@@ -5,7 +5,9 @@ import {
   ChevronLeft, ChevronRight, Hash, TrendingUp,
   SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
   Briefcase,
-  IdCard
+  IdCard,
+  UserCheck,
+  UserMinus
 } from "lucide-react";
 import {
   getInstructores,
@@ -15,6 +17,7 @@ import {
   getUsuariosNoInstructores
 } from "../../services/instructoresServices";
 import { configUi, cn } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 export const Instructores = () => {
   const [instructores, setInstructores] = useState([]);
@@ -38,6 +41,7 @@ export const Instructores = () => {
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [statusFilter, setStatusFilter] = useState("Todos");
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -91,6 +95,14 @@ export const Instructores = () => {
         (i.nombre_completo || "").toLowerCase().includes(q) ||
         (i.email || "").toLowerCase().includes(q) ||
         (i.especialidad || "").toLowerCase().includes(q)
+      );
+    }
+
+    // Status Filter
+    if (statusFilter !== "Todos") {
+      result = result.filter(i => 
+        (statusFilter === "Activo" && (i.estado === "Activo" || i.estado === "activo" || i.estado === true)) ||
+        (statusFilter === "Inactivo" && (i.estado === "Inactivo" || i.estado === "inactivo" || i.estado === false))
       );
     }
 
@@ -266,6 +278,18 @@ export const Instructores = () => {
                 className={configUi.inputWithIcon}
               />
             </div>
+
+            {/* Filter Dropdown */}
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activos", value: "Activo", icon: UserCheck, color: "#10b981" },
+                { label: "Inactivos", value: "Inactivo", icon: UserMinus, color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
 
             <button
               onClick={exportCSV}

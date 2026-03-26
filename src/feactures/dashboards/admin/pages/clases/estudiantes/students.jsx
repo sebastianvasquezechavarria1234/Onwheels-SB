@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
   User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle, AlertCircle,
-  Briefcase, TrendingUp, Download, IdCard
+  Briefcase, TrendingUp, Download, IdCard, UserCheck, UserMinus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -16,6 +16,7 @@ import {
 } from "../../services/estudiantesServices";
 import { configUi, cn } from "../../configuracion/configUi";
 import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 import api from "../../../../../../services/api";
 
 const Students = () => {
@@ -24,6 +25,7 @@ const Students = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -238,10 +240,19 @@ const Students = () => {
     }
   };
 
-  const filtered = estudiantes.filter(s =>
-    (s.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
-    (s.documento || "").includes(search)
-  );
+  const filtered = useMemo(() => {
+    return estudiantes.filter(s => {
+      const q = search.toLowerCase();
+      const matchesSearch = (s.nombre_completo || "").toLowerCase().includes(q) ||
+                           (s.documento || "").includes(search);
+      
+      const matchesStatus = statusFilter === "Todos" || 
+                           (statusFilter === "Activo" && (s.estado === "Activo" || s.estado === "activo" || s.estado === true)) ||
+                           (statusFilter === "Inactivo" && (s.estado === "Inactivo" || s.estado === "inactivo" || s.estado === false));
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [estudiantes, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -287,6 +298,18 @@ const Students = () => {
                 className={configUi.inputWithIcon}
               />
             </div>
+
+            {/* Filter Dropdown */}
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activos", value: "Activo", icon: UserCheck, color: "#10b981" },
+                { label: "Inactivos", value: "Inactivo", icon: UserMinus, color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
 
             <button onClick={exportCSV} className={configUi.iconButton} title="Exportar CSV">
               <Download size={20} />

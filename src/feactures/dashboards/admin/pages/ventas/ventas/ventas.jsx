@@ -4,7 +4,7 @@ import {
   Package, ChevronDown, Hash, ChevronLeft, ChevronRight,
   Search, Plus, Pencil, Trash2, Eye, Download,
   ShoppingBag, Calendar, CreditCard, Info, Clock, AlertCircle,
-  TrendingUp, SlidersHorizontal, Ban, X, CheckCircle, AlertTriangle
+  TrendingUp, SlidersHorizontal, Ban, X, CheckCircle, AlertTriangle, User
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,6 +17,7 @@ import {
 } from "../../services/ventasService";
 import { getClientes } from "../../services/clientesServices";
 import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 function Ventas() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ function Ventas() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [clienteFiltro, setClienteFiltro] = useState("todos");
+  const [statusFiltro, setStatusFiltro] = useState("todos");
 
   // Modales
   const [modal, setModal] = useState(null); // 'cancelar', 'status'
@@ -155,9 +157,11 @@ function Ventas() {
         nombreCli.includes(searchTerm.toLowerCase());
 
       const matchesCliente = clienteFiltro === "todos" || v.id_cliente === Number(clienteFiltro);
-      return matchesSearch && matchesCliente;
+      const matchesStatus = statusFiltro === "todos" || v.estado === statusFiltro;
+      
+      return matchesSearch && matchesCliente && matchesStatus;
     });
-  }, [ventas, searchTerm, clienteFiltro, clientes]);
+  }, [ventas, searchTerm, clienteFiltro, statusFiltro, clientes]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -198,18 +202,29 @@ function Ventas() {
             />
           </div>
 
-          <div className="relative w-full sm:w-auto">
-            <select
+          <div className="flex items-center gap-2">
+            <FilterDropdown
               value={clienteFiltro}
-              onChange={(e) => { setClienteFiltro(e.target.value); setCurrentPage(1); }}
-              className={cn(configUi.select, "w-full min-w-[200px] h-12")}
-            >
-              <option value="todos">Todos los Clientes</option>
-              {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre_completo}</option>)}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
-              <ChevronDown size={18} />
-            </div>
+              onChange={(val) => { setClienteFiltro(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Clientes", value: "todos" },
+                ...clientes.map(c => ({ label: c.nombre_completo, value: String(c.id_cliente), icon: User }))
+              ]}
+              placeholder="Cliente"
+            />
+
+            <FilterDropdown
+              value={statusFiltro}
+              onChange={(val) => { setStatusFiltro(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "todos" },
+                { label: "Pendiente", value: "Pendiente", color: "#f59e0b" },
+                { label: "Entregada", value: "Entregada", color: "#10b981" },
+                { label: "Cancelada", value: "Cancelada", color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+              icon={ShoppingBag}
+            />
           </div>
 
           <button onClick={() => fetchData()} className={configUi.iconButton} title="Refrescar">
