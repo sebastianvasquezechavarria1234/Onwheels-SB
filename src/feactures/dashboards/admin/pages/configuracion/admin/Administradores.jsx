@@ -72,8 +72,8 @@ export const Administradores = () => {
 
   const handleCreate = async () => {
     try {
-      if (!formData.id_usuario) {
-        showNotification("El usuario es obligatorio", "error");
+      if (!formData.id_usuario || !formData.tipo_admin?.trim() || !formData.area?.trim()) {
+        showNotification("Todos los campos son obligatorios", "error");
         return;
       }
 
@@ -101,6 +101,11 @@ export const Administradores = () => {
   const handleEdit = async () => {
     try {
       if (!selectedAdmin) return;
+
+      if (!formData.tipo_admin?.trim() || !formData.area?.trim()) {
+        showNotification("Todos los campos son obligatorios", "error");
+        return;
+      }
 
       setSubmitting(true);
 

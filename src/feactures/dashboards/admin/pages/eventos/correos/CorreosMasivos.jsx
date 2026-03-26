@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  Plus, X, Eye, Mail, Trash2, Calendar, Users, Send, Search, Hash,
+  Plus, X, Eye, Mail, Calendar, Users, Send, Search, Hash,
   ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle, AlertCircle, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,8 +8,7 @@ import {
   obtenerRolesDisponibles,
   obtenerVistaPreviaDestinatarios,
   enviarCorreosMasivos,
-  obtenerHistorialEnvios,
-  eliminarEnvio
+  obtenerHistorialEnvios
 } from "../../services/emailMasivoServices";
 import { configUi, cn } from "../../configuracion/configUi";
 
@@ -28,7 +27,6 @@ export default function EnviarCorreosMasivos() {
   const [modal, setModal] = useState(false); // New Email Modal (split view)
   const [modalPreview, setModalPreview] = useState(false);
   const [modalDetalle, setModalDetalle] = useState(false);
-  const [modalDelete, setModalDelete] = useState(false);
 
   // Selection states
   const [rolesSeleccionados, setRolesSeleccionados] = useState([]);
@@ -133,17 +131,6 @@ export default function EnviarCorreosMasivos() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!selected) return;
-    try {
-      await eliminarEnvio(selected.id_envio);
-      setHistorial(prev => prev.filter(h => h.id_envio !== selected.id_envio));
-      showNotification("Registro eliminado");
-      setModalDelete(false);
-    } catch (error) {
-      showNotification("No se pudo eliminar", "error");
-    }
-  };
 
   // Filter & Sort
   const filteredAndSorted = useMemo(() => {
@@ -228,7 +215,6 @@ export default function EnviarCorreosMasivos() {
                     <td className={cn(configUi.td, "pr-5 text-right")}>
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => { setDetalleEnvio(h); setModalDetalle(true); }} className={configUi.actionButton}><Eye size={14} /></button>
-                        <button onClick={() => { setSelected(h); setModalDelete(true); }} className={configUi.actionDangerButton}><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -362,24 +348,6 @@ export default function EnviarCorreosMasivos() {
         )}
       </AnimatePresence>
 
-      {/* DELETE CONFIRM */}
-      <AnimatePresence>
-        {modalDelete && (
-          <motion.div className={configUi.modalBackdrop} onClick={() => setModalDelete(false)}>
-            <motion.div className={cn(configUi.modalPanel, "max-w-md")} onClick={e => e.stopPropagation()}>
-              <div className="p-8 text-center flex flex-col items-center">
-                <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4"><Trash2 size={30} /></div>
-                <h3 className="text-xl font-bold text-[#16315f]">¿Eliminar Registro?</h3>
-                <p className="text-sm text-[#6b84aa] mt-2 font-medium">Esta acción borrará este envío del historial de forma permanente.</p>
-                <div className="mt-8 flex gap-3 w-full">
-                  <button onClick={() => setModalDelete(false)} className={cn(configUi.secondaryButton, "flex-1")}>No, cancelar</button>
-                  <button onClick={handleDelete} className={cn(configUi.dangerButton, "flex-1")}>Sí, eliminar</button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* DETAIL MODAL */}
       <AnimatePresence>

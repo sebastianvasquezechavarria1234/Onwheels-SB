@@ -14,9 +14,7 @@ import {
   deleteInstructor,
   getUsuariosNoInstructores
 } from "../../services/instructoresServices";
-import { configUi } from "../../configuracion/configUi";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
+import { configUi, cn } from "../../configuracion/configUi";
 
 export const Instructores = () => {
   const [instructores, setInstructores] = useState([]);
@@ -354,9 +352,9 @@ export const Instructores = () => {
                       <td className={`${configUi.td} text-center`}>
                         <span className={cn(
                           configUi.pill,
-                          inst.estado ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                          (inst.estado === "Activo" || inst.estado === "activo" || inst.estado === true) ? configUi.successPill : configUi.dangerPill
                         )}>
-                          {inst.estado ? "Activo" : "Inactivo"}
+                          {typeof inst.estado === "boolean" ? (inst.estado ? "Activo" : "Inactivo") : inst.estado}
                         </span>
                       </td>
                       <td className={`${configUi.td} text-right`}>

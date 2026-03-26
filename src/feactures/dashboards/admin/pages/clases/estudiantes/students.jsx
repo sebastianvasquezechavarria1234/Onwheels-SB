@@ -14,11 +14,9 @@ import {
   actualizarEstudiante,
   getUsuariosActivos
 } from "../../services/estudiantesServices";
-import { configUi } from "../../configuracion/configUi";
+import { configUi, cn } from "../../configuracion/configUi";
 import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
 import api from "../../../../../../services/api";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const Students = () => {
   const [estudiantes, setEstudiantes] = useState([]);
@@ -356,10 +354,10 @@ const Students = () => {
                           onClick={() => handleStatusToggle(s)}
                           className={cn(
                             configUi.pill,
-                            s.estado === 'Activo' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                            (s.estado === 'Activo' || s.estado === 'activo' || s.estado === true) ? configUi.successPill : configUi.dangerPill
                           )}
                         >
-                          {s.estado}
+                          {typeof s.estado === "boolean" ? (s.estado ? "Activo" : "Inactivo") : s.estado}
                         </button>
                       </td>
                       <td className={`${configUi.td} text-right`}>

@@ -14,11 +14,9 @@ import {
   updateMatricula,
   createMatricula,
 } from "../../services/matriculaService";
-import { configUi } from "../../configuracion/configUi";
+import { configUi, cn } from "../../configuracion/configUi";
 import { useToast } from "../../../../../../context/ToastContext";
 import api from "../../../../../../services/api";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const MatriculasAdmin = () => {
   const toast = useToast();
@@ -453,10 +451,10 @@ const MatriculasAdmin = () => {
                       <td className={`${configUi.td} text-center`}>
                         <span className={cn(
                           configUi.pill,
-                          m.estado === 'Activa' ? 'bg-emerald-50 text-emerald-600' :
-                          m.estado === 'Vencida' ? 'bg-red-50 text-red-600' :
-                          m.estado === 'Pausada' ? 'bg-amber-50 text-amber-600' :
-                          'bg-slate-50 text-slate-500'
+                          (m.estado === 'Activa' || m.estado === 'activo' || m.estado === true) ? configUi.successPill :
+                          (m.estado === 'Vencida' || m.estado === 'vencida') ? configUi.dangerPill :
+                          m.estado === 'Pausada' ? 'border-amber-200 bg-amber-50 text-amber-600' :
+                          configUi.subtlePill
                         )}>
                           {m.estado}
                         </span>
@@ -590,7 +588,7 @@ const MatriculasAdmin = () => {
                        modal === 'expediente' ? 'Expediente del Estudiante' : ''}
                     </h3>
                     <p className={configUi.modalSubtitle}>
-                      {selectedMatricula?.nombre_completo || "Gestión de inscripción"}
+                      {selectedMatricula?.nombre_completo || "Gestión de inscripción."}
                     </p>
                   </div>
                   <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
