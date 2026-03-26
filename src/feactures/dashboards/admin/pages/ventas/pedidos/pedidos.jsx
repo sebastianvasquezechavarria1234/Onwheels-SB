@@ -213,17 +213,13 @@ function Pedidos() {
             <tbody className="divide-y divide-[#d7e5f8]">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="p-20 text-center">
-                    <div className="flex flex-col items-center gap-4">
+                  <td colSpan="7" className={configUi.emptyState}>
+                    <div className="flex flex-col items-center gap-4 p-20">
                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sincronizando Órdenes...</p>
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando órdenes de venta...</p>
                     </div>
                   </td>
                 </tr>
-              </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan="7" className={configUi.emptyState}>Sincronizando órdenes de venta...</td></tr>
               ) : currentItems.length === 0 ? (
                 <tr><td colSpan="7" className={configUi.emptyState}>No se han encontrado pedidos registrados.</td></tr>
               ) : (
@@ -392,7 +388,7 @@ function Pedidos() {
                         />
                       </div>
                     )}
-                  </div>
+                  </form>
                 )}
               </div>
 

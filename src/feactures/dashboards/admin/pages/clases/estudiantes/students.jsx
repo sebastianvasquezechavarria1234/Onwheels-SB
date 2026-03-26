@@ -125,19 +125,52 @@ const Students = () => {
     const errors = {};
     if (step === 1) {
       if (modal === "add" && !formData.id_usuario) errors.id_usuario = "Debes vincular un usuario base";
-      if (!formData.nombre_completo?.trim()) errors.nombre_completo = "El nombre es obligatorio";
-      if (!formData.email?.trim()) errors.email = "El email es obligatorio";
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = "Email no válido";
-      if (!formData.telefono?.trim()) errors.telefono = "El teléfono es obligatorio";
+      if (!formData.nombre_completo?.trim()) {
+        errors.nombre_completo = "El nombre es obligatorio";
+      } else if (formData.nombre_completo.trim().length < 3) {
+        errors.nombre_completo = "El nombre debe tener al menos 3 caracteres";
+      }
+      
+      if (!formData.email?.trim()) {
+        errors.email = "El email es obligatorio";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        errors.email = "Email no válido";
+      }
+      
+      if (!formData.telefono?.trim()) {
+        errors.telefono = "El teléfono es obligatorio";
+      } else if (!/^\d{7,15}$/.test(formData.telefono.replace(/\s/g, ""))) {
+        errors.telefono = "Teléfono inválido (mín. 7 dígitos)";
+      }
     }
     if (step === 2) {
-      if (!formData.documento?.trim()) errors.documento = "El documento es obligatorio";
-      if (!formData.edad) errors.edad = "La edad es obligatoria";
-      else if (parseInt(formData.edad) <= 0) errors.edad = "Edad no válida";
+      if (!formData.documento?.trim()) {
+        errors.documento = "El documento es obligatorio";
+      } else if (formData.documento.trim().length < 5) {
+        errors.documento = "Documento muy corto (mín. 5)";
+      }
+      
+      if (!formData.edad) {
+        errors.edad = "La edad es obligatoria";
+      } else {
+        const age = parseInt(formData.edad);
+        if (isNaN(age) || age < 1 || age > 110) {
+          errors.edad = "Edad inválida (Rango: 1-110)";
+        }
+      }
     }
     if (step === 3) {
-      if (!formData.acudiente_nombre?.trim()) errors.acudiente_nombre = "Nombre del acudiente es obligatorio";
-      if (!formData.acudiente_telefono?.trim()) errors.acudiente_telefono = "Teléfono del acudiente es obligatorio";
+      if (!formData.acudiente_nombre?.trim()) {
+        errors.acudiente_nombre = "Nombre del acudiente es obligatorio";
+      } else if (formData.acudiente_nombre.trim().length < 3) {
+        errors.acudiente_nombre = "Nombre muy corto";
+      }
+      
+      if (!formData.acudiente_telefono?.trim()) {
+        errors.acudiente_telefono = "Teléfono del acudiente es obligatorio";
+      } else if (!/^\d{7,15}$/.test(formData.acudiente_telefono.replace(/\s/g, ""))) {
+        errors.acudiente_telefono = "Teléfono inválido";
+      }
     }
 
     setFormErrors(errors);
@@ -424,7 +457,7 @@ const Students = () => {
             onClick={closeModal}
           >
             <motion.div
-              className={`${configUi.modalPanel} ${modal === 'delete' ? 'max-w-sm' : 'max-w-3xl'}`}
+              className={`${configUi.modalPanel} ${modal === 'delete' ? 'max-w-sm' : 'max-w-xl'}`}
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}

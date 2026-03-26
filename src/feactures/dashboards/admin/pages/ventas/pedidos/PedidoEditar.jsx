@@ -541,6 +541,5 @@ export default function PedidoEditar() {
                 )}
             </AnimatePresence>
         </div>
-        </div >
     );
 }

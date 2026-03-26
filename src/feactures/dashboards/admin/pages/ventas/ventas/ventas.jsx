@@ -217,17 +217,13 @@ function Ventas() {
             <tbody className="divide-y divide-[#d7e5f8]">
               {loading ? (
                 <tr>
-                   <td colSpan="7" className="p-20 text-center">
-                     <div className="flex flex-col items-center gap-4">
-                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Facturación...</p>
-                     </div>
-                   </td>
+                  <td colSpan="7" className={configUi.emptyState}>
+                    <div className="flex flex-col items-center gap-4 p-20">
+                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando base de datos...</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan="7" className={configUi.emptyState}>Sincronizando base de datos...</td></tr>
                 ) : currentItems.length === 0 ? (
                   <tr><td colSpan="7" className={configUi.emptyState}>Sin registros de ventas que coincidan.</td></tr>
                 ) : (
@@ -296,9 +292,9 @@ function Ventas() {
                     </tr>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
+            </tbody>
+          </table>
+        </div>
 
         {/* Pagination Footer */}
         {totalPages > 1 && (
@@ -353,6 +349,7 @@ function Ventas() {
                 <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
               </div>
 
+              <div className="flex flex-col">
                 <div className={configUi.modalContent}>
                     {modal === 'cancelar' ? (
                        <form id="cancel-form" onSubmit={handleCancel} className="space-y-4 py-1 text-center">
@@ -396,18 +393,18 @@ function Ventas() {
                              </div>
                              <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">El cambio de estado se reflejará en el panel del cliente en tiempo real.</p>
                           </div>
-                        </div>
-                     </div>
-                  )}
-              </div>
+                       </form>
+                    )}
+                </div>
 
-              <div className={configUi.modalFooter}>
-                <button onClick={closeModal} className={configUi.secondaryButton}>Regresar</button>
-                {modal === 'cancelar' ? (
-                  <button onClick={handleCancel} className={configUi.dangerButton}>Confirmar Anulación</button>
-                ) : (
-                  <button onClick={handleStatusUpdate} className={configUi.primaryButton}>Guardar Cambios</button>
-                )}
+                <div className={configUi.modalFooter}>
+                  <button onClick={closeModal} className={configUi.secondaryButton}>Regresar</button>
+                  {modal === 'cancelar' ? (
+                    <button onClick={handleCancel} className={configUi.dangerButton}>Confirmar Anulación</button>
+                  ) : (
+                    <button onClick={handleStatusUpdate} className={configUi.primaryButton}>Guardar Cambios</button>
+                  )}
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -426,7 +423,7 @@ function Ventas() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div >
+    </div>
   );
 }
 

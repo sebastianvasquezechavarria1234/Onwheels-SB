@@ -11,7 +11,7 @@ import {
   asignarPermisoARol,
   eliminarPermisoDeRol
 } from "../../services/RolesService";
-import { cn, configUi, groupPermissionsByModule } from "../configUi";
+import { cn, configUi, groupPermissionsByModule, getPermissionMeta } from "../configUi";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
@@ -223,11 +223,39 @@ const Roles = () => {
   };
 
   const togglePermiso = (idPermiso) => {
-    setPermisosAsignados(prev =>
-      prev.includes(idPermiso)
+    const permission = permisosTotales.find(p => p.id_permiso === idPermiso);
+    if (!permission) return;
+    
+    // Import helper from configUi (already imported as groupPermissionsByModule, but let's use getPermissionMeta)
+    // Actually getPermissionMeta is NOT imported yet, let's check and import it if needed.
+    // Looking at the imports in Roles.jsx: import { cn, configUi, groupPermissionsByModule } from "../configUi";
+    // I need to add getPermissionMeta to imports.
+    
+    setPermisosAsignados(prev => {
+      const isRemoving = prev.includes(idPermiso);
+      let next = isRemoving
         ? prev.filter(id => id !== idPermiso)
-        : [...prev, idPermiso]
-    );
+        : [...prev, idPermiso];
+      
+      // Control automático de permisos "ver" ocultos al alternar "gestionar"
+      const meta = getPermissionMeta(permission);
+      
+      if (meta.action === "gestionar") {
+        const verPermiso = permisosTotales.find(p => {
+          const pMeta = getPermissionMeta(p);
+          return pMeta.action === "ver" && pMeta.moduleKey === meta.moduleKey;
+        });
+        
+        if (verPermiso) {
+          if (!isRemoving && !next.includes(verPermiso.id_permiso)) {
+            next.push(verPermiso.id_permiso);
+          } else if (isRemoving && next.includes(verPermiso.id_permiso)) {
+            next = next.filter(id => id !== verPermiso.id_permiso);
+          }
+        }
+      }
+      return next;
+    });
   };
 
   const guardarPermisos = async () => {
@@ -280,7 +308,12 @@ const Roles = () => {
     return true; // Todos los roles
   });
 
-  const groupedPermissions = groupPermissionsByModule(permisosTotales);
+  const filteredPermissions = (permisosTotales || []).filter(p => {
+    const meta = getPermissionMeta(p);
+    return meta.action !== "ver";
+  });
+
+  const groupedPermissions = groupPermissionsByModule(filteredPermissions);
 
   return (
     <>
@@ -457,7 +490,9 @@ const Roles = () => {
       <AnimatePresence>
         {modalType && modalType !== "delete" && (
           <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className={`${configUi.modalPanel} ${modalType === "permisos" ? "max-w-5xl" : "max-w-3xl"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+            <motion.div
+              className={`${configUi.modalPanel} ${modalType === 'permisos' ? 'max-w-2xl' : 'max-w-3xl'}`}
+ initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
               <div className={modalType === "permisos" ? configUi.modalSplit : configUi.modalSplitCompact}>
                 <div className={configUi.modalSide}>
                   <div>
