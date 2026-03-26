@@ -248,7 +248,7 @@ export default function PedidoDetalle() {
             <div className="space-y-6 relative z-10">
               <div className="flex justify-between items-center text-white/60">
                 <span className="text-[10px] font-bold uppercase tracking-widest">Método Usado</span>
-                <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/10">{venta.metodo_pago || "Efectivo"}</span>
+                <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black tracking-widest uppercase border border-white/10">{pedido.metodo_pago || "Efectivo"}</span>
               </div>
 
               <div className="flex justify-between items-center pt-4 border-t border-white/5">
@@ -261,14 +261,14 @@ export default function PedidoDetalle() {
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-300">Cifra Liquidada</span>
-                  <span className="text-2xl font-black tracking-tighter mt-1">${parseFloat(venta.total).toLocaleString()}</span>
+                  <span className="text-2xl font-black tracking-tighter mt-1">${parseFloat(pedido.total).toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* ANULACIÓN INFO (SOLO SI CANCELADA) */}
-          {(venta.estado === "Cancelada") && (
+          {(pedido.estado === "Cancelada") && (
             <div className="bg-rose-600 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
               <h3 className="text-lg font-extrabold mb-6 flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center text-white backdrop-blur-md">
@@ -279,7 +279,7 @@ export default function PedidoDetalle() {
               <div className="space-y-4">
                 <label className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Dictamen de Cancelación:</label>
                 <div className="p-6 bg-black/10 rounded-3xl border border-white/5 italic text-sm font-medium leading-relaxed">
-                  "{venta.motivo_cancelacion || "Se procedió con la anulación del pedido por solicitud administrativa."}"
+                  "{pedido.motivo_cancelacion || "Se procedió con la anulación del pedido por solicitud administrativa."}"
                 </div>
               </div>
             </div>

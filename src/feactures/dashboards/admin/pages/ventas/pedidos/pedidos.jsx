@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   Package, ChevronDown, Hash, ChevronLeft, ChevronRight,
   Search, Plus, Pencil, Trash2, Eye, Download,
-  ShoppingBag, Calendar, CreditCard, Info, Clock, AlertCircle, X
+  ShoppingBag, Calendar, CreditCard, Info, Clock, AlertCircle, X, CheckCircle, AlertTriangle, Ban
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -55,8 +55,8 @@ function Pedidos() {
         getPedidos(),
         getClientes()
       ]);
-      setPedidos(pedidosData || []);
-      setClientes(clientesData || []);
+      setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
+      setClientes(Array.isArray(clientesData) ? clientesData : []);
     } catch (err) {
       console.error("Error cargando datos:", err);
       showNotification("Error al sincronizar historial de pedidos", "error");
@@ -127,8 +127,7 @@ function Pedidos() {
       const nombreCli = getClienteNombre(p.id_cliente).toLowerCase();
       const matchesSearch =
         String(p.id_venta).includes(searchTerm) ||
-        nombreCli.includes(searchTerm.toLowerCase()) ||
-        new Date(p.fecha_venta).toLocaleDateString().includes(searchTerm);
+        nombreCli.includes(searchTerm.toLowerCase());
 
       const matchesCliente = clienteFiltro === "todos" || p.id_cliente === Number(clienteFiltro);
       return matchesSearch && matchesCliente;
@@ -156,9 +155,9 @@ function Pedidos() {
           <span className={configUi.countBadge}>
             {filtered.length} ÓRDENES
           </span>
-          <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-wider">
+          <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase tracking-wider">
             <ShoppingBag size={12} />
-            CARTERA: ${filtered.reduce((acc, v) => acc + (Number(v.total) || 0), 0).toLocaleString()}
+            CONSOLIDADO: ${filtered.reduce((acc, v) => acc + (Number(v.total) || 0), 0).toLocaleString()}
           </div>
         </div>
 
@@ -178,12 +177,12 @@ function Pedidos() {
             <select
               value={clienteFiltro}
               onChange={(e) => { setClienteFiltro(e.target.value); setCurrentPage(1); }}
-              className={cn(configUi.select, "w-full min-w-[200px]")}
+              className={cn(configUi.select, "w-full min-w-[200px] h-12")}
             >
               <option value="todos">Todos los Clientes</option>
               {clientes.map(c => <option key={c.id_cliente} value={c.id_cliente}>{c.nombre_completo}</option>)}
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
               <ChevronDown size={18} />
             </div>
           </div>
@@ -226,7 +225,7 @@ function Pedidos() {
                 currentItems.map((v) => (
                   <tr key={v.id_venta} className={configUi.row}>
                     <td className={configUi.td}>
-                      <span className="text-xs font-extrabold text-slate-400 font-mono">#{v.id_venta}</span>
+                      <span className="text-xs font-extrabold text-[#16315f] font-mono">#{v.id_venta}</span>
                     </td>
                     <td className={configUi.td}>
                       <div className="flex items-center gap-3">
@@ -234,9 +233,9 @@ function Pedidos() {
                           <Calendar size={16} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-[#16315f]">{new Date(v.fecha_venta).toLocaleDateString()}</span>
+                          <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
                           <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-                            <Clock size={10} /> {new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                           </span>
                         </div>
                       </div>
@@ -244,7 +243,7 @@ function Pedidos() {
                     <td className={configUi.td}>
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
-                        <span className="text-[10px] text-slate-400 font-medium">Doc. Registrado</span>
+                        <span className="text-[10px] text-slate-400 font-medium">Registrado</span>
                       </div>
                     </td>
                     <td className={`${configUi.td} text-center`}>
@@ -253,17 +252,17 @@ function Pedidos() {
                         <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
                       </div>
                     </td>
-                    <td className={`${configUi.td} text-center font-extrabold text-[#16315f] text-sm`}>
+                    <td className={`${configUi.td} text-right font-extrabold text-[#16315f] text-sm tabular-nums`}>
                       ${(Number(v.total) || 0).toLocaleString()}
                     </td>
                     <td className={`${configUi.td} text-center`}>
                       <div className="flex flex-col items-center gap-1">
-                        <span className={cn(configUi.pill, getStatusStyle(v.estado), "border shadow-sm")}>
+                        <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border", getStatusStyle(v.estado))}>
                           {v.estado}
                         </span>
                         {v.estado === "Cancelada" && v.motivo_cancelacion && (
                           <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
-                            Motivo: {v.motivo_cancelacion}
+                            {v.motivo_cancelacion}
                           </span>
                         )}
                       </div>
@@ -279,11 +278,11 @@ function Pedidos() {
                           </button>
                         )}
                         {v.estado !== "Cancelada" && (
-                          <button onClick={() => openModal("status", v)} className={cn(configUi.actionButton, "hover:bg-indigo-50 hover:text-indigo-600")} title="Estado">
+                          <button onClick={() => openModal("status", v)} className={configUi.actionButton} title="Estado">
                             <Package size={14} />
                           </button>
                         )}
-                        <button onClick={() => openModal("eliminar", v)} className={cn(configUi.actionButton, "hover:bg-rose-50 hover:text-rose-600")} title="Eliminar">
+                        <button onClick={() => openModal("eliminar", v)} className={configUi.actionDangerButton} title="Eliminar">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -299,7 +298,7 @@ function Pedidos() {
         {totalPages > 1 && (
           <div className={configUi.paginationBar}>
             <p className="text-sm font-bold text-[#6b84aa]">
-              Lote <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
+              Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -350,33 +349,56 @@ function Pedidos() {
 
               <div className={configUi.modalContent}>
                 {modal === 'eliminar' ? (
-                  <div className="space-y-6 text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-500 border border-rose-100">
+                  <div className="space-y-6 text-center py-4">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 text-rose-500 border border-rose-100 shadow-inner">
                       <Trash2 size={32} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 px-4">
                       <p className="text-sm font-black text-[#16315f] uppercase tracking-tight">¿Confirmar Eliminación?</p>
-                      <p className="text-[11px] text-[#6b84aa] italic">Esta acción es irreversible y removerá el registro permanentemente.</p>
+                      <p className="text-[11px] text-[#6b84aa] font-medium leading-relaxed">Esta acción es irreversible y removerá el registro permanentemente del historial de pedidos.</p>
                     </div>
                   </div>
                 ) : (
-                  <form id="status-form" onSubmit={handleStatusUpdate} className="space-y-6">
+                  <div className="space-y-6 py-2">
                     <div className={configUi.fieldGroup}>
                       <label className={configUi.fieldLabel}>Nuevo Estado del Pedido</label>
                       <div className="relative">
-                        <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <select
                           value={statusFormEstado}
                           onChange={(e) => setStatusFormEstado(e.target.value)}
-                          className={cn(configUi.fieldSelect, "pl-10")}
+                          className={cn(configUi.fieldSelect, "pl-12 h-14 font-bold")}
                         >
                           <option value="Pendiente">Pendiente</option>
                           <option value="Entregada">Entregada</option>
                           <option value="Cancelada">Cancelada</option>
                         </select>
                       </div>
+                      <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">Los pedidos en estado Entregada impactan el stock final.</p>
                     </div>
 
+<<<<<<< HEAD
+  <AnimatePresence>
+    {statusFormEstado === 'Cancelada' && (
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className={configUi.fieldGroup}
+      >
+        <label className={configUi.fieldLabel}>Justificación Reglamentaria</label>
+        <textarea
+          value={cancelJustificacion}
+          onChange={(e) => setCancelJustificacion(e.target.value)}
+          placeholder="Describa el motivo de cancelación..."
+          className={cn(configUi.fieldTextarea, "h-28 pt-4")}
+          required
+        />
+      </motion.div>
+    )}
+  </AnimatePresence>
+                  </div >
+=======
                     {statusFormEstado === 'Cancelada' && (
                       <div className={configUi.fieldGroup}>
                         <label className={configUi.fieldLabel}>Justificación Reglamentaria</label>
@@ -393,7 +415,7 @@ function Pedidos() {
               </div>
 
               <div className={configUi.modalFooter}>
-                <button onClick={closeModal} className={configUi.secondaryButton}>Cerrar</button>
+                <button onClick={closeModal} className={configUi.secondaryButton}>Regresar</button>
                 {modal === 'eliminar' ? (
                   <button onClick={handleDelete} className={configUi.dangerButton}>Eliminar Ahora</button>
                 ) : (

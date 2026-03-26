@@ -148,6 +148,40 @@ export const UpcomingEvents = () => {
                         Skatepark Central
                       </span>
                     </div>
+
+                    {/* Botón de Inscripción */}
+                    {(event.google_forms || event.link_google_forms) && (
+                      <div className="mt-3 flex gap-2">
+                        {Array.isArray(event.google_forms) && event.google_forms.length > 0 ? (
+                          event.google_forms.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url.startsWith('http') ? url : `https://${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-1.5 bg-[var(--color-blue)] text-white py-1.5 px-3 rounded-lg text-[10px] font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Inscribirme al evento {event.google_forms.length > 1 ? `(${idx + 1})` : ""}
+                            </a>
+                          ))
+                        ) : (
+                          (typeof event.google_forms === 'string' || typeof event.link_google_forms === 'string') && (
+                            <a
+                              href={(event.google_forms || event.link_google_forms).startsWith('http') 
+                                ? (event.google_forms || event.link_google_forms) 
+                                : `https://${event.google_forms || event.link_google_forms}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-1.5 bg-[var(--color-blue)] text-white py-1.5 px-3 rounded-lg text-[10px] font-black uppercase tracking-tighter hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all text-center"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Inscribirme al evento
+                            </a>
+                          )
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <Link
