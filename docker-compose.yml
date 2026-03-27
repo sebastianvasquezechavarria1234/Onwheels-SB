@@ -1,0 +1,22 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: onwheels-frontend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ../OnWheels-SB-Api
+      dockerfile: dockerfile
+    container_name: onwheels-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped

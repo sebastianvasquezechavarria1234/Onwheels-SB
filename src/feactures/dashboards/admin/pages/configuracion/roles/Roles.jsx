@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, Download, SlidersHorizontal, ChevronRight, ChevronLeft, ShieldCheck } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, SlidersHorizontal, ChevronRight, ChevronLeft, ShieldCheck } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getRoles,
@@ -11,7 +11,8 @@ import {
   asignarPermisoARol,
   eliminarPermisoDeRol
 } from "../../services/RolesService";
-import { cn, configUi, groupPermissionsByModule, getPermissionMeta } from "../configUi";
+import { cn, configUi, groupPermissionsByModule } from "../configUi";
+import FilterDropdown from "../FilterDropdown";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
@@ -30,7 +31,7 @@ const Roles = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
-  const [filterType, setFilterType] = useState("Todos los roles");
+  const [filterType, setFilterType] = useState("Todos");
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -272,7 +273,7 @@ const Roles = () => {
   const filteredRoles = React.useMemo(() => {
     return roles.filter(r => {
       const matchesSearch = r.nombre_rol.toLowerCase().includes(search.toLowerCase());
-      const matchesType = filterType === "Todos los roles" ||
+      const matchesType = filterType === "Todos" ||
         (filterType === "Activos" && r.estado) ||
         (filterType === "Inactivos" && !r.estado);
       return matchesSearch && matchesType;
@@ -283,33 +284,9 @@ const Roles = () => {
   const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
   const currentItems = filteredRoles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleDownload = () => {
-    if (!filteredRoles || filteredRoles.length === 0) return;
-    const header = ["ID", "Nombre Rol", "Descripcion", "Estado"];
-    const csvData = filteredRoles.map(r => [
-      r.id_rol,
-      `"${r.nombre_rol}"`,
-      `"${r.descripcion || ""}"`,
-      r.estado ? "Activo" : "Inactivo"
-    ].join(","));
-
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_roles_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
 
-  const filteredPermissions = (permisosTotales || []).filter(p => {
-    const meta = getPermissionMeta(p);
-    return meta.action !== "ver";
-  });
-
-  const groupedPermissions = groupPermissionsByModule(filteredPermissions);
+  const groupedPermissions = groupPermissionsByModule(permisosTotales);
 
   return (
     <>
@@ -337,28 +314,18 @@ const Roles = () => {
             </div>
 
             {/* Filter Dropdown */}
-            <div className="relative hidden md:block">
-              <select
-                value={filterType}
-                onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-                className={configUi.select}
-              >
-                <option value="Todos los roles">Todos los roles</option>
-                <option value="Activos">Activos</option>
-                <option value="Inactivos">Inactivos</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
-              </div>
-            </div>
+            <FilterDropdown
+              value={filterType}
+              onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Roles", value: "Todos" },
+                { label: "Activos", value: "Activos", color: "#10b981" },
+                { label: "Inactivos", value: "Inactivos", color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
 
-            {/* Download Button */}
-            <button
-              onClick={handleDownload}
-              className={configUi.iconButton} title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
 
             {/* Create Button */}
             <button

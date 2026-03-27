@@ -7,19 +7,16 @@ const API_Endpoint = "/eventos"; // base para eventos
 // ⭐ GET — OBTENER DATOS
 // ===============================
 
-export const getEventos = async () => {
-  const res = await api.get(API_Endpoint);
+export const getEventos = async (params = {}) => {
+  const options = Object.keys(params).length > 0 ? { params } : {};
+  const res = await api.get(API_Endpoint, options);
   return res.data;
 };
 
 export const getCategorias = async () => {
-  const res = await api.get("/categoria-productos"); 
-  // NOTA: corregido para usar el endpoint de productos si es necesario 
   // OJO: El usuario se quejó de error en /api/eventos y /api/categorias-eventos
-  // Si Event.js gestiona categorias de EVENTOS, el endpoint es /categorias-eventos
-  // Mantendré la lógica original pero con axios.
-  const res2 = await api.get("/categorias-eventos");
-  return res2.data;
+  const res = await api.get("/categorias-eventos");
+  return res.data;
 };
 
 export const getPatrocinadores = async () => {
@@ -37,25 +34,27 @@ export const getSedes = async () => {
 // ===============================
 
 export const createEvento = async (evento) => {
-  let data = evento;
-
-  // Si hay un archivo de imagen, usar FormData
-  if (evento.imagenArchivo) {
-    const formData = new FormData();
-    Object.keys(evento).forEach(key => {
-      if (key === 'imagenArchivo') {
-        formData.append('imagen', evento.imagenArchivo);
-      } else if (key === 'google_forms' && Array.isArray(evento[key])) {
-        // Enviar cada link del array
-        evento[key].forEach(link => formData.append('google_forms[]', link));
-      } else if (evento[key] !== null && evento[key] !== undefined) {
-        formData.append(key, evento[key]);
-      }
-    });
-    data = formData;
+  // Si no hay imagen nueva para subir, enviamos JSON puro para que Laravel valide correctamente nulls/enteros.
+  if (!evento.imagenArchivo) {
+    const jsonPayload = { ...evento };
+    delete jsonPayload.imagenArchivo; // limpiar campo auxiliar
+    const res = await api.post(API_Endpoint, jsonPayload);
+    return res.data;
   }
 
-  const res = await api.post(API_Endpoint, data);
+  // Si hay imagen, usamos FormData
+  const formData = new FormData();
+  Object.keys(evento).forEach(key => {
+    if (key === 'imagenArchivo') {
+      formData.append('imagen_evento', evento.imagenArchivo);
+    } else if (key !== 'imagen_evento') {
+       // Omitimos imagen_evento aquí porque lo reemplazamos con el archivo real
+       const val = evento[key] === null || evento[key] === undefined ? "" : evento[key];
+       formData.append(key, val);
+    }
+  });
+
+  const res = await api.post(API_Endpoint, formData);
   return res.data;
 };
 
@@ -64,25 +63,29 @@ export const createEvento = async (evento) => {
 // ===============================
 
 export const updateEvento = async (id, evento) => {
-  let data = evento;
-
-  // Si hay un archivo de imagen, usar FormData
-  if (evento.imagenArchivo) {
-    const formData = new FormData();
-    Object.keys(evento).forEach(key => {
-      if (key === 'imagenArchivo') {
-        formData.append('imagen', evento.imagenArchivo);
-      } else if (key === 'google_forms' && Array.isArray(evento[key])) {
-        // Enviar cada link del array
-        evento[key].forEach(link => formData.append('google_forms[]', link));
-      } else if (evento[key] !== null && evento[key] !== undefined) {
-         formData.append(key, evento[key]);
-      }
-    });
-    data = formData;
+  // Si no hay imagen nueva para subir, enviamos JSON puro
+  if (!evento.imagenArchivo) {
+    const jsonPayload = { ...evento };
+    delete jsonPayload.imagenArchivo;
+    const res = await api.put(`${API_Endpoint}/${id}`, jsonPayload);
+    return res.data;
   }
 
-  const res = await api.put(`${API_Endpoint}/${id}`, data);
+  // En Laravel/PHP, las peticiones PUT con archivos no parsean FormData nativamente. 
+  // Enviamos un POST con el campo _method='PUT'.
+  const formData = new FormData();
+  formData.append('_method', 'PUT');
+  
+  Object.keys(evento).forEach(key => {
+    if (key === 'imagenArchivo') {
+      formData.append('imagen_evento', evento.imagenArchivo);
+    } else if (key !== 'imagen_evento') {
+       const val = evento[key] === null || evento[key] === undefined ? "" : evento[key];
+       formData.append(key, val);
+    }
+  });
+
+  const res = await api.post(`${API_Endpoint}/${id}`, formData);
   return res.data;
 };
 

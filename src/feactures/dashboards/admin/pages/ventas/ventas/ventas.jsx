@@ -4,7 +4,7 @@ import {
   Package, ChevronDown, Hash, ChevronLeft, ChevronRight,
   Search, Plus, Pencil, Trash2, Eye, Download,
   ShoppingBag, Calendar, CreditCard, Info, Clock, AlertCircle,
-  TrendingUp, SlidersHorizontal, Ban, X, CheckCircle, AlertTriangle
+  TrendingUp, SlidersHorizontal, Ban, X, CheckCircle, AlertTriangle, User
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,6 +17,7 @@ import {
 } from "../../services/ventasService";
 import { getClientes } from "../../services/clientesServices";
 import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 function Ventas() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ function Ventas() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [clienteFiltro, setClienteFiltro] = useState("todos");
+  const [statusFiltro, setStatusFiltro] = useState("todos");
 
   // Modales
   const [modal, setModal] = useState(null); // 'cancelar', 'status'
@@ -155,9 +157,11 @@ function Ventas() {
         nombreCli.includes(searchTerm.toLowerCase());
 
       const matchesCliente = clienteFiltro === "todos" || v.id_cliente === Number(clienteFiltro);
-      return matchesSearch && matchesCliente;
+      const matchesStatus = statusFiltro === "todos" || v.estado === statusFiltro;
+
+      return matchesSearch && matchesCliente && matchesStatus;
     });
-  }, [ventas, searchTerm, clienteFiltro, clientes]);
+  }, [ventas, searchTerm, clienteFiltro, statusFiltro, clientes]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -248,6 +252,12 @@ function Ventas() {
                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando base de datos...</p>
                     </div>
                   </td>
+                  <td colSpan="7" className={configUi.emptyState}>
+                    <div className="flex flex-col items-center gap-4 p-20">
+                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando base de datos...</p>
+                    </div>
+                  </td>
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr><td colSpan="7" className={configUi.emptyState}>Sin registros de ventas que coincidan.</td></tr>
@@ -268,16 +278,29 @@ function Ventas() {
                             <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                           </span>
                         </div>
+                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                          <Calendar size={16} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
+                            <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className={configUi.td}>
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
                         <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
+                        <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
                       </div>
                     </td>
                     <td className={`${configUi.td} text-center`}>
                       <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
+                        <Package size={12} className="text-slate-400" />
+                        <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
                         <Package size={12} className="text-slate-400" />
                         <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
                       </div>
@@ -331,10 +354,16 @@ function Ventas() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 className={configUi.paginationButton}
               >
                 <ChevronLeft size={18} />
               </button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
@@ -373,6 +402,7 @@ function Ventas() {
                 </div>
                 <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
               </div>
+
               <div className={configUi.modalContent}>
                 {modal === 'cancelar' ? (
                   <div className="space-y-6 py-2 text-center">
@@ -437,7 +467,10 @@ function Ventas() {
       <AnimatePresence>
         {notification.show && (
           <motion.div
+          <motion.div
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+            className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+              notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
             className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
               notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
           >
@@ -446,7 +479,7 @@ function Ventas() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div >
+    </div>
   );
 }
 

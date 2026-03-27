@@ -29,6 +29,7 @@ export default function Eventos() {
 
   // UI state
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   
@@ -105,15 +106,21 @@ export default function Eventos() {
     setLoading(true);
     try {
       const [evs, cats, pats, seds] = await Promise.all([
-        getEventos(),
+        getEventos({ todos: true }),
         getCategoriasEventos(),
         getProductosSponsors(),
         getSedes()
       ]);
-      setEventos(evs || []);
-      setCategorias(cats || []);
-      setPatrocinadores(pats || []);
-      setSedes(seds || []);
+      
+      const processedEvs = Array.isArray(evs) ? evs : (evs?.data && Array.isArray(evs.data) ? evs.data : []);
+      const processedCats = Array.isArray(cats) ? cats : (cats?.data && Array.isArray(cats.data) ? cats.data : []);
+      const processedPats = Array.isArray(pats) ? pats : (pats?.data && Array.isArray(pats.data) ? pats.data : []);
+      const processedSedes = Array.isArray(seds) ? seds : (seds?.data && Array.isArray(seds.data) ? seds.data : []);
+
+      setEventos(processedEvs);
+      setCategorias(processedCats);
+      setPatrocinadores(processedPats);
+      setSedes(processedSedes);
     } catch (err) {
       console.error("Error al cargar datos:", err);
       showNotification("Error de conexión", "error");
@@ -147,7 +154,7 @@ export default function Eventos() {
         hora_aproximada_fin: evento.hora_aproximada_fin ? evento.hora_aproximada_fin.slice(0, 5) : "",
         descripcion: evento.descripcion || "",
         imagen_evento: evento.imagen_evento || "",
-        estado: evento.estado || "activo",
+        estado: (evento.estado || "activo").toLowerCase(),
         google_forms: (Array.isArray(evento.google_forms) ? evento.google_forms[0] : (evento.google_forms || "")),
       });
     } else {
@@ -191,7 +198,7 @@ export default function Eventos() {
   const handleSave = async () => {
     // Validar fecha de evento (no pasada)
     if (form.fecha_evento) {
-        const eventDate = new Date(form.fecha_evento + "T00:00:00"); // Asegurar fecha local
+        const eventDate = new Date(form.fecha_evento + "T00:00:00");
         const today = new Date();
         today.setHours(0,0,0,0);
         if (eventDate < today) {
@@ -200,14 +207,24 @@ export default function Eventos() {
         }
     }
 
+    const payload = {
+      ...form,
+      id_categoria_evento: form.id_categoria_evento ? Number(form.id_categoria_evento) : null,
+      id_sede: form.id_sede ? Number(form.id_sede) : null,
+      id_patrocinador: form.id_patrocinador ? Number(form.id_patrocinador) : null,
+      google_forms: form.google_forms || "",
+      imagen_evento: form.imagen_evento || "",
+      descripcion: form.descripcion || ""
+    };
+
     setSubmitting(true);
     try {
       if (modal === "crear") {
-        await createEvento(form);
+        await createEvento(payload);
         toast.success("Evento publicado con éxito");
         showNotification("Evento publicado con éxito");
       } else if (modal === "editar" && selected) {
-        await updateEvento(selected.id_evento, form);
+        await updateEvento(selected.id_evento, payload);
         toast.success("Evento actualizado");
         showNotification("Evento actualizado");
       }
@@ -215,9 +232,17 @@ export default function Eventos() {
       closeModal();
     } catch (err) {
       console.error("Error al guardar:", err);
-      const msg = err?.response?.data?.mensaje || "No se pudo guardar el evento";
-      toast.error(msg);
-      showNotification(msg, "error");
+      // Extraer validaciones de Laravel si existen
+      if (err?.response?.data?.errors) {
+        const firstErrorList = Object.values(err.response.data.errors)[0];
+        const firstError = Array.isArray(firstErrorList) ? firstErrorList[0] : firstErrorList;
+        toast.error(firstError);
+        showNotification(firstError, "error");
+      } else {
+        const msg = err?.response?.data?.msg || err?.response?.data?.mensaje || "Revise los campos requeridos";
+        toast.error(msg);
+        showNotification(msg, "error");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -250,9 +275,16 @@ export default function Eventos() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(e => 
-        e.nombre_evento.toLowerCase().includes(q) || 
-        (e.nombre_sede || "").toLowerCase().includes(q)
+        ((e.nombre_evento || "").toLowerCase().includes(q) || 
+        (e.nombre_sede || "").toLowerCase().includes(q))
       );
+    }
+    if (statusFilter !== "Todos") {
+      result = result.filter(e => {
+        const est = String(e.estado || "").toLowerCase();
+        const filt = statusFilter.toLowerCase();
+        return est === filt;
+      });
     }
     result.sort((a,b) => {
       const vA = a[sortField];
@@ -261,7 +293,7 @@ export default function Eventos() {
       return sortDirection === "asc" ? vA - vB : vB - vA;
     });
     return result;
-  }, [eventos, search, sortField, sortDirection]);
+  }, [eventos, search, statusFilter, sortField, sortDirection]);
 
   const currentItems = filteredAndSorted.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
   const totalPages = Math.ceil(filteredAndSorted.length / itemsPerPage);
@@ -288,6 +320,17 @@ export default function Eventos() {
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86a0c6]" />
             <input value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Buscar por nombre o sede..." className={configUi.inputWithIcon} />
           </div>
+          
+          <select 
+            value={statusFilter} 
+            onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+            className={cn(configUi.fieldSelect, "w-full sm:w-auto min-w-[150px]")}
+          >
+            <option value="Todos">Todos los Estados</option>
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+          </select>
+
           <button onClick={() => openModal("crear")} className={configUi.primaryButton}>
             <Plus size={18} /> <span>Crear Evento</span>
           </button>
@@ -452,6 +495,14 @@ export default function Eventos() {
                                      <input type="time" name="hora_aproximada_fin" value={form.hora_aproximada_fin} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10", formErrors.hora_aproximada_fin && "border-red-500")} />
                                   </div>
                                   {formErrors.hora_aproximada_fin && <p className="text-[10px] text-red-500 font-bold mt-1">{formErrors.hora_aproximada_fin}</p>}
+                               </div>
+
+                               <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Estado del Evento</label>
+                                  <select name="estado" value={form.estado} onChange={handleChange} disabled={modal === "ver"} className={configUi.fieldSelect}>
+                                     <option value="activo">Activo</option>
+                                     <option value="inactivo">Inactivo</option>
+                                  </select>
                                </div>
                             </div>
                           ) : (

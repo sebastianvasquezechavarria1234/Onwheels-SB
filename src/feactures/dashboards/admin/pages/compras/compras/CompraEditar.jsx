@@ -84,10 +84,13 @@ const CompraEditar = () => {
                 getVariantes()
             ]);
             
-            setProveedores(Array.isArray(provRes) ? provRes : []);
+            const provArray = provRes?.data || provRes?.proveedores || (Array.isArray(provRes) ? provRes : []);
+            setProveedores(provArray);
             
-            const rawProducts = Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : [];
-            setAllProducts(combinarProductosConVariantes(rawProducts, varRes || []));
+            const rawProducts = prodRes?.data || prodRes?.productos || (Array.isArray(prodRes) ? prodRes : []);
+            const rawVariantes = varRes?.data || varRes?.variantes || (Array.isArray(varRes) ? varRes : []);
+            
+            setAllProducts(combinarProductosConVariantes(rawProducts, rawVariantes));
 
             if (isEditing) {
                 const data = await comprasService.getCompraById(id);
@@ -277,7 +280,7 @@ const CompraEditar = () => {
                                             <select
                                                 value={purchase.nit_proveedor}
                                                 onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
-                                                className={cn(configUi.fieldSelect, "pl-11 pr-10", errors.nit_proveedor && "border-rose-400 bg-rose-50/30")}
+                                                className={cn(configUi.fieldSelect, "pl-11", errors.nit_proveedor && "border-rose-400 bg-rose-50/30")}
                                             >
                                                 <option value="">Seleccionar Proveedor...</option>
                                                 {proveedores.map(p => (
@@ -286,9 +289,6 @@ const CompraEditar = () => {
                                                     </option>
                                                 ))}
                                             </select>
-                                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
-                                              <ChevronDown size={18} />
-                                            </div>
                                         </div>
                                         {errors.nit_proveedor && <p className="text-[10px] text-rose-500 mt-1 font-bold italic">{errors.nit_proveedor}</p>}
                                     </div>

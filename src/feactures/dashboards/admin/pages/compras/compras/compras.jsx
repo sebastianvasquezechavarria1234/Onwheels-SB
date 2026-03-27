@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Eye, Plus, Search, ChevronLeft, ChevronRight,
-  ShoppingCart, Filter, Calendar, Download, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
-  CheckCircle, AlertTriangle
+  Eye, Plus, Search, ChevronLeft, ChevronRight, Edit2, Trash2,
+  ShoppingCart, Filter, Calendar, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
+  CheckCircle, AlertTriangle, User
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import comprasService from "../../services/comprasService";
 import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 const Compras = () => {
   const location = useLocation();
@@ -17,6 +18,7 @@ const Compras = () => {
   const [proveedores, setProveedores] = useState([]);
   const [search, setSearch] = useState("");
   const [proveedorFilter, setProveedorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
 
   // Frontend Filtration & Pagination
   const [paginaActual, setPaginaActual] = useState(1);
@@ -43,9 +45,11 @@ const Compras = () => {
       const coreData = await comprasService.getAllCompras(); // Fetch all
       const dataProv = await comprasService.getProveedores();
 
-      setCompras(Array.isArray(coreData) ? coreData : (coreData.compras || []));
+      const comprasArray = coreData?.data || coreData?.compras || (Array.isArray(coreData) ? coreData : []);
+      const provArray = dataProv?.data || dataProv?.proveedores || (Array.isArray(dataProv) ? dataProv : []);
 
-      setProveedores(Array.isArray(dataProv) ? dataProv : []);
+      setCompras(comprasArray);
+      setProveedores(provArray);
     } catch (err) {
       showNotification("Error de conexión: No se pudieron sincronizar los datos", "error");
     } finally {
@@ -56,6 +60,21 @@ const Compras = () => {
   const openDetails = (compra) => {
     setSelected(compra);
     setModalOpen(true);
+  };
+
+  const handleDelete = async (compraId) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar la orden #${compraId}? Esta acción no se puede revertir.`)) return;
+    
+    setLoading(true);
+    try {
+      await comprasService.deleteCompra(compraId);
+      showNotification("Transacción de compra eliminada correctamente");
+      fetchData(); // Recargar datos
+    } catch (err) {
+      showNotification("Error al eliminar la compra", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const closeDetails = () => {
@@ -73,34 +92,16 @@ const Compras = () => {
       const matchesSearch = String(c.id_compra).includes(search) ||
         getProveedorNombre(c.id_proveedor).toLowerCase().includes(search.toLowerCase());
       const matchesProv = !proveedorFilter || String(c.id_proveedor) === String(proveedorFilter);
-      return matchesSearch && matchesProv;
+      const matchesStatus = statusFilter === "Todos" || c.estado === statusFilter;
+      return matchesSearch && matchesProv && matchesStatus;
     });
-  }, [compras, search, proveedorFilter, proveedores]);
+  }, [compras, search, proveedorFilter, statusFilter, proveedores]);
 
   const totalFiltered = filtered.length;
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
   const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
 
-  const handleDownload = () => {
-    if (!filtered || filtered.length === 0) return;
-    const header = ["ID Compra", "Fecha", "Proveedor", "Total", "Estado"];
-    const csvData = filtered.map(c => [
-      c.id_compra,
-      new Date(c.fecha_compra).toLocaleDateString(),
-      `"${getProveedorNombre(c.id_proveedor)}"`,
-      c.total || 0,
-      `"${c.estado}"`
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_compras_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div className={configUi.pageShell}>
@@ -126,29 +127,36 @@ const Compras = () => {
             />
           </div>
 
-          {/* Filter Dropdown */}
-          <div className="relative w-full sm:w-auto">
-            <select
-              value={proveedorFilter}
-              onChange={(e) => { setProveedorFilter(e.target.value); setPaginaActual(1); }}
-              className={cn(configUi.select, "w-full min-w-[220px]")}
-            >
-              <option value="">Todos los Proveedores</option>
-              {proveedores.map(p => (
-                <option key={p.id_proveedor || p.nit} value={p.id_proveedor || p.nit}>
-                  {p.nombre_empresa || p.nombre_proveedor}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-              <ChevronDown size={18} />
-            </div>
+          <div className="flex items-center gap-2">
+            <FilterDropdown
+              value={proveedorFilter || ""}
+              onChange={(val) => { setProveedorFilter(val); setPaginaActual(1); }}
+              options={[
+                { label: "Todos los Proveedores", value: "" },
+                ...proveedores.map(p => ({ 
+                  label: p.nombre_empresa || p.nombre_proveedor, 
+                  value: String(p.id_proveedor || p.nit),
+                  icon: Briefcase
+                }))
+              ]}
+              placeholder="Proveedor"
+            />
+
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Pendiente", value: "Pendiente", color: "#f59e0b" },
+                { label: "Recibida", value: "Recibida", color: "#10b981" },
+                { label: "Cancelada", value: "Cancelada", color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+              icon={ShoppingCart}
+            />
           </div>
 
-          {/* Download Button */}
-          <button onClick={handleDownload} className={configUi.iconButton} title="Descargar Reporte">
-            <Download size={20} />
-          </button>
+
 
           <div className="flex items-center gap-3">
             <Link
@@ -210,17 +218,32 @@ const Compras = () => {
                         <span className="text-[10px] text-[#6b84aa]">ID: {c.id_proveedor}</span>
                       </div>
                     </td>
-                    <td className={`${configUi.td} text-center font-extrabold text-[#16315f]`}>
-                      ${(Number(c.total) || 0).toLocaleString()}
-                    </td>
                     <td className={`${configUi.td} text-center`}>
-                      <span className={cn(configUi.pill, "bg-emerald-50 text-emerald-700 border-emerald-100", "border shadow-sm")}>
-                        {c.estado}
-                      </span>
+                      {c.items && c.items.length > 0 ? (
+                        <div className="flex flex-col gap-1 items-center text-center">
+                          <span className="text-xs font-bold text-[#16315f] bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
+                            {c.items.length} {c.items.length === 1 ? 'producto' : 'productos'}
+                          </span>
+                          <span className="text-[9px] text-slate-400 max-w-[150px] truncate" title={c.items.map(i => i.nombre_producto).join(', ')}>
+                            {c.items.map(i => i.nombre_producto).join(', ')}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className={`${configUi.td} text-right font-black text-emerald-600`}>
+                      ${(Number(c.total_compra) || 0).toLocaleString('es-CO')}
                     </td>
                     <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openDetails(c)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
+                        <Link to={`${basePath}/compras/editar/${c.id_compra}`} className={configUi.actionButton} title="Modificar">
+                          <Edit2 size={14} />
+                        </Link>
+                        <button onClick={() => handleDelete(c.id_compra)} className={configUi.actionDangerButton} title="Eliminar">
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

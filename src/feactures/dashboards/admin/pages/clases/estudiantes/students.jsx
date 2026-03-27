@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
   User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle, AlertCircle,
-  Briefcase, TrendingUp, Download, IdCard
+  Briefcase, TrendingUp, IdCard, UserCheck, UserMinus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,11 +14,10 @@ import {
   actualizarEstudiante,
   getUsuariosActivos
 } from "../../services/estudiantesServices";
-import { configUi } from "../../configuracion/configUi";
+import { configUi, cn } from "../../configuracion/configUi";
 import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 import api from "../../../../../../services/api";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const Students = () => {
   const [estudiantes, setEstudiantes] = useState([]);
@@ -26,6 +25,7 @@ const Students = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -273,31 +273,24 @@ const Students = () => {
     }
   };
 
-  const filtered = estudiantes.filter(s =>
-    (s.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
-    (s.documento || "").includes(search)
-  );
+  const filtered = useMemo(() => {
+    return estudiantes.filter(s => {
+      const q = search.toLowerCase();
+      const matchesSearch = (s.nombre_completo || "").toLowerCase().includes(q) ||
+                           (s.documento || "").includes(search);
+      
+      const matchesStatus = statusFilter === "Todos" || 
+                           (statusFilter === "Activo" && (s.estado === "Activo" || s.estado === "activo" || s.estado === true)) ||
+                           (statusFilter === "Inactivo" && (s.estado === "Inactivo" || s.estado === "inactivo" || s.estado === false));
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [estudiantes, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const exportCSV = () => {
-    if (!filtered || filtered.length === 0) return;
-    const headers = ["Nombre", "Documento", "Email", "Teléfono", "Nivel", "Estado"];
-    const rows = filtered.map(s => [
-      `"${s.nombre_completo}"`, `"${s.documento}"`, `"${s.email}"`, `"${s.telefono}"`, `"${s.nivel_experiencia}"`, s.estado
-    ].join(","));
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "reporte_estudiantes_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+
 
   return (
     <>
@@ -323,9 +316,19 @@ const Students = () => {
               />
             </div>
 
-            <button onClick={exportCSV} className={configUi.iconButton} title="Exportar CSV">
-              <Download size={20} />
-            </button>
+            {/* Filter Dropdown */}
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activos", value: "Activo", icon: UserCheck, color: "#10b981" },
+                { label: "Inactivos", value: "Inactivo", icon: UserMinus, color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
+
+
 
             <button onClick={() => openModal("add")} className={configUi.primaryButton}>
               <Plus size={18} />
@@ -389,10 +392,10 @@ const Students = () => {
                           onClick={() => handleStatusToggle(s)}
                           className={cn(
                             configUi.pill,
-                            s.estado === 'Activo' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                            (s.estado === 'Activo' || s.estado === 'activo' || s.estado === true) ? configUi.successPill : configUi.dangerPill
                           )}
                         >
-                          {s.estado}
+                          {typeof s.estado === "boolean" ? (s.estado ? "Activo" : "Inactivo") : s.estado}
                         </button>
                       </td>
                       <td className={`${configUi.td} text-right`}>

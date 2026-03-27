@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Download, Tag } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../../../../../services/api";
 
@@ -137,13 +137,7 @@ export default function CategoriaProductos() {
           </div>
           
           <div className="flex items-center gap-3">
-             <button
-              onClick={() => {/* Lógica de descarga */}}
-              className="p-2.5 text-gray-400 hover:text-[#040529] hover:bg-gray-50 rounded-xl transition-all border border-gray-200 shadow-sm"
-              title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
             <button
               onClick={() => openModal("add")}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#040529] text-white rounded-xl text-sm font-bold hover:bg-[#040529]/90 transition-all shadow-lg shadow-[#040529]/10 active:scale-95"
