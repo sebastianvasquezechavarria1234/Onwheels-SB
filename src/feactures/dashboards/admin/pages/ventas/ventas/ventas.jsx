@@ -389,6 +389,7 @@ function Ventas() {
                 </div>
                 <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>
               </div>
+              
               <div className={configUi.modalContent}>
                 {modal === 'cancelar' ? (
                   <div className="space-y-6 py-2 text-center">
