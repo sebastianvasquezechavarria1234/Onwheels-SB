@@ -1,18 +1,16 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info, Download } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../../../../../services/api";
-
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   
   // Frontend Filtration & Pagination State
   const [paginaActual, setPaginaActual] = useState(1);
@@ -103,36 +101,23 @@ export default function Proveedores() {
   const filtered = React.useMemo(() => {
     return proveedores.filter(p => {
       const q = search.toLowerCase();
-      return (p.nombre_proveedor || "").toLowerCase().includes(q) || 
-             (p.nit || "").toLowerCase().includes(q) ||
-             (p.email || "").toLowerCase().includes(q);
+      const matchesSearch = (p.nombre_proveedor || "").toLowerCase().includes(q) || 
+                           (p.nit || "").toLowerCase().includes(q) ||
+                           (p.email || "").toLowerCase().includes(q);
+      
+      const matchesStatus = statusFilter === "Todos" || 
+                           (statusFilter === "Verificado" && p.estado === "Verificado") ||
+                           (statusFilter === "Pendiente" && p.estado !== "Verificado");
+      
+      return matchesSearch && matchesStatus;
     });
-  }, [proveedores, search]);
+  }, [proveedores, search, statusFilter]);
 
   const totalFiltered = filtered.length;
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
   const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
 
-  const handleDownload = () => {
-    if (!filtered || filtered.length === 0) return;
-    const header = ["Nombre Proveedor", "NIT", "Email", "Telefono", "Direccion"];
-    const csvData = filtered.map(p => [
-      `"${p.nombre_proveedor}"`,
-      p.nit,
-      p.email,
-      p.telefono || "",
-      `"${p.direccion || ""}"`
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_proveedores_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
 
   const handleDelete = async () => {
@@ -163,13 +148,7 @@ export default function Proveedores() {
           </div>
           
           <div className="flex items-center gap-3">
-             <button
-              onClick={handleDownload}
-              className="p-2.5 text-gray-400 hover:text-[#040529] hover:bg-gray-50 rounded-xl transition-all border border-gray-200 shadow-sm"
-              title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
             <button
               onClick={() => openModal("add")}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#040529] text-white rounded-xl text-sm font-bold hover:bg-[#040529]/90 transition-all shadow-lg shadow-[#040529]/10 active:scale-95"
@@ -192,6 +171,17 @@ export default function Proveedores() {
               className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl focus:bg-white focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition-all text-sm text-[#16315f]"
             />
           </div>
+
+          <FilterDropdown
+            value={statusFilter}
+            onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
+            options={[
+              { label: "Todos los Estados", value: "Todos" },
+              { label: "Verificados", value: "Verificado", color: "#10b981" },
+              { label: "Pendientes", value: "Pendiente", color: "#f59e0b" }
+            ]}
+            placeholder="Estado"
+          />
         </div>
       </div>
 

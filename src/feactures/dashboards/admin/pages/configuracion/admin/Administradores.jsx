@@ -1,7 +1,7 @@
 // src/features/dashboards/admin/pages/Administradores.jsx
 import React, { useEffect, useState, useCallback } from "react";
 
-import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Download, SlidersHorizontal } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, SlidersHorizontal, ShieldCheck, UserCog } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getAdministradores,
@@ -11,6 +11,7 @@ import {
   getUsuariosSoloConRolCliente // ✅ Nombre actualizado
 } from "../../services/administradoresServices";
 import { configUi } from "../configUi";
+import FilterDropdown from "../FilterDropdown";
 
 export const Administradores = () => {
   const [administradores, setAdministradores] = useState([]);
@@ -31,7 +32,7 @@ export const Administradores = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
-  const [filterType, setFilterType] = useState("Todos los admins");
+  const [filterType, setFilterType] = useState("Todos");
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
   const showNotification = (message, type = "success") => {
@@ -72,8 +73,8 @@ export const Administradores = () => {
 
   const handleCreate = async () => {
     try {
-      if (!formData.id_usuario) {
-        showNotification("El usuario es obligatorio", "error");
+      if (!formData.id_usuario || !formData.tipo_admin?.trim() || !formData.area?.trim()) {
+        showNotification("Todos los campos son obligatorios", "error");
         return;
       }
 
@@ -101,6 +102,11 @@ export const Administradores = () => {
   const handleEdit = async () => {
     try {
       if (!selectedAdmin) return;
+
+      if (!formData.tipo_admin?.trim() || !formData.area?.trim()) {
+        showNotification("Todos los campos son obligatorios", "error");
+        return;
+      }
 
       setSubmitting(true);
 
@@ -189,25 +195,7 @@ export const Administradores = () => {
   const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
   const currentItems = filteredAdmins.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleDownload = () => {
-    if (!filteredAdmins || filteredAdmins.length === 0) return;
-    const header = ["Nombre Completo", "Email", "Tipo Admin", "Area"];
-    const csvData = filteredAdmins.map(a => [
-      `"${a.nombre_completo}"`,
-      a.email,
-      a.tipo_admin || "General",
-      `"${a.area || ""}"`
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_administradores_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <>
@@ -235,28 +223,18 @@ export const Administradores = () => {
             </div>
 
             {/* Filter Dropdown */}
-            <div className="relative hidden md:block">
-              <select
-                value={filterType}
-                onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-                className={configUi.select}
-              >
-                <option value="Todos los admins">Todos los admins</option>
-                <option value="Superadmin">Superadmin</option>
-                <option value="Soporte">Soporte</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
-              </div>
-            </div>
+            <FilterDropdown
+              value={filterType}
+              onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Admins", value: "Todos" },
+                { label: "Superadmin", value: "Superadmin", icon: ShieldCheck },
+                { label: "Soporte", value: "Soporte", icon: UserCog }
+              ]}
+              placeholder="Tipo de Admin"
+            />
 
-            {/* Download Button */}
-            <button
-              onClick={handleDownload}
-              className={configUi.iconButton} title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
 
             {/* Create Button */}
             <button

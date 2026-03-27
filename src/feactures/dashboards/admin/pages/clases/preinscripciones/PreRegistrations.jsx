@@ -12,10 +12,8 @@ import {
   aceptarPreinscripcionYCrearMatricula
 } from "../../services/preinscripcionesService";
 import api from "../../../../../../services/api";
-import { configUi } from "../../configuracion/configUi";
+import { configUi, cn } from "../../configuracion/configUi";
 import { useToast } from "../../../../../../context/ToastContext";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const PreinscripcionesAdmin = () => {
   const toast = useToast();

@@ -424,7 +424,7 @@ export default function Sedes() {
                 onClick={closeModal}
               >
                 <motion.div
-                  className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-2xl")}
+                  className={cn(configUi.modalPanel, modal === "delete" ? "max-w-md" : "max-w-2xl")}
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
@@ -472,8 +472,8 @@ export default function Sedes() {
                                 value={form.nombre_sede}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                readOnly={modal === "ver"}
-                                disabled={modal === "ver" || submitting}
+                                readOnly={modal === "details"}
+                                disabled={modal === "details" || submitting}
                                 placeholder="Ej: Auditorio Principal"
                                 className={cn(configUi.fieldInput, "pl-10", formErrors.nombre_sede && "border-red-500")}
                               />
@@ -490,8 +490,8 @@ export default function Sedes() {
                               value={form.ciudad}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              readOnly={modal === "ver"}
-                              disabled={modal === "ver" || submitting}
+                              readOnly={modal === "details"}
+                              disabled={modal === "details" || submitting}
                               placeholder="Ej: Medellín"
                               className={cn(configUi.fieldInput, formErrors.ciudad && "border-red-500")}
                             />
@@ -509,8 +509,8 @@ export default function Sedes() {
                                 value={form.direccion}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                readOnly={modal === "ver"}
-                                disabled={modal === "ver" || submitting}
+                                readOnly={modal === "details"}
+                                disabled={modal === "details" || submitting}
                                 placeholder="Ej: Calle 10 # 45-20"
                                 className={cn(configUi.fieldInput, "pl-10", formErrors.direccion && "border-red-500")}
                               />
@@ -529,8 +529,8 @@ export default function Sedes() {
                                 value={form.telefono}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                readOnly={modal === "ver"}
-                                disabled={modal === "ver" || submitting}
+                                readOnly={modal === "details"}
+                                disabled={modal === "details" || submitting}
                                 placeholder="Ej: 3001234567"
                                 className={cn(configUi.fieldInput, "pl-10", formErrors.telefono && "border-red-500")}
                               />
@@ -545,11 +545,11 @@ export default function Sedes() {
 
                     <div className={configUi.modalFooter}>
                       <span className="text-xs text-[#6b84aa]">
-                        {modal === "ver" ? "Vista de información registrada." : "Complete todos los campos marcados con *."}
+                        {modal === "details" ? "Vista de información registrada." : "Complete todos los campos marcados con *."}
                       </span>
                       <div className="flex items-center gap-3">
                         <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>
-                          {modal === "ver" ? "Cerrar" : "Cancelar"}
+                          {modal === "details" ? "Cerrar" : "Cancelar"}
                         </button>
                         {modal === "crear" && (
                           <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
