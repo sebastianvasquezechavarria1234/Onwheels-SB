@@ -54,7 +54,7 @@ const FilterDropdown = ({
         />
         
         <span className={cn(
-          "flex-1 text-left text-sm font-bold truncate",
+          "flex-1 text-left text-sm font-medium truncate",
           selectedOption ? "text-[#16315f]" : "text-[#86a0c6]"
         )}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -103,7 +103,7 @@ const FilterDropdown = ({
                     <div className="h-2 w-2 rounded-full bg-slate-200" />
                   )}
 
-                  <span className="flex-1 text-[13px] font-bold">
+                  <span className="flex-1 text-[13px] font-medium">
                     {option.label}
                   </span>
 

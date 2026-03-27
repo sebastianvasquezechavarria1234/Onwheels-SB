@@ -15,7 +15,7 @@ const ClassLevels = () => {
 
   const [modalType, setModalType] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState(null);
-  const [formData, setFormData] = useState({ nombre_nivel: "", descripcion: "", estado: "Activo" });
+  const [formData, setFormData] = useState({ nombre_nivel: "", descripcion: "" });
   const [formErrors, setFormErrors] = useState({});
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
@@ -43,9 +43,9 @@ const ClassLevels = () => {
     setModalType(type);
     setSelectedLevel(level);
     if (type === "editar" && level) {
-      setFormData({ nombre_nivel: level.nombre_nivel, descripcion: level.descripcion || "", estado: level.estado });
+      setFormData({ nombre_nivel: level.nombre_nivel, descripcion: level.descripcion || "" });
     } else {
-      setFormData({ nombre_nivel: "", descripcion: "", estado: "Activo" });
+      setFormData({ nombre_nivel: "", descripcion: "" });
     }
     setFormErrors({});
   };
@@ -101,7 +101,7 @@ const ClassLevels = () => {
         {/* Header */}
         <div className={configUi.headerRow}>
           <div className={configUi.titleWrap}>
-            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>Niveles de Clase</h2>
+            <h2 className={configUi.title}>Niveles de Clase</h2>
             <span className={configUi.countBadge}>{filteredLevels.length} niveles</span>
           </div>
           <div className={configUi.toolbar}>
@@ -126,35 +126,28 @@ const ClassLevels = () => {
             <table className={configUi.table}>
               <thead className={configUi.thead}>
                 <tr>
-                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[30%]`}>Nivel</th>
-                  <th className={`${configUi.th} w-[45%]`}>Descripción</th>
-                  <th className={`${configUi.th} text-center w-[15%]`}>Estado</th>
-                  <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[10%]`}>Acciones</th>
+                  <th className={`${configUi.th} w-[40%]`}>Nivel</th>
+                  <th className={`${configUi.th} w-[50%]`}>Descripción</th>
+                  <th className={`${configUi.th} text-right w-[10%]`}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr><td colSpan="4" className={configUi.emptyState}>Cargando niveles...</td></tr>
-                ) : currentItems.length === 0 ? (
-                  <tr><td colSpan="4" className={configUi.emptyState}>No se encontraron niveles.</td></tr>
-                ) : currentItems.map((lvl) => (
+                ) : currentItems.map((lvl) => {
+                  return (
                   <tr key={lvl.id_nivel} className={configUi.row}>
                     <td className={`${configUi.td} font-bold text-[#16315f]`}>{lvl.nombre_nivel}</td>
                     <td className={`${configUi.td} text-[#5b7398]`}>{lvl.descripcion || "—"}</td>
-                    <td className={`${configUi.td} text-center`}>
-                      <span className={(lvl.estado === "Activo" || lvl.estado === "activo" || lvl.estado === true) ? configUi.successPill : configUi.dangerPill}>
-                        {typeof lvl.estado === "boolean" ? (lvl.estado ? "Activo" : "Inactivo") : lvl.estado}
-                      </span>
-                    </td>
                     <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openModal("ver", lvl)} className={configUi.actionButton} title="Ver"><Eye size={14} /></button>
-                        <button onClick={() => openModal("editar", lvl)} className={configUi.actionButton} title="Editar"><Pencil size={14} /></button>
+                        <button onClick={() => openModal("ver", lvl)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
+                        <button onClick={() => openModal("editar", lvl)} className={configUi.actionButton} title="Modificar"><Pencil size={14} /></button>
                         <button onClick={() => openModal("eliminar", lvl)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -187,7 +180,7 @@ const ClassLevels = () => {
         {modalType && (
           <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
             <motion.div
-              className={`${configUi.modalPanel} ${modalType === "eliminar" ? "max-w-sm" : "max-w-lg"}`}
+              className={cn(configUi.modalPanel, modalType === "eliminar" ? "max-w-sm" : "max-w-lg")}
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: "spring", damping: 20 }} onClick={(e) => e.stopPropagation()}
             >
@@ -218,17 +211,11 @@ const ClassLevels = () => {
                     <div className="space-y-4">
                       <div className={configUi.fieldGroup}>
                         <label className={configUi.fieldLabel}>Nombre del nivel</label>
-                        <div className={configUi.readOnlyField}>{selectedLevel.nombre_nivel}</div>
+                        <div className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-[#16315f]">{selectedLevel.nombre_nivel}</div>
                       </div>
                       <div className={configUi.fieldGroup}>
                         <label className={configUi.fieldLabel}>Descripción</label>
-                        <div className={configUi.readOnlyField}>{selectedLevel.descripcion || "Sin descripción"}</div>
-                      </div>
-                      <div className={configUi.fieldGroup}>
-                        <label className={configUi.fieldLabel}>Estado</label>
-                        <div className={configUi.readOnlyField}>
-                          {typeof selectedLevel.estado === "boolean" ? (selectedLevel.estado ? "Activo" : "Inactivo") : selectedLevel.estado}
-                        </div>
+                        <div className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-500 min-h-[5rem]">{selectedLevel.descripcion || "Sin descripción"}</div>
                       </div>
                     </div>
                   )}
@@ -255,15 +242,6 @@ const ClassLevels = () => {
                           placeholder="Descripción opcional..."
                         />
                       </div>
-                      {modalType === "editar" && (
-                        <div className={configUi.fieldGroup}>
-                          <label className={configUi.fieldLabel}>Estado</label>
-                          <select value={formData.estado} onChange={(e) => setFormData({ ...formData, estado: e.target.value })} className={configUi.fieldSelect}>
-                            <option value="Activo">Activo</option>
-                            <option value="Inactivo">Inactivo</option>
-                          </select>
-                        </div>
-                      )}
                     </form>
                   )}
                 </div>
@@ -273,7 +251,7 @@ const ClassLevels = () => {
                   <div className="flex items-center gap-3">
                     <button onClick={closeModal} disabled={submitting} className={configUi.secondaryButton}>{modalType === "ver" ? "Cerrar" : "Cancelar"}</button>
                     {(modalType === "crear" || modalType === "editar") && (
-                      <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>
+                      <button onClick={handleSave} disabled={submitting} className={configUi.primaryButton}>
                         {submitting ? "Guardando..." : modalType === "crear" ? "Crear nivel" : "Guardar cambios"}
                       </button>
                     )}

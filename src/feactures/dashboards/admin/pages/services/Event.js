@@ -34,15 +34,23 @@ export const getSedes = async () => {
 // ===============================
 
 export const createEvento = async (evento) => {
-  // Usar FormData siempre para asegurar que google_forms[] y otros campos se envíen bien
+  // Si no hay imagen nueva para subir, enviamos JSON puro para que Laravel valide correctamente nulls/enteros.
+  if (!evento.imagenArchivo) {
+    const jsonPayload = { ...evento };
+    delete jsonPayload.imagenArchivo; // limpiar campo auxiliar
+    const res = await api.post(API_Endpoint, jsonPayload);
+    return res.data;
+  }
+
+  // Si hay imagen, usamos FormData
   const formData = new FormData();
   Object.keys(evento).forEach(key => {
     if (key === 'imagenArchivo') {
-      if (evento.imagenArchivo) formData.append('imagen', evento.imagenArchivo);
-    } else if (key === 'google_forms' && Array.isArray(evento[key])) {
-      evento[key].forEach(link => formData.append('google_forms[]', link));
-    } else if (evento[key] !== null && evento[key] !== undefined) {
-      formData.append(key, evento[key]);
+      formData.append('imagen_evento', evento.imagenArchivo);
+    } else if (key !== 'imagen_evento') {
+       // Omitimos imagen_evento aquí porque lo reemplazamos con el archivo real
+       const val = evento[key] === null || evento[key] === undefined ? "" : evento[key];
+       formData.append(key, val);
     }
   });
 
@@ -55,19 +63,29 @@ export const createEvento = async (evento) => {
 // ===============================
 
 export const updateEvento = async (id, evento) => {
-  // Usar FormData siempre
+  // Si no hay imagen nueva para subir, enviamos JSON puro
+  if (!evento.imagenArchivo) {
+    const jsonPayload = { ...evento };
+    delete jsonPayload.imagenArchivo;
+    const res = await api.put(`${API_Endpoint}/${id}`, jsonPayload);
+    return res.data;
+  }
+
+  // En Laravel/PHP, las peticiones PUT con archivos no parsean FormData nativamente. 
+  // Enviamos un POST con el campo _method='PUT'.
   const formData = new FormData();
+  formData.append('_method', 'PUT');
+  
   Object.keys(evento).forEach(key => {
     if (key === 'imagenArchivo') {
-      if (evento.imagenArchivo) formData.append('imagen', evento.imagenArchivo);
-    } else if (key === 'google_forms' && Array.isArray(evento[key])) {
-      evento[key].forEach(link => formData.append('google_forms[]', link));
-    } else if (evento[key] !== null && evento[key] !== undefined) {
-      formData.append(key, evento[key]);
+      formData.append('imagen_evento', evento.imagenArchivo);
+    } else if (key !== 'imagen_evento') {
+       const val = evento[key] === null || evento[key] === undefined ? "" : evento[key];
+       formData.append(key, val);
     }
   });
 
-  const res = await api.put(`${API_Endpoint}/${id}`, formData);
+  const res = await api.post(`${API_Endpoint}/${id}`, formData);
   return res.data;
 };
 

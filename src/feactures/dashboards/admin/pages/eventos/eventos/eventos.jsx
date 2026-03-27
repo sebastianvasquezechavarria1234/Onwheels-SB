@@ -111,10 +111,16 @@ export default function Eventos() {
         getProductosSponsors(),
         getSedes()
       ]);
-      setEventos(evs || []);
-      setCategorias(cats || []);
-      setPatrocinadores(pats || []);
-      setSedes(seds || []);
+      
+      const processedEvs = Array.isArray(evs) ? evs : (evs?.data && Array.isArray(evs.data) ? evs.data : []);
+      const processedCats = Array.isArray(cats) ? cats : (cats?.data && Array.isArray(cats.data) ? cats.data : []);
+      const processedPats = Array.isArray(pats) ? pats : (pats?.data && Array.isArray(pats.data) ? pats.data : []);
+      const processedSedes = Array.isArray(seds) ? seds : (seds?.data && Array.isArray(seds.data) ? seds.data : []);
+
+      setEventos(processedEvs);
+      setCategorias(processedCats);
+      setPatrocinadores(processedPats);
+      setSedes(processedSedes);
     } catch (err) {
       console.error("Error al cargar datos:", err);
       showNotification("Error de conexión", "error");
@@ -148,7 +154,7 @@ export default function Eventos() {
         hora_aproximada_fin: evento.hora_aproximada_fin ? evento.hora_aproximada_fin.slice(0, 5) : "",
         descripcion: evento.descripcion || "",
         imagen_evento: evento.imagen_evento || "",
-        estado: evento.estado || "activo",
+        estado: (evento.estado || "activo").toLowerCase(),
         google_forms: (Array.isArray(evento.google_forms) ? evento.google_forms[0] : (evento.google_forms || "")),
       });
     } else {
@@ -206,9 +212,9 @@ export default function Eventos() {
       id_categoria_evento: form.id_categoria_evento ? Number(form.id_categoria_evento) : null,
       id_sede: form.id_sede ? Number(form.id_sede) : null,
       id_patrocinador: form.id_patrocinador ? Number(form.id_patrocinador) : null,
-      google_forms: form.google_forms ? [form.google_forms] : [],
-      imagen_evento: form.imagen_evento || null,
-      descripcion: form.descripcion || null
+      google_forms: form.google_forms || "",
+      imagen_evento: form.imagen_evento || "",
+      descripcion: form.descripcion || ""
     };
 
     setSubmitting(true);
@@ -226,9 +232,17 @@ export default function Eventos() {
       closeModal();
     } catch (err) {
       console.error("Error al guardar:", err);
-      const msg = err?.response?.data?.mensaje || "No se pudo guardar el evento";
-      toast.error(msg);
-      showNotification(msg, "error");
+      // Extraer validaciones de Laravel si existen
+      if (err?.response?.data?.errors) {
+        const firstErrorList = Object.values(err.response.data.errors)[0];
+        const firstError = Array.isArray(firstErrorList) ? firstErrorList[0] : firstErrorList;
+        toast.error(firstError);
+        showNotification(firstError, "error");
+      } else {
+        const msg = err?.response?.data?.msg || err?.response?.data?.mensaje || "Revise los campos requeridos";
+        toast.error(msg);
+        showNotification(msg, "error");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -261,12 +275,16 @@ export default function Eventos() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(e => 
-        (e.nombre_evento.toLowerCase().includes(q) || 
+        ((e.nombre_evento || "").toLowerCase().includes(q) || 
         (e.nombre_sede || "").toLowerCase().includes(q))
       );
     }
     if (statusFilter !== "Todos") {
-      result = result.filter(e => e.estado === statusFilter);
+      result = result.filter(e => {
+        const est = String(e.estado || "").toLowerCase();
+        const filt = statusFilter.toLowerCase();
+        return est === filt;
+      });
     }
     result.sort((a,b) => {
       const vA = a[sortField];
@@ -511,14 +529,6 @@ export default function Eventos() {
                                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                      <input name="google_forms" value={form.google_forms} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10")} placeholder="https://forms.gle/..." />
                                   </div>
-                               </div>
-
-                               <div className={configUi.fieldGroup}>
-                                  <label className={configUi.fieldLabel}>Estado de Visibilidad</label>
-                                  <select name="estado" value={form.estado} onChange={handleChange} disabled={modal === "ver"} className={configUi.fieldSelect}>
-                                     <option value="activo">Activo (Visible en Landing)</option>
-                                     <option value="inactivo">Inactivo (Oculto de Landing)</option>
-                                  </select>
                                </div>
 
                                <div className={configUi.fieldGroup}>

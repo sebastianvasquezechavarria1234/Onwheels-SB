@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Eye, Plus, Search, ChevronLeft, ChevronRight,
+  Eye, Plus, Search, ChevronLeft, ChevronRight, Edit2, Trash2,
   ShoppingCart, Filter, Calendar, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
   CheckCircle, AlertTriangle, User
 } from "lucide-react";
@@ -45,9 +45,11 @@ const Compras = () => {
       const coreData = await comprasService.getAllCompras(); // Fetch all
       const dataProv = await comprasService.getProveedores();
 
-      setCompras(Array.isArray(coreData) ? coreData : (coreData.compras || []));
+      const comprasArray = coreData?.data || coreData?.compras || (Array.isArray(coreData) ? coreData : []);
+      const provArray = dataProv?.data || dataProv?.proveedores || (Array.isArray(dataProv) ? dataProv : []);
 
-      setProveedores(Array.isArray(dataProv) ? dataProv : []);
+      setCompras(comprasArray);
+      setProveedores(provArray);
     } catch (err) {
       showNotification("Error de conexión: No se pudieron sincronizar los datos", "error");
     } finally {
@@ -58,6 +60,21 @@ const Compras = () => {
   const openDetails = (compra) => {
     setSelected(compra);
     setModalOpen(true);
+  };
+
+  const handleDelete = async (compraId) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar la orden #${compraId}? Esta acción no se puede revertir.`)) return;
+    
+    setLoading(true);
+    try {
+      await comprasService.deleteCompra(compraId);
+      showNotification("Transacción de compra eliminada correctamente");
+      fetchData(); // Recargar datos
+    } catch (err) {
+      showNotification("Error al eliminar la compra", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const closeDetails = () => {
@@ -201,17 +218,32 @@ const Compras = () => {
                         <span className="text-[10px] text-[#6b84aa]">ID: {c.id_proveedor}</span>
                       </div>
                     </td>
-                    <td className={`${configUi.td} text-center font-extrabold text-[#16315f]`}>
-                      ${(Number(c.total) || 0).toLocaleString()}
-                    </td>
                     <td className={`${configUi.td} text-center`}>
-                      <span className={cn(configUi.pill, "bg-emerald-50 text-emerald-700 border-emerald-100", "border shadow-sm")}>
-                        {c.estado}
-                      </span>
+                      {c.items && c.items.length > 0 ? (
+                        <div className="flex flex-col gap-1 items-center text-center">
+                          <span className="text-xs font-bold text-[#16315f] bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
+                            {c.items.length} {c.items.length === 1 ? 'producto' : 'productos'}
+                          </span>
+                          <span className="text-[9px] text-slate-400 max-w-[150px] truncate" title={c.items.map(i => i.nombre_producto).join(', ')}>
+                            {c.items.map(i => i.nombre_producto).join(', ')}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className={`${configUi.td} text-right font-black text-emerald-600`}>
+                      ${(Number(c.total_compra) || 0).toLocaleString('es-CO')}
                     </td>
                     <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openDetails(c)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
+                        <Link to={`${basePath}/compras/editar/${c.id_compra}`} className={configUi.actionButton} title="Modificar">
+                          <Edit2 size={14} />
+                        </Link>
+                        <button onClick={() => handleDelete(c.id_compra)} className={configUi.actionDangerButton} title="Eliminar">
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

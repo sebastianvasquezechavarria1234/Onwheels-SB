@@ -48,7 +48,7 @@ export const configUi = {
   fieldGroup: "space-y-1.5",
   fieldLabel: "pl-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#6b84aa]",
   fieldInput: "w-full rounded-2xl border border-[#bfd1f4] bg-white px-4 py-3 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] placeholder:text-[#91a9cc]",
-  fieldSelect: "w-full rounded-2xl border border-[#bfd1f4] bg-white px-4 py-3 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] cursor-pointer",
+  fieldSelect: "w-full !appearance-none rounded-2xl !border !border-solid !border-[#bfd1f4] !bg-white px-4 py-3 pr-10 text-sm text-[#16315f] outline-none transition focus:!border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] cursor-pointer !bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b84aa%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%3E%3C/path%3E%3C/svg%3E')] !bg-[position:right_1rem_center] !bg-[size:1.1rem] !bg-no-repeat",
   fieldTextarea: "h-28 w-full resize-none rounded-2xl border border-[#bfd1f4] bg-white px-4 py-3 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] placeholder:text-[#91a9cc]",
   readOnlyField: "rounded-2xl border border-[#d7e5f8] bg-[#f8fbff] px-4 py-3 text-sm text-[#16315f]",
   formSection: "rounded-[1.5rem] border border-[#d7e5f8] bg-[#fbfdff] p-4",

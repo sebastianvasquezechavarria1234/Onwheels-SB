@@ -84,10 +84,13 @@ const CompraEditar = () => {
                 getVariantes()
             ]);
             
-            setProveedores(Array.isArray(provRes) ? provRes : []);
+            const provArray = provRes?.data || provRes?.proveedores || (Array.isArray(provRes) ? provRes : []);
+            setProveedores(provArray);
             
-            const rawProducts = Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : [];
-            setAllProducts(combinarProductosConVariantes(rawProducts, varRes || []));
+            const rawProducts = prodRes?.data || prodRes?.productos || (Array.isArray(prodRes) ? prodRes : []);
+            const rawVariantes = varRes?.data || varRes?.variantes || (Array.isArray(varRes) ? varRes : []);
+            
+            setAllProducts(combinarProductosConVariantes(rawProducts, rawVariantes));
 
             if (isEditing) {
                 const data = await comprasService.getCompraById(id);
