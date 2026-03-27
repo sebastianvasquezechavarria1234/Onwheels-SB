@@ -9,7 +9,7 @@ import { getPreinscriptionPath } from '../../../../utils/roleHelpers';
 export const LearningSection = () => {
     const { user } = useAuth();
     return (
-        <section className="relative w-full py-24 flex items-center justify-center overflow-hidden bg-zinc-950 border-t border-zinc-900">
+        <section className="relative w-full py-12 md:py-24 flex items-center justify-center overflow-hidden bg-zinc-950 border-t border-zinc-900">
 
             <div className="relative z-10 max-w-[1000px] w-full px-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
 

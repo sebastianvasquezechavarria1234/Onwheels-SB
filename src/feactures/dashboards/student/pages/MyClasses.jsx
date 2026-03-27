@@ -151,7 +151,7 @@ export const MyClasses = () => {
 
     return (
         <StudentLayout>
-            <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
+            <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[80px] md:pt-[160px]">
                 <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6 pb-6 border-b border-gray-800">
                         <div>
@@ -174,7 +174,7 @@ export const MyClasses = () => {
                             </button>
 
                             {quoteMenuOpen && (
-                                <div className="absolute right-0 mt-3 w-[290px] bg-[#121821] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-20">
+                                <div className="absolute right-0 mt-3 w-[260px] sm:w-[290px] bg-[#121821] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-20">
                                     <a
                                         href={`tel:${contactPhone.replace(/\s+/g, "")}`}
                                         className="flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-[#1E293B] transition-colors"
@@ -290,7 +290,7 @@ export const MyClasses = () => {
                 <AnimatePresence>
                     {modalOpen && selected && (
                         <ModalWrapper onClose={closeModal}>
-                            <div className="p-8">
+                            <div className="p-6 sm:p-8">
                                 <div className="flex justify-between items-start mb-8 border-b border-gray-800 pb-6">
                                     <div>
                                         <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-1">
@@ -308,7 +308,7 @@ export const MyClasses = () => {
                                         "{selected.descripcion}"
                                     </p>
 
-                                    <div className="grid grid-cols-2 gap-x-8 gap-y-6 bg-[#0B0F14] p-6 rounded-2xl border border-gray-800">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 bg-[#0B0F14] p-4 sm:p-6 rounded-2xl border border-gray-800">
                                         <div className="flex items-start gap-3">
                                             <div className="p-2 bg-gray-800/50 rounded-lg">
                                                 <MapPin className="text-[#3b82f6]" size={20} />

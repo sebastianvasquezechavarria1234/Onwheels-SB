@@ -20,7 +20,7 @@ export const Hero = () => {
     console.log("Hero Paths:", { user, storePath, joinPath });
 
     return (
-        <section className="relative w-full h-[85vh] md:h-[90vh] bg-black text-white overflow-hidden flex flex-col md:flex-row pt-20">
+        <section className="relative w-full min-h-screen md:min-h-0 h-auto md:h-[90vh] bg-black text-white overflow-hidden flex flex-col md:flex-row pt-24 md:pt-20 pb-10 md:pb-0">
             {/* Left: Typography & Content - COMPACT */}
             <div className="w-full md:w-5/12 p-6 md:p-10 lg:p-14 flex flex-col justify-center relative z-20">
                 <motion.div
@@ -41,7 +41,7 @@ export const Hero = () => {
                         </span>
                         <motion.div
                             style={{ y: y2 }}
-                            className="absolute -top-6 -right-6 text-[6rem] md:text-[8rem] opacity-5 font-black pointer-events-none select-none z-[-1]"
+                            className="absolute -top-6 -right-6 text-[6rem] md:text-[8rem] opacity-5 font-black pointer-events-none select-none z-[-1] hidden md:block"
                         >
                             SB
                         </motion.div>
@@ -67,7 +67,7 @@ export const Hero = () => {
             </div>
 
             {/* Right: Immersive Visuals - BETTER ASPECT RATIO */}
-            <div className="w-full md:w-7/12 h-[50vh] md:h-auto relative">
+            <div className="w-full md:w-7/12 h-[40vh] md:h-auto relative">
                 <motion.div
                     style={{ y: y1 }}
                     className="absolute inset-4 md:inset-8 lg:inset-10 overflow-hidden rounded-[2rem] md:rounded-[3rem]"

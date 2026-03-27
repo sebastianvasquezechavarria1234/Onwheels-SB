@@ -37,7 +37,7 @@ export const ClassContent = () => {
   return (
     <div className="min-h-screen flex flex-col font-sans bg-zinc-950 text-white overflow-x-hidden">
       {/* === HERO: IMMERSIVE VIDEO === */}
-      <section className="relative w-full h-[90vh] bg-black overflow-hidden flex flex-col items-center justify-center pt-20">
+      <section className="relative w-full h-auto min-h-screen md:h-[90vh] bg-black overflow-hidden flex flex-col items-center justify-center pt-24 md:pt-20 pb-10 md:pb-0">
         <div className="absolute inset-0 z-0">
           <video
             autoPlay
@@ -65,11 +65,11 @@ export const ClassContent = () => {
               <span className="h-[2px] w-12 bg-[var(--color-blue)]"></span>
             </div>
 
-            <h1 className="text-7xl md:text-9xl lg:text-[12rem] font-black leading-none tracking-tighter mb-10 uppercase italic">
+            <h1 className="text-3xl sm:text-5xl md:text-9xl lg:text-[12rem] font-black leading-none tracking-tighter mb-6 md:mb-10 uppercase italic">
               PERFORMANCE<span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-500 not-italic">SB</span>
             </h1>
 
-            <p className="text-zinc-400 text-base md:text-2xl max-w-3xl mx-auto leading-relaxed mb-16 font-medium">
+            <p className="text-zinc-400 text-sm md:text-2xl max-w-3xl mx-auto leading-relaxed mb-8 md:mb-16 font-medium px-4 md:px-0">
               No somos una escuela común. Somos un centro de alto rendimiento donde la técnica se encuentra con la cultura urbana. Tu camino profesional inicia aquí.
             </p>
 
@@ -95,14 +95,14 @@ export const ClassContent = () => {
       </section>
 
       {/* === NARRATIVE: THE JOURNEY === */}
-      <section className="py-32 bg-zinc-950">
+      <section className="py-16 md:py-32 bg-zinc-950">
         <div className="max-w-[1200px] mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-            <div className="lg:col-span-5 space-y-8 sticky top-32">
+            <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-32">
               <div className="inline-block px-4 py-1 bg-white/5 border border-white/10 rounded-full">
                 <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">El Proceso Performance SB</span>
               </div>
-              <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-tight">
+              <h2 className="text-3xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tighter leading-tight">
                 TU EVOLUCIÓN <br />
                 <span className="text-zinc-800 italic">SIN LÍMITES</span>
               </h2>
@@ -147,10 +147,10 @@ export const ClassContent = () => {
                   initial={{ opacity: 0, x: 20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  className="group relative bg-zinc-900/40 p-10 rounded-[2.5rem] border border-zinc-900 hover:border-zinc-800 transition-all"
+                  className="group relative bg-zinc-900/40 p-6 md:p-10 rounded-[1.5rem] md:rounded-[2.5rem] border border-zinc-900 hover:border-zinc-800 transition-all"
                 >
-                  <div className="absolute top-8 right-10 text-6xl font-black text-white/5 italic">{item.step}</div>
-                  <div className="flex gap-6 items-start">
+                  <div className="absolute top-6 right-6 md:top-8 md:right-10 text-4xl md:text-6xl font-black text-white/5 italic">{item.step}</div>
+                  <div className="flex flex-col sm:flex-row gap-4 md:gap-6 items-start">
                     <div className="w-14 h-14 bg-zinc-950 rounded-2xl flex items-center justify-center border border-zinc-800 group-hover:bg-[var(--color-blue)] group-hover:text-white transition-all">
                       {item.icon}
                     </div>
@@ -167,11 +167,11 @@ export const ClassContent = () => {
       </section>
 
       {/* === SESSIONS: CALENDAR GRID (LIGHT THEME) === */}
-      <section className="py-32 bg-white relative">
+      <section className="py-16 md:py-32 bg-white relative">
         <div className="max-w-[1200px] mx-auto px-6">
-          <div className="flex flex-col items-center text-center mb-24 max-w-3xl mx-auto space-y-6">
+          <div className="flex flex-col items-center text-center mb-12 md:mb-24 max-w-3xl mx-auto space-y-4 md:space-y-6">
             <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-[0.4em]">Optimiza tu Tiempo</span>
-            <h2 className="text-5xl md:text-8xl font-black text-zinc-950 uppercase tracking-tighter leading-none">
+            <h2 className="text-3xl sm:text-5xl md:text-8xl font-black text-zinc-950 uppercase tracking-tighter leading-none">
               SESIONES DE <br />
               <span className="text-zinc-100 italic">ENTRENAMIENTO</span>
             </h2>
@@ -255,11 +255,11 @@ export const ClassContent = () => {
 
 
       {/* === PLANES: REFINED PROPORTIONS (DYNAMIC DATA) === */}
-      <section className="py-32 bg-zinc-950 text-white relative border-t border-zinc-900">
+      <section className="py-16 md:py-32 bg-zinc-950 text-white relative border-t border-zinc-900">
         <div className="max-w-[1100px] mx-auto px-6">
-          <div className="flex flex-col items-center text-center mb-24 space-y-8 max-w-4xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-12 md:mb-24 space-y-6 md:space-y-8 max-w-4xl mx-auto">
             <div className="h-1.5 w-16 bg-[var(--color-blue)] rounded-full"></div>
-            <h2 className="text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter leading-none">
+            <h2 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tighter leading-none">
               INVIERTE EN <br />
               <span className="text-zinc-800 italic">TU TALENTO</span>
             </h2>
@@ -305,7 +305,7 @@ export const ClassContent = () => {
       </section>
 
       {/* === CTA: FINAL PUSH === */}
-      <section className="py-40 bg-zinc-950 border-t border-zinc-900 flex flex-col items-center text-center px-6 relative overflow-hidden">
+      <section className="py-20 md:py-40 bg-zinc-950 border-t border-zinc-900 flex flex-col items-center text-center px-4 md:px-6 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[25rem] md:text-[45rem] font-black text-white/[0.01] pointer-events-none select-none italic z-0 leading-none">
           EVOLVE
         </div>
@@ -321,11 +321,11 @@ export const ClassContent = () => {
               <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-widest">Inscripciones Abiertas</span>
             </div>
           </div>
-          <h2 className="text-6xl md:text-[10rem] font-black text-white mb-12 uppercase tracking-tighter leading-[0.8]">
+          <h2 className="text-4xl sm:text-6xl md:text-[10rem] font-black text-white mb-8 md:mb-12 uppercase tracking-tighter leading-[0.8]">
             TU MOMENTO <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-500 italic">ES AHORA</span>
           </h2>
-          <p className="text-zinc-500 max-w-2xl mx-auto mb-20 font-black uppercase tracking-[0.4em] text-[10px] md:text-sm leading-relaxed">
+          <p className="text-zinc-500 max-w-2xl mx-auto mb-10 md:mb-20 font-black uppercase tracking-[0.2em] md:tracking-[0.4em] text-[10px] md:text-sm leading-relaxed">
             La diferencia entre un amateur y un profesional es la formación. Únete a la comunidad de skate más grande del país.
           </p>
           <Link to={joinPath} className="inline-flex items-center gap-4 text-white font-black text-sm md:text-2xl hover:text-[var(--color-blue)] transition-all uppercase tracking-[0.5em] border-b-8 border-[var(--color-blue)] pb-6 hover:gap-8 active:scale-95 text-glow">

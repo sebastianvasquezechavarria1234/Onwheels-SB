@@ -283,7 +283,7 @@ export const UsersSetting = () => {
 
   return (
     <UsersLayout>
-      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[160px]">
+      <section className="min-h-screen bg-[#0B0F14] text-white font-primary pb-24 pt-[80px] md:pt-[160px]">
         <div className="max-w-[800px] mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-gray-800 pb-6">

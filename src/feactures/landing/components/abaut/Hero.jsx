@@ -30,11 +30,11 @@ export const Hero = () => {
             <span className="h-[2px] w-12 bg-[var(--color-blue)]"></span>
           </div>
 
-          <h1 className="text-6xl md:text-8xl lg:text-[10rem] font-black leading-none tracking-tighter mb-10 uppercase italic text-white">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[10rem] font-black leading-none tracking-tighter mb-6 md:mb-10 uppercase italic text-white">
             SOMOS LA <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-500 not-italic">CALLE</span>
           </h1>
 
-          <p className="text-zinc-300 text-base md:text-2xl max-w-3xl mx-auto leading-relaxed mb-16 font-medium italic">
+          <p className="text-zinc-300 text-sm md:text-2xl max-w-3xl mx-auto leading-relaxed mb-10 md:mb-16 font-medium italic px-4 md:px-0">
             "Skate, estilo y pasión sin pausa. Más que una tienda, somos el motor de la cultura urbana."
           </p>
 

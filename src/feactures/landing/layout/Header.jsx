@@ -39,7 +39,7 @@ export const Header = () => {
       >
         <div
           className={`
-            flex items-center justify-between px-6 py-2 rounded-full 
+            flex items-center justify-between px-4 md:px-6 py-2 rounded-full 
             backdrop-blur-xl pointer-events-auto transition-all duration-500 ease-in-out
             w-[95%] max-w-[1400px]
             ${scrolled
@@ -92,7 +92,7 @@ export const Header = () => {
                 to="/login"
                 className={`
                   bg-white text-black font-bold hover:bg-[var(--color-blue)] hover:text-white transition-all uppercase
-                  ${scrolled ? "px-5 py-2 text-[10px]" : "px-6 py-2.5 text-xs"}
+                  ${scrolled ? "px-4 md:px-5 py-1.5 md:py-2 text-[10px]" : "px-4 md:px-6 py-2 md:py-2.5 text-[10px] md:text-xs"}
                   rounded-full shadow-lg hover:shadow-[var(--color-blue)]/50
                 `}
               >

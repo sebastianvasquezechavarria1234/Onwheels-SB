@@ -218,10 +218,6 @@ const Roles = () => {
     const permission = permisosTotales.find(p => p.id_permiso === idPermiso);
     if (!permission) return;
 
-    // Import helper from configUi (already imported as groupPermissionsByModule, but let's use getPermissionMeta)
-    // Actually getPermissionMeta is NOT imported yet, let's check and import it if needed.
-    // Looking at the imports in Roles.jsx: import { cn, configUi, groupPermissionsByModule } from "../configUi";
-    // I need to add getPermissionMeta to imports.
 
     setPermisosAsignados(prev => {
       const isRemoving = prev.includes(idPermiso);
@@ -307,11 +303,6 @@ const Roles = () => {
     document.body.removeChild(link);
   };
 
-  const currentItems = roles.filter(r => {
-    if (filterType === "Activos") return r.estado === true;
-    if (filterType === "Inactivos") return r.estado === false;
-    return true; // Todos los roles
-  });
 
   const filteredPermissions = (permisosTotales || []).filter(p => {
     const meta = getPermissionMeta(p);

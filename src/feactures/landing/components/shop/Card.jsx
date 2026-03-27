@@ -234,16 +234,16 @@ export const Card = ({ product }) => {
                   {/* Colors */}
                   <div>
                     <span className="text-xs font-bold text-slate-200 mb-2 block uppercase">1. Color</span>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5 md:gap-2">
                       {uniqueColors.map((c) => (
                         <button
                           key={c.id_color}
                           onClick={() => { setSelectedColor(c); setSelectedSize(null); }}
-                          className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedColor?.id_color === c.id_color ? 'border-blue-500 scale-110' : 'border-slate-600'}`}
+                          className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-[1.5px] md:border-2 flex items-center justify-center transition-all ${selectedColor?.id_color === c.id_color ? 'border-blue-500 scale-110' : 'border-slate-600'}`}
                           style={{ backgroundColor: c.color_hex || c.codigo_hex || '#000' }}
                           title={c.nombre_color}
                         >
-                          {selectedColor?.id_color === c.id_color && <Check size={12} className="text-white invert mix-blend-difference" />}
+                          {selectedColor?.id_color === c.id_color && <Check size={10} className="text-white invert mix-blend-difference md:w-3 md:h-3" />}
                         </button>
                       ))}
                     </div>
@@ -304,23 +304,23 @@ export const Card = ({ product }) => {
         </div>
 
         {/* Info Compacta */}
-        <div className="p-4 bg-[#121821] flex flex-col flex-1">
-          <Link to={productDetailLink} className="block mb-2">
-            <h4 className="font-primary font-bold text-white text-lg leading-tight line-clamp-2 hover:text-[#1E3A8A] transition-colors cursor-pointer">
+        <div className="p-3 md:p-4 bg-[#121821] flex flex-col flex-1">
+          <Link to={productDetailLink} className="block mb-1 md:mb-2">
+            <h4 className="font-primary font-bold text-white text-sm md:text-lg leading-tight line-clamp-2 hover:text-[#1E3A8A] transition-colors cursor-pointer">
               {nombre_producto}
             </h4>
           </Link>
 
           {/* Category/Tag placeholder if needed, otherwise just space */}
-          {/* <p className="text-xs text-slate-400 font-medium mb-3">Categoria</p> */}
+          {/* <p className="text-[10px] md:text-xs text-slate-400 font-medium mb-2 md:mb-3">Categoria</p> */}
 
-          <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-800">
+          <div className="flex items-center justify-between mt-auto pt-2 md:pt-3 border-t border-gray-800">
             <div className="flex flex-col">
-              <span className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-wider">Precio</span>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-lg">{formatPrice(precioFinal)}</span>
+              <span className="text-[9px] md:text-[10px] text-[#9CA3AF] uppercase font-bold tracking-wider">Precio</span>
+              <div className="flex flex-wrap items-center gap-1 md:gap-2">
+                <span className="font-bold text-white text-sm md:text-lg">{formatPrice(precioFinal)}</span>
                 {hasDiscount && (
-                  <span className="text-xs text-gray-500 line-through font-medium">
+                  <span className="text-[9px] md:text-xs text-gray-500 line-through font-medium">
                     {formatPrice(precio)}
                   </span>
                 )}
@@ -329,11 +329,11 @@ export const Card = ({ product }) => {
 
             <button
               onClick={toggleSelector}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 shadow-lg
+              className={`shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg md:rounded-xl transition-all duration-300 shadow-lg
                 ${showSelector ? 'bg-gray-800 text-white rotate-180' : 'bg-[#1E3A8A] text-white hover:bg-blue-800 hover:scale-105 shadow-[#1E3A8A]/20'}`}
               title="Seleccionar opciones"
             >
-              {showSelector ? <X size={18} /> : <ShoppingCart size={18} strokeWidth={2.5} />}
+              {showSelector ? <X className="w-4 h-4 md:w-[18px] md:h-[18px]" /> : <ShoppingCart strokeWidth={2.5} className="w-4 h-4 md:w-[18px] md:h-[18px]" />}
             </button>
           </div>
         </div>

@@ -212,10 +212,10 @@ function Pedidos() {
             <tbody className="divide-y divide-[#d7e5f8]">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className={configUi.emptyState}>
-                    <div className="flex flex-col items-center gap-4 p-20">
+                  <td colSpan="7" className="p-20 text-center">
+                    <div className="flex flex-col items-center gap-4">
                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando órdenes de venta...</p>
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Sincronizando Órdenes...</p>
                     </div>
                   </td>
                 </tr>
@@ -262,7 +262,7 @@ function Pedidos() {
                         </span>
                         {v.estado === "Cancelada" && v.motivo_cancelacion && (
                           <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
-                            {v.motivo_cancelacion}
+                             {v.motivo_cancelacion}
                           </span>
                         )}
                       </div>
@@ -377,40 +377,26 @@ function Pedidos() {
                       <p className="text-[10px] text-slate-400 font-medium ml-1 mt-3">Los pedidos en estado Entregada impactan el stock final.</p>
                     </div>
 
-<<<<<<< HEAD
-  <AnimatePresence>
-    {statusFormEstado === 'Cancelada' && (
-      <motion.div
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: 'auto' }}
-        exit={{ opacity: 0, height: 0 }}
-        className={configUi.fieldGroup}
-      >
-        <label className={configUi.fieldLabel}>Justificación Reglamentaria</label>
-        <textarea
-          value={cancelJustificacion}
-          onChange={(e) => setCancelJustificacion(e.target.value)}
-          placeholder="Describa el motivo de cancelación..."
-          className={cn(configUi.fieldTextarea, "h-28 pt-4")}
-          required
-        />
-      </motion.div>
-    )}
-  </AnimatePresence>
-                  </div >
-=======
-                    {statusFormEstado === 'Cancelada' && (
-                      <div className={configUi.fieldGroup}>
-                        <label className={configUi.fieldLabel}>Justificación Reglamentaria</label>
-                        <textarea
-                          value={cancelJustificacion}
-                          onChange={(e) => setCancelJustificacion(e.target.value)}
-                          placeholder="Describa el motivo de cancelación..."
-                          className={cn(configUi.fieldTextarea, "h-24 pt-4")}
-                        />
-                      </div>
-                    )}
-                  </form>
+                    <AnimatePresence>
+                      {statusFormEstado === 'Cancelada' && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }} 
+                          animate={{ opacity: 1, height: 'auto' }} 
+                          exit={{ opacity: 0, height: 0 }}
+                          className={configUi.fieldGroup}
+                        >
+                          <label className={configUi.fieldLabel}>Justificación Reglamentaria</label>
+                          <textarea
+                            value={cancelJustificacion}
+                            onChange={(e) => setCancelJustificacion(e.target.value)}
+                            placeholder="Describa el motivo de cancelación..."
+                            className={cn(configUi.fieldTextarea, "h-28 pt-4")}
+                            required
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
 

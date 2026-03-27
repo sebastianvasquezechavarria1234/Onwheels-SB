@@ -4,7 +4,7 @@ import { Shirt, Calendar } from "lucide-react";
 
 export const Hero = () => {
     return (
-        <section className="relative w-full h-[90vh] min-h-[650px] bg-black text-white overflow-hidden flex items-center">
+        <section className="relative w-full h-auto min-h-[70vh] md:min-h-[650px] md:h-[90vh] bg-black text-white overflow-hidden flex items-center pt-24 md:pt-0">
             
             {/* Background Image */}
             <div className="absolute inset-0">
@@ -17,7 +17,7 @@ export const Hero = () => {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-8 md:px-16">
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-16">
                 
                 {/* Top Label */}
                 <div className="flex items-center gap-3 mb-6">
@@ -28,7 +28,7 @@ export const Hero = () => {
                 </div>
 
                 {/* Heading */}
-                <h1 className="text-5xl md:text-7xl lg:text-8xl leading-[0.95] font-black tracking-tight mb-8 max-w-4xl">
+                <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl leading-[0.95] font-black tracking-tight mb-6 md:mb-8 max-w-4xl">
                     TODO LO QUE
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-blue)] to-cyan-400">
                         UN SKATER
