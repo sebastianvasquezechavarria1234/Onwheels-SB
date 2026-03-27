@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { 
   Eye, Plus, Search, Pencil, Trash2, X, 
   ChevronLeft, ChevronRight, User, Mail, 
-  MapPin, Phone, CreditCard, UserPlus, Info
+  MapPin, Phone, CreditCard, UserPlus, Info, Download
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -121,6 +121,32 @@ export const Clientes = () => {
     }
   };
 
+  const handleDownload = () => {
+    if (!filtered || filtered.length === 0) return;
+    const header = ["ID Cliente", "Nombre Completo", "Documento", "Email", "Telefono", "Direccion", "Metodo Pago"];
+    const csvData = filtered.map(c => [
+      c.id_cliente,
+      `"${c.nombre_completo}"`,
+      `"${c.documento || ""}"`,
+      `"${c.email}"`,
+      `"${c.telefono_contacto || ""}"`,
+      `"${(c.direccion_envio || "").replace(/"/g, '""')}"`,
+      `"${c.metodo_pago || ""}"`
+    ].join(","));
+
+    const csvLines = [header.join(","), ...csvData];
+    const csvContent = "\uFEFF" + csvLines.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "reporte_clientes_onwheels.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // --- FILTRADO Y PAGINACIÓN ---
   const filtered = useMemo(() => {
     return clientes.filter(c =>
@@ -161,6 +187,9 @@ export const Clientes = () => {
                 className={configUi.inputWithIcon}
               />
             </div>
+            <button onClick={handleDownload} className={configUi.iconButton} title="Descargar Reporte">
+              <Download size={20} />
+            </button>
             <button onClick={() => openModal("add")} className={configUi.primaryButton}>
               <Plus size={18} />
               <span className="hidden sm:inline">Nuevo Cliente</span>

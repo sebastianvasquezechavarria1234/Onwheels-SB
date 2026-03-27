@@ -202,30 +202,28 @@ function Ventas() {
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <FilterDropdown
-              value={clienteFiltro}
-              onChange={(val) => { setClienteFiltro(val); setCurrentPage(1); }}
-              options={[
-                { label: "Todos los Clientes", value: "todos" },
-                ...clientes.map(c => ({ label: c.nombre_completo, value: String(c.id_cliente), icon: User }))
-              ]}
-              placeholder="Cliente"
-            />
+          <FilterDropdown
+            value={clienteFiltro}
+            onChange={(val) => { setClienteFiltro(val); setCurrentPage(1); }}
+            options={[
+              { label: "Todos los Clientes", value: "todos" },
+              ...clientes.map(c => ({ label: c.nombre_completo, value: String(c.id_cliente), icon: User }))
+            ]}
+            placeholder="Cliente"
+          />
 
-            <FilterDropdown
-              value={statusFiltro}
-              onChange={(val) => { setStatusFiltro(val); setCurrentPage(1); }}
-              options={[
-                { label: "Todos los Estados", value: "todos" },
-                { label: "Pendiente", value: "Pendiente", color: "#f59e0b" },
-                { label: "Entregada", value: "Entregada", color: "#10b981" },
-                { label: "Cancelada", value: "Cancelada", color: "#ef4444" }
-              ]}
-              placeholder="Estado"
-              icon={ShoppingBag}
-            />
-          </div>
+          <FilterDropdown
+            value={statusFiltro}
+            onChange={(val) => { setStatusFiltro(val); setCurrentPage(1); }}
+            options={[
+              { label: "Todos los Estados", value: "todos" },
+              { label: "Pendiente", value: "Pendiente", color: "#f59e0b" },
+              { label: "Entregada", value: "Entregada", color: "#10b981" },
+              { label: "Cancelada", value: "Cancelada", color: "#ef4444" }
+            ]}
+            placeholder="Estado"
+            icon={ShoppingBag}
+          />
 
           <button onClick={() => fetchData()} className={configUi.iconButton} title="Refrescar">
             <Clock size={20} />

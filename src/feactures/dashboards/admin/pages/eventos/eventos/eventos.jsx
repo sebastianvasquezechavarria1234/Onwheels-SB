@@ -29,6 +29,7 @@ export default function Eventos() {
 
   // UI state
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   
@@ -105,7 +106,7 @@ export default function Eventos() {
     setLoading(true);
     try {
       const [evs, cats, pats, seds] = await Promise.all([
-        getEventos(),
+        getEventos({ todos: true }),
         getCategoriasEventos(),
         getProductosSponsors(),
         getSedes()
@@ -191,7 +192,7 @@ export default function Eventos() {
   const handleSave = async () => {
     // Validar fecha de evento (no pasada)
     if (form.fecha_evento) {
-        const eventDate = new Date(form.fecha_evento + "T00:00:00"); // Asegurar fecha local
+        const eventDate = new Date(form.fecha_evento + "T00:00:00");
         const today = new Date();
         today.setHours(0,0,0,0);
         if (eventDate < today) {
@@ -200,14 +201,24 @@ export default function Eventos() {
         }
     }
 
+    const payload = {
+      ...form,
+      id_categoria_evento: form.id_categoria_evento ? Number(form.id_categoria_evento) : null,
+      id_sede: form.id_sede ? Number(form.id_sede) : null,
+      id_patrocinador: form.id_patrocinador ? Number(form.id_patrocinador) : null,
+      google_forms: form.google_forms ? [form.google_forms] : [],
+      imagen_evento: form.imagen_evento || null,
+      descripcion: form.descripcion || null
+    };
+
     setSubmitting(true);
     try {
       if (modal === "crear") {
-        await createEvento(form);
+        await createEvento(payload);
         toast.success("Evento publicado con éxito");
         showNotification("Evento publicado con éxito");
       } else if (modal === "editar" && selected) {
-        await updateEvento(selected.id_evento, form);
+        await updateEvento(selected.id_evento, payload);
         toast.success("Evento actualizado");
         showNotification("Evento actualizado");
       }
@@ -250,9 +261,12 @@ export default function Eventos() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(e => 
-        e.nombre_evento.toLowerCase().includes(q) || 
-        (e.nombre_sede || "").toLowerCase().includes(q)
+        (e.nombre_evento.toLowerCase().includes(q) || 
+        (e.nombre_sede || "").toLowerCase().includes(q))
       );
+    }
+    if (statusFilter !== "Todos") {
+      result = result.filter(e => e.estado === statusFilter);
     }
     result.sort((a,b) => {
       const vA = a[sortField];
@@ -261,7 +275,7 @@ export default function Eventos() {
       return sortDirection === "asc" ? vA - vB : vB - vA;
     });
     return result;
-  }, [eventos, search, sortField, sortDirection]);
+  }, [eventos, search, statusFilter, sortField, sortDirection]);
 
   const currentItems = filteredAndSorted.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
   const totalPages = Math.ceil(filteredAndSorted.length / itemsPerPage);
@@ -288,6 +302,17 @@ export default function Eventos() {
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86a0c6]" />
             <input value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Buscar por nombre o sede..." className={configUi.inputWithIcon} />
           </div>
+          
+          <select 
+            value={statusFilter} 
+            onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+            className={cn(configUi.fieldSelect, "w-full sm:w-auto min-w-[150px]")}
+          >
+            <option value="Todos">Todos los Estados</option>
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+          </select>
+
           <button onClick={() => openModal("crear")} className={configUi.primaryButton}>
             <Plus size={18} /> <span>Crear Evento</span>
           </button>
@@ -478,6 +503,14 @@ export default function Eventos() {
                                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                      <input name="google_forms" value={form.google_forms} onChange={handleChange} readOnly={modal === "ver"} className={cn(configUi.fieldInput, "pl-10")} placeholder="https://forms.gle/..." />
                                   </div>
+                               </div>
+
+                               <div className={configUi.fieldGroup}>
+                                  <label className={configUi.fieldLabel}>Estado de Visibilidad</label>
+                                  <select name="estado" value={form.estado} onChange={handleChange} disabled={modal === "ver"} className={configUi.fieldSelect}>
+                                     <option value="activo">Activo (Visible en Landing)</option>
+                                     <option value="inactivo">Inactivo (Oculto de Landing)</option>
+                                  </select>
                                </div>
 
                                <div className={configUi.fieldGroup}>

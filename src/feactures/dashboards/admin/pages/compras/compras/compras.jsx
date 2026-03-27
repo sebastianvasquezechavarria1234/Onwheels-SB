@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Eye, Plus, Search, ChevronLeft, ChevronRight,
-  ShoppingCart, Filter, Calendar, Download, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
+  ShoppingCart, Filter, Calendar, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
   CheckCircle, AlertTriangle, User
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -84,26 +84,7 @@ const Compras = () => {
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
   const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
 
-  const handleDownload = () => {
-    if (!filtered || filtered.length === 0) return;
-    const header = ["ID Compra", "Fecha", "Proveedor", "Total", "Estado"];
-    const csvData = filtered.map(c => [
-      c.id_compra,
-      new Date(c.fecha_compra).toLocaleDateString(),
-      `"${getProveedorNombre(c.id_proveedor)}"`,
-      c.total || 0,
-      `"${c.estado}"`
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_compras_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div className={configUi.pageShell}>
@@ -158,10 +139,7 @@ const Compras = () => {
             />
           </div>
 
-          {/* Download Button */}
-          <button onClick={handleDownload} className={configUi.iconButton} title="Descargar Reporte">
-            <Download size={20} />
-          </button>
+
 
           <div className="flex items-center gap-3">
             <Link

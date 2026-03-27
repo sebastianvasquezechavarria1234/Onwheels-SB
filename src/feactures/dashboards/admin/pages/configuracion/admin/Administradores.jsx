@@ -1,7 +1,7 @@
 // src/features/dashboards/admin/pages/Administradores.jsx
 import React, { useEffect, useState, useCallback } from "react";
 
-import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Download, SlidersHorizontal, ShieldCheck, UserCog } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, SlidersHorizontal, ShieldCheck, UserCog } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getAdministradores,
@@ -195,25 +195,7 @@ export const Administradores = () => {
   const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
   const currentItems = filteredAdmins.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleDownload = () => {
-    if (!filteredAdmins || filteredAdmins.length === 0) return;
-    const header = ["Nombre Completo", "Email", "Tipo Admin", "Area"];
-    const csvData = filteredAdmins.map(a => [
-      `"${a.nombre_completo}"`,
-      a.email,
-      a.tipo_admin || "General",
-      `"${a.area || ""}"`
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_administradores_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <>
@@ -252,13 +234,7 @@ export const Administradores = () => {
               placeholder="Tipo de Admin"
             />
 
-            {/* Download Button */}
-            <button
-              onClick={handleDownload}
-              className={configUi.iconButton} title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
 
             {/* Create Button */}
             <button

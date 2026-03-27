@@ -39,8 +39,8 @@ const FilterDropdown = ({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex h-12 items-center gap-3 rounded-2xl border px-4 transition-all duration-300",
-          isOpen || selectedOption 
-            ? "border-[#7da7e8] bg-[#f0f7ff] ring-4 ring-[#dbeafe]" 
+          isOpen
+            ? "border-[#7da7e8] bg-white ring-4 ring-[#dbeafe]" 
             : "border-[#bfd1f4] bg-white hover:border-[#9fbce7] hover:bg-[#f8fbff]",
           "w-full sm:w-auto min-w-[160px]"
         )}

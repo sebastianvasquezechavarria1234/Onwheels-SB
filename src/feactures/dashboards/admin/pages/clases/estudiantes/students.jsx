@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
   User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle, AlertCircle,
-  Briefcase, TrendingUp, Download, IdCard, UserCheck, UserMinus
+  Briefcase, TrendingUp, IdCard, UserCheck, UserMinus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -257,23 +257,7 @@ const Students = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const exportCSV = () => {
-    if (!filtered || filtered.length === 0) return;
-    const headers = ["Nombre", "Documento", "Email", "Teléfono", "Nivel", "Estado"];
-    const rows = filtered.map(s => [
-      `"${s.nombre_completo}"`, `"${s.documento}"`, `"${s.email}"`, `"${s.telefono}"`, `"${s.nivel_experiencia}"`, s.estado
-    ].join(","));
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "reporte_estudiantes_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+
 
   return (
     <>
@@ -311,9 +295,7 @@ const Students = () => {
               placeholder="Estado"
             />
 
-            <button onClick={exportCSV} className={configUi.iconButton} title="Exportar CSV">
-              <Download size={20} />
-            </button>
+
 
             <button onClick={() => openModal("add")} className={configUi.primaryButton}>
               <Plus size={18} />

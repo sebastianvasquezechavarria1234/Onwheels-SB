@@ -374,14 +374,16 @@ export default function Usuarios() {
       `"${getRolNombres(u.roles)}"`
     ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [header.join(","), ...csvData].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", "reporte_usuarios_onwheels.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const filteredUsers = React.useMemo(() => {
@@ -453,29 +455,27 @@ export default function Usuarios() {
             </div>
 
             {/* Filter Dropdowns */}
-            <div className="flex items-center gap-2">
-              <FilterDropdown
-                value={filterType}
-                onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
-                options={[
-                  { label: "Todos los Roles", value: "Todos" },
-                  { label: "Clientes", value: "Clientes", icon: User },
-                  { label: "Instructores", value: "Instructores", icon: Briefcase }
-                ]}
-                placeholder="Filtrar por Rol"
-              />
-              
-              <FilterDropdown
-                value={filterStatus}
-                onChange={(val) => { setFilterStatus(val); setCurrentPage(1); }}
-                options={[
-                  { label: "Todos los Estados", value: "Todos" },
-                  { label: "Activos", value: "Activo", color: "#10b981" },
-                  { label: "Inactivos", value: "Inactivo", color: "#ef4444" }
-                ]}
-                placeholder="Estado"
-              />
-            </div>
+            <FilterDropdown
+              value={filterType}
+              onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Roles", value: "Todos" },
+                { label: "Clientes", value: "Clientes", icon: User },
+                { label: "Instructores", value: "Instructores", icon: Briefcase }
+              ]}
+              placeholder="Filtrar por Rol"
+            />
+            
+            <FilterDropdown
+              value={filterStatus}
+              onChange={(val) => { setFilterStatus(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activos", value: "Activo", color: "#10b981" },
+                { label: "Inactivos", value: "Inactivo", color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
 
             {/* Download Button */}
             <button

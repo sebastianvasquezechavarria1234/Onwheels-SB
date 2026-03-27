@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, Download, SlidersHorizontal, ChevronRight, ChevronLeft, ShieldCheck } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, SlidersHorizontal, ChevronRight, ChevronLeft, ShieldCheck } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getRoles,
@@ -260,25 +260,7 @@ const Roles = () => {
   const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
   const currentItems = filteredRoles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleDownload = () => {
-    if (!filteredRoles || filteredRoles.length === 0) return;
-    const header = ["ID", "Nombre Rol", "Descripcion", "Estado"];
-    const csvData = filteredRoles.map(r => [
-      r.id_rol,
-      `"${r.nombre_rol}"`,
-      `"${r.descripcion || ""}"`,
-      r.estado ? "Activo" : "Inactivo"
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_roles_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const groupedPermissions = groupPermissionsByModule(permisosTotales);
 
@@ -319,13 +301,7 @@ const Roles = () => {
               placeholder="Estado"
             />
 
-            {/* Download Button */}
-            <button
-              onClick={handleDownload}
-              className={configUi.iconButton} title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
 
             {/* Create Button */}
             <button

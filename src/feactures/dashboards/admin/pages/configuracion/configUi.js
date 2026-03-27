@@ -48,7 +48,7 @@ export const configUi = {
   fieldGroup: "space-y-1.5",
   fieldLabel: "pl-1 text-[11px] font-black uppercase tracking-[0.16em] text-[#6b84aa]",
   fieldInput: "w-full rounded-2xl border border-[#bfd1f4] bg-white px-4 py-3 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] placeholder:text-[#91a9cc]",
-  fieldSelect: "w-full appearance-none rounded-2xl border border-[#9fbce7] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-4 py-3 text-sm font-medium text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe]",
+  fieldSelect: "w-full rounded-2xl border border-[#bfd1f4] bg-white px-4 py-3 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] cursor-pointer",
   fieldTextarea: "h-28 w-full resize-none rounded-2xl border border-[#bfd1f4] bg-white px-4 py-3 text-sm text-[#16315f] outline-none transition focus:border-[#7da7e8] focus:ring-4 focus:ring-[#dbeafe] placeholder:text-[#91a9cc]",
   readOnlyField: "rounded-2xl border border-[#d7e5f8] bg-[#f8fbff] px-4 py-3 text-sm text-[#16315f]",
   formSection: "rounded-[1.5rem] border border-[#d7e5f8] bg-[#fbfdff] p-4",

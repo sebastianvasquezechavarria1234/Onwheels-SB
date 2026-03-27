@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info, Download } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../../../../../services/api";
 import { cn, configUi } from "../../configuracion/configUi";
@@ -117,26 +117,7 @@ export default function Proveedores() {
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
   const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
 
-  const handleDownload = () => {
-    if (!filtered || filtered.length === 0) return;
-    const header = ["Nombre Proveedor", "NIT", "Email", "Telefono", "Direccion"];
-    const csvData = filtered.map(p => [
-      `"${p.nombre_proveedor}"`,
-      p.nit,
-      p.email,
-      p.telefono || "",
-      `"${p.direccion || ""}"`
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_proveedores_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
 
   const handleDelete = async () => {
@@ -167,13 +148,7 @@ export default function Proveedores() {
           </div>
           
           <div className="flex items-center gap-3">
-             <button
-              onClick={handleDownload}
-              className="p-2.5 text-gray-400 hover:text-[#040529] hover:bg-gray-50 rounded-xl transition-all border border-gray-200 shadow-sm"
-              title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
             <button
               onClick={() => openModal("add")}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#040529] text-white rounded-xl text-sm font-bold hover:bg-[#040529]/90 transition-all shadow-lg shadow-[#040529]/10 active:scale-95"
