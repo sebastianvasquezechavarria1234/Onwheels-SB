@@ -75,7 +75,7 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h2 className="text-xl font-black text-[#16315f] tracking-tight">Catálogo de Artículos</h2>
+                        <h2 className="text-2xl font-light text-[#16315f] tracking-tight">Catálogo de Artículos</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Explora e incorpora productos al documento</p>
                     </div>
                 </div>
@@ -113,13 +113,13 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                                 )}
                             >
                                 <div className={cn(
-                                    "h-12 w-12 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center transition-colors",
-                                    selectedProduct?.id_producto === p.id_producto ? "bg-white/10" : "bg-indigo-100/50"
+                                    "h-12 w-12 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center transition-colors border border-slate-200",
+                                    selectedProduct?.id_producto === p.id_producto ? "bg-white/10 border-transparent" : "bg-white"
                                 )}>
-                                    {p.url_imagen || p.imagen ? (
-                                        <img src={p.url_imagen || p.imagen} alt="" className="w-full h-full object-cover" />
+                                    {p.url_imagen || p.imagen || p.imagen_url || (p.imagenes && p.imagenes[0]?.url_imagen) ? (
+                                        <img src={p.url_imagen || p.imagen || p.imagen_url || (p.imagenes && p.imagenes[0]?.url_imagen)} alt="" className="w-full h-full object-cover" />
                                     ) : (
-                                        <Package size={20} className={selectedProduct?.id_producto === p.id_producto ? "text-indigo-200" : "text-indigo-400"} />
+                                        <Package size={20} className={selectedProduct?.id_producto === p.id_producto ? "text-indigo-200" : "text-slate-300"} />
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -217,66 +217,43 @@ export const ProductSelectorView = ({ allProducts = [], onAdd, onClose, checkSto
                                 <AnimatePresence>
                                     {selectedVariant && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 30 }}
+                                            initial={{ opacity: 0, y: 15 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="overflow-hidden rounded-[2.5rem] bg-[#16315f] text-white shadow-2xl shadow-indigo-900/40 relative"
+                                            className="overflow-hidden rounded-[2rem] bg-[#16315f] text-white shadow-2xl shadow-[#16315f]/20 relative mt-4"
                                         >
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
 
-                                            <div className="p-8 pb-4 grid grid-cols-2 gap-10">
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center justify-between opacity-60">
-                                                        <label className="text-[10px] font-black uppercase tracking-[0.2em]">Cantidad</label>
-                                                        <span className="text-[10px] font-black">{selectedVariant.stock_actual || 0} Disponibles</span>
+                                            <div className="p-5 flex flex-col gap-4 relative z-10">
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center justify-between opacity-70">
+                                                            <label className="text-[9px] font-bold uppercase tracking-[0.1em]">Cantidad</label>
+                                                            <span className="text-[9px]">{selectedVariant.stock_actual || 0} Bodega</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 bg-white/10 rounded-xl p-1.5 border border-white/10">
+                                                            <button onClick={() => setQty(Math.max(1, qty - 1))} className="h-8 w-8 flex items-center justify-center rounded-[0.6rem] bg-white/10 hover:bg-white/20 active:scale-95"><Minus size={14}/></button>
+                                                            <input type="number" value={qty} onChange={(e) => setQty(Math.max(1, parseInt(e.target.value)||1))} className="flex-1 bg-transparent text-center font-bold text-lg border-none focus:ring-0 p-0" />
+                                                            <button onClick={() => setQty(qty + 1)} className="h-8 w-8 flex items-center justify-center rounded-[0.6rem] bg-white/10 hover:bg-white/20 active:scale-95"><Plus size={14}/></button>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-2 border border-white/10 transition-colors focus-within:bg-white/15">
-                                                        <button
-                                                            onClick={() => setQty(Math.max(1, qty - 1))}
-                                                            className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-90"
-                                                        >
-                                                            <Minus size={18} />
-                                                        </button>
-                                                        <input
-                                                            type="number"
-                                                            value={qty}
-                                                            onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                                                            className="flex-1 bg-transparent text-center font-black text-2xl border-none focus:ring-0 p-0"
-                                                        />
-                                                        <button
-                                                            onClick={() => setQty(qty + 1)}
-                                                            className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-90"
-                                                        >
-                                                            <Plus size={18} />
-                                                        </button>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[9px] font-bold uppercase tracking-[0.1em] opacity-70">Precio Unitario Ajustado</label>
+                                                        <div className="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-1.5 border border-white/10 h-[44px]">
+                                                            <span className="text-sm opacity-50">$</span>
+                                                            <input type="number" value={priceField} onChange={(e) => setPriceField(e.target.value)} className="w-full bg-transparent font-bold text-lg border-none focus:ring-0 p-0 tabular-nums" />
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-4">
-                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Precio Unitario Ajustado</label>
-                                                    <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-3 pl-6 border border-white/10 focus-within:bg-white/15">
-                                                        <span className="text-xl font-black opacity-30">$</span>
-                                                        <input
-                                                            type="number"
-                                                            value={priceField}
-                                                            onChange={(e) => setPriceField(e.target.value)}
-                                                            className="flex-1 bg-transparent font-black text-2xl border-none focus:ring-0 p-0 tabular-nums"
-                                                        />
+                                                <div className="flex items-center justify-between border-t border-white/20 pt-4 mt-1">
+                                                    <div>
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 mb-1">Impacto Total</p>
+                                                        <p className="text-2xl font-black tabular-nums leading-none">${(qty * priceField).toLocaleString()}</p>
                                                     </div>
+                                                    <button onClick={handleAddItem} className="h-11 px-5 rounded-xl bg-white text-[#16315f] font-black tracking-widest uppercase text-[10px] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-xl group">
+                                                        <Plus size={14} className="transition-transform group-hover:rotate-90 duration-300" /> Incluir en Orden
+                                                    </button>
                                                 </div>
-                                            </div>
-
-                                            <div className="p-8 pt-0 flex items-center justify-between mt-4">
-                                                <div className="bg-white/5 py-4 px-8 rounded-3xl border border-white/10 min-w-[200px]">
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.22em] opacity-50 mb-1">Impacto Total</p>
-                                                    <p className="text-3xl font-black tabular-nums tracking-tighter leading-none">${(qty * priceField).toLocaleString()}</p>
-                                                </div>
-                                                <button
-                                                    onClick={handleAddItem}
-                                                    className="h-20 px-12 rounded-[1.8rem] bg-white text-[#16315f] font-black uppercase tracking-widest flex items-center gap-4 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-black/20 group"
-                                                >
-                                                    <Plus size={24} className="transition-transform group-hover:rotate-90 duration-500" />
-                                                    <span>Incluir en Orden</span>
-                                                </button>
                                             </div>
                                         </motion.div>
                                     )}

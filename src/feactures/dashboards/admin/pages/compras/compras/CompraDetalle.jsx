@@ -132,7 +132,7 @@ export default function CompraDetalle() {
         <div className="rounded-[1.5rem] border border-[#d7e5f8] bg-[#fbfdff] p-6 shadow-sm flex flex-col">
           <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-[#16315f] mb-4">
             <Package size={16} className="text-[#6a85ad]" />
-            Productos Adquiridos
+            Productos Comprados
           </h3>
           <div className="overflow-x-auto border border-[#d7e5f8] rounded-2xl">
             <table className={configUi.table}>
@@ -149,9 +149,18 @@ export default function CompraDetalle() {
                 {compra.items?.map((item, idx) => (
                   <tr key={idx} className="bg-white">
                     <td className="px-3 py-4 align-middle">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-sm text-[#16315f]">{item.nombre_producto}</span>
-                        <span className="text-xs text-[#6b84aa] mt-0.5">SKU: {item.sku || "N/A"}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 shrink-0 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                           {item.imagen || item.url_imagen || item.imagen_url ? (
+                              <img src={item.imagen || item.url_imagen || item.imagen_url} alt={item.nombre_producto} className="h-full w-full object-cover" />
+                           ) : (
+                              <Package size={14} className="text-slate-300" />
+                           )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-xs text-[#16315f] uppercase truncate max-w-[160px]">{item.nombre_producto}</span>
+                          <span className="text-[10px] text-[#6b84aa] mt-0.5">SKU: {item.sku || "N/A"}</span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-3 py-4 align-middle">

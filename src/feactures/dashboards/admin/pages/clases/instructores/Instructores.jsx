@@ -28,7 +28,8 @@ export const Instructores = () => {
   const [formData, setFormData] = useState({
     id_usuario: "",
     anios_experiencia: "",
-    especialidad: ""
+    especialidad: "",
+    estado: true
   });
   const [search, setSearch] = useState("");
   const [formErrors, setFormErrors] = useState({});
@@ -168,7 +169,8 @@ export const Instructores = () => {
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
         anios_experiencia: parseInt(formData.anios_experiencia),
-        especialidad: formData.especialidad.trim()
+        especialidad: formData.especialidad.trim(),
+        estado: formData.estado
       };
       await createInstructor(payload);
       await fetchInstructores();
@@ -185,7 +187,8 @@ export const Instructores = () => {
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
         anios_experiencia: parseInt(formData.anios_experiencia),
-        especialidad: formData.especialidad.trim()
+        especialidad: formData.especialidad.trim(),
+        estado: formData.estado
       };
       await updateInstructor(selectedInstructor.id_instructor, payload);
       await fetchInstructores();
@@ -211,12 +214,13 @@ export const Instructores = () => {
     setModal(type);
     setSelectedInstructor(instructor);
     if (type === "crear") {
-      setFormData({ id_usuario: "", anios_experiencia: "", especialidad: "" });
+      setFormData({ id_usuario: "", anios_experiencia: "", especialidad: "", estado: true });
     } else if (instructor) {
       setFormData({
         id_usuario: instructor.id_usuario.toString(),
         anios_experiencia: instructor.anios_experiencia?.toString() || "0",
-        especialidad: instructor.especialidad || ""
+        especialidad: instructor.especialidad || "",
+        estado: instructor.estado
       });
     }
   };
@@ -581,6 +585,24 @@ export const Instructores = () => {
                             {formErrors.anios_experiencia && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{formErrors.anios_experiencia}</p>}
                           </div>
                         </div>
+
+                        {(modal === "crear" || modal === "editar") && (
+                          <div className={configUi.fieldGroup}>
+                            <label className={configUi.fieldLabel}>Estado del Miembro</label>
+                            <div className="relative">
+                              <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                              <select
+                                name="estado"
+                                value={formData.estado.toString()}
+                                onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value === "true" }))}
+                                className={`${configUi.fieldSelect} !pl-10`}
+                              >
+                                <option value="true">Activo de Planta</option>
+                                <option value="false">Inactivo / Retirado</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
 
                         {modal === "ver" && (
                              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-center space-y-2 opacity-60">

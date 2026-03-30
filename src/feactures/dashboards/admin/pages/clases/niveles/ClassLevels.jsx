@@ -142,8 +142,8 @@ const ClassLevels = () => {
                     <td className={`${configUi.td} font-bold text-[#16315f]`}>{lvl.nombre_nivel}</td>
                     <td className={`${configUi.td} text-[#5b7398]`}>{lvl.descripcion || "—"}</td>
                     <td className={`${configUi.td} text-center`}>
-                      <span className={lvl.estado === "Activo" ? configUi.successPill : configUi.dangerPill}>
-                        {lvl.estado}
+                      <span className={(lvl.estado || "Activo") === "Activo" ? configUi.successPill : configUi.dangerPill}>
+                        {lvl.estado || "Activo"}
                       </span>
                     </td>
                     <td className={`${configUi.td} text-right`}>
@@ -226,7 +226,7 @@ const ClassLevels = () => {
                       </div>
                       <div className={configUi.fieldGroup}>
                         <label className={configUi.fieldLabel}>Estado</label>
-                        <div className={configUi.readOnlyField}>{selectedLevel.estado}</div>
+                        <div className={configUi.readOnlyField}>{selectedLevel.estado || "Activo"}</div>
                       </div>
                     </div>
                   )}

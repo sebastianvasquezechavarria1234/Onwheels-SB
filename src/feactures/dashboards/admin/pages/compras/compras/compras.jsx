@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Eye, Plus, Search, ChevronLeft, ChevronRight,
   ShoppingCart, Filter, Calendar, Download, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
@@ -12,6 +12,7 @@ import { cn, configUi } from "../../configuracion/configUi";
 const Compras = () => {
   const location = useLocation();
   const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
+  const navigate = useNavigate();
   const [compras, setCompras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [proveedores, setProveedores] = useState([]);
@@ -54,8 +55,7 @@ const Compras = () => {
   };
 
   const openDetails = (compra) => {
-    setSelected(compra);
-    setModalOpen(true);
+    navigate(`${basePath}/compras/detalle/${compra.id_compra}`);
   };
 
   const closeDetails = () => {
@@ -70,12 +70,13 @@ const Compras = () => {
 
   const filtered = React.useMemo(() => {
     return compras.filter((c) => {
+      const provName = c.nombre_proveedor || "Proveedor sin nombre";
       const matchesSearch = String(c.id_compra).includes(search) ||
-        getProveedorNombre(c.id_proveedor).toLowerCase().includes(search.toLowerCase());
-      const matchesProv = !proveedorFilter || String(c.id_proveedor) === String(proveedorFilter);
+        provName.toLowerCase().includes(search.toLowerCase());
+      const matchesProv = !proveedorFilter || String(c.nit_proveedor) === String(proveedorFilter);
       return matchesSearch && matchesProv;
     });
-  }, [compras, search, proveedorFilter, proveedores]);
+  }, [compras, search, proveedorFilter]);
 
   const totalFiltered = filtered.length;
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
@@ -83,13 +84,13 @@ const Compras = () => {
 
   const handleDownload = () => {
     if (!filtered || filtered.length === 0) return;
-    const header = ["ID Compra", "Fecha", "Proveedor", "Total", "Estado"];
+    const header = ["ID Compra", "Fecha", "Proveedor", "Total Compra", "Cantidad Refs"];
     const csvData = filtered.map(c => [
       c.id_compra,
-      new Date(c.fecha_compra).toLocaleDateString(),
-      `"${getProveedorNombre(c.id_proveedor)}"`,
-      c.total || 0,
-      `"${c.estado}"`
+      new Date(c.fecha_compra).toLocaleDateString('es-CO'),
+      `"${c.nombre_proveedor || "Proveedor sin nombre"}"`,
+      c.total_compra || 0,
+      c.items?.length || 0
     ].join(","));
 
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
@@ -156,7 +157,7 @@ const Compras = () => {
               className={configUi.primaryButton}
             >
               <Plus size={18} />
-              <span>Nueva Compra</span>
+              <span>Crear</span>
             </Link>
           </div>
         </div>
@@ -172,7 +173,7 @@ const Compras = () => {
                 <th className={configUi.th}>Factura / Fecha</th>
                 <th className={configUi.th}>Proveedor Autorizado</th>
                 <th className={configUi.th + " text-center"}>Productos</th>
-                <th className={configUi.th + " text-right"}>Total Liquidación</th>
+                <th className={configUi.th + " text-right"}>Total Compra</th>
                 <th className={configUi.th + " text-right"}>Acciones</th>
               </tr>
             </thead>
@@ -182,7 +183,7 @@ const Compras = () => {
                   <td colSpan="6" className="p-20 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Facturación...</p>
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Compras...</p>
                     </div>
                   </td>
                 </tr>
@@ -196,27 +197,27 @@ const Compras = () => {
                     </td>
                     <td className={configUi.td}>
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50 shrink-0">
                           <Calendar size={16} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-[#16315f]">{new Date(c.fecha_compra).toLocaleDateString()}</span>
+                          <span className="text-xs font-bold text-[#16315f]">{new Date(c.fecha_compra).toLocaleDateString('es-CO')}</span>
                         </div>
                       </div>
                     </td>
                     <td className={configUi.td}>
                       <div className="flex flex-col text-sm text-[#16315f]">
-                        <span className="font-bold">{getProveedorNombre(c.id_proveedor)}</span>
-                        <span className="text-[10px] text-[#6b84aa]">ID: {c.id_proveedor}</span>
+                        <span className="font-bold truncate max-w-[200px]">{c.nombre_proveedor || "Proveedor sin nombre"}</span>
+                        <span className="text-[10px] text-[#6b84aa]">NIT: {c.nit_proveedor}</span>
                       </div>
                     </td>
-                    <td className={`${configUi.td} text-center font-extrabold text-[#16315f]`}>
-                      ${(Number(c.total) || 0).toLocaleString()}
-                    </td>
                     <td className={`${configUi.td} text-center`}>
-                      <span className={cn(configUi.pill, "bg-emerald-50 text-emerald-700 border-emerald-100", "border shadow-sm")}>
-                        {c.estado}
+                      <span className="font-bold text-xs text-[#6b84aa] px-3 py-1 bg-[#f8fbff] rounded-lg border border-[#d7e5f8]">
+                        {c.items?.length || 0} Refs
                       </span>
+                    </td>
+                    <td className={`${configUi.td} text-right font-extrabold text-[#16315f] tabular-nums`}>
+                      ${(Number(c.total_compra) || 0).toLocaleString('es-CO')}
                     </td>
                     <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-1">
@@ -258,95 +259,7 @@ const Compras = () => {
         )}
       </div>
 
-      {/* --- Details Modal --- */}
-      <AnimatePresence>
-        {modalOpen && selected && (
-          <motion.div
-            className={configUi.modalBackdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeDetails}
-          >
-            <motion.div
-              className={cn(configUi.modalPanel, "max-w-4xl")}
-              initial={{ scale: 0.95, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 30 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={configUi.modalHeader}>
-                <div>
-                  <h3 className={configUi.modalTitle}>Detalle de Transacción</h3>
-                  <p className={configUi.modalSubtitle}>ID Factura: #ORDEN-{selected.id_compra.toString().padStart(5, '0')}</p>
-                </div>
-                <button onClick={closeDetails} className={configUi.modalClose}><X size={20} /></button>
-              </div>
 
-              <div className={configUi.modalContent}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div className={configUi.formSection}>
-                    <p className={configUi.modalEyebrow}>Proveedor</p>
-                    <p className="text-lg font-black text-[#16315f] mt-1">{selected.nombre_empresa || selected.nombre_proveedor}</p>
-                    <p className="text-sm text-[#6b84aa]">{selected.email || "No registrado"}</p>
-                  </div>
-                  <div className={configUi.formSection}>
-                    <p className={configUi.modalEyebrow}>Fecha y Liquidación</p>
-                    <div className="flex justify-between items-end mt-1">
-                      <div>
-                        <p className="text-sm font-bold text-[#16315f]">{new Date(selected.fecha_compra).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                        <p className={configUi.successPill + " mt-2"}>Liquidación Finalizada</p>
-                      </div>
-                      <p className="text-2xl font-black text-[#16315f] tabular-nums">${Number(selected.total_compra).toLocaleString('es-CO')}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className={configUi.modalEyebrow + " flex items-center gap-2"}>
-                    <Package size={14} /> Desglose de Productos
-                  </h4>
-                  <div className="rounded-2xl border border-[#d7e5f8] overflow-hidden">
-                    <table className="w-full text-left">
-                      <thead className="bg-[#f8fbff] text-[#6b84aa] text-[10px] font-black uppercase tracking-widest border-b border-[#f0f6ff]">
-                        <tr>
-                          <th className="px-5 py-3">Referencia</th>
-                          <th className="px-5 py-3 text-center">Cant.</th>
-                          <th className="px-5 py-3 text-right">Unitario</th>
-                          <th className="px-5 py-3 text-right">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#f0f6ff]">
-                        {selected.items?.map((item, idx) => (
-                          <tr key={idx} className="text-[12px] text-[#16315f]">
-                            <td className="px-5 py-3">
-                              <div className="flex flex-col">
-                                <span className="font-bold uppercase">{item.nombre_producto}</span>
-                                <span className="text-[10px] text-[#6b84aa]">{item.nombre_variante}</span>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3 text-center font-bold">x{item.cantidad}</td>
-                            <td className="px-5 py-3 text-right tabular-nums text-[#6b84aa]">${Number(item.precio_unitario).toLocaleString('es-CO')}</td>
-                            <td className="px-5 py-3 text-right tabular-nums font-bold">${Number(item.subtotal).toLocaleString('es-CO')}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <div className={configUi.modalFooter}>
-                <button onClick={closeDetails} className={configUi.secondaryButton}>Cerrar Detalle</button>
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-[#6b84aa]">TOTAL LIQUIDADO:</span>
-                  <span className="text-xl font-black text-[#16315f]">${Number(selected.total_compra).toLocaleString('es-CO')}</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* --- NOTIFICATIONS --- */}
       <AnimatePresence>
