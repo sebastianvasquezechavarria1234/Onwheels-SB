@@ -78,7 +78,7 @@ export const StudentCheckout = () => {
               <h2 className="text-3xl font-black text-white tracking-tight">Información de envío y pago</h2>
             </div>
 
-            <form onSubmit={onConfirm} className="p-8 bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl">
+            <form onSubmit={onConfirm} className="p-5 md:p-8 bg-[#121821] border border-gray-800 rounded-[2rem] shadow-xl">
               {/* Información de Envío */}
               <div className="mb-10">
                 <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2 tracking-wide">
@@ -173,7 +173,7 @@ export const StudentCheckout = () => {
 
           {/* Resumen del Pedido */}
           <div className="w-[35%] lg:mt-16 max-lg:w-full">
-            <div className="sticky top-24 bg-[#121821] border border-gray-800 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+            <div className="sticky top-24 bg-[#121821] border border-gray-800 rounded-[2rem] p-5 md:p-8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#1E3A8A] rounded-full -mr-16 -mt-16 opacity-10 blur-2xl"></div>
 
               <h3 className="text-xl font-black text-white mb-6 tracking-tight relative z-10">Resumen del pedido</h3>

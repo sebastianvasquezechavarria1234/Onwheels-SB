@@ -14,7 +14,7 @@ export const AboutContent = () => {
       <Hero />
 
       {/* === SECTION 1: VISION (DARK THEME) === */}
-      <section className="bg-zinc-950 py-32 overflow-hidden border-b border-zinc-900">
+      <section className="bg-zinc-950 py-16 md:py-32 overflow-hidden border-b border-zinc-900">
         <div className="max-w-[1100px] mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div
@@ -46,11 +46,11 @@ export const AboutContent = () => {
               <div className="inline-block px-4 py-1 bg-[var(--color-blue)]/10 border border-[var(--color-blue)]/30 rounded-full">
                 <span className="text-[var(--color-blue)] text-[10px] font-black uppercase tracking-widest">Nuestra Visión</span>
               </div>
-              <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-tight italic">
+              <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-tight italic">
                 IMPULSANDO LA <br />
                 <span className="text-zinc-800 not-italic">CULTURA URBANA</span>
               </h2>
-              <p className="text-zinc-400 text-lg md:text-2xl leading-relaxed font-medium border-l-2 border-[var(--color-blue)] pl-6">
+              <p className="text-zinc-400 text-base md:text-2xl leading-relaxed font-medium border-l-2 border-[var(--color-blue)] pl-4 md:pl-6">
                 Ser más que una tienda: convertirnos en el motor que impulse la cultura del skate en nuestra comunidad y más allá.
                 Queremos inspirar a nuevas generaciones a patinar, crear y compartir... construyendo un espacio donde cada truco,
                 cada caída y cada victoria se viva como parte de una misma pasión.
@@ -71,7 +71,7 @@ export const AboutContent = () => {
       </section>
 
       {/* === SECTION 2: MISSION (LIGHT THEME) === */}
-      <section className="bg-white py-32 overflow-hidden">
+      <section className="bg-white py-16 md:py-32 overflow-hidden">
         <div className="max-w-[1100px] mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div
@@ -102,11 +102,11 @@ export const AboutContent = () => {
               <div className="inline-block px-4 py-1 bg-zinc-100 border border-zinc-200 rounded-full">
                 <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Nuestra Misión</span>
               </div>
-              <h2 className="text-5xl md:text-7xl font-black text-zinc-950 uppercase tracking-tighter leading-tight italic">
+              <h2 className="text-3xl sm:text-5xl md:text-7xl font-black text-zinc-950 uppercase tracking-tighter leading-tight italic">
                 PASIÓN POR <br />
                 <span className="text-zinc-200 not-italic">EL SKATEBOARDING</span>
               </h2>
-              <p className="text-zinc-500 text-lg md:text-2xl leading-relaxed font-bold border-l-2 border-zinc-950 pl-6 uppercase tracking-tight">
+              <p className="text-zinc-500 text-base md:text-2xl leading-relaxed font-bold border-l-2 border-zinc-950 pl-4 md:pl-6 uppercase tracking-tight">
                 Brindar a cada patinador las herramientas, la técnica y el estilo necesarios para superar sus propios límites.
                 En Performance SB, no solo vendemos equipo; cultivamos el talento y forjamos una identidad propia en el asfalto.
               </p>

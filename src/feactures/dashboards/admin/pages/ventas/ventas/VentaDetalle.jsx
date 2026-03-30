@@ -89,7 +89,7 @@ export default function VentaDetalle() {
                     </button>
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className={configUi.title}>Comprobante de Venta</h1>
+                            <h1 className={cn(configUi.title, "text-lg")}>Detalle de Ventas</h1>
                             <span className={cn(getStatusStyle(venta.status || venta.estado), "text-[9px] uppercase tracking-widest")}>
                                 {venta.status || venta.estado}
                             </span>

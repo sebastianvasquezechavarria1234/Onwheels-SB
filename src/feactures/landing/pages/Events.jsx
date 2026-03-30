@@ -206,7 +206,7 @@ export const EventsContent = () => {
     <div className="bg-zinc-950 min-h-screen">
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative h-[400px] md:h-[480px] flex items-end overflow-hidden">
+      <section className="relative h-[300px] md:h-[480px] flex items-end overflow-hidden">
         <img
           src="https://cdn-blog.superprof.com/blog_es/wp-content/uploads/2023/05/mejores-skaters-historia-1.jpg"
           alt="Eventos"
@@ -217,7 +217,7 @@ export const EventsContent = () => {
           <span className="inline-block text-[10px] font-bold text-(--color-blue) uppercase tracking-[0.35em] mb-4">
             Performance SB — Agenda
           </span>
-          <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9]">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9]">
             Eventos<br />
             <span className="text-zinc-500">&amp; Competiciones</span>
           </h1>
@@ -485,7 +485,7 @@ export const EventsContent = () => {
       {/* ── PRÓXIMOS EVENTOS ─────────────────────────────────── */}
       {futureEvents.length > 0 && (
         <section className="max-w-[1000px] mx-auto px-6 py-14">
-          <div className="flex items-end justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
             <div>
               <p className="text-[10px] font-bold text-(--color-blue) uppercase tracking-[0.35em] mb-1.5">Calendario</p>
               <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-none">
@@ -573,10 +573,10 @@ export const EventsContent = () => {
 
         <div className="grid lg:grid-cols-12 bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800">
           {/* Panel día seleccionado */}
-          <div className="lg:col-span-4 bg-zinc-950 text-white p-6 lg:p-8 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-800 min-h-[420px]">
+          <div className="lg:col-span-4 bg-zinc-950 text-white p-5 md:p-6 lg:p-8 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-800 min-h-[300px] lg:min-h-[420px]">
             <div className="mb-6">
               <div className="flex items-baseline gap-3">
-                <span className="text-7xl font-black tracking-tighter leading-none">{selectedDate.getDate()}</span>
+                <span className="text-5xl md:text-7xl font-black tracking-tighter leading-none">{selectedDate.getDate()}</span>
                 <div>
                   <span className="block text-base font-light uppercase tracking-widest text-zinc-500">
                     {daysOfWeek[selectedDate.getDay()]}
@@ -649,7 +649,7 @@ export const EventsContent = () => {
           </div>
 
           {/* Grid del calendario */}
-          <div className="lg:col-span-8 p-6 lg:p-10">
+          <div className="lg:col-span-8 p-4 md:p-6 lg:p-10">
             <div className="flex items-center justify-between mb-8">
               <button
                 onClick={() => changeMonth(-1)}

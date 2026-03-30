@@ -1,6 +1,6 @@
 // src/features/dashboards/admin/pages/compras/productos/Products.jsx
 import React, { useEffect, useState } from "react";
-import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock, Download, ChevronDown, TrendingUp, PlusCircle, AlertTriangle, FileText, Upload, Package } from "lucide-react";
+import { X, Plus, Trash2, Search, Eye, Pen, ImageIcon, Tag, MapPin, User, Calendar, Hash, ChevronLeft, ChevronRight, CheckCircle, Clock, Download, ChevronDown, TrendingUp, PlusCircle, AlertTriangle, FileText, Upload, Package, Layers, Box } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getProductos,
@@ -18,13 +18,10 @@ import {
 import { getCategorias } from "../../services/categoriasService";
 import { canManage } from "../../../../../../utils/permissions";
 
-import { configUi } from "../../configuracion/configUi";
+import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
 
 const API_URL = import.meta.env.VITE_API_BASE || "http://localhost:3000";
 
@@ -32,6 +29,7 @@ export default function Productos({ renderLayout = true }) {
   console.log("🚀 [Antigravity] Products.jsx v2 - Grouped Variants Fixed");
   const [busqueda, setBusqueda] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   const [filtroPrecio, setFiltroPrecio] = useState("");
   const [filtroAlfabetico, setFiltroAlfabetico] = useState("");
   const [productos, setProductos] = useState([]);
@@ -568,9 +566,13 @@ export default function Productos({ renderLayout = true }) {
       const matchesSearch = (p.nombre_producto || "").toLowerCase().includes(q) || 
                            (p.descripcion || "").toLowerCase().includes(q);
       const matchesCategory = filtroCategoria === "" || Number(p.id_categoria) === Number(filtroCategoria);
-      return matchesSearch && matchesCategory;
+      const matchesStatus = statusFilter === "Todos" || 
+                           (statusFilter === "Activo" && p.estado) ||
+                           (statusFilter === "Inactivo" && !p.estado);
+                           
+      return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [productos, busqueda, filtroCategoria]);
+  }, [productos, busqueda, filtroCategoria, statusFilter]);
 
   const totalFiltered = filtered.length;
   const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / productosPorPagina));
@@ -594,14 +596,16 @@ export default function Productos({ renderLayout = true }) {
       ].join(",");
     });
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "\uFEFF" + [header.join(","), ...csvData].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", "reporte_productos_onwheels.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const getCategoriaNombre = (idCat) => {
@@ -620,47 +624,57 @@ export default function Productos({ renderLayout = true }) {
 
   const content = (
     <>
-      <div className="flex flex-col h-[100dvh] bg-gray-50 overflow-hidden">
+      <div className={configUi.pageShell}>
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+               Productos
+            </h2>
+          </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 px-6 pt-6">
-          <h2 className="text-[28px] font-black text-[#040529] tracking-tight whitespace-nowrap" style={{ fontFamily: '"Outfit", sans-serif' }}>
-             Productos
-          </h2>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            {/* Search Bar */}
-            <div className="relative w-full sm:w-[280px]">
+          <div className={configUi.toolbar}>
+            <div className={configUi.searchWrap}>
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={busqueda}
                 onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
-                className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] transition-all text-[#16315f] placeholder:text-[#86a0c6]"
+                className={configUi.inputWithIcon}
               />
             </div>
 
             {/* Filter Dropdown */}
-            <div className="relative hidden md:block">
-              <select
-                value={filtroCategoria}
-                onChange={(e) => { setFiltroCategoria(e.target.value); setPaginaActual(1); }}
-                className="appearance-none bg-white border border-[#bfd1f4] text-[#16315f] py-2.5 pl-4 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] cursor-pointer w-48"
-              >
-                <option value="">Todas las categorías</option>
-                {categorias.map(c => (
-                  <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                <ChevronDown size={18} />
-              </div>
-            </div>
+            <FilterDropdown
+              value={filtroCategoria}
+              onChange={(val) => { setFiltroCategoria(val); setPaginaActual(1); }}
+              options={[
+                { label: "Todas las Categorías", value: "" },
+                ...categorias.map(c => ({ 
+                  label: c.nombre_categoria, 
+                  value: String(c.id_categoria),
+                  icon: Layers
+                }))
+              ]}
+              placeholder="Categoría"
+            />
+
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activos", value: "Activo", color: "#10b981" },
+                { label: "Inactivos", value: "Inactivo", color: "#64748b" }
+              ]}
+              placeholder="Estado"
+              icon={Box}
+            />
 
             {/* Download Button */}
             <button
                onClick={handleDownload}
-               className="flex items-center justify-center p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-[#040529] hover:bg-slate-50 transition shadow-sm" title="Descargar Reporte"
+               className={configUi.iconButton} title="Descargar Reporte"
             >
               <Download size={20} />
             </button>
@@ -668,7 +682,7 @@ export default function Productos({ renderLayout = true }) {
             {canManage("productos") && (
               <button
                 onClick={() => openProductModal(null)}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#040529] hover:bg-black text-white rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                className={configUi.primaryButton}
               >
                 <Plus size={18} />
                 Registrar Producto
@@ -890,7 +904,6 @@ export default function Productos({ renderLayout = true }) {
                                 <option value="">Seleccionar...</option>
                                 {categorias.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre_categoria}</option>)}
                               </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
                             </div>
                             {formErrors.id_categoria && <p className="text-rose-500 text-xs font-bold mt-1">{formErrors.id_categoria}</p>}
                           </div>
@@ -901,7 +914,6 @@ export default function Productos({ renderLayout = true }) {
                                 <option value="activo">Activo</option>
                                 <option value="inactivo">Inactivo</option>
                               </select>
-                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
                             </div>
                           </div>
                         </div>
@@ -1048,7 +1060,6 @@ export default function Productos({ renderLayout = true }) {
                                     <option value="">Seleccionar color...</option>
                                     {colores.map(c => <option key={c.id_color} value={c.nombre_color}>{c.nombre_color}</option>)}
                                   </select>
-                                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
                                 </div>
                                 <button type="button" onClick={() => setIsCreateColorOpen(true)} title="Nuevo color" className="px-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-[#16315f] hover:border-[#16315f] transition-all text-xs font-bold">+ Color</button>
                               </div>
@@ -1067,7 +1078,6 @@ export default function Productos({ renderLayout = true }) {
                                         <option value="">Talla...</option>
                                         {tallas.map(tl => <option key={tl.id_talla} value={tl.nombre_talla}>{tl.nombre_talla}</option>)}
                                       </select>
-                                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={14} />
                                     </div>
                                     <input type="number" value={t.cantidad} onChange={(e) => handleTallaChange(idx, 'cantidad', e.target.value)} placeholder="Und." className={cn(configUi.fieldInput, "w-24 bg-white font-bold text-center")} />
                                     {idx === currentVariant.tallas.length - 1 ? (

@@ -19,8 +19,6 @@ import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
 import { useToast } from "../../../../../../context/ToastContext";
 import api from "../../../../../../services/api";
 
-const cn = (...classes) => classes.filter(Boolean).join(" ");
-
 const MatriculasAdmin = () => {
   const toast = useToast();
   // --- ESTADOS ---
@@ -61,6 +59,7 @@ const MatriculasAdmin = () => {
   const itemsPerPage = 8;
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("Todos");
 
   // --- HANDLERS ---
   const showNotification = useCallback((message, type = "success") => {
@@ -108,12 +107,17 @@ const MatriculasAdmin = () => {
   }, []);
 
   const filtered = useMemo(() => {
-    return matriculas.filter(m =>
-      (m.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
-      (m.documento || "").includes(search) ||
-      (m.nombre_plan || "").toLowerCase().includes(search.toLowerCase())
-    );
-  }, [matriculas, search]);
+    return matriculas.filter(m => {
+      const q = search.toLowerCase();
+      const matchesSearch = (m.nombre_completo || "").toLowerCase().includes(q) ||
+                           (m.documento || "").includes(search) ||
+                           (m.nombre_plan || "").toLowerCase().includes(q);
+      
+      const matchesStatus = statusFilter === "Todos" || m.estado === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [matriculas, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -360,6 +364,21 @@ const MatriculasAdmin = () => {
               />
             </div>
 
+            {/* Filter Dropdown */}
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activa", value: "Activa", icon: CheckCircle, color: "#10b981" },
+                { label: "Pausada", value: "Pausada", icon: Pause, color: "#f59e0b" },
+                { label: "Vencida", value: "Vencida", icon: Clock, color: "#64748b" },
+                { label: "Finalizada", value: "Finalizada", icon: CheckCircle, color: "#0ea5e9" },
+                { label: "Cancelada", value: "Cancelada", icon: X, color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
+
             {/* Actions */}
             <button 
               onClick={handleDownload}
@@ -456,10 +475,10 @@ const MatriculasAdmin = () => {
                       <td className={`${configUi.td} text-center`}>
                         <span className={cn(
                           configUi.pill,
-                          m.estado === 'Activa' ? 'bg-emerald-50 text-emerald-600' :
-                          m.estado === 'Vencida' ? 'bg-red-50 text-red-600' :
-                          m.estado === 'Pausada' ? 'bg-amber-50 text-amber-600' :
-                          'bg-slate-50 text-slate-500'
+                          (m.estado === 'Activa' || m.estado === 'activo' || m.estado === true) ? configUi.successPill :
+                          (m.estado === 'Vencida' || m.estado === 'vencida') ? configUi.dangerPill :
+                          m.estado === 'Pausada' ? 'border-amber-200 bg-amber-50 text-amber-600' :
+                          configUi.subtlePill
                         )}>
                           {m.estado}
                         </span>
@@ -593,7 +612,7 @@ const MatriculasAdmin = () => {
                        modal === 'expediente' ? 'Expediente del Estudiante' : ''}
                     </h3>
                     <p className={configUi.modalSubtitle}>
-                      {selectedMatricula?.nombre_completo || "Gestión de inscripción"}
+                      {selectedMatricula?.nombre_completo || "Gestión de inscripción."}
                     </p>
                   </div>
                   <button onClick={closeModal} className={configUi.modalClose}><X size={20} /></button>

@@ -71,7 +71,7 @@ const StudentPurchaseDetail = () => {
     return (
         <StudentLayout>
             <div className="bg-[#0B0F14] min-h-screen text-white font-primary pb-24">
-                <div className="max-w-[1200px] mx-auto px-4 pt-[160px]">
+                <div className="max-w-[1200px] mx-auto px-4 pt-[80px] md:pt-[160px]">
                     {/* Header con botón volver */}
                     <button
                         onClick={() => navigate(-1)}

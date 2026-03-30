@@ -69,9 +69,9 @@ export const UpcomingEvents = () => {
   }, []);
 
   return (
-    <section className="bg-zinc-950 py-16 border-t border-zinc-900">
-      <div className="max-w-[1000px] mx-auto px-6">
-        <div className="flex items-center justify-between mb-10">
+    <section className="bg-zinc-950 py-10 md:py-16 border-t border-zinc-900">
+      <div className="max-w-[1000px] mx-auto px-4 md:px-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 md:mb-10 gap-4">
           <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
             Próximos <span className="text-zinc-500">Eventos</span>
           </h2>
@@ -109,33 +109,35 @@ export const UpcomingEvents = () => {
               return (
                 <div
                   key={index}
-                  className="flex items-center bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 rounded-xl p-4 transition-all hover:border-[var(--color-blue)] hover:shadow-lg group"
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-0 bg-zinc-900/50 hover:bg-zinc-900 border border-zinc-800 rounded-xl p-4 transition-all hover:border-[var(--color-blue)] hover:shadow-lg group"
                 >
-                  {/* Event Thumbnail */}
-                  <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 mr-6 bg-zinc-800 border border-zinc-700">
-                    <img
-                      src={getImageUrl(event?.imagen)}
-                      alt={event?.nombre_evento}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                  <div className="flex items-center gap-4 w-full sm:w-auto sm:mr-6 shrink-0">
+                    {/* Event Thumbnail */}
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden shrink-0 bg-zinc-800 border border-zinc-700">
+                      <img
+                        src={getImageUrl(event?.imagen)}
+                        alt={event?.nombre_evento}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-zinc-800 rounded-lg group-hover:bg-[var(--color-blue)] transition-colors shrink-0">
+                      <span className="text-lg sm:text-xl font-bold text-white leading-none">
+                        {isNaN(dateObj.getDate()) ? "--" : dateObj.getDate()}
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] text-gray-400 group-hover:text-blue-100 uppercase leading-none mt-1">
+                        {isNaN(dateObj.getDate()) ? "???" : month}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center w-14 h-14 bg-zinc-800 rounded-lg group-hover:bg-[var(--color-blue)] transition-colors shrink-0 mr-6">
-                    <span className="text-xl font-bold text-white leading-none">
-                      {isNaN(dateObj.getDate()) ? "--" : dateObj.getDate()}
-                    </span>
-                    <span className="text-[10px] text-gray-400 group-hover:text-blue-100 uppercase leading-none mt-1">
-                      {isNaN(dateObj.getDate()) ? "???" : month}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-w-0 pr-4">
-                    <h3 className="text-lg font-bold text-white mb-1 truncate group-hover:text-[var(--color-blue)] transition-colors">
+                  <div className="flex-1 w-full min-w-0 sm:pr-4">
+                    <h3 className="text-base sm:text-lg font-bold text-white mb-1 truncate group-hover:text-[var(--color-blue)] transition-colors">
                       {event?.nombre_evento ||
                         event?.descripcion ||
                         "Evento General"}
                     </h3>
-                    <div className="flex items-center gap-4 text-gray-500 text-xs text-nowrap">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-gray-500 text-xs">
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
                         {dateObj.toLocaleTimeString("es-CO", {
@@ -186,7 +188,7 @@ export const UpcomingEvents = () => {
 
                   <Link
                     to={eventsPath}
-                    className="w-10 h-10 rounded-full border border-zinc-700 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors shrink-0"
+                    className="hidden sm:flex w-10 h-10 rounded-full border border-zinc-700 items-center justify-center text-white hover:bg-white hover:text-black transition-colors shrink-0"
                   >
                     <ArrowRight size={16} />
                   </Link>

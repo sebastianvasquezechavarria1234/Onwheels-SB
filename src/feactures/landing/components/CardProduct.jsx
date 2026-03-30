@@ -49,7 +49,7 @@ export default function CardProduct({ item }) {
       </div>
 
       {/* Controles y Subtotal */}
-      <div className="flex flex-col sm:flex-row items-center gap-5 md:gap-10 w-full sm:w-auto justify-between sm:justify-end">
+      <div className="flex flex-row sm:flex-row items-center gap-4 md:gap-10 w-full sm:w-auto justify-between sm:justify-end">
         {/* Cantidad */}
         <div className="flex items-center border border-gray-700 rounded-xl overflow-hidden bg-[#0B0F14] shadow-inner">
           <button

@@ -3,9 +3,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Eye, Plus, Search, Pencil, Trash2, X, User,
   ChevronLeft, ChevronRight, Hash, TrendingUp,
-  SlidersHorizontal, ArrowUpDown, Download, AlertCircle,
+  SlidersHorizontal, ArrowUpDown, AlertCircle,
   Briefcase,
-  IdCard
+  IdCard,
+  UserCheck,
+  UserMinus
 } from "lucide-react";
 import {
   getInstructores,
@@ -14,9 +16,8 @@ import {
   deleteInstructor,
   getUsuariosNoInstructores
 } from "../../services/instructoresServices";
-import { configUi } from "../../configuracion/configUi";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
+import { configUi, cn } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 export const Instructores = () => {
   const [instructores, setInstructores] = useState([]);
@@ -41,6 +42,7 @@ export const Instructores = () => {
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [statusFilter, setStatusFilter] = useState("Todos");
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -94,6 +96,14 @@ export const Instructores = () => {
         (i.nombre_completo || "").toLowerCase().includes(q) ||
         (i.email || "").toLowerCase().includes(q) ||
         (i.especialidad || "").toLowerCase().includes(q)
+      );
+    }
+
+    // Status Filter
+    if (statusFilter !== "Todos") {
+      result = result.filter(i => 
+        (statusFilter === "Activo" && (i.estado === "Activo" || i.estado === "activo" || i.estado === true)) ||
+        (statusFilter === "Inactivo" && (i.estado === "Inactivo" || i.estado === "inactivo" || i.estado === false))
       );
     }
 
@@ -231,23 +241,7 @@ export const Instructores = () => {
     setFormErrors({});
   };
 
-  const exportCSV = () => {
-    if (!filteredAndSorted || filteredAndSorted.length === 0) return;
-    const headers = ["Nombre", "Email", "Documento", "Especialidad", "Experiencia", "Estado"];
-    const rows = filteredAndSorted.map(i => [
-      `"${i.nombre_completo}"`, `"${i.email}"`, `"${i.documento || "N/A"}"`, `"${i.especialidad}"`, i.anios_experiencia, i.estado ? "Activo" : "Inactivo"
-    ].join(","));
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "reporte_instructores_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+
 
   return (
     <>
@@ -273,13 +267,19 @@ export const Instructores = () => {
               />
             </div>
 
-            <button
-              onClick={exportCSV}
-              className={configUi.iconButton}
-              title="Exportar CSV"
-            >
-              <Download size={20} />
-            </button>
+            {/* Filter Dropdown */}
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activos", value: "Activo", icon: UserCheck, color: "#10b981" },
+                { label: "Inactivos", value: "Inactivo", icon: UserMinus, color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
+
+
 
             <button
               onClick={() => openModal("crear")}
@@ -358,9 +358,9 @@ export const Instructores = () => {
                       <td className={`${configUi.td} text-center`}>
                         <span className={cn(
                           configUi.pill,
-                          inst.estado ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                          (inst.estado === "Activo" || inst.estado === "activo" || inst.estado === true) ? configUi.successPill : configUi.dangerPill
                         )}>
-                          {inst.estado ? "Activo" : "Inactivo"}
+                          {typeof inst.estado === "boolean" ? (inst.estado ? "Activo" : "Inactivo") : inst.estado}
                         </span>
                       </td>
                       <td className={`${configUi.td} text-right`}>

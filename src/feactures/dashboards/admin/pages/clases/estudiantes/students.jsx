@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
   User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle, AlertCircle,
-  Briefcase, TrendingUp, Download, IdCard
+  Briefcase, TrendingUp, IdCard, UserCheck, UserMinus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,11 +14,10 @@ import {
   actualizarEstudiante,
   getUsuariosActivos
 } from "../../services/estudiantesServices";
-import { configUi } from "../../configuracion/configUi";
+import { configUi, cn } from "../../configuracion/configUi";
 import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 import api from "../../../../../../services/api";
-
-const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const Students = () => {
   const [estudiantes, setEstudiantes] = useState([]);
@@ -26,6 +25,7 @@ const Students = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -125,19 +125,52 @@ const Students = () => {
     const errors = {};
     if (step === 1) {
       if (modal === "add" && !formData.id_usuario) errors.id_usuario = "Debes vincular un usuario base";
-      if (!formData.nombre_completo?.trim()) errors.nombre_completo = "El nombre es obligatorio";
-      if (!formData.email?.trim()) errors.email = "El email es obligatorio";
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = "Email no válido";
-      if (!formData.telefono?.trim()) errors.telefono = "El teléfono es obligatorio";
+      if (!formData.nombre_completo?.trim()) {
+        errors.nombre_completo = "El nombre es obligatorio";
+      } else if (formData.nombre_completo.trim().length < 3) {
+        errors.nombre_completo = "El nombre debe tener al menos 3 caracteres";
+      }
+      
+      if (!formData.email?.trim()) {
+        errors.email = "El email es obligatorio";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        errors.email = "Email no válido";
+      }
+      
+      if (!formData.telefono?.trim()) {
+        errors.telefono = "El teléfono es obligatorio";
+      } else if (!/^\d{7,15}$/.test(formData.telefono.replace(/\s/g, ""))) {
+        errors.telefono = "Teléfono inválido (mín. 7 dígitos)";
+      }
     }
     if (step === 2) {
-      if (!formData.documento?.trim()) errors.documento = "El documento es obligatorio";
-      if (!formData.edad) errors.edad = "La edad es obligatoria";
-      else if (parseInt(formData.edad) <= 0) errors.edad = "Edad no válida";
+      if (!formData.documento?.trim()) {
+        errors.documento = "El documento es obligatorio";
+      } else if (formData.documento.trim().length < 5) {
+        errors.documento = "Documento muy corto (mín. 5)";
+      }
+      
+      if (!formData.edad) {
+        errors.edad = "La edad es obligatoria";
+      } else {
+        const age = parseInt(formData.edad);
+        if (isNaN(age) || age < 1 || age > 110) {
+          errors.edad = "Edad inválida (Rango: 1-110)";
+        }
+      }
     }
     if (step === 3) {
-      if (!formData.acudiente_nombre?.trim()) errors.acudiente_nombre = "Nombre del acudiente es obligatorio";
-      if (!formData.acudiente_telefono?.trim()) errors.acudiente_telefono = "Teléfono del acudiente es obligatorio";
+      if (!formData.acudiente_nombre?.trim()) {
+        errors.acudiente_nombre = "Nombre del acudiente es obligatorio";
+      } else if (formData.acudiente_nombre.trim().length < 3) {
+        errors.acudiente_nombre = "Nombre muy corto";
+      }
+      
+      if (!formData.acudiente_telefono?.trim()) {
+        errors.acudiente_telefono = "Teléfono del acudiente es obligatorio";
+      } else if (!/^\d{7,15}$/.test(formData.acudiente_telefono.replace(/\s/g, ""))) {
+        errors.acudiente_telefono = "Teléfono inválido";
+      }
     }
 
     setFormErrors(errors);
@@ -240,31 +273,24 @@ const Students = () => {
     }
   };
 
-  const filtered = estudiantes.filter(s =>
-    (s.nombre_completo || "").toLowerCase().includes(search.toLowerCase()) ||
-    (s.documento || "").includes(search)
-  );
+  const filtered = useMemo(() => {
+    return estudiantes.filter(s => {
+      const q = search.toLowerCase();
+      const matchesSearch = (s.nombre_completo || "").toLowerCase().includes(q) ||
+                           (s.documento || "").includes(search);
+      
+      const matchesStatus = statusFilter === "Todos" || 
+                           (statusFilter === "Activo" && (s.estado === "Activo" || s.estado === "activo" || s.estado === true)) ||
+                           (statusFilter === "Inactivo" && (s.estado === "Inactivo" || s.estado === "inactivo" || s.estado === false));
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [estudiantes, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const exportCSV = () => {
-    if (!filtered || filtered.length === 0) return;
-    const headers = ["Nombre", "Documento", "Email", "Teléfono", "Nivel", "Estado"];
-    const rows = filtered.map(s => [
-      `"${s.nombre_completo}"`, `"${s.documento}"`, `"${s.email}"`, `"${s.telefono}"`, `"${s.nivel_experiencia}"`, s.estado
-    ].join(","));
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "reporte_estudiantes_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+
 
   return (
     <>
@@ -290,9 +316,19 @@ const Students = () => {
               />
             </div>
 
-            <button onClick={exportCSV} className={configUi.iconButton} title="Exportar CSV">
-              <Download size={20} />
-            </button>
+            {/* Filter Dropdown */}
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Activos", value: "Activo", icon: UserCheck, color: "#10b981" },
+                { label: "Inactivos", value: "Inactivo", icon: UserMinus, color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
+
+
 
             <button onClick={() => openModal("add")} className={configUi.primaryButton}>
               <Plus size={18} />
@@ -356,10 +392,10 @@ const Students = () => {
                           onClick={() => handleStatusToggle(s)}
                           className={cn(
                             configUi.pill,
-                            s.estado === 'Activo' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                            (s.estado === 'Activo' || s.estado === 'activo' || s.estado === true) ? configUi.successPill : configUi.dangerPill
                           )}
                         >
-                          {s.estado}
+                          {typeof s.estado === "boolean" ? (s.estado ? "Activo" : "Inactivo") : s.estado}
                         </button>
                       </td>
                       <td className={`${configUi.td} text-right`}>
@@ -429,7 +465,7 @@ const Students = () => {
             onClick={closeModal}
           >
             <motion.div
-              className={`${configUi.modalPanel} ${modal === 'delete' ? 'max-w-sm' : 'max-w-3xl'}`}
+              className={`${configUi.modalPanel} ${modal === 'delete' ? 'max-w-sm' : 'max-w-xl'}`}
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}

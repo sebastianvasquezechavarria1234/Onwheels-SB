@@ -257,7 +257,7 @@ export default function VentaEditar() {
     }
 
     return (
-        <div className={configUi.pageShell}>
+        <div className={cn(configUi.pageShell, "!overflow-y-auto pb-24")}>
             <AnimatePresence mode="wait">
                 {showProductSelector ? (
                     <ProductSelectorView
@@ -302,21 +302,24 @@ export default function VentaEditar() {
                         onClose={() => setShowProductSelector(false)}
                     />
                 ) : (
-                    <motion.div key="venta-form" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="flex flex-col h-full min-h-0">
+                    <motion.div key="venta-form" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                         {/* Header Row */}
-                        <div className={configUi.headerRow + " mb-6"}>
-                            <div className={configUi.titleWrap}>
-                                <button
-                                    onClick={() => navigate(`${basePath}/ventas`)}
-                                    className={configUi.iconButton + " w-10 h-10 rounded-xl"}
-                                >
+                        <div className={cn(configUi.headerRow, "sticky top-4 z-[30] !bg-white/80 backdrop-blur-xl border border-slate-100 p-4 rounded-3xl shadow-xl shadow-slate-200/50 mb-10")}>
+                            <div className="flex items-center gap-5">
+                                <button onClick={() => navigate(`${basePath}/ventas`)} className="group flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-[#16315f] hover:border-[#16315f]/20 hover:shadow-lg transition-all">
                                     <ArrowLeft size={20} />
                                 </button>
-                                <h1 className={configUi.title}>{isEditing ? `Editar Venta #${id}` : "Nueva Venta Directa"}</h1>
-                                <span className={configUi.countBadge}>ESTADO: {form.estado.toUpperCase()}</span>
+                                <div>
+                                    <h1 className="text-lg font-bold text-[#16315f] tracking-tight" style={{ fontFamily: '"Outfit", sans-serif' }}>
+                                        {isEditing ? `Editar Venta #${id}` : "Nueva Venta"}
+                                    </h1>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                        ESTADO: {form.estado.toUpperCase()}
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className={configUi.toolbar}>
+                            <div className="flex items-center gap-6">
                                 <div className="px-6 border-r border-[#d7e5f8] flex flex-col items-end">
                                     <p className="text-[9px] font-black text-[#6b84aa] uppercase tracking-widest leading-none mb-1">TOTAL VENTA</p>
                                     <span className="text-xl font-black text-[#16315f] tabular-nums">

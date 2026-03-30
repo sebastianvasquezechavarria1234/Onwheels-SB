@@ -110,6 +110,8 @@ export const StudentHeader = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const closeButtonRef = useRef(null);
+  const firstLinkRef = useRef(null);
+  const modalRef = useRef(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 

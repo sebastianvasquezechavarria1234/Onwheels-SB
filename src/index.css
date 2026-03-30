@@ -78,22 +78,7 @@ h4{
 }
 
 
-select {
-  appearance: none;        /* estándar */
-  -webkit-appearance: none;/* Safari/Chrome */
-  -moz-appearance: none;   /* Firefox */
-  background: transparent; /* elimina fondo si tiene */
-  padding-right: 1rem;     /* espacio para que no choque el texto */
-  border: none;            /* opcional */
-  outline: none;
-}
-
-/* Ocultar flecha en IE / Edge (antiguos) */
-select::-ms-expand {
-  display: none;
-}
-
-/* si quieres mantener un estilo de caja */
+/* los select se gestionan mediante el sistema de diseño configUi para mantener consistencia */
 .select-wrap {
   display: inline-block;
   border: 1px dashed #ccc;

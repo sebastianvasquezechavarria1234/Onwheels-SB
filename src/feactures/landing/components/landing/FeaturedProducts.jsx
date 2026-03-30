@@ -67,10 +67,10 @@ export const FeaturedProducts = () => {
                 </div>
 
                 {/* Content - Compact */}
-                <div className="p-6 pt-2 flex flex-col gap-3">
+                <div className="p-4 md:p-6 pt-2 flex flex-col gap-2 md:gap-3">
                     <div className="space-y-0.5">
-                        <span className="text-[var(--color-blue)] text-[9px] font-black uppercase tracking-[0.3em] opacity-80">Premium Gear</span>
-                        <h3 className="text-white font-bold text-sm md:text-base leading-tight group-hover:text-[var(--color-blue)] transition-colors line-clamp-2 min-h-[2.5rem]">
+                        <span className="text-[var(--color-blue)] text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] opacity-80">Premium Gear</span>
+                        <h3 className="text-white font-bold text-xs md:text-sm lg:text-base leading-tight group-hover:text-[var(--color-blue)] transition-colors line-clamp-2 min-h-[2rem] md:min-h-[2.5rem]">
                             {product?.nombre_producto}
                         </h3>
                     </div>
@@ -83,11 +83,11 @@ export const FeaturedProducts = () => {
                             <span className="text-[9px] text-zinc-500 ml-1.5 font-bold uppercase tracking-widest">(12)</span>
                         </div>
                         <div className="flex flex-col items-end">
-                            <span className="text-white font-mono font-black text-base">
+                            <span className="text-white font-mono font-black text-sm md:text-base">
                                 ${new Intl.NumberFormat("es-CO").format(precioFinal)}
                             </span>
                             {hasDiscount && (
-                                <span className="text-[10px] text-zinc-500 line-through font-bold opacity-70">
+                                <span className="text-[9px] md:text-[10px] text-zinc-500 line-through font-bold opacity-70">
                                     ${new Intl.NumberFormat("es-CO").format(precioBase)}
                                 </span>
                             )}
@@ -106,15 +106,15 @@ export const FeaturedProducts = () => {
     };
 
     return (
-        <section className="bg-zinc-950 py-32 px-4 relative z-0 border-t border-zinc-900">
+        <section className="bg-zinc-950 py-16 md:py-32 px-4 relative z-0 border-t border-zinc-900">
             {/* Background decorations - Lighter */}
             <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[60%] h-[300px] bg-[var(--color-blue)]/5 blur-[120px] rounded-full pointer-events-none" />
 
             <div className="max-w-[1200px] mx-auto relative z-10">
                 {/* ... existing content ... */}
-                <div className="flex flex-col items-center mb-20 text-center space-y-4">
+                <div className="flex flex-col items-center mb-10 md:mb-20 text-center space-y-4">
                     <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-[0.4em]">Performance Shop</span>
-                    <h2 className="text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none">
+                    <h2 className="text-3xl sm:text-5xl md:text-8xl font-black text-white uppercase tracking-tighter leading-none">
                         ITEMS <span className="text-zinc-800 italic">DESTACADOS</span>
                     </h2>
                     <p className="text-zinc-500 max-w-lg text-sm md:text-base font-medium leading-relaxed">
@@ -123,7 +123,7 @@ export const FeaturedProducts = () => {
                 </div>
 
                 {/* Main Grid: Uniform 4 columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-12">
                     {loading ? (
                         [1, 2, 3, 4].map(i => (
                             <div key={i} className="flex flex-col gap-6 animate-pulse">
@@ -141,7 +141,7 @@ export const FeaturedProducts = () => {
                     )}
                 </div>
 
-                <div className="flex justify-center mt-20">
+                <div className="flex justify-center mt-10 md:mt-20">
                     <Link
                         to={getStoreHomePath(user)}
                         className="

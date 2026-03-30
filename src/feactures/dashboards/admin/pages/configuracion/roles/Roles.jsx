@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, Download, SlidersHorizontal, ChevronRight, ChevronLeft, ShieldCheck } from "lucide-react";
+import { Eye, Plus, Search, Pencil, Trash2, X, Key, Save, SlidersHorizontal, ChevronRight, ChevronLeft, ShieldCheck } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   getRoles,
@@ -12,6 +12,7 @@ import {
   eliminarPermisoDeRol
 } from "../../services/RolesService";
 import { cn, configUi, groupPermissionsByModule } from "../configUi";
+import FilterDropdown from "../FilterDropdown";
 
 const Roles = () => {
   const [roles, setRoles] = useState([]);
@@ -30,7 +31,7 @@ const Roles = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
-  const [filterType, setFilterType] = useState("Todos los roles");
+  const [filterType, setFilterType] = useState("Todos");
 
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
@@ -215,11 +216,35 @@ const Roles = () => {
   };
 
   const togglePermiso = (idPermiso) => {
-    setPermisosAsignados(prev =>
-      prev.includes(idPermiso)
+    const permission = permisosTotales.find(p => p.id_permiso === idPermiso);
+    if (!permission) return;
+
+
+    setPermisosAsignados(prev => {
+      const isRemoving = prev.includes(idPermiso);
+      let next = isRemoving
         ? prev.filter(id => id !== idPermiso)
-        : [...prev, idPermiso]
-    );
+        : [...prev, idPermiso];
+
+      // Control automático de permisos "ver" ocultos al alternar "gestionar"
+      const meta = getPermissionMeta(permission);
+
+      if (meta.action === "gestionar") {
+        const verPermiso = permisosTotales.find(p => {
+          const pMeta = getPermissionMeta(p);
+          return pMeta.action === "ver" && pMeta.moduleKey === meta.moduleKey;
+        });
+
+        if (verPermiso) {
+          if (!isRemoving && !next.includes(verPermiso.id_permiso)) {
+            next.push(verPermiso.id_permiso);
+          } else if (isRemoving && next.includes(verPermiso.id_permiso)) {
+            next = next.filter(id => id !== verPermiso.id_permiso);
+          }
+        }
+      }
+      return next;
+    });
   };
 
   const guardarPermisos = async () => {
@@ -248,9 +273,9 @@ const Roles = () => {
   const filteredRoles = React.useMemo(() => {
     return roles.filter(r => {
       const matchesSearch = r.nombre_rol.toLowerCase().includes(search.toLowerCase());
-      const matchesType = filterType === "Todos los roles" || 
-                         (filterType === "Activos" && r.estado) || 
-                         (filterType === "Inactivos" && !r.estado);
+      const matchesType = filterType === "Todos" ||
+        (filterType === "Activos" && r.estado) ||
+        (filterType === "Inactivos" && !r.estado);
       return matchesSearch && matchesType;
     });
   }, [roles, search, filterType]);
@@ -259,25 +284,7 @@ const Roles = () => {
   const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
   const currentItems = filteredRoles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleDownload = () => {
-    if (!filteredRoles || filteredRoles.length === 0) return;
-    const header = ["ID", "Nombre Rol", "Descripcion", "Estado"];
-    const csvData = filteredRoles.map(r => [
-      r.id_rol,
-      `"${r.nombre_rol}"`,
-      `"${r.descripcion || ""}"`,
-      r.estado ? "Activo" : "Inactivo"
-    ].join(","));
 
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_roles_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const groupedPermissions = groupPermissionsByModule(permisosTotales);
 
@@ -288,7 +295,7 @@ const Roles = () => {
         <div className={configUi.headerRow}>
           <div className={configUi.titleWrap}>
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
-               Roles
+              Roles
             </h2>
             <span className={configUi.countBadge}>{totalFiltered} roles</span>
           </div>
@@ -307,28 +314,18 @@ const Roles = () => {
             </div>
 
             {/* Filter Dropdown */}
-            <div className="relative hidden md:block">
-              <select
-                value={filterType}
-                onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-                className={configUi.select}
-              >
-                <option value="Todos los roles">Todos los roles</option>
-                <option value="Activos">Activos</option>
-                <option value="Inactivos">Inactivos</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd"></path></svg>
-              </div>
-            </div>
+            <FilterDropdown
+              value={filterType}
+              onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Roles", value: "Todos" },
+                { label: "Activos", value: "Activos", color: "#10b981" },
+                { label: "Inactivos", value: "Inactivos", color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+            />
 
-            {/* Download Button */}
-            <button
-              onClick={handleDownload}
-              className={configUi.iconButton} title="Descargar Reporte"
-            >
-              <Download size={20} />
-            </button>
+
 
             {/* Create Button */}
             <button
@@ -362,57 +359,57 @@ const Roles = () => {
                 ) : (
                   currentItems.map((r, i) => {
                     const isOfficial = [3, 9, 10, 12].includes(r.id_rol);
-                            return (
-                              <tr key={r.id_rol} className={configUi.row}>
-                                <td className={configUi.td}>#{r.id_rol}</td>
-                                <td className={`${configUi.td} font-bold text-[#16315f]`}>{r.nombre_rol}</td>
-                                <td className={`${configUi.td} text-[#5b7398]`}>{r.descripcion || "-"}</td>
-                                <td className={`${configUi.td}`}>
-                                  <div className="flex justify-center">
-                                    {r.estado ? (
-                                      <span className={configUi.successPill}>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                        Activo
-                                      </span>
-                                    ) : (
-                                      <span className={configUi.dangerPill}>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                                        Inactivo
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className={`${configUi.td} text-right`}>
-                                  <div className="flex justify-end gap-2">
-                                    <button 
-                                      onClick={() => openPermisos(r)} 
-                                      disabled={isOfficial}
-                                      className={cn(configUi.actionButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")} 
-                                      title={isOfficial ? "Rol protegido del sistema" : "Permisos"}
-                                    >
-                                      <Key size={14} />
-                                    </button>
-                                    <button 
-                                      onClick={() => openEdit(r)} 
-                                      disabled={isOfficial}
-                                      className={cn(configUi.actionButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")} 
-                                      title={isOfficial ? "Rol protegido del sistema" : "Editar"}
-                                    >
-                                      <Pencil size={14} />
-                                    </button>
-                                    <button 
-                                      onClick={() => confirmDelete(r)} 
-                                      disabled={isOfficial}
-                                      className={cn(configUi.actionDangerButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")} 
-                                      title={isOfficial ? "Rol protegido del sistema" : "Eliminar"}
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })
+                    return (
+                      <tr key={r.id_rol} className={configUi.row}>
+                        <td className={configUi.td}>#{r.id_rol}</td>
+                        <td className={`${configUi.td} font-bold text-[#16315f]`}>{r.nombre_rol}</td>
+                        <td className={`${configUi.td} text-[#5b7398]`}>{r.descripcion || "-"}</td>
+                        <td className={`${configUi.td}`}>
+                          <div className="flex justify-center">
+                            {r.estado ? (
+                              <span className={configUi.successPill}>
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                Activo
+                              </span>
+                            ) : (
+                              <span className={configUi.dangerPill}>
+                                <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                                Inactivo
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className={`${configUi.td} text-right`}>
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openPermisos(r)}
+                              disabled={isOfficial}
+                              className={cn(configUi.actionButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")}
+                              title={isOfficial ? "Rol protegido del sistema" : "Permisos"}
+                            >
+                              <Key size={14} />
+                            </button>
+                            <button
+                              onClick={() => openEdit(r)}
+                              disabled={isOfficial}
+                              className={cn(configUi.actionButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")}
+                              title={isOfficial ? "Rol protegido del sistema" : "Editar"}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => confirmDelete(r)}
+                              disabled={isOfficial}
+                              className={cn(configUi.actionDangerButton, isOfficial && "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300")}
+                              title={isOfficial ? "Rol protegido del sistema" : "Eliminar"}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -456,7 +453,9 @@ const Roles = () => {
       <AnimatePresence>
         {modalType && modalType !== "delete" && (
           <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className={`${configUi.modalPanel} ${modalType === "permisos" ? "max-w-4xl" : "max-w-3xl"}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
+            <motion.div
+              className={`${configUi.modalPanel} ${modalType === 'permisos' ? 'max-w-2xl' : 'max-w-3xl'}`}
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()}>
               <div className={modalType === "permisos" ? configUi.modalSplit : configUi.modalSplitCompact}>
                 <div className={configUi.modalSide}>
                   <div>
@@ -582,7 +581,7 @@ const Roles = () => {
             </motion.div>
           </motion.div>
         )}
-        
+
         {/* Delete Confirmation Modal */}
         {modalType === "delete" && selected && (
           <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>

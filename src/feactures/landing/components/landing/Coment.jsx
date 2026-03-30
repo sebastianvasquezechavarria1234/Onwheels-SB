@@ -53,15 +53,15 @@ export const Coment = () => {
   };
 
   return (
-    <section className="bg-zinc-50 py-32 px-4 relative overflow-hidden border-t border-zinc-100">
+    <section className="bg-zinc-50 py-16 md:py-32 px-4 relative overflow-hidden border-t border-zinc-100">
       {/* Subtle Pattern */}
       <div className="absolute inset-0 opacity-[0.4] pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #e2e8f0 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
-        <div className="flex flex-col items-center mb-20 text-center space-y-4">
+        <div className="flex flex-col items-center mb-10 md:mb-20 text-center space-y-4">
           <span className="text-[var(--color-blue)] text-xs font-black uppercase tracking-[0.4em]">Testimonios</span>
-          <h2 className="text-4xl md:text-6xl font-black text-zinc-950 uppercase tracking-tighter leading-none">
+          <h2 className="text-3xl md:text-6xl font-black text-zinc-950 uppercase tracking-tighter leading-none">
             COMUNIDAD <span className="text-zinc-500 italic">SOBRE RUEDAS</span>
           </h2>
           <p className="text-zinc-500 max-w-md text-sm font-medium">

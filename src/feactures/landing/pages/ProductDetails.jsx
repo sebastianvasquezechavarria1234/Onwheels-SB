@@ -204,7 +204,7 @@ export const ProductDetailsContent = () => {
 
   return (
     <div className="bg-[#0B0F14] min-h-screen text-white pb-24">
-      <section className="pt-[120px] lg:pt-[140px] max-w-[1200px] mx-auto p-4 md:p-8">
+      <section className="pt-[100px] md:pt-[120px] lg:pt-[140px] max-w-[1200px] mx-auto p-4 md:p-8">
         <Link to={backLink} className="inline-flex items-center gap-2 text-[#9CA3AF] hover:text-white mb-8 transition-colors group">
           <div className="w-8 h-8 rounded-full bg-[#121821] flex items-center justify-center group-hover:bg-gray-800 transition-colors">
             <ArrowLeft size={16} />
@@ -216,7 +216,7 @@ export const ProductDetailsContent = () => {
           {/* Left: Image Gallery */}
           <div className="w-full lg:w-[55%] flex flex-col lg:flex-row-reverse gap-4">
             {/* Main Image */}
-            <div className="flex-1 bg-[#121821] rounded-3xl aspect-[4/5] lg:aspect-auto lg:h-[400px] lg:max-w-[400px] mx-auto overflow-hidden shadow-sm relative border border-gray-800/50 flex justify-center items-center">
+            <div className="flex-1 bg-[#121821] rounded-2xl md:rounded-3xl aspect-square md:aspect-[4/5] lg:aspect-auto lg:h-[400px] lg:max-w-[400px] mx-auto overflow-hidden shadow-sm relative border border-gray-800/50 flex justify-center items-center">
               <img
                 src={allImages[selectedImageIndex]}
                 alt={nombre_producto}

@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Eye, Plus, Search, ChevronLeft, ChevronRight,
-  ShoppingCart, Filter, Calendar, Download, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
-  CheckCircle, AlertTriangle
+  Eye, Plus, Search, ChevronLeft, ChevronRight, Edit2, Trash2,
+  ShoppingCart, Filter, Calendar, X, Mail, MapPin, Briefcase, Info, Package, DollarSign, ChevronDown,
+  CheckCircle, AlertTriangle, User
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import comprasService from "../../services/comprasService";
 import { cn, configUi } from "../../configuracion/configUi";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 
 const Compras = () => {
   const location = useLocation();
@@ -18,6 +19,7 @@ const Compras = () => {
   const [proveedores, setProveedores] = useState([]);
   const [search, setSearch] = useState("");
   const [proveedorFilter, setProveedorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Todos");
 
   // Frontend Filtration & Pagination
   const [paginaActual, setPaginaActual] = useState(1);
@@ -44,9 +46,11 @@ const Compras = () => {
       const coreData = await comprasService.getAllCompras(); // Fetch all
       const dataProv = await comprasService.getProveedores();
 
-      setCompras(Array.isArray(coreData) ? coreData : (coreData.compras || []));
+      const comprasArray = coreData?.data || coreData?.compras || (Array.isArray(coreData) ? coreData : []);
+      const provArray = dataProv?.data || dataProv?.proveedores || (Array.isArray(dataProv) ? dataProv : []);
 
-      setProveedores(Array.isArray(dataProv) ? dataProv : []);
+      setCompras(comprasArray);
+      setProveedores(provArray);
     } catch (err) {
       showNotification("Error de conexión: No se pudieron sincronizar los datos", "error");
     } finally {
@@ -103,6 +107,17 @@ const Compras = () => {
     document.body.removeChild(link);
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Confirma la eliminación de este registro de compra?")) return;
+    try {
+      await comprasService.deleteCompra(id);
+      showNotification("Registro de compra eliminado");
+      fetchData();
+    } catch (err) {
+      showNotification("Error al eliminar el registro", "error");
+    }
+  };
+
   return (
     <div className={configUi.pageShell}>
       {/* Header Section */}
@@ -127,29 +142,36 @@ const Compras = () => {
             />
           </div>
 
-          {/* Filter Dropdown */}
-          <div className="relative w-full sm:w-auto">
-            <select
-              value={proveedorFilter}
-              onChange={(e) => { setProveedorFilter(e.target.value); setPaginaActual(1); }}
-              className={cn(configUi.select, "w-full min-w-[220px]")}
-            >
-              <option value="">Todos los Proveedores</option>
-              {proveedores.map(p => (
-                <option key={p.id_proveedor || p.nit} value={p.id_proveedor || p.nit}>
-                  {p.nombre_empresa || p.nombre_proveedor}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
-              <ChevronDown size={18} />
-            </div>
+          <div className="flex items-center gap-2">
+            <FilterDropdown
+              value={proveedorFilter || ""}
+              onChange={(val) => { setProveedorFilter(val); setPaginaActual(1); }}
+              options={[
+                { label: "Todos los Proveedores", value: "" },
+                ...proveedores.map(p => ({ 
+                  label: p.nombre_empresa || p.nombre_proveedor, 
+                  value: String(p.id_proveedor || p.nit),
+                  icon: Briefcase
+                }))
+              ]}
+              placeholder="Proveedor"
+            />
+
+            <FilterDropdown
+              value={statusFilter}
+              onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos" },
+                { label: "Pendiente", value: "Pendiente", color: "#f59e0b" },
+                { label: "Recibida", value: "Recibida", color: "#10b981" },
+                { label: "Cancelada", value: "Cancelada", color: "#ef4444" }
+              ]}
+              placeholder="Estado"
+              icon={ShoppingCart}
+            />
           </div>
 
-          {/* Download Button */}
-          <button onClick={handleDownload} className={configUi.iconButton} title="Descargar Reporte">
-            <Download size={20} />
-          </button>
+
 
           <div className="flex items-center gap-3">
             <Link
@@ -222,6 +244,12 @@ const Compras = () => {
                     <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => openDetails(c)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
+                        <Link to={`${basePath}/compras/editar/${c.id_compra}`} className={configUi.actionButton} title="Modificar">
+                          <Edit2 size={14} />
+                        </Link>
+                        <button onClick={() => handleDelete(c.id_compra)} className={configUi.actionDangerButton} title="Eliminar">
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

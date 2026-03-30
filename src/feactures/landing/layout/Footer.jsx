@@ -24,15 +24,15 @@ export const Footer = () => {
     const eventsPath = user ? `/${user.roles?.includes('administrador') ? 'admin' : (user.roles?.includes('estudiante') ? 'student' : (user.roles?.includes('instructor') ? 'instructor' : (user.roles?.includes('cliente') ? 'users' : 'custom')))}/events` : "/events";
 
     return (
-        <footer className="relative bg-black pt-16 pb-8 overflow-hidden">
+        <footer className="relative bg-black pt-10 md:pt-16 pb-8 overflow-hidden">
             {/* Glass Overlay Effect */}
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
             <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-blue)] to-transparent opacity-50"></div>
 
-            <div className="relative z-20 max-w-[1200px] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+            <div className="relative z-20 max-w-[1200px] mx-auto px-4 md:px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10 mb-12">
 
                 {/* Brand */}
-                <div className="md:col-span-1">
+                <div className="col-span-2 md:col-span-1">
                     <Link to="/" className="flex items-center gap-2 mb-4 group">
                         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-[var(--color-blue)] group-hover:scale-110 transition-transform">
                             <img src="/logo.png" alt="OW" className="w-full h-full object-cover" />

@@ -10,10 +10,10 @@ export const CommunityReels = () => {
   ];
 
   return (
-    <section className="bg-black py-24 border-t border-zinc-900">
-      <div className="max-w-[1200px] mx-auto px-6 mb-12 flex flex-col md:flex-row justify-between items-end gap-6 text-center md:text-left">
+    <section className="bg-black py-12 md:py-24 border-t border-zinc-900">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-6 mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-6 text-center md:text-left">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tighter mb-2">
+          <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter mb-2">
             Community <span className="text-[var(--color-blue)]">Reels</span>
           </h2>
           <p className="text-zinc-400 text-sm max-w-[400px]">
@@ -23,8 +23,8 @@ export const CommunityReels = () => {
         <div className="hidden md:block h-px flex-1 bg-zinc-800 mx-8 mb-4"></div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {videos.map((video, i) => (
             <div
               key={i}

@@ -277,7 +277,7 @@ const CompraEditar = () => {
                                             <select
                                                 value={purchase.nit_proveedor}
                                                 onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
-                                                className={cn(configUi.fieldSelect, "pl-11 pr-10", errors.nit_proveedor && "border-rose-400 bg-rose-50/30")}
+                                                className={cn(configUi.fieldSelect, "pl-11", errors.nit_proveedor && "border-rose-400 bg-rose-50/30")}
                                             >
                                                 <option value="">Seleccionar Proveedor...</option>
                                                 {proveedores.map(p => (
