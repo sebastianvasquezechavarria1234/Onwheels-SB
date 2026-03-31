@@ -64,7 +64,7 @@ const Compras = () => {
 
   const handleDelete = async (compraId) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar la orden #${compraId}? Esta acción no se puede revertir.`)) return;
-    
+
     setLoading(true);
     try {
       await comprasService.deleteCompra(compraId);
@@ -127,7 +127,7 @@ const Compras = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <FilterDropdown
               value={proveedorFilter || ""}
               onChange={(val) => { setProveedorFilter(val); setPaginaActual(1); }}
@@ -140,255 +140,255 @@ const Compras = () => {
                 }))
               ]}
               placeholder="Proveedor"
-            />
+            /> */}
 
-            <FilterDropdown
-              value={statusFilter}
-              onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
-              options={[
-                { label: "Todos los Estados", value: "Todos" },
-                { label: "Pendiente", value: "Pendiente", color: "#f59e0b" },
-                { label: "Recibida", value: "Recibida", color: "#10b981" },
-                { label: "Cancelada", value: "Cancelada", color: "#ef4444" }
-              ]}
-              placeholder="Estado"
-              icon={ShoppingCart}
-            />
-          </div>
+          <FilterDropdown
+            value={statusFilter}
+            onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
+            options={[
+              { label: "Todos los Estados", value: "Todos" },
+              { label: "Pendiente", value: "Pendiente", color: "#f59e0b" },
+              { label: "Recibida", value: "Recibida", color: "#10b981" },
+              { label: "Cancelada", value: "Cancelada", color: "#ef4444" }
+            ]}
+            placeholder="Estado"
+            icon={ShoppingCart}
+          />
+        </div>
 
 
 
-          <div className="flex items-center gap-3">
-            <Link
-              to={`${basePath}/compras/crear`}
-              className={configUi.primaryButton}
-            >
-              <Plus size={18} />
-              <span>Nueva Compra</span>
-            </Link>
-          </div>
+        <div className="flex items-center gap-3">
+          <Link
+            to={`${basePath}/compras/crear`}
+            className={configUi.primaryButton}
+          >
+            <Plus size={18} />
+            <span>Nueva Compra</span>
+          </Link>
         </div>
       </div>
+    </div>
 
-      {/* Table Area */}
-      <div className={configUi.tableCard}>
-        <div className={configUi.tableScroll}>
-          <table className={configUi.table}>
-            <thead className={configUi.thead}>
-              <tr>
-                <th className={configUi.th + " w-12 text-center"}>#</th>
-                <th className={configUi.th}>Factura / Fecha</th>
-                <th className={configUi.th}>Proveedor Autorizado</th>
-                <th className={configUi.th + " text-center"}>Productos</th>
-                <th className={configUi.th + " text-right"}>Total Liquidación</th>
-                <th className={configUi.th + " text-right"}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#d7e5f8]">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="p-20 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Facturación...</p>
+      {/* Table Area */ }
+  <div className={configUi.tableCard}>
+    <div className={configUi.tableScroll}>
+      <table className={configUi.table}>
+        <thead className={configUi.thead}>
+          <tr>
+            <th className={configUi.th + " w-12 text-center"}>#</th>
+            <th className={configUi.th}>Factura / Fecha</th>
+            <th className={configUi.th}>Proveedor Autorizado</th>
+            <th className={configUi.th + " text-center"}>Productos</th>
+            <th className={configUi.th + " text-right"}>Total Liquidación</th>
+            <th className={configUi.th + " text-right"}>Acciones</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[#d7e5f8]">
+          {loading ? (
+            <tr>
+              <td colSpan="6" className="p-20 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-10 h-10 border-4 border-slate-200 border-t-[#16315f] rounded-full animate-spin" />
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando Facturación...</p>
+                </div>
+              </td>
+            </tr>
+          ) : currentItems.length === 0 ? (
+            <tr><td colSpan="6" className={configUi.emptyState}>Sin registros de compras que coincidan.</td></tr>
+          ) : (
+            currentItems.map((c) => (
+              <tr key={c.id_compra} className={configUi.row}>
+                <td className={configUi.td}>
+                  <span className="text-xs font-extrabold text-[#16315f] font-mono">#{c.id_compra}</span>
+                </td>
+                <td className={configUi.td}>
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
+                      <Calendar size={16} />
                     </div>
-                  </td>
-                </tr>
-              ) : currentItems.length === 0 ? (
-                <tr><td colSpan="6" className={configUi.emptyState}>Sin registros de compras que coincidan.</td></tr>
-              ) : (
-                currentItems.map((c) => (
-                  <tr key={c.id_compra} className={configUi.row}>
-                    <td className={configUi.td}>
-                      <span className="text-xs font-extrabold text-[#16315f] font-mono">#{c.id_compra}</span>
-                    </td>
-                    <td className={configUi.td}>
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
-                          <Calendar size={16} />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-[#16315f]">{new Date(c.fecha_compra).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={configUi.td}>
-                      <div className="flex flex-col text-sm text-[#16315f]">
-                        <span className="font-bold">{getProveedorNombre(c.id_proveedor)}</span>
-                        <span className="text-[10px] text-[#6b84aa]">ID: {c.id_proveedor}</span>
-                      </div>
-                    </td>
-                    <td className={`${configUi.td} text-center`}>
-                      {c.items && c.items.length > 0 ? (
-                        <div className="flex flex-col gap-1 items-center text-center">
-                          <span className="text-xs font-bold text-[#16315f] bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
-                            {c.items.length} {c.items.length === 1 ? 'producto' : 'productos'}
-                          </span>
-                          <span className="text-[9px] text-slate-400 max-w-[150px] truncate" title={c.items.map(i => i.nombre_producto).join(', ')}>
-                            {c.items.map(i => i.nombre_producto).join(', ')}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
-                    </td>
-                    <td className={`${configUi.td} text-right font-black text-emerald-600`}>
-                      ${(Number(c.total_compra) || 0).toLocaleString('es-CO')}
-                    </td>
-                    <td className={`${configUi.td} text-right`}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openDetails(c)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
-                        <Link to={`${basePath}/compras/editar/${c.id_compra}`} className={configUi.actionButton} title="Modificar">
-                          <Edit2 size={14} />
-                        </Link>
-                        <button onClick={() => handleDelete(c.id_compra)} className={configUi.actionDangerButton} title="Eliminar">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-[#16315f]">{new Date(c.fecha_compra).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </td>
+                <td className={configUi.td}>
+                  <div className="flex flex-col text-sm text-[#16315f]">
+                    <span className="font-bold">{getProveedorNombre(c.id_proveedor)}</span>
+                    <span className="text-[10px] text-[#6b84aa]">ID: {c.id_proveedor}</span>
+                  </div>
+                </td>
+                <td className={`${configUi.td} text-center`}>
+                  {c.items && c.items.length > 0 ? (
+                    <div className="flex flex-col gap-1 items-center text-center">
+                      <span className="text-xs font-bold text-[#16315f] bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
+                        {c.items.length} {c.items.length === 1 ? 'producto' : 'productos'}
+                      </span>
+                      <span className="text-[9px] text-slate-400 max-w-[150px] truncate" title={c.items.map(i => i.nombre_producto).join(', ')}>
+                        {c.items.map(i => i.nombre_producto).join(', ')}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-300">—</span>
+                  )}
+                </td>
+                <td className={`${configUi.td} text-right font-black text-emerald-600`}>
+                  ${(Number(c.total_compra) || 0).toLocaleString('es-CO')}
+                </td>
+                <td className={`${configUi.td} text-right`}>
+                  <div className="flex items-center justify-end gap-1">
+                    <button onClick={() => openDetails(c)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
+                    <Link to={`${basePath}/compras/editar/${c.id_compra}`} className={configUi.actionButton} title="Modificar">
+                      <Edit2 size={14} />
+                    </Link>
+                    <button onClick={() => handleDelete(c.id_compra)} className={configUi.actionDangerButton} title="Eliminar">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    {/* --- Pagination Footer --- */}
+    {totalPaginasLocal > 1 && (
+      <div className={configUi.paginationBar}>
+        <p className="text-sm font-bold text-[#6b84aa]">
+          Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginasLocal}</span>
+        </p>
+
+        <div className="flex items-center gap-2">
+          <button
+            disabled={paginaActual === 1}
+            onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+            className={configUi.paginationButton}
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          <button
+            disabled={paginaActual === totalPaginasLocal}
+            onClick={() => setPaginaActual(p => Math.min(totalPaginasLocal, p + 1))}
+            className={configUi.paginationButton}
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
+      </div>
+    )}
+  </div>
 
-        {/* --- Pagination Footer --- */}
-        {totalPaginasLocal > 1 && (
-          <div className={configUi.paginationBar}>
-            <p className="text-sm font-bold text-[#6b84aa]">
-              Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginasLocal}</span>
-            </p>
+  {/* --- Details Modal --- */ }
+  <AnimatePresence>
+    {modalOpen && selected && (
+      <motion.div
+        className={configUi.modalBackdrop}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={closeDetails}
+      >
+        <motion.div
+          className={cn(configUi.modalPanel, "max-w-4xl")}
+          initial={{ scale: 0.95, opacity: 0, y: 30 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 30 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={configUi.modalHeader}>
+            <div>
+              <h3 className={configUi.modalTitle}>Detalle de Transacción</h3>
+              <p className={configUi.modalSubtitle}>ID Factura: #ORDEN-{selected.id_compra.toString().padStart(5, '0')}</p>
+            </div>
+            <button onClick={closeDetails} className={configUi.modalClose}><X size={20} /></button>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                disabled={paginaActual === 1}
-                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                className={configUi.paginationButton}
-              >
-                <ChevronLeft size={18} />
-              </button>
+          <div className={configUi.modalContent}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className={configUi.formSection}>
+                <p className={configUi.modalEyebrow}>Proveedor</p>
+                <p className="text-lg font-black text-[#16315f] mt-1">{selected.nombre_empresa || selected.nombre_proveedor}</p>
+                <p className="text-sm text-[#6b84aa]">{selected.email || "No registrado"}</p>
+              </div>
+              <div className={configUi.formSection}>
+                <p className={configUi.modalEyebrow}>Fecha y Liquidación</p>
+                <div className="flex justify-between items-end mt-1">
+                  <div>
+                    <p className="text-sm font-bold text-[#16315f]">{new Date(selected.fecha_compra).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    <p className={configUi.successPill + " mt-2"}>Liquidación Finalizada</p>
+                  </div>
+                  <p className="text-2xl font-black text-[#16315f] tabular-nums">${Number(selected.total_compra).toLocaleString('es-CO')}</p>
+                </div>
+              </div>
+            </div>
 
-              <button
-                disabled={paginaActual === totalPaginasLocal}
-                onClick={() => setPaginaActual(p => Math.min(totalPaginasLocal, p + 1))}
-                className={configUi.paginationButton}
-              >
-                <ChevronRight size={18} />
-              </button>
+            <div className="space-y-4">
+              <h4 className={configUi.modalEyebrow + " flex items-center gap-2"}>
+                <Package size={14} /> Desglose de Productos
+              </h4>
+              <div className="rounded-2xl border border-[#d7e5f8] overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-[#f8fbff] text-[#6b84aa] text-[10px] font-black uppercase tracking-widest border-b border-[#f0f6ff]">
+                    <tr>
+                      <th className="px-5 py-3">Referencia</th>
+                      <th className="px-5 py-3 text-center">Cant.</th>
+                      <th className="px-5 py-3 text-right">Unitario</th>
+                      <th className="px-5 py-3 text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f0f6ff]">
+                    {selected.items?.map((item, idx) => (
+                      <tr key={idx} className="text-[12px] text-[#16315f]">
+                        <td className="px-5 py-3">
+                          <div className="flex flex-col">
+                            <span className="font-bold uppercase">{item.nombre_producto}</span>
+                            <span className="text-[10px] text-[#6b84aa]">{item.nombre_variante}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 text-center font-bold">x{item.cantidad}</td>
+                        <td className="px-5 py-3 text-right tabular-nums text-[#6b84aa]">${Number(item.precio_unitario).toLocaleString('es-CO')}</td>
+                        <td className="px-5 py-3 text-right tabular-nums font-bold">${Number(item.subtotal).toLocaleString('es-CO')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
+
+          <div className={configUi.modalFooter}>
+            <button onClick={closeDetails} className={configUi.secondaryButton}>Cerrar Detalle</button>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-bold text-[#6b84aa]">TOTAL LIQUIDADO:</span>
+              <span className="text-xl font-black text-[#16315f]">${Number(selected.total_compra).toLocaleString('es-CO')}</span>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  {/* --- NOTIFICATIONS --- */ }
+  <AnimatePresence>
+    {notification.show && (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0 }}
+        className={cn(
+          "fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+          notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500"
         )}
-      </div>
-
-      {/* --- Details Modal --- */}
-      <AnimatePresence>
-        {modalOpen && selected && (
-          <motion.div
-            className={configUi.modalBackdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeDetails}
-          >
-            <motion.div
-              className={cn(configUi.modalPanel, "max-w-4xl")}
-              initial={{ scale: 0.95, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 30 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={configUi.modalHeader}>
-                <div>
-                  <h3 className={configUi.modalTitle}>Detalle de Transacción</h3>
-                  <p className={configUi.modalSubtitle}>ID Factura: #ORDEN-{selected.id_compra.toString().padStart(5, '0')}</p>
-                </div>
-                <button onClick={closeDetails} className={configUi.modalClose}><X size={20} /></button>
-              </div>
-
-              <div className={configUi.modalContent}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div className={configUi.formSection}>
-                    <p className={configUi.modalEyebrow}>Proveedor</p>
-                    <p className="text-lg font-black text-[#16315f] mt-1">{selected.nombre_empresa || selected.nombre_proveedor}</p>
-                    <p className="text-sm text-[#6b84aa]">{selected.email || "No registrado"}</p>
-                  </div>
-                  <div className={configUi.formSection}>
-                    <p className={configUi.modalEyebrow}>Fecha y Liquidación</p>
-                    <div className="flex justify-between items-end mt-1">
-                      <div>
-                        <p className="text-sm font-bold text-[#16315f]">{new Date(selected.fecha_compra).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                        <p className={configUi.successPill + " mt-2"}>Liquidación Finalizada</p>
-                      </div>
-                      <p className="text-2xl font-black text-[#16315f] tabular-nums">${Number(selected.total_compra).toLocaleString('es-CO')}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className={configUi.modalEyebrow + " flex items-center gap-2"}>
-                    <Package size={14} /> Desglose de Productos
-                  </h4>
-                  <div className="rounded-2xl border border-[#d7e5f8] overflow-hidden">
-                    <table className="w-full text-left">
-                      <thead className="bg-[#f8fbff] text-[#6b84aa] text-[10px] font-black uppercase tracking-widest border-b border-[#f0f6ff]">
-                        <tr>
-                          <th className="px-5 py-3">Referencia</th>
-                          <th className="px-5 py-3 text-center">Cant.</th>
-                          <th className="px-5 py-3 text-right">Unitario</th>
-                          <th className="px-5 py-3 text-right">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#f0f6ff]">
-                        {selected.items?.map((item, idx) => (
-                          <tr key={idx} className="text-[12px] text-[#16315f]">
-                            <td className="px-5 py-3">
-                              <div className="flex flex-col">
-                                <span className="font-bold uppercase">{item.nombre_producto}</span>
-                                <span className="text-[10px] text-[#6b84aa]">{item.nombre_variante}</span>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3 text-center font-bold">x{item.cantidad}</td>
-                            <td className="px-5 py-3 text-right tabular-nums text-[#6b84aa]">${Number(item.precio_unitario).toLocaleString('es-CO')}</td>
-                            <td className="px-5 py-3 text-right tabular-nums font-bold">${Number(item.subtotal).toLocaleString('es-CO')}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <div className={configUi.modalFooter}>
-                <button onClick={closeDetails} className={configUi.secondaryButton}>Cerrar Detalle</button>
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-[#6b84aa]">TOTAL LIQUIDADO:</span>
-                  <span className="text-xl font-black text-[#16315f]">${Number(selected.total_compra).toLocaleString('es-CO')}</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* --- NOTIFICATIONS --- */}
-      <AnimatePresence>
-        {notification.show && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className={cn(
-              "fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
-              notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500"
-            )}
-          >
-            {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-            {notification.message}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+      >
+        {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+        {notification.message}
+      </motion.div>
+    )}
+  </AnimatePresence>
+    </div >
   );
 };
 
