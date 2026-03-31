@@ -462,7 +462,7 @@ export default function Usuarios() {
             </div>
 
             {/* Filter Dropdowns */}
-             <FilterDropdown
+            <FilterDropdown
               value={filterType}
               onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
               options={[
@@ -476,7 +476,7 @@ export default function Usuarios() {
               placeholder="Filtrar por Rol"
             />
 
-            <FilterDropdown
+            {/* <FilterDropdown
               value={filterStatus}
               onChange={(val) => { setFilterStatus(val); setCurrentPage(1); }}
               options={[
@@ -485,7 +485,7 @@ export default function Usuarios() {
                 { label: "Inactivos", value: "Inactivo", icon: X }
               ]}
               placeholder="Estado"
-            />
+            /> */}
 
 
 

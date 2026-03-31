@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Search, Plus, Eye, Pencil, Trash2, X, ChevronLeft, ChevronRight,
   User, Phone, Mail, Calendar, Hash, Shield, Info, CheckCircle, AlertCircle,

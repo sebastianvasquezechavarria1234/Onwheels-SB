@@ -14,8 +14,9 @@ import {
   updateMatricula,
   createMatricula,
 } from "../../services/matriculaService";
-import { configUi } from "../../configuracion/configUi";
+import { configUi, cn } from "../../configuracion/configUi";
 import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
+import FilterDropdown from "../../configuracion/FilterDropdown";
 import { useToast } from "../../../../../../context/ToastContext";
 import api from "../../../../../../services/api";
 
