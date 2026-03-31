@@ -155,10 +155,7 @@ function Pedidos() {
           <span className={configUi.countBadge}>
             {filtered.length} ÓRDENES
           </span>
-          <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase tracking-wider">
-            <ShoppingBag size={12} />
-            CONSOLIDADO: ${filtered.reduce((acc, v) => acc + (Number(v.total) || 0), 0).toLocaleString()}
-          </div>
+
         </div>
 
         <div className={configUi.toolbar}>
@@ -262,7 +259,7 @@ function Pedidos() {
                         </span>
                         {v.estado === "Cancelada" && v.motivo_cancelacion && (
                           <span className="text-[9px] text-rose-500 font-medium italic max-w-[120px] truncate" title={v.motivo_cancelacion}>
-                             {v.motivo_cancelacion}
+                            {v.motivo_cancelacion}
                           </span>
                         )}
                       </div>
@@ -379,9 +376,9 @@ function Pedidos() {
 
                     <AnimatePresence>
                       {statusFormEstado === 'Cancelada' && (
-                        <motion.div 
-                          initial={{ opacity: 0, height: 0 }} 
-                          animate={{ opacity: 1, height: 'auto' }} 
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
                           className={configUi.fieldGroup}
                         >

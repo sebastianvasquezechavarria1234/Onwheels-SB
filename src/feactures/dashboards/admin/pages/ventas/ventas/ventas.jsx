@@ -278,29 +278,16 @@ function Ventas() {
                             <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                           </span>
                         </div>
-                        <div className="h-9 w-9 bg-indigo-50/50 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-50">
-                          <Calendar size={16} />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-[#16315f]">{v.fecha_venta ? new Date(v.fecha_venta).toLocaleDateString() : '—'}</span>
-                          <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium">
-                            <Clock size={10} /> {v.fecha_venta ? new Date(v.fecha_venta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
-                          </span>
-                        </div>
                       </div>
                     </td>
                     <td className={configUi.td}>
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
                         <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
-                        <span className="text-xs font-bold text-[#16315f] truncate max-w-[200px]">{getClienteNombre(v.id_cliente)}</span>
-                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">Méd: {v.metodo_pago || '—'}</span>
                       </div>
                     </td>
                     <td className={`${configUi.td} text-center`}>
                       <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50 border border-slate-100">
-                        <Package size={12} className="text-slate-400" />
-                        <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
                         <Package size={12} className="text-slate-400" />
                         <span className="text-xs font-bold text-[#16315f]">{v.items?.length || 0}</span>
                       </div>
@@ -354,16 +341,10 @@ function Ventas() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 className={configUi.paginationButton}
               >
                 <ChevronLeft size={18} />
               </button>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
@@ -467,10 +448,7 @@ function Ventas() {
       <AnimatePresence>
         {notification.show && (
           <motion.div
-          <motion.div
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-            className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
-              notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
             className={cn("fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
               notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500")}
           >

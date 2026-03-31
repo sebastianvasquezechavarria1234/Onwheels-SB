@@ -167,17 +167,6 @@ export default function VentaDetalle() {
                         </div>
                     </div>
 
-                    {/* Justificación de cancelación si aplica */}
-                    {(venta.status === "Cancelada" || venta.estado === "Cancelada") && (
-                        <div className={cn(configUi.formSection, "border-rose-200 bg-rose-50/50 p-8")}>
-                            <h3 className="text-sm font-black text-rose-600 uppercase tracking-widest flex items-center gap-3 mb-4">
-                                <AlertTriangle size={18} /> Justificación de Anulación
-                            </h3>
-                            <div className="p-6 bg-white/80 rounded-2xl border border-rose-100 text-sm font-bold text-rose-700 italic shadow-sm">
-                                "{venta.justificacion_cancelacion || "Operación cancelada por solicitud administrativa."}"
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Right: Personal & Payment Info */}
@@ -228,7 +217,7 @@ export default function VentaDetalle() {
                         </div>
 
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                            <DollarSign size={16} /> Parámetros de Recaudo
+                            <DollarSign size={16} /> Información de Pago
                         </h3>
 
                         <div className="space-y-8">

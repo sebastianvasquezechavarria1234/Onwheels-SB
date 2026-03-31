@@ -47,7 +47,7 @@ export default function Productos({ renderLayout = true }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [paginaActual, setPaginaActual] = useState(1);
   const productosPorPagina = 10;
-  
+
   const [productForm, setProductForm] = useState({
     id_producto: null,
     nombre_producto: "",
@@ -121,11 +121,11 @@ export default function Productos({ renderLayout = true }) {
   const validateVariantsInline = () => {
     // Determine whether user interacted with currentVariant
     const hasColor = currentVariant.color && currentVariant.color.trim() !== "" && currentVariant.color !== "—";
-    const hasAnyTallaData = currentVariant.tallas.some(t => 
-      (t.talla && t.talla.trim() !== "" && t.talla !== "—") || 
+    const hasAnyTallaData = currentVariant.tallas.some(t =>
+      (t.talla && t.talla.trim() !== "" && t.talla !== "—") ||
       (String(t.cantidad).trim() !== "")
     );
-    
+
     const isInteracting = hasColor || hasAnyTallaData;
 
     if (!isInteracting) {
@@ -136,7 +136,7 @@ export default function Productos({ renderLayout = true }) {
     // Si tiene color pero no tallas, o tiene tallas pero no color, es válido.
     // Solo es inválido si una talla tiene cantidad pero no nombre, o viceversa, 
     // A MENOS que sea la única talla y el producto sea "solo color".
-    
+
     const validTallas = currentVariant.tallas.filter(t => {
       const hasTallaName = t.talla && t.talla.trim() !== "" && t.talla !== "—";
       const hasQty = String(t.cantidad).trim() !== "";
@@ -183,9 +183,9 @@ export default function Productos({ renderLayout = true }) {
         getTallas(),
         getVariantes(),
       ]);
-      
+
       setProductos(Array.isArray(resProds) ? resProds : (resProds.data || []));
-      
+
       setCategorias(cats || []);
       setColores(cols || []);
       setTallas(tls || []);
@@ -333,7 +333,11 @@ export default function Productos({ renderLayout = true }) {
     setSelectedProductForView(producto);
     setIsViewModalOpen(true);
   };
+  const [isSaving, setIsSaving] = useState(false);
+
   const saveProduct = async () => {
+    if (isSaving) return;
+
     const fieldsToValidate = [
       "nombre_producto", "id_categoria", "precio_compra", "precio",
       "descripcion", "estado", "descuento_producto", "porcentaje_ganancia"
@@ -347,7 +351,7 @@ export default function Productos({ renderLayout = true }) {
 
     const isVariantsValid = validateVariantsInline();
 
-    const hasImages = imagenesArchivos.length > 0 || imagenesUrls.length > 0 || imagenesConservadas.length > 0;
+    const hasImages = imagenesArchivos.length > 0 || imagenesUrls.length > 0 || imagenesConservadas.length > 0 || (typeof urlInput === 'string' && urlInput.trim() !== '');
 
     if (!isFormValid || !isVariantsValid) {
       showNotification("Corrige los errores en el formulario", "error");
@@ -360,6 +364,7 @@ export default function Productos({ renderLayout = true }) {
     }
 
     try {
+      setIsSaving(true);
       const formData = new FormData();
       formData.append("nombre_producto", productForm.nombre_producto.trim());
       formData.append("descripcion", productForm.descripcion?.trim() || "");
@@ -375,7 +380,11 @@ export default function Productos({ renderLayout = true }) {
         formData.append("imagenes_archivos", file);
       });
       // Urls nuevas
-      formData.append("imagenes_urls", JSON.stringify(imagenesUrls));
+      let finalUrls = [...imagenesUrls];
+      if (typeof urlInput === 'string' && urlInput.trim() !== '') {
+        finalUrls.push(urlInput.trim());
+      }
+      formData.append("imagenes_urls", JSON.stringify(finalUrls));
       // Imágenes que no borramos de la DB
       formData.append("imagenes_conservadas", JSON.stringify(imagenesConservadas));
       // Flatten grouped variants for backend
@@ -444,6 +453,8 @@ export default function Productos({ renderLayout = true }) {
       console.error("❌ saveProduct error:", err);
       const msg = err.response?.data?.message || err.response?.data?.error || err.message || "Error al guardar";
       showNotification("Error guardando producto: " + msg, "error");
+    } finally {
+      setIsSaving(false);
     }
   };
   const openDeleteConfirm = (producto) => {
@@ -494,9 +505,9 @@ export default function Productos({ renderLayout = true }) {
 
       const newGrouping = {
         color: (currentVariant.color && currentVariant.color !== "—") ? currentVariant.color : "—",
-        tallas: validTallas.map(t => ({ 
-          talla: (t.talla && t.talla !== "—") ? t.talla : "—", 
-          cantidad: Number(t.cantidad) || 0 
+        tallas: validTallas.map(t => ({
+          talla: (t.talla && t.talla !== "—") ? t.talla : "—",
+          cantidad: Number(t.cantidad) || 0
         }))
       };
 
@@ -563,13 +574,13 @@ export default function Productos({ renderLayout = true }) {
   const filtered = React.useMemo(() => {
     return (productos || []).filter(p => {
       const q = busqueda.toLowerCase();
-      const matchesSearch = (p.nombre_producto || "").toLowerCase().includes(q) || 
-                           (p.descripcion || "").toLowerCase().includes(q);
+      const matchesSearch = (p.nombre_producto || "").toLowerCase().includes(q) ||
+        (p.descripcion || "").toLowerCase().includes(q);
       const matchesCategory = filtroCategoria === "" || Number(p.id_categoria) === Number(filtroCategoria);
-      const matchesStatus = statusFilter === "Todos" || 
-                           (statusFilter === "Activo" && p.estado) ||
-                           (statusFilter === "Inactivo" && !p.estado);
-                           
+      const matchesStatus = statusFilter === "Todos" ||
+        (statusFilter === "Activo" && p.estado) ||
+        (statusFilter === "Inactivo" && !p.estado);
+
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [productos, busqueda, filtroCategoria, statusFilter]);
@@ -628,7 +639,7 @@ export default function Productos({ renderLayout = true }) {
         <div className={configUi.headerRow}>
           <div className={configUi.titleWrap}>
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
-               Productos
+              Productos
             </h2>
           </div>
 
@@ -650,8 +661,8 @@ export default function Productos({ renderLayout = true }) {
               onChange={(val) => { setFiltroCategoria(val); setPaginaActual(1); }}
               options={[
                 { label: "Todas las Categorías", value: "" },
-                ...categorias.map(c => ({ 
-                  label: c.nombre_categoria, 
+                ...categorias.map(c => ({
+                  label: c.nombre_categoria,
                   value: String(c.id_categoria),
                   icon: Layers
                 }))
@@ -659,7 +670,7 @@ export default function Productos({ renderLayout = true }) {
               placeholder="Categoría"
             />
 
-            <FilterDropdown
+            {/* <FilterDropdown
               value={statusFilter}
               onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
               options={[
@@ -669,12 +680,12 @@ export default function Productos({ renderLayout = true }) {
               ]}
               placeholder="Estado"
               icon={Box}
-            />
+            /> */}
 
             {/* Download Button */}
             <button
-               onClick={handleDownload}
-               className={configUi.iconButton} title="Descargar Reporte"
+              onClick={handleDownload}
+              className={configUi.iconButton} title="Descargar Reporte"
             >
               <Download size={20} />
             </button>
@@ -693,98 +704,98 @@ export default function Productos({ renderLayout = true }) {
         {/* Table Area */}
         <div className="flex-1 px-6 pb-6 overflow-hidden">
           <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] flex flex-col h-full overflow-hidden">
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full min-w-[1000px] text-left border-separate border-spacing-0">
-              <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-30 shadow-sm">
-                <tr>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] w-12 text-center">#</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef]">Producto / Categoría</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef]">Estado</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Inversión</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Venta</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Stock</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#d7e5f8]">
-                {loading ? (
+            <div className="flex-1 overflow-auto custom-scrollbar">
+              <table className="w-full min-w-[1000px] text-left border-separate border-spacing-0">
+                <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-30 shadow-sm">
                   <tr>
-                    <td colSpan="7" className="p-20 text-center">
-                       <div className="flex flex-col items-center gap-4">
-                         <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
-                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando inventario...</p>
-                       </div>
-                    </td>
+                    <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] w-12 text-center">#</th>
+                    <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef]">Producto / Categoría</th>
+                    <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef]">Estado</th>
+                    <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Inversión</th>
+                    <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Venta</th>
+                    <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Stock</th>
+                    <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.12em] border-b border-[#9ec1ef] text-right">Acciones</th>
                   </tr>
-                ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="p-20 text-center">
-                       <div className="flex flex-col items-center gap-3 opacity-20">
-                         <ImageIcon size={48} />
-                         <p className="text-xs font-black uppercase tracking-widest">Sin productos</p>
-                       </div>
-                    </td>
-                  </tr>
-                ) : (
-                  currentItems.map((p, idx) => {
-                    const totalStock = (variantesGlobales || []).filter(v => v.id_producto === p.id_producto).reduce((acc, v) => acc + (v.stock || 0), 0);
-                    return (
-                      <tr key={p.id_producto} className="group hover:bg-[#f8fbff] transition-all">
-                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-center">
-                           <span className="text-[10px] font-black text-slate-300">{(paginaActual - 1) * productosPorPagina + idx + 1}</span>
-                        </td>
-                        <td className="px-3 py-2 border-b border-[#d7e5f8]">
-                          <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100 overflow-hidden shrink-0">
-                               {p.imagenes && p.imagenes.length > 0 ? (
-                                 <img 
-                                   src={p.imagenes[0].url_imagen?.startsWith('http') ? p.imagenes[0].url_imagen : `${API_URL}${p.imagenes[0].url_imagen}`} 
-                                   alt={p.nombre_producto} 
-                                   className="w-full h-full object-cover" 
-                                 />
-                               ) : (
-                                 <ImageIcon size={14} className="text-slate-200" />
-                               )}
-                             </div>
-                             <div className="flex flex-col min-w-0">
-                               <span className="font-bold text-[#16315f] text-sm leading-tight truncate uppercase tracking-tight">{p.nombre_producto}</span>
-                               <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-0.5">{getCategoriaNombre(p.id_categoria)}</span>
-                             </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 border-b border-[#d7e5f8]">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${p.estado ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
-                            {p.estado ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right font-bold text-slate-400 text-[11px] tabular-nums">
-                          ${Number(p.precio_compra).toLocaleString()}
-                        </td>
-                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
-                          <div className="flex flex-col items-end">
-                             <span className="font-black text-[#16315f] text-[11px] tabular-nums">${Number(p.precio).toLocaleString()}</span>
-                             {Number(p.descuento_producto) > 0 && <span className="text-[9px] font-bold text-rose-500 bg-rose-50 px-1 rounded">-{p.descuento_producto}% OFF</span>}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
-                           <span className={`font-black text-[11px] ${totalStock <= 5 ? 'text-rose-500' : 'text-slate-700'}`}>
-                             {totalStock} <span className="text-[9px] font-bold text-slate-300 ml-0.5">UND</span>
-                           </span>
-                        </td>
-                        <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => openViewModal(p)} className="p-1.5 rounded-lg bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105" title="Ver Detalle"><Eye size={12} /></button>
-                            <button onClick={() => openProductModal(p)} className="p-1.5 rounded-lg bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105" title="Editar"><Pen size={12} /></button>
-                            <button onClick={() => { setProductoToDelete(p); setIsDeleteConfirmOpen(true); }} className="p-1.5 rounded-lg bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105" title="Eliminar"><Trash2 size={12} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[#d7e5f8]">
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="p-20 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Actualizando inventario...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-20 text-center">
+                        <div className="flex flex-col items-center gap-3 opacity-20">
+                          <ImageIcon size={48} />
+                          <p className="text-xs font-black uppercase tracking-widest">Sin productos</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentItems.map((p, idx) => {
+                      const totalStock = (variantesGlobales || []).filter(v => v.id_producto === p.id_producto).reduce((acc, v) => acc + (v.stock || 0), 0);
+                      return (
+                        <tr key={p.id_producto} className="group hover:bg-[#f8fbff] transition-all">
+                          <td className="px-3 py-2 border-b border-[#d7e5f8] text-center">
+                            <span className="text-[10px] font-black text-slate-300">{(paginaActual - 1) * productosPorPagina + idx + 1}</span>
+                          </td>
+                          <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100 overflow-hidden shrink-0">
+                                {p.imagenes && p.imagenes.length > 0 ? (
+                                  <img
+                                    src={p.imagenes[0].url_imagen?.startsWith('http') ? p.imagenes[0].url_imagen : `${API_URL}${p.imagenes[0].url_imagen}`}
+                                    alt={p.nombre_producto}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <ImageIcon size={14} className="text-slate-200" />
+                                )}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-bold text-[#16315f] text-sm leading-tight truncate tracking-tight capitalize">{p.nombre_producto}</span>
+                                <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-0.5">{getCategoriaNombre(p.id_categoria)}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${p.estado ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
+                              {p.estado ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 border-b border-[#d7e5f8] text-right font-bold text-slate-400 text-[11px] tabular-nums">
+                            ${Number(p.precio_compra).toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                            <div className="flex flex-col items-end">
+                              <span className="font-black text-[#16315f] text-[11px] tabular-nums">${Number(p.precio).toLocaleString()}</span>
+                              {Number(p.descuento_producto) > 0 && <span className="text-[9px] font-bold text-rose-500 bg-rose-50 px-1 rounded">-{p.descuento_producto}% OFF</span>}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                            <span className={`font-black text-[11px] ${totalStock <= 5 ? 'text-rose-500' : 'text-slate-700'}`}>
+                              {totalStock} <span className="text-[9px] font-bold text-slate-300 ml-0.5">UND</span>
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button onClick={() => openViewModal(p)} className="p-1.5 rounded-lg bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105" title="Ver Detalle"><Eye size={12} /></button>
+                              <button onClick={() => openProductModal(p)} className="p-1.5 rounded-lg bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105" title="Editar"><Pen size={12} /></button>
+                              <button onClick={() => { setProductoToDelete(p); setIsDeleteConfirmOpen(true); }} className="p-1.5 rounded-lg bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105" title="Eliminar"><Trash2 size={12} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
             {/* Footer Pagination */}
             {totalPaginasLocal > 1 && (
@@ -1159,143 +1170,156 @@ export default function Productos({ renderLayout = true }) {
 
 
 
-                  {/* === Modal de Vista === */}
+        {/* === Modal de Vista === */}
         <AnimatePresence>
           {isViewModalOpen && selectedProductForView && (
             <motion.div
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
               onClick={() => setIsViewModalOpen(false)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white rounded-[2.5rem] shadow-2xl relative overflow-hidden max-w-4xl w-full border border-slate-200"
-                initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="bg-white rounded-3xl shadow-2xl relative overflow-hidden max-w-md w-full border border-slate-100 flex flex-col max-h-[90vh]"
+                initial={{ scale: 0.95, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 16 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex flex-col lg:flex-row h-[600px] lg:h-[750px]">
-                  
-                  {/* Left Side: Media Showcase */}
-                  <div className="lg:w-[45%] bg-slate-50 relative flex flex-col">
-                    <div className="flex-1 p-8 flex items-center justify-center bg-white m-4 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden group">
-                      {selectedProductForView.imagenes && selectedProductForView.imagenes.length > 0 ? (
-                        <img 
-                          src={selectedProductForView.imagenes[0].url_imagen?.startsWith('http') ? selectedProductForView.imagenes[0].url_imagen : `${API_URL}${selectedProductForView.imagenes[0].url_imagen}`} 
+                {/* Close */}
+                <button
+                  onClick={() => setIsViewModalOpen(false)}
+                  className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100/80 backdrop-blur-md text-slate-500 hover:bg-slate-200 transition-all shadow-sm"
+                >
+                  <X size={16} />
+                </button>
+
+                {/* Image Banner (Carrusel) */}
+                <div className="w-full h-40 bg-slate-50 border-b border-slate-100 flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar shrink-0">
+                  {selectedProductForView.imagenes && selectedProductForView.imagenes.length > 0 ? (
+                    selectedProductForView.imagenes.map((img, idx) => (
+                      <div key={idx} className="w-full h-full flex-shrink-0 snap-center p-2 flex items-center justify-center relative">
+                        <img
+                          src={img.url_imagen?.startsWith('http') ? img.url_imagen : `${API_URL}${img.url_imagen}`}
                           alt={selectedProductForView.nombre_producto}
-                          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                          className="h-full max-w-full object-contain hover:scale-105 transition-transform"
                         />
-                      ) : (
-                        <div className="flex flex-col items-center gap-3 opacity-20">
-                          <ImageIcon size={64} />
-                          <p className="font-black text-xs uppercase tracking-widest">Sin imagen</p>
-                        </div>
+                        {selectedProductForView.imagenes.length > 1 && (
+                          <div className="absolute bottom-2 right-2 bg-slate-900/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm font-bold shadow-sm">
+                            {idx + 1} / {selectedProductForView.imagenes.length}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-20">
+                      <ImageIcon size={32} />
+                      <p className="font-black text-[9px] uppercase tracking-widest">Sin imagen</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Body */}
+                <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+                  {/* Header */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 bg-[#16315f] text-white text-[9px] font-black uppercase tracking-[0.2em] rounded-full">
+                        {getCategoriaNombre(selectedProductForView.id_categoria)}
+                      </span>
+                      <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border ${selectedProductForView.estado
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                        }`}>
+                        {selectedProductForView.estado ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-black text-[#16315f] tracking-tight leading-tight">
+                      {selectedProductForView.nombre_producto}
+                    </h2>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1">REF #{String(selectedProductForView.id_producto).padStart(4, '0')}</p>
+                  </div>
+
+                  {/* Price Grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Costo</p>
+                      <p className="text-sm font-black text-slate-500">${Number(selectedProductForView.precio_compra).toLocaleString()}</p>
+                    </div>
+                    <div className="p-3 bg-[#eef3fb] rounded-2xl border border-[#c6d9f5] flex flex-col items-center justify-center relative">
+                      <p className="text-[9px] font-black text-[#6b84aa] uppercase tracking-widest mb-0.5">Venta</p>
+                      <p className="text-sm font-black text-[#16315f]">${Number(selectedProductForView.precio).toLocaleString()}</p>
+                      {Number(selectedProductForView.descuento_producto) > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 text-[8px] font-black text-white bg-rose-500 px-1.5 py-0.5 rounded-full shadow-sm">
+                          -{selectedProductForView.descuento_producto}%
+                        </span>
                       )}
                     </div>
-
                   </div>
-                  {/* Right Side: Details */}
-                  <div className="flex-1 flex flex-col h-full bg-white relative">
-                    <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
-                      <div className="space-y-10">
-                        {/* Header Section */}
-                        <div className="space-y-4">
-                           <div className="flex items-center gap-2">
-                             <span className="px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
-                               {getCategoriaNombre(selectedProductForView.id_categoria)}
-                             </span>
-                             {selectedProductForView.estado ? (
-                               <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-emerald-100">Activo</span>
-                             ) : (
-                               <span className="px-3 py-1 bg-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-slate-200">Inactivo</span>
-                             )}
-                           </div>
-                           <h2 className="text-4xl font-bold text-slate-800 font-['Outfit'] tracking-tighter leading-none">
-                             {selectedProductForView.nombre_producto}
-                           </h2>
-                           <p className="text-slate-400 font-medium text-sm">ID del producto: #{selectedProductForView.id_producto}</p>
-                        </div>
 
-                        {/* Price Area */}
-                        <div className="flex items-end gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
-                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Precio Online</p>
-                            <div className="flex items-center gap-3">
-                              <span className={`text-4xl font-bold text-slate-800 font-['Outfit'] ${Number(selectedProductForView.descuento_producto) > 0 ? 'text-slate-300 line-through text-2xl' : ''}`}>
-                                ${Number(selectedProductForView.precio).toLocaleString()}
-                              </span>
-                              {Number(selectedProductForView.descuento_producto) > 0 && (
-                                <div className="flex items-center gap-3">
-                                   <span className="text-4xl font-black text-rose-500 font-['Outfit']">
-                                     ${(Number(selectedProductForView.precio) * (1 - Number(selectedProductForView.descuento_producto) / 100)).toLocaleString()}
-                                   </span>
-                                   <div className="p-1 px-2 bg-rose-500 rounded-lg text-white text-[10px] font-black uppercase">
-                                     -{selectedProductForView.descuento_producto}%
-                                   </div>
-                                </div>
+                  {/* Stock Total */}
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Stock Total:</span>
+                    <span className={`text-sm font-black ${(variantesGlobales || []).filter(v => v.id_producto === selectedProductForView.id_producto).reduce((a, v) => a + (v.stock || 0), 0) <= 5
+                        ? 'text-rose-500' : 'text-slate-700'
+                      }`}>
+                      {(variantesGlobales || []).filter(v => v.id_producto === selectedProductForView.id_producto).reduce((a, v) => a + (v.stock || 0), 0)} und.
+                    </span>
+                  </div>
+
+                  {/* Variants */}
+                  {(() => {
+                    const prodVars = (variantesGlobales || []).filter(v => v.id_producto === selectedProductForView.id_producto);
+                    if (prodVars.length === 0) return null;
+                    const grouped = prodVars.reduce((acc, v) => {
+                      const cName = getColorNombre(v.id_color);
+                      if (!acc[cName]) acc[cName] = { color: cName, hex: colores.find(c => c.id_color === v.id_color)?.codigo_hex, tallas: [] };
+                      acc[cName].tallas.push({ talla: getTallaNombre(v.id_talla), stock: v.stock });
+                      return acc;
+                    }, {});
+                    return (
+                      <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Detalle por Variantes</p>
+                        <div className="space-y-2">
+                          {Object.values(grouped).map((v, i) => (
+                            <div key={i} className="flex gap-2 p-2.5 bg-white border border-slate-100 rounded-xl shadow-sm items-center">
+                              {v.hex && (
+                                <span className="w-4 h-4 rounded-full border border-slate-200 shrink-0" style={{ backgroundColor: v.hex }} />
                               )}
+                              <span className="text-[10px] font-black text-[#16315f] w-14 shrink-0 truncate">{v.color}</span>
+                              <div className="flex flex-wrap gap-1 border-l border-slate-100 pl-2">
+                                {v.tallas.map((t, ti) => (
+                                  <span key={ti} className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${t.stock <= 5 ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-slate-50 text-slate-500 border-slate-200'
+                                    }`}>{t.talla}: {t.stock}</span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        </div>
-
-                        {/* Inventory Section */}
-                        <div className="space-y-6">
-                           <div className="flex items-center justify-between">
-                              <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Hash size={14} className="text-indigo-500" /> Stock por Atributos
-                              </h4>
-                              <span className="text-xs font-bold text-slate-800 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                                Total: {(variantesGlobales || []).filter(v => v.id_producto === selectedProductForView.id_producto).reduce((acc, v) => acc + (v.stock || 0), 0)} und.
-                              </span>
-                           </div>
-
-                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                             {(() => {
-                               const prodVars = (variantesGlobales || []).filter(v => v.id_producto === selectedProductForView.id_producto);
-                               const grouped = prodVars.reduce((acc, v) => {
-                                 const cName = getColorNombre(v.id_color);
-                                 if (!acc[cName]) acc[cName] = { color: cName, tallas: [] };
-                                 acc[cName].tallas.push({ talla: getTallaNombre(v.id_talla), stock: v.stock });
-                                 return acc;
-                               }, {});
-                               return Object.values(grouped).map((v, vIdx) => (
-                                 <div key={vIdx} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-3 group hover:border-slate-300 transition-all">
-                                   <div className="flex flex-col gap-1.5">
-                                     <span className="text-[10px] font-black text-slate-800 uppercase tracking-tight">{v.color}</span>
-                                     <div className="flex flex-wrap gap-1">
-                                       {(v.tallas || []).map((t, tIdx) => (
-                                         <div key={tIdx} className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg">
-                                           <span className="text-[10px] font-black text-slate-700 uppercase tracking-tighter">{t.talla}</span>
-                                           <span className={`text-[10px] font-bold ${t.stock <= 5 ? 'text-rose-500' : 'text-slate-400'}`}>{t.stock}</span>
-                                         </div>
-                                       ))}
-                                     </div>
-                                   </div>
-                                 </div>
-                               ));
-                             })()}
-                           </div>
-                        </div>
-
-                        {/* Description Section */}
-                        <div className="space-y-3">
-                           <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                             <FileText size={14} className="text-amber-500" /> Descripción Técnica
-                           </h4>
-                           <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 italic text-slate-600 text-sm leading-relaxed">
-                             "{selectedProductForView.descripcion || "Este producto no cuenta con una descripción detallada en este momento."}"
-                           </div>
+                          ))}
                         </div>
                       </div>
-                    </div>
+                    );
+                  })()}
 
-                    <div className="p-8 shrink-0 flex gap-4">
-                       <button 
-                         onClick={() => { setIsViewModalOpen(false); openProductModal(selectedProductForView); }}
-                         className="flex-1 py-4 bg-slate-900 text-white rounded-3xl font-bold text-sm hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-95"
-                       >
-                         <Pen size={18} /> Editar Producto
-                       </button>
+                  {/* Description */}
+                  {selectedProductForView.descripcion && (
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Descripción</p>
+                      <p className="text-[11px] text-slate-500 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">{selectedProductForView.descripcion}</p>
                     </div>
-                  </div>
+                  )}
+                </div>
+
+                {/* Footer actions */}
+                <div className="p-4 border-t border-slate-100 bg-white flex gap-2 shrink-0">
+                  <button
+                    onClick={() => { setIsViewModalOpen(false); openProductModal(selectedProductForView); }}
+                    className="flex-1 py-2.5 bg-[#16315f] text-white rounded-xl font-bold text-xs hover:bg-[#0d2248] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Pen size={14} /> Editar
+                  </button>
+                  <button
+                    onClick={() => setIsViewModalOpen(false)}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-500 rounded-xl font-bold text-xs hover:bg-slate-200 transition-all"
+                  >
+                    Cerrar
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1319,7 +1343,7 @@ export default function Productos({ renderLayout = true }) {
                   <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto ring-8 ring-rose-50/50">
                     <Trash2 size={32} className="text-rose-500" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h3 className="text-2xl font-bold text-slate-800 tracking-tight font-['Outfit']">¿Eliminar Producto?</h3>
                     <p className="text-slate-400 text-sm font-medium leading-relaxed px-2">
@@ -1359,41 +1383,41 @@ export default function Productos({ renderLayout = true }) {
                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               >
                 <div className="flex items-center gap-4 mb-8">
-                   <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
-                     <Plus className="text-white" size={24} />
-                   </div>
-                   <div>
-                     <h3 className="font-bold text-xl text-slate-800 tracking-tight font-['Outfit']">Nuevo Color</h3>
-                     <p className="text-xs text-slate-400 font-medium">Agréguelo instantáneamente</p>
-                   </div>
+                  <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
+                    <Plus className="text-white" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl text-slate-800 tracking-tight font-['Outfit']">Nuevo Color</h3>
+                    <p className="text-xs text-slate-400 font-medium">Agréguelo instantáneamente</p>
+                  </div>
                 </div>
 
                 <div className="space-y-6">
-                   <div className="space-y-2">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
-                     <input
-                       type="text"
-                       placeholder="Ej: Azul Medianoche"
-                       value={newColorName}
-                       onChange={(e) => setNewColorName(e.target.value)}
-                       className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:ring-8 focus:ring-slate-100 outline-none transition-all text-sm font-bold text-slate-700"
-                     />
-                   </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Azul Medianoche"
+                      value={newColorName}
+                      onChange={(e) => setNewColorName(e.target.value)}
+                      className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:ring-8 focus:ring-slate-100 outline-none transition-all text-sm font-bold text-slate-700"
+                    />
+                  </div>
 
-                   <div className="space-y-2">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selector de Tono</label>
-                     <div className="flex items-center gap-3">
-                       <input
-                         type="color"
-                         value={newColorHex}
-                         onChange={(e) => setNewColorHex(e.target.value)}
-                         className="w-14 h-14 p-0 border-2 border-slate-300 rounded-2xl cursor-pointer overflow-hidden shadow-sm hover:scale-105 transition-transform"
-                       />
-                       <div className="flex-1 px-5 py-3.5 bg-slate-100 border-2 border-slate-200 rounded-2xl text-xs font-black text-slate-400 uppercase tracking-widest">
-                         {newColorHex}
-                       </div>
-                     </div>
-                   </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selector de Tono</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={newColorHex}
+                        onChange={(e) => setNewColorHex(e.target.value)}
+                        className="w-14 h-14 p-0 border-2 border-slate-300 rounded-2xl cursor-pointer overflow-hidden shadow-sm hover:scale-105 transition-transform"
+                      />
+                      <div className="flex-1 px-5 py-3.5 bg-slate-100 border-2 border-slate-200 rounded-2xl text-xs font-black text-slate-400 uppercase tracking-widest">
+                        {newColorHex}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-10">
@@ -1427,24 +1451,24 @@ export default function Productos({ renderLayout = true }) {
                 initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
               >
                 <div className="flex items-center gap-4 mb-8">
-                   <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
-                     <Plus className="text-white" size={24} />
-                   </div>
-                   <div>
-                     <h3 className="font-bold text-xl text-slate-800 tracking-tight font-['Outfit']">Nueva Talla</h3>
-                     <p className="text-xs text-slate-400 font-medium">Expanda sus existencias</p>
-                   </div>
+                  <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200">
+                    <Plus className="text-white" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl text-slate-800 tracking-tight font-['Outfit']">Nueva Talla</h3>
+                    <p className="text-xs text-slate-400 font-medium">Expanda sus existencias</p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre / Identificación</label>
-                   <input
-                     type="text"
-                     placeholder="Ej: XXL o 42"
-                     value={newTallaName}
-                     onChange={(e) => setNewTallaName(e.target.value)}
-                     className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:ring-8 focus:ring-slate-100 outline-none transition-all text-sm font-bold text-slate-700"
-                   />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre / Identificación</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: XXL o 42"
+                    value={newTallaName}
+                    onChange={(e) => setNewTallaName(e.target.value)}
+                    className="w-full px-5 py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:ring-8 focus:ring-slate-100 outline-none transition-all text-sm font-bold text-slate-700"
+                  />
                 </div>
 
                 <div className="flex justify-end gap-3 mt-10">

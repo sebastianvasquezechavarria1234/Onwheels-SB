@@ -16,7 +16,13 @@ export const Grid = () => {
         const fetchProducts = async () => {
             try {
                 const response = await api.get("/productos");
-                setProducts(response.data);
+                // Filtrar productos inactivos y con stock 0
+                const availableProducts = response.data.filter(p => {
+                    const isActive = p.estado !== false;
+                    const totalStock = (p.variantes || []).reduce((acc, v) => acc + (v.stock || 0), 0);
+                    return isActive && totalStock > 0;
+                });
+                setProducts(availableProducts);
             } catch (error) {
                 console.error("Connection error:", error);
             } finally {

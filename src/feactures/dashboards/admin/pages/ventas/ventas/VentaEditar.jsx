@@ -383,7 +383,7 @@ export default function VentaEditar() {
                                                     </div>
                                                 </div>
                                                 <div className={configUi.fieldGroup}>
-                                                    <label className={configUi.fieldLabel}>Método de Recaudo</label>
+                                                    <label className={configUi.fieldLabel}>Método de pago</label>
                                                     <div className="relative">
                                                         <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300" size={18} />
                                                         <select
@@ -444,8 +444,7 @@ export default function VentaEditar() {
                                                 <span className="text-slate-600 text-sm font-black">${totalEstimated.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black">
-                                                <span>Impuestos</span>
-                                                <span className="text-emerald-500 text-sm italic font-black">$0</span>
+
                                             </div>
                                             <div className="flex justify-between items-center py-4 border-y border-slate-50 mt-4">
                                                 <span className="text-sm font-black uppercase tracking-tighter text-slate-400">Total</span>

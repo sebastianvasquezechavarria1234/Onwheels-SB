@@ -189,7 +189,7 @@ export default function Usuarios() {
       };
 
       const newUserRes = await createUsuario(payload);
-      
+
       // Si el usuario seleccionó una foto, la subimos
       if (formData.foto_perfil && newUserRes?.usuario?.id_usuario) {
         const formDataImg = new FormData();
@@ -203,10 +203,10 @@ export default function Usuarios() {
           },
           body: formDataImg
         });
-        
+
         if (!photoRes.ok) {
-           const errData = await photoRes.json();
-           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
+          const errData = await photoRes.json();
+          throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
         }
       }
 
@@ -248,7 +248,7 @@ export default function Usuarios() {
         const formDataImg = new FormData();
         formDataImg.append("foto_perfil", formData.foto_perfil);
         const token = localStorage.getItem("token");
-        
+
         const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:3000";
         const photoRes = await fetch(`${API_URL}/api/usuarios/${selectedUsuario.id_usuario}/foto`, {
           method: "POST",
@@ -259,17 +259,17 @@ export default function Usuarios() {
         });
 
         if (!photoRes.ok) {
-           const errData = await photoRes.json();
-           throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
+          const errData = await photoRes.json();
+          throw new Error(errData.mensaje || "Error al subir la imagen de perfil");
         }
-        
+
         // Actualizamos localstorage si nos estamos editando a nosotros mismos
         const photoData = await photoRes.json();
         const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
-        if(String(currentUserData.id_usuario) === String(selectedUsuario.id_usuario)){
+        if (String(currentUserData.id_usuario) === String(selectedUsuario.id_usuario)) {
           currentUserData.foto_perfil = photoData.foto_perfil || photoData.secure_url;
           localStorage.setItem("user", JSON.stringify(currentUserData));
-          window.dispatchEvent(new Event("storage")); 
+          window.dispatchEvent(new Event("storage"));
         }
       }
 
@@ -390,8 +390,8 @@ export default function Usuarios() {
     return usuarios.filter(u => {
       // Filter by Type (Role)
       if (filterType === "Clientes") {
-        const isClient = u.roles?.some(r => 
-          r.nombre_rol?.toLowerCase().includes("cliente") || 
+        const isClient = u.roles?.some(r =>
+          r.nombre_rol?.toLowerCase().includes("cliente") ||
           r.nombre_rol?.toLowerCase().includes("estudiante")
         );
         if (!isClient) return false;
@@ -406,7 +406,7 @@ export default function Usuarios() {
         if (filterStatus === "Activo" && !isActive) return false;
         if (filterStatus === "Inactivo" && isActive) return false;
       }
-      
+
       if (search) {
         const q = search.toLowerCase();
         const matchesNombre = u.nombre_completo?.toLowerCase().includes(q);
@@ -436,7 +436,7 @@ export default function Usuarios() {
         <div className={configUi.headerRow}>
           <div className={configUi.titleWrap}>
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
-               Usuarios
+              Usuarios
             </h2>
             <span className={configUi.countBadge}>{totalFiltered} usuarios</span>
           </div>
@@ -465,17 +465,8 @@ export default function Usuarios() {
               ]}
               placeholder="Filtrar por Rol"
             />
-            
-            <FilterDropdown
-              value={filterStatus}
-              onChange={(val) => { setFilterStatus(val); setCurrentPage(1); }}
-              options={[
-                { label: "Todos los Estados", value: "Todos" },
-                { label: "Activos", value: "Activo", color: "#10b981" },
-                { label: "Inactivos", value: "Inactivo", color: "#ef4444" }
-              ]}
-              placeholder="Estado"
-            />
+
+
 
             {/* Download Button */}
             <button
@@ -556,7 +547,7 @@ export default function Usuarios() {
                             <Mail size={14} className="shrink-0 text-slate-400" />
                             <span className="text-sm">{u.email}</span>
                           </div>
-                              {u.telefono && (
+                          {u.telefono && (
                             <div className="flex items-center gap-2 text-slate-500">
                               <Phone size={14} className="shrink-0 text-slate-400" />
                               <span className="text-xs font-medium">{u.telefono}</span>
@@ -724,7 +715,7 @@ export default function Usuarios() {
                         <div className="mx-auto flex max-w-md gap-3">
                           <button onClick={closeModal} disabled={submitting} className={`${configUi.secondaryButton} flex-1`}>Cancelar</button>
                           {!modalError && (
-                             <button onClick={handleDelete} disabled={submitting} className={`${configUi.dangerButton} flex-1`}>{submitting ? "Eliminando..." : "Eliminar"}</button>
+                            <button onClick={handleDelete} disabled={submitting} className={`${configUi.dangerButton} flex-1`}>{submitting ? "Eliminando..." : "Eliminar"}</button>
                           )}
                         </div>
                       </div>

@@ -181,10 +181,10 @@ export const Administradores = () => {
   const filteredAdmins = React.useMemo(() => {
     return administradores.filter(a => {
       const q = search.toLowerCase();
-      const matchesSearch = a.nombre_completo.toLowerCase().includes(q) || 
-                           a.email.toLowerCase().includes(q) ||
-                           (a.area || "").toLowerCase().includes(q);
-      
+      const matchesSearch = a.nombre_completo.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q) ||
+        (a.area || "").toLowerCase().includes(q);
+
       if (filterType === "Superadmin") return matchesSearch && a.tipo_admin?.toLowerCase() === "superadmin";
       if (filterType === "Soporte") return matchesSearch && a.tipo_admin?.toLowerCase() === "soporte";
       return matchesSearch;
@@ -222,7 +222,7 @@ export const Administradores = () => {
               />
             </div>
 
-            {/* Filter Dropdown */}
+            {/* Filter Dropdown
             <FilterDropdown
               value={filterType}
               onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
@@ -232,7 +232,7 @@ export const Administradores = () => {
                 { label: "Soporte", value: "Soporte", icon: UserCog }
               ]}
               placeholder="Tipo de Admin"
-            />
+            /> */}
 
 
 
