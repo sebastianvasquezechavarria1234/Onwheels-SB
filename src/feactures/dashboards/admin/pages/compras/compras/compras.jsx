@@ -25,9 +25,6 @@ const Compras = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 10;
 
-  const [selected, setSelected] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-
   // Notificación
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
@@ -58,10 +55,7 @@ const Compras = () => {
     }
   };
 
-  const openDetails = (compra) => {
-    setSelected(compra);
-    setModalOpen(true);
-  };
+
 
   const handleDelete = async (compraId) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar la orden #${compraId}? Esta acción no se puede revertir.`)) return;
@@ -78,10 +72,7 @@ const Compras = () => {
     }
   };
 
-  const closeDetails = () => {
-    setModalOpen(false);
-    setTimeout(() => setSelected(null), 200);
-  };
+
 
   const getProveedorNombre = (id_proveedor) => {
     const p = proveedores.find(item => item.id_proveedor === id_proveedor);
@@ -121,17 +112,6 @@ const Compras = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Confirma la eliminación de este registro de compra?")) return;
-    try {
-      await comprasService.deleteCompra(id);
-      showNotification("Registro de compra eliminado");
-      fetchData();
-    } catch (err) {
-      showNotification("Error al eliminar el registro", "error");
-    }
   };
 
   return (
@@ -267,7 +247,7 @@ const Compras = () => {
                     </td>
                     <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openDetails(c)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
+                        <Link to={`${basePath}/compras/detalle/${c.id_compra}`} className={configUi.actionButton} title="Detalle"><Eye size={14} /></Link>
                         <Link to={`${basePath}/compras/editar/${c.id_compra}`} className={configUi.actionButton} title="Modificar">
                           <Edit2 size={14} />
                         </Link>
@@ -311,95 +291,7 @@ const Compras = () => {
         )}
       </div>
 
-      {/* --- Details Modal --- */}
-      <AnimatePresence>
-        {modalOpen && selected && (
-          <motion.div
-            className={configUi.modalBackdrop}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeDetails}
-          >
-            <motion.div
-              className={cn(configUi.modalPanel, "max-w-4xl")}
-              initial={{ scale: 0.95, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 30 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={configUi.modalHeader}>
-                <div>
-                  <h3 className={configUi.modalTitle}>Detalle de Transacción</h3>
-                  <p className={configUi.modalSubtitle}>ID Factura: #ORDEN-{selected.id_compra.toString().padStart(5, '0')}</p>
-                </div>
-                <button onClick={closeDetails} className={configUi.modalClose}><X size={20} /></button>
-              </div>
 
-              <div className={configUi.modalContent}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div className={configUi.formSection}>
-                    <p className={configUi.modalEyebrow}>Proveedor</p>
-                    <p className="text-lg font-black text-[#16315f] mt-1">{selected.nombre_empresa || selected.nombre_proveedor}</p>
-                    <p className="text-sm text-[#6b84aa]">{selected.email || "No registrado"}</p>
-                  </div>
-                  <div className={configUi.formSection}>
-                    <p className={configUi.modalEyebrow}>Fecha y Liquidación</p>
-                    <div className="flex justify-between items-end mt-1">
-                      <div>
-                        <p className="text-sm font-bold text-[#16315f]">{new Date(selected.fecha_compra).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                        <p className={configUi.successPill + " mt-2"}>Liquidación Finalizada</p>
-                      </div>
-                      <p className="text-2xl font-black text-[#16315f] tabular-nums">${Number(selected.total_compra).toLocaleString('es-CO')}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className={configUi.modalEyebrow + " flex items-center gap-2"}>
-                    <Package size={14} /> Desglose de Productos
-                  </h4>
-                  <div className="rounded-2xl border border-[#d7e5f8] overflow-hidden">
-                    <table className="w-full text-left">
-                      <thead className="bg-[#f8fbff] text-[#6b84aa] text-[10px] font-black uppercase tracking-widest border-b border-[#f0f6ff]">
-                        <tr>
-                          <th className="px-5 py-3">Referencia</th>
-                          <th className="px-5 py-3 text-center">Cant.</th>
-                          <th className="px-5 py-3 text-right">Unitario</th>
-                          <th className="px-5 py-3 text-right">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#f0f6ff]">
-                        {selected.items?.map((item, idx) => (
-                          <tr key={idx} className="text-[12px] text-[#16315f]">
-                            <td className="px-5 py-3">
-                              <div className="flex flex-col">
-                                <span className="font-bold uppercase">{item.nombre_producto}</span>
-                                <span className="text-[10px] text-[#6b84aa]">{item.nombre_variante}</span>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3 text-center font-bold">x{item.cantidad}</td>
-                            <td className="px-5 py-3 text-right tabular-nums text-[#6b84aa]">${Number(item.precio_unitario).toLocaleString('es-CO')}</td>
-                            <td className="px-5 py-3 text-right tabular-nums font-bold">${Number(item.subtotal).toLocaleString('es-CO')}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <div className={configUi.modalFooter}>
-                <button onClick={closeDetails} className={configUi.secondaryButton}>Cerrar Detalle</button>
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-[#6b84aa]">TOTAL LIQUIDADO:</span>
-                  <span className="text-xl font-black text-[#16315f]">${Number(selected.total_compra).toLocaleString('es-CO')}</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* --- NOTIFICATIONS --- */}
       <AnimatePresence>

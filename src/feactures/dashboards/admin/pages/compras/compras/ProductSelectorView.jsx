@@ -8,7 +8,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { cn, configUi } from "../../configuracion/configUi";
 
-export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = false, currentItems = [] }) => {
+export const ProductSelectorView = ({ 
+    onClose, onAdd, allProducts, 
+    checkStock = false, currentItems = [],
+    availableColors = [], availableSizes = []
+}) => {
     const location = useLocation();
     const basePath = location.pathname.startsWith('/custom') ? '/custom' : '/admin';
     const productPath = basePath === '/custom' ? 'productos' : 'products';
@@ -16,6 +20,8 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
     const [productSearch, setProductSearch] = useState("");
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
+    const [manualMode, setManualMode] = useState(false);
+    const [manualConfig, setManualConfig] = useState({ id_color: "", id_talla: "" });
     const [qty, setQty] = useState(1);
     const [priceField, setPriceField] = useState("");
     const [error, setError] = useState("");
@@ -30,13 +36,41 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
     const handleSelectProduct = (product) => {
         setSelectedProduct(product);
         setSelectedVariant(null);
+        setManualMode(false);
+        setManualConfig({ id_color: "", id_talla: "" });
         setQty(1);
-        setPriceField(product.precio || "");
+        setPriceField(product.precio_compra || product.precio || "");
         setError("");
     };
 
     const handleAddItem = () => {
-        if (!selectedProduct || !selectedVariant) return;
+        if (!selectedProduct) return;
+
+        let finalVariant = selectedVariant;
+
+        if (manualMode) {
+            if (!manualConfig.id_color || !manualConfig.id_talla) {
+                setError("Seleccione Color y Talla");
+                return;
+            }
+            const colorObj = availableColors.find(c => String(c.id_color) === String(manualConfig.id_color));
+            const tallaObj = availableSizes.find(t => String(t.id_talla) === String(manualConfig.id_talla));
+            
+            finalVariant = {
+                id_variante: null,
+                id_color: colorObj.id_color,
+                nombre_color: colorObj.nombre_color || colorObj.color,
+                codigo_hex: colorObj.codigo_hex,
+                id_talla: tallaObj.id_talla,
+                nombre_talla: tallaObj.nombre_talla || tallaObj.talla,
+                stock: 0
+            };
+        }
+
+        if (!finalVariant) {
+            setError("Seleccione una variante o configure una nueva");
+            return;
+        }
 
         const cantidad = parseInt(qty) || 0;
         if (cantidad <= 0) {
@@ -44,26 +78,26 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
             return;
         }
 
-        if (checkStock) {
-            const existingItem = currentItems.find(it => it.id_variante === selectedVariant.id_variante);
-            const existingQty = existingItem ? existingItem.qty : 0;
+        if (checkStock && finalVariant.id_variante) {
+            const existingItem = currentItems.find(it => it.id_variante === finalVariant.id_variante);
+            const existingQty = existingItem ? (existingItem.qty || existingItem.cantidad || 0) : 0;
             const totalQty = existingQty + cantidad;
 
-            if (totalQty > (selectedVariant.stock || 0)) {
-                setError(`Stock insuficiente. Ya tienes ${existingQty} en la lista. Máximo disponible: ${selectedVariant.stock}`);
+            if (totalQty > (finalVariant.stock || 0)) {
+                setError(`Stock insuficiente. Ya tienes ${existingQty} en la lista. Máximo disponible: ${finalVariant.stock}`);
                 return;
             }
         }
 
         onAdd({
             product: selectedProduct,
-            variant: selectedVariant,
+            variant: finalVariant,
             cantidad: cantidad,
             precio_unitario: parseFloat(priceField) || 0
         });
         
         // Reset after add
-        setSelectedVariant(null);
+        if (!manualMode) setSelectedVariant(null);
         setQty(1);
         setError("");
     };
@@ -193,65 +227,120 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
 
                                 {/* Variant Selection */}
                                 <div className="space-y-6">
-                                    <div className="flex items-center gap-3">
-                                        <TrendingUp size={16} className="text-indigo-400" />
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Variantes en Existencia</h4>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
-                                            <div className="col-span-full p-8 rounded-3xl bg-white border border-indigo-50 border-dashed text-center">
-                                                <AlertCircle className="mx-auto text-slate-300 mb-2" size={24} />
-                                                <p className="text-xs font-medium text-slate-400">Sin variantes disponibles para este producto</p>
-                                            </div>
-                                        ) : (
-                                            selectedProduct.variantes.map(v => {
-                                                const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
-                                                const outOfStock = v.stock <= 0 && checkStock;
-                                                return (
-                                                    <button
-                                                        key={v.id_variante || v.id_producto_variante}
-                                                        onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
-                                                        disabled={outOfStock}
-                                                        className={cn(
-                                                            "p-4 rounded-2xl border-2 text-left transition-all relative group",
-                                                            isVarSelected 
-                                                                ? "border-indigo-500 bg-white shadow-xl shadow-indigo-100 -translate-y-1"
-                                                                : outOfStock 
-                                                                    ? "border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
-                                                                    : "border-transparent bg-white hover:border-indigo-100 hover:shadow-lg"
-                                                        )}
-                                                    >
-                                                        <div className="flex items-center justify-between mb-3">
-                                                            <div className="flex items-center gap-2">
-                                                                {v.codigo_hex && (
-                                                                    <div className="h-3 w-3 rounded-full border border-slate-100" style={{ backgroundColor: v.codigo_hex }} />
-                                                                )}
-                                                                <span className="text-[10px] font-black uppercase text-[#16315f] tracking-tighter">
-                                                                    {v.nombre_color || v.color || 'Único'}
-                                                                </span>
-                                                            </div>
-                                                            <span className={cn("text-[10px] font-bold", isVarSelected ? "text-indigo-500" : "text-slate-300")}>
-                                                                {v.nombre_talla || v.talla || 'Única'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-[11px] font-bold text-slate-400">Stock</span>
-                                                            <span className={cn("text-xs font-black", (v.stock || 0) > 0 ? "text-[#16315f]" : "text-rose-500")}>
-                                                                {v.stock || 0}
-                                                            </span>
-                                                        </div>
-                                                        {isVarSelected && <div className="absolute top-2 right-2 h-4 w-4 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg"><CheckCircle size={10} className="text-white" /></div>}
-                                                    </button>
-                                                );
-                                            })
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <TrendingUp size={16} className="text-indigo-400" />
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Variantes en Existencia</h4>
+                                        </div>
+                                        {!checkStock && (
+                                            <button 
+                                                onClick={() => { setManualMode(!manualMode); setSelectedVariant(null); setError(""); }}
+                                                className={cn(
+                                                    "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border",
+                                                    manualMode 
+                                                        ? "bg-[#16315f] text-white border-[#16315f]" 
+                                                        : "bg-white text-indigo-500 border-indigo-100 hover:bg-indigo-50"
+                                                )}
+                                            >
+                                                {manualMode ? "Ver Existentes" : "Nueva Combinación"}
+                                            </button>
                                         )}
                                     </div>
+                                    
+                                    {!manualMode ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
+                                                <div className="col-span-full p-8 rounded-3xl bg-white border border-indigo-50 border-dashed text-center">
+                                                    <AlertCircle className="mx-auto text-slate-300 mb-2" size={24} />
+                                                    <p className="text-xs font-medium text-slate-400">Sin variantes registradas</p>
+                                                    {!checkStock && (
+                                                        <button 
+                                                            onClick={() => setManualMode(true)}
+                                                            className="mt-4 text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:underline"
+                                                        >
+                                                            Configurar Nueva Variante
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                selectedProduct.variantes.map(v => {
+                                                    const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
+                                                    const outOfStock = v.stock <= 0 && checkStock;
+                                                    return (
+                                                        <button
+                                                            key={v.id_variante || v.id_producto_variante}
+                                                            onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
+                                                            disabled={outOfStock}
+                                                            className={cn(
+                                                                "p-4 rounded-2xl border-2 text-left transition-all relative group",
+                                                                isVarSelected 
+                                                                    ? "border-indigo-500 bg-white shadow-xl shadow-indigo-100 -translate-y-1"
+                                                                    : outOfStock 
+                                                                        ? "border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
+                                                                        : "border-transparent bg-white hover:border-indigo-100 hover:shadow-lg"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    {v.color_hex || v.codigo_hex ? (
+                                                                        <div className="h-3 w-3 rounded-full border border-slate-100" style={{ backgroundColor: v.color_hex || v.codigo_hex }} />
+                                                                    ) : null}
+                                                                    <span className="text-[10px] font-black uppercase text-[#16315f] tracking-tighter">
+                                                                        {v.nombre_color || v.color || 'Único'}
+                                                                    </span>
+                                                                </div>
+                                                                <span className={cn("text-[10px] font-bold", isVarSelected ? "text-indigo-500" : "text-slate-300")}>
+                                                                    {v.nombre_talla || v.talla || 'Única'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[11px] font-bold text-slate-400">Stock</span>
+                                                                <span className={cn("text-xs font-black", (v.stock || 0) > 0 ? "text-[#16315f]" : "text-rose-500")}>
+                                                                    {v.stock || 0}
+                                                                </span>
+                                                            </div>
+                                                            {isVarSelected && <div className="absolute top-2 right-2 h-4 w-4 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg"><CheckCircle size={10} className="text-white" /></div>}
+                                                        </button>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-4 p-8 rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100/50">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Color de Variante</label>
+                                                <select 
+                                                    value={manualConfig.id_color}
+                                                    onChange={(e) => setManualConfig({...manualConfig, id_color: e.target.value})}
+                                                    className="w-full h-12 px-4 bg-white border border-indigo-100 rounded-xl text-xs font-bold text-[#16315f] outline-none"
+                                                >
+                                                    <option value="">Seleccionar Color...</option>
+                                                    {availableColors.map(c => (
+                                                        <option key={c.id_color} value={c.id_color}>{c.nombre_color}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Talla / Tamaño</label>
+                                                <select 
+                                                    value={manualConfig.id_talla}
+                                                    onChange={(e) => setManualConfig({...manualConfig, id_talla: e.target.value})}
+                                                    className="w-full h-12 px-4 bg-white border border-indigo-100 rounded-xl text-xs font-bold text-[#16315f] outline-none"
+                                                >
+                                                    <option value="">Seleccionar Talla...</option>
+                                                    {availableSizes.map(t => (
+                                                        <option key={t.id_talla} value={t.id_talla}>{t.nombre_talla}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <p className="col-span-full text-[10px] text-indigo-400 font-bold italic mt-2 text-center">Nota: Si la combinación ya existe, el sistema la detectará automáticamente al procesar la compra.</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Form Panel (Amount & Price) */}
                                 <AnimatePresence>
-                                    {selectedVariant && (
+                                    {(selectedVariant || manualMode) && (
                                         <motion.div
                                             initial={{ opacity: 0, y: 15 }}
                                             animate={{ opacity: 1, y: 0 }}
@@ -264,7 +353,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                                                     <div className="space-y-3">
                                                         <div className="flex justify-between items-center px-1">
                                                             <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Cantidad</label>
-                                                            <span className="text-[10px] font-bold opacity-40 italic">{selectedVariant.stock || 0} Total</span>
+                                                            <span className="text-[10px] font-bold opacity-40 italic">{manualMode ? 0 : (selectedVariant?.stock || 0)} Actual</span>
                                                         </div>
                                                         <div className="flex items-center gap-3 bg-white/10 rounded-2xl p-2 border border-white/10 h-16">
                                                             <button 

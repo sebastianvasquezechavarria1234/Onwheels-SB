@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import comprasService from "../../services/comprasService";
-import { getVariantes } from "../../services/productosServices";
+import { getVariantes, getColores, getTallas } from "../../services/productosServices";
 import { ProductSelectorView } from "./ProductSelectorView";
 import { cn, configUi } from "../../configuracion/configUi";
 import { useToast } from "../../../../../../context/ToastContext";
@@ -31,6 +31,8 @@ const CompraEditar = () => {
     const [items, setItems] = useState([]);
     const [proveedores, setProveedores] = useState([]);
     const [allProducts, setAllProducts] = useState([]);
+    const [colores, setColores] = useState([]);
+    const [tallas, setTallas] = useState([]);
     const [showProductSelector, setShowProductSelector] = useState(false);
 
     const [errors, setErrors] = useState({});
@@ -78,13 +80,17 @@ const CompraEditar = () => {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const [provRes, prodRes, varRes] = await Promise.all([
+            const [provRes, prodRes, varRes, colRes, talRes] = await Promise.all([
                 comprasService.getProveedores(),
                 comprasService.getProductos({ limit: 1000 }),
-                getVariantes()
+                getVariantes(),
+                getColores(),
+                getTallas()
             ]);
 
             setProveedores(Array.isArray(provRes) ? provRes : []);
+            setColores(Array.isArray(colRes) ? colRes : []);
+            setTallas(Array.isArray(talRes) ? talRes : []);
 
             const rawProducts = Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : [];
             setAllProducts(combinarProductosConVariantes(rawProducts, varRes || []));
@@ -200,6 +206,8 @@ const CompraEditar = () => {
                         key="selector"
                         onClose={() => setShowProductSelector(false)}
                         allProducts={allProducts}
+                        availableColors={colores}
+                        availableSizes={tallas}
                         onAdd={(data) => {
                             const { product, variant, cantidad, precio_unitario } = data;
                             const newItem = {
@@ -260,70 +268,71 @@ const CompraEditar = () => {
                             </div>
                         </div>
 
-                        {/* Main Grid Content */}
-                        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden min-h-0 pb-4">
-
-                            {/* Left: General Info */}
-                            <div className="lg:col-span-4 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-                                <div className="space-y-4">
-                                    <h4 className="text-sm font-black text-[#16315f] uppercase tracking-widest flex items-center gap-2 border-b border-[#d7e5f8] pb-2">
-                                        <Info size={10} className="text-indigo-300" /> Información Principal
-                                    </h4>
-
-                                    <div className={configUi.fieldGroup}>
-                                        <label className={configUi.fieldLabel}>Proveedor Autorizado *</label>
-                                        <div className="relative">
-                                            <Archive className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                            <select
-                                                value={purchase.nit_proveedor}
-                                                onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
-                                                className={cn(configUi.fieldSelect, "pl-11", errors.nit_proveedor && "border-rose-400 bg-rose-50/30")}
-                                            >
-                                                <option value="">Seleccionar Proveedor...</option>
-                                                {proveedores.map(p => (
-                                                    <option key={p.nit || p.id_proveedor} value={p.nit || p.id_proveedor}>
-                                                        {p.nombre_empresa || p.nombre_proveedor}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
-                                                <ChevronDown size={18} />
-                                            </div>
+                        {/* Main Content Layout - Reordered to be vertical */}
+                        <div className="flex-1 flex flex-col gap-6 overflow-hidden min-h-0 pb-4">
+                            
+                            {/* Top Section: General Info & Add Button */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end shrink-0">
+                                <div className={configUi.fieldGroup}>
+                                    <label className={configUi.fieldLabel}>Proveedor Autorizado *</label>
+                                    <div className="relative">
+                                        <Archive className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <select
+                                            value={purchase.nit_proveedor}
+                                            onChange={(e) => setPurchase(prev => ({ ...prev, nit_proveedor: e.target.value }))}
+                                            className={cn(configUi.fieldSelect, "pl-11", errors.nit_proveedor && "border-rose-400 bg-rose-50/30")}
+                                        >
+                                            <option value="">Seleccionar Proveedor...</option>
+                                            {proveedores.map(p => (
+                                                <option key={p.nit || p.id_proveedor} value={p.nit || p.id_proveedor}>
+                                                    {p.nombre_empresa || p.nombre_proveedor}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                                            <ChevronDown size={18} />
                                         </div>
-                                        {errors.nit_proveedor && <p className="text-[10px] text-rose-500 mt-1 font-bold italic">{errors.nit_proveedor}</p>}
                                     </div>
-
-                                    <div className={configUi.fieldGroup}>
-                                        <label className={configUi.fieldLabel}>Fecha Contable</label>
-                                        <div className="relative">
-                                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                            <input
-                                                type="date"
-                                                value={purchase.fecha_compra}
-                                                onChange={(e) => setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }))}
-                                                className={cn(configUi.fieldInput, "pl-11")}
-                                            />
-                                        </div>
-                                        {errors.fecha_compra && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.fecha_compra}</p>}
-                                    </div>
+                                    {errors.nit_proveedor && <p className="text-[10px] text-rose-500 mt-1 font-bold italic">{errors.nit_proveedor}</p>}
                                 </div>
 
-                                <button
-                                    onClick={() => setShowProductSelector(true)}
-                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-indigo-100 bg-indigo-50/50 text-[#16315f] hover:bg-indigo-50 hover:border-indigo-200 transition-all"
-                                >
-                                    <PlusCircle size={16} className="text-indigo-500" />
-                                    <span className="text-xs font-black uppercase tracking-widest">Agregar Producto</span>
-                                </button>
-                                {errors.items && <p className="text-left text-xs font-bold text-rose-500">{errors.items}</p>}
+                                <div className={configUi.fieldGroup}>
+                                    <label className={configUi.fieldLabel}>Fecha Contable</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <input
+                                            type="date"
+                                            value={purchase.fecha_compra}
+                                            onChange={(e) => setPurchase(prev => ({ ...prev, fecha_compra: e.target.value }))}
+                                            className={cn(configUi.fieldInput, "pl-11")}
+                                        />
+                                    </div>
+                                    {errors.fecha_compra && <p className="text-[10px] text-rose-500 mt-1 font-bold">{errors.fecha_compra}</p>}
+                                </div>
+
+                                <div className="flex flex-col justify-end">
+                                    <button
+                                        onClick={() => setShowProductSelector(true)}
+                                        className="h-[46px] w-full flex items-center justify-center gap-3 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 text-[#16315f] hover:bg-white hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-100 transition-all group"
+                                    >
+                                        <PlusCircle size={20} className="text-indigo-500 transition-transform group-hover:rotate-90" />
+                                        <span className="text-xs font-black uppercase tracking-[0.15em]">Vincular Producto</span>
+                                    </button>
+                                    {errors.items && <p className="text-left text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-tight">{errors.items}</p>}
+                                </div>
                             </div>
 
-                            {/* Right: Items List Table */}
-                            <div className="lg:col-span-8 flex flex-col overflow-hidden min-h-0">
-                                <div className={cn(configUi.tableCard, "h-full flex flex-col")}>
-                                    <div className="px-6 py-4 border-b border-[#d7e5f8] flex justify-between items-center bg-[#fbfdff]/50 shrink-0">
-                                        <span className={configUi.modalEyebrow}>Productos en la Compra</span>
-                                        <span className={configUi.subtlePill}>{items.length} Referencias</span>
+                            {/* Bottom Section: Items List Table */}
+                            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                                <div className={cn(configUi.tableCard, "h-full flex flex-col shadow-2xl shadow-indigo-50/50")}>
+                                    <div className="px-6 py-4 border-b border-[#d7e5f8] flex justify-between items-center bg-white shrink-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                                            <span className={configUi.modalEyebrow}>Desglose de Mercancía</span>
+                                        </div>
+                                        <span className={configUi.subtlePill + " text-indigo-500 bg-indigo-50 border-indigo-100 font-black"}>
+                                            {items.length} {items.length === 1 ? 'REF' : 'REFS'}
+                                        </span>
                                     </div>
 
                                     <div className={cn(configUi.tableScroll, "flex-1")}>
@@ -341,9 +350,11 @@ const CompraEditar = () => {
                                                 {items.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={5} className={configUi.emptyState + " py-20"}>
-                                                            <div className="space-y-3 opacity-30 flex flex-col items-center">
-                                                                <ShoppingBag size={48} />
-                                                                <p className="text-xs font-black uppercase tracking-widest leading-none">Canasta Vacía</p>
+                                                            <div className="space-y-4 opacity-50 flex flex-col items-center">
+                                                                <div className="h-24 w-24 bg-slate-50 rounded-[2rem] flex items-center justify-center border border-dashed border-slate-200">
+                                                                    <ShoppingBag size={40} strokeWidth={1} className="text-slate-300" />
+                                                                </div>
+                                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Canasta Vacía</p>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -351,8 +362,8 @@ const CompraEditar = () => {
                                                     items.map((item, idx) => (
                                                         <tr key={idx} className={configUi.row}>
                                                             <td className={configUi.td}>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center shadow-inner">
                                                                         {item.imagen || item.url_imagen ? (
                                                                             <img src={item.imagen || item.url_imagen} alt={item.nombre_producto} className="w-full h-full object-cover" />
                                                                         ) : (
@@ -360,13 +371,15 @@ const CompraEditar = () => {
                                                                         )}
                                                                     </div>
                                                                     <div className="flex flex-col">
-                                                                        <span className="font-bold uppercase text-[11px] truncate max-w-[180px] text-[#16315f]">{item.nombre_producto}</span>
-                                                                        <span className="text-[10px] text-[#6b84aa] mt-0.5">{item.nombre_variante}</span>
+                                                                        <span className="font-bold uppercase text-[11px] tracking-tight text-[#16315f]">{item.nombre_producto}</span>
+                                                                        <span className="text-[10px] text-indigo-400 font-black uppercase mt-0.5">{item.nombre_variante}</span>
                                                                     </div>
                                                                 </div>
                                                             </td>
                                                             <td className={configUi.td + " text-center"}>
-                                                                <span className={configUi.subtlePill}>x{item.cantidad}</span>
+                                                                <span className="h-8 min-w-[32px] px-2 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-lg text-xs font-black text-[#16315f]">
+                                                                    x{item.cantidad}
+                                                                </span>
                                                             </td>
                                                             <td className={configUi.td + " text-right font-bold text-slate-400 tabular-nums"}>
                                                                 ${Number(item.precio_unitario).toLocaleString('es-CO')}
@@ -377,9 +390,9 @@ const CompraEditar = () => {
                                                             <td className={configUi.td + " text-right"}>
                                                                 <button
                                                                     onClick={() => removeItem(idx)}
-                                                                    className={configUi.actionDangerButton}
+                                                                    className="h-10 w-10 flex items-center justify-center text-rose-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all active:scale-90"
                                                                 >
-                                                                    <Trash2 size={14} />
+                                                                    <Trash2 size={16} />
                                                                 </button>
                                                             </td>
                                                         </tr>
@@ -389,14 +402,19 @@ const CompraEditar = () => {
                                         </table>
                                     </div>
 
-                                    <div className="mt-auto px-6 py-4 border-t border-[#d7e5f8] bg-[#fbfdff] flex justify-between items-center shrink-0">
-                                        <div className="flex items-center gap-2 text-emerald-600">
-                                            <CheckCircle size={18} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Total Verificado</span>
+                                    <div className="mt-auto px-10 py-8 border-t border-[#d7e5f8] bg-white flex justify-between items-center shrink-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 border border-emerald-100">
+                                                <CheckCircle size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Impacto Contable</p>
+                                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Liquidación Verificada</span>
+                                            </div>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Monto Total Compra</p>
-                                            <p className="text-2xl font-black text-[#16315f] tabular-nums leading-none">${Number(purchase.total_compra).toLocaleString('es-CO')}</p>
+                                            <p className="text-[9px] font-black text-[#6b84aa] uppercase tracking-widest mb-1 leading-none">Monto Total Liquidado</p>
+                                            <p className="text-4xl font-black text-[#16315f] tabular-nums tracking-tighter leadning-none">${Number(purchase.total_compra).toLocaleString('es-CO')}</p>
                                         </div>
                                     </div>
                                 </div>

@@ -11,7 +11,7 @@ import {
   asignarPermisoARol,
   eliminarPermisoDeRol
 } from "../../services/RolesService";
-import { cn, configUi, groupPermissionsByModule } from "../configUi";
+import { cn, configUi, groupPermissionsByModule, getPermissionMeta } from "../configUi";
 import FilterDropdown from "../FilterDropdown";
 
 const Roles = () => {
@@ -215,6 +215,25 @@ const Roles = () => {
     }
   };
 
+  const toggleRoleStatus = async (rol) => {
+    const isOfficial = [3, 9, 10, 12].includes(rol.id_rol);
+    if (isOfficial) return;
+    try {
+      setLoading(true);
+      await updateRole(rol.id_rol, { 
+        nombre_rol: rol.nombre_rol, 
+        descripcion: rol.descripcion, 
+        estado: !rol.estado 
+      });
+      showNotification(`Estado del rol actualizado a ${!rol.estado ? "Activo" : "Inactivo"}`);
+      fetchRoles();
+    } catch (err) {
+      showNotification(err.response?.data?.mensaje || "Error al actualizar estado", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const togglePermiso = (idPermiso) => {
     const permission = permisosTotales.find(p => p.id_permiso === idPermiso);
     if (!permission) return;
@@ -286,7 +305,12 @@ const Roles = () => {
 
 
 
-  const groupedPermissions = groupPermissionsByModule(permisosTotales);
+  const groupedPermissions = groupPermissionsByModule(permisosTotales)
+    .map(group => ({
+      ...group,
+      items: group.items.filter(p => p.meta.action !== 'ver')
+    }))
+    .filter(group => group.items.length > 0);
 
   return (
     <>
@@ -367,15 +391,25 @@ const Roles = () => {
                         <td className={`${configUi.td}`}>
                           <div className="flex justify-center">
                             {r.estado ? (
-                              <span className={configUi.successPill}>
+                              <button 
+                                onClick={() => toggleRoleStatus(r)} 
+                                disabled={isOfficial} 
+                                className={cn(configUi.successPill, "transition-transform", isOfficial ? "opacity-70 cursor-not-allowed" : "cursor-pointer hover:scale-105 hover:bg-emerald-100 hover:shadow-sm")}
+                                title={isOfficial ? "El estado de roles principales no se puede editar" : "Cambiar estado a Inactivo"}
+                              >
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                                 Activo
-                              </span>
+                              </button>
                             ) : (
-                              <span className={configUi.dangerPill}>
+                              <button 
+                                onClick={() => toggleRoleStatus(r)} 
+                                disabled={isOfficial} 
+                                className={cn(configUi.dangerPill, "transition-transform", isOfficial ? "opacity-70 cursor-not-allowed" : "cursor-pointer hover:scale-105 hover:bg-rose-100 hover:shadow-sm")}
+                                title={isOfficial ? "El estado de roles principales no se puede editar" : "Cambiar estado a Activo"}
+                              >
                                 <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
                                 Inactivo
-                              </span>
+                              </button>
                             )}
                           </div>
                         </td>
@@ -416,7 +450,7 @@ const Roles = () => {
           </div>
 
           {/* Pagination Footer */}
-          {totalPagesLocal > 1 && (
+          {totalFiltered > 0 && (
             <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
                 Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPagesLocal}</span>

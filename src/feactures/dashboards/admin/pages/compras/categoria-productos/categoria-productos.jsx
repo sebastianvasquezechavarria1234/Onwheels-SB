@@ -3,11 +3,7 @@ import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Tag } 
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../../../../../services/api";
 
-// Helper para clases condicionales
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
-
+import { configUi, cn } from "../../configuracion/configUi";
 export default function CategoriaProductos() {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,53 +117,43 @@ export default function CategoriaProductos() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
-      {/* Header & Stats */}
-      <div className="shrink-0 flex flex-col gap-6 p-8 pb-4 bg-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-[#040529] font-['Outfit'] tracking-tight">
-              Categorías de productos
-            </h2>
-            <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
-              <span>{totalItems} categorías totales</span>
-              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-              <span>Clasificación de productos</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-
-            <button
-              onClick={() => openModal("add")}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#040529] text-white rounded-xl text-sm font-bold hover:bg-[#040529]/90 transition-all shadow-lg shadow-[#040529]/10 active:scale-95"
-            >
-              <Plus size={18} />
-              <span>Nueva Categoría</span>
-            </button>
-          </div>
+    <div className={configUi.pageShell}>
+      {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+      <div className={configUi.headerRow}>
+        <div className={configUi.titleWrap}>
+          <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+            Categorías de productos
+          </h2>
+          <span className={configUi.countBadge}>{totalItems} categorías</span>
         </div>
 
-        {/* Toolbar: Search */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
-          <div className="relative flex-1 w-full group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#040529] transition-colors" size={18} />
+        <div className={configUi.toolbar}>
+          {/* Search Bar */}
+          <div className={configUi.searchWrap}>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
+              placeholder="Buscar categoría..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPaginaActual(1); }}
-              placeholder="Buscar por nombre de categoría..."
-              className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl focus:bg-white focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition-all text-sm text-[#16315f]"
+              className={configUi.inputWithIcon}
             />
           </div>
+
+          <button
+            onClick={() => openModal("add")}
+            className={`${configUi.primaryButton} whitespace-nowrap`}
+          >
+            <Plus size={18} />
+            Nueva Categoría
+          </button>
         </div>
       </div>
 
-      {/* Table Area */}
-      <div className="flex-1 p-8 pt-0 overflow-hidden flex flex-col min-h-0">
-        <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] flex flex-col h-full overflow-hidden">
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full min-w-[860px] text-left border-separate border-spacing-0">
+      {/* --- SECTION 2: TABLE AREA --- */}
+      <div className={configUi.tableCard}>
+        <div className={configUi.tableScroll}>
+          <table className={configUi.table}>
               <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-10">
                 <tr>
                   <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] w-16">ID</th>
@@ -197,19 +183,19 @@ export default function CategoriaProductos() {
                   </tr>
                 ) : (
                   categorias.map((c) => (
-                    <tr key={c.id_categoria} className="group hover:bg-[#f8fbff] transition-all">
-                      <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                    <tr key={c.id_categoria} className={configUi.row}>
+                      <td className={configUi.td}>
                         <span className="text-[10px] font-black text-slate-400 px-2 py-0.5 bg-slate-100 rounded-md">#{c.id_categoria}</span>
                       </td>
-                      <td className="px-3 py-2 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm uppercase tracking-tight">{c.nombre_categoria}</td>
-                      <td className="px-3 py-2 border-b border-[#d7e5f8]">
-                        <p className="text-[11px] text-slate-400 font-medium max-w-sm truncate leading-none">{c.descripcion || "—"}</p>
+                      <td className={`${configUi.td} font-bold text-[#16315f] uppercase tracking-tight`}>{c.nombre_categoria}</td>
+                      <td className={configUi.td}>
+                        <p className="text-[11px] text-[#6b84aa] font-medium max-w-sm truncate leading-none">{c.descripcion || "—"}</p>
                       </td>
-                      <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                      <td className={`${configUi.td} text-right`}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <button onClick={() => openModal("details", c)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Eye size={14} /></button>
-                          <button onClick={() => openModal("edit", c)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Pencil size={14} /></button>
-                          <button onClick={() => openModal("delete", c)} className="p-2 rounded-xl bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105"><Trash2 size={14} /></button>
+                          <button onClick={() => openModal("details", c)} className={configUi.actionButton}><Eye size={14} /></button>
+                          <button onClick={() => openModal("edit", c)} className={configUi.actionButton}><Pencil size={14} /></button>
+                          <button onClick={() => openModal("delete", c)} className={configUi.actionDangerButton}><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -219,47 +205,28 @@ export default function CategoriaProductos() {
             </table>
           </div>
 
-          <div className="shrink-0 border-t border-[#d7e5f8] px-5 py-4 bg-[#fbfdff] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-[#6b84aa]">
-              Mostrando <span className="font-bold text-[#16315f]">{categorias.length}</span> de <span className="font-bold text-[#16315f]">{totalItems}</span> registros
-            </div>
-            
+          <div className={configUi.paginationBar}>
+            <p className="text-sm font-bold text-slate-500">
+              Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginas}</span>
+            </p>
             <div className="flex items-center gap-2">
               <button
                 disabled={paginaActual === 1}
                 onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
+                className={configUi.paginationButton}
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={18} />
               </button>
-              
-              <div className="flex items-center gap-1">
-                {[...Array(totalPaginas)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setPaginaActual(i + 1)}
-                    className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
-                      paginaActual === i + 1
-                        ? "bg-[#223a63] text-white shadow-lg shadow-[#223a63]/20"
-                        : "text-[#6b84aa] hover:text-[#16315f] hover:bg-white"
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-
               <button
                 disabled={paginaActual === totalPaginas}
                 onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
+                className={configUi.paginationButton}
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
         </div>
-      </div>
 
       <AnimatePresence>
         {notification.show && (

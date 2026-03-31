@@ -345,22 +345,31 @@ export default function Sedes() {
                   ) : (
                     currentItems.map((s) => (
                       <tr key={s.id_sede} className={configUi.row}>
-                        <td className={`${configUi.td} font-bold text-gray-900`}>{s.nombre_sede}</td>
-                        <td className={`${configUi.td} text-gray-500 flex items-center gap-2`}>
-                          <MapPin size={14} className="text-blue-400 shrink-0" />
-                          <span className="truncate">{s.direccion}</span>
+                        <td className={configUi.td}>
+                          <span className="font-bold text-[#16315f]">{s.nombre_sede}</span>
                         </td>
                         <td className={configUi.td}>
-                          <span className={configUi.pill}>
+                          <div className="flex items-center gap-2 text-slate-500">
+                            <MapPin size={14} className="text-indigo-400 shrink-0" />
+                            <span className="truncate max-w-[300px]">{s.direccion}</span>
+                          </div>
+                        </td>
+                        <td className={configUi.td}>
+                          <span className={cn(configUi.subtlePill, "bg-slate-50 border-slate-100 text-slate-600 font-bold")}>
                             {s.ciudad}
                           </span>
                         </td>
-                        <td className={`${configUi.td} text-gray-600`}>{s.telefono}</td>
+                        <td className={configUi.td}>
+                          <div className="flex items-center gap-2 text-slate-600 font-medium">
+                            <Phone size={14} className="text-slate-300" />
+                            {s.telefono}
+                          </div>
+                        </td>
                         <td className={`${configUi.td} text-right`}>
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button onClick={() => openModal("ver", s)} className={configUi.actionButton} title="Ver Detalle"><Eye size={14} strokeWidth={2.5} /></button>
-                            <button onClick={() => openModal("editar", s)} className={configUi.actionButton} title="Editar"><Pencil size={14} strokeWidth={2.5} /></button>
-                            <button onClick={() => openModal("eliminar", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} strokeWidth={2.5} /></button>
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => openModal("ver", s)} className={configUi.actionButton} title="Ver Detalle"><Eye size={14} /></button>
+                            <button onClick={() => openModal("editar", s)} className={configUi.actionButton} title="Editar"><Pencil size={14} /></button>
+                            <button onClick={() => openModal("eliminar", s)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
                           </div>
                         </td>
                       </tr>

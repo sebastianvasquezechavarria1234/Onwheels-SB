@@ -155,7 +155,8 @@ const ClassLevels = () => {
                       </div>
                     </td>
                   </tr>
-                )})}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
