@@ -49,6 +49,8 @@ export default function Usuarios() {
   const [search, setSearch] = useState("");
   const [formErrors, setFormErrors] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
   const [filterType, setFilterType] = useState("Todos");
   const [filterStatus, setFilterStatus] = useState("Todos");
@@ -71,17 +73,32 @@ export default function Usuarios() {
   }, []);
 
   // Cargar usuarios y roles (Una sola vez o cuando se requiera resetear)
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const [resUsuarios, dataRoles] = await Promise.all([
-        getUsuarios(), // Sin params, el backend retorna todos los usuarios
+        getUsuarios({
+          page: currentPage,
+          limit: itemsPerPage,
+          search,
+          id_rol: filterType !== "Todos" ? filterType : undefined,
+          estado: filterStatus !== "Todos" ? filterStatus : undefined
+        }),
         getRoles()
       ]);
 
-      setUsuarios(Array.isArray(resUsuarios) ? resUsuarios : []);
-      // getRoles sin params devuelve array directo
+      if (resUsuarios?.data) {
+        setUsuarios(resUsuarios.data);
+        setTotalPages(resUsuarios.totalPages || 1);
+        setTotalItems(resUsuarios.total || resUsuarios.data.length);
+      } else {
+        const rawArray = Array.isArray(resUsuarios) ? resUsuarios : [];
+        setUsuarios(rawArray);
+        setTotalPages(1);
+        setTotalItems(rawArray.length);
+      }
+
       setRoles(Array.isArray(dataRoles) ? dataRoles : []);
     } catch (err) {
       console.error("Error cargando datos:", err);
@@ -90,11 +107,14 @@ export default function Usuarios() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, search, filterType, filterStatus]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [fetchData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -363,71 +383,58 @@ export default function Usuarios() {
     });
   };
 
-  const handleDownload = () => {
-    if (!filteredUsers || filteredUsers.length === 0) return;
-    const header = ["ID", "Nombre Completo", "Email", "Telefono", "Roles"];
-    const csvData = filteredUsers.map(u => [
-      u.id_usuario,
-      `"${u.nombre_completo || ""}"`,
-      u.email || "",
-      u.telefono || "",
-      `"${getRolNombres(u.roles)}"`
-    ].join(","));
+  const handleDownload = async () => {
+    try {
+      setLoading(true);
+      // Obtener todos los registros que coinciden con los filtros actuales (sin paginación)
+      const allMatchingRes = await getUsuarios({
+        search,
+        id_rol: filterType !== "Todos" ? filterType : undefined,
+        estado: filterStatus !== "Todos" ? filterStatus : undefined
+      });
 
-    const csvContent = "\uFEFF" + [header.join(","), ...csvData].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "reporte_usuarios_onwheels.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const dataToDownload = Array.isArray(allMatchingRes) ? allMatchingRes : (allMatchingRes.data || []);
+
+      if (dataToDownload.length === 0) {
+        showNotification("No hay datos para descargar", "error");
+        return;
+      }
+
+      const header = ["ID", "Nombre Completo", "Email", "Telefono", "Roles"];
+      const csvData = dataToDownload.map(u => [
+        u.id_usuario,
+        `"${u.nombre_completo || ""}"`,
+        u.email || "",
+        u.telefono || "",
+        `"${getRolNombres(u.roles)}"`
+      ].join(","));
+
+      const csvContent = "\uFEFF" + [header.join(","), ...csvData].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `reporte_usuarios_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error descargando reporte:", err);
+      showNotification("Error al generar el reporte", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredUsers = React.useMemo(() => {
-    return usuarios.filter(u => {
-      // Filter by Type (Role)
-      if (filterType === "Clientes") {
-        const isClient = u.roles?.some(r =>
-          r.nombre_rol?.toLowerCase().includes("cliente") ||
-          r.nombre_rol?.toLowerCase().includes("estudiante")
-        );
-        if (!isClient) return false;
-      } else if (filterType === "Instructores") {
-        const isInstr = u.roles?.some(r => r.nombre_rol?.toLowerCase().includes("instructor"));
-        if (!isInstr) return false;
-      }
-
-      // Filter by Status (assuming estado exists as boolean or string)
-      if (filterStatus !== "Todos") {
-        const isActive = u.estado === true || u.estado === "Activo" || u.estado === "activo";
-        if (filterStatus === "Activo" && !isActive) return false;
-        if (filterStatus === "Inactivo" && isActive) return false;
-      }
-
-      if (search) {
-        const q = search.toLowerCase();
-        const matchesNombre = u.nombre_completo?.toLowerCase().includes(q);
-        const matchesEmail = u.email?.toLowerCase().includes(q);
-        const matchesDoc = u.documento?.toLowerCase().includes(q);
-        if (!matchesNombre && !matchesEmail && !matchesDoc) return false;
-      }
-      return true;
-    });
-  }, [usuarios, filterType, filterStatus, search]);
-
-  const totalFiltered = filteredUsers.length;
-  const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
-  const currentItems = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const currentItems = usuarios;
 
   // Para asegurar que no nos quedemos en una página vacía
   useEffect(() => {
-    if (currentPage > totalPagesLocal) {
-      setCurrentPage(totalPagesLocal);
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
     }
-  }, [currentPage, totalPagesLocal]);
+  }, [currentPage, totalPages]);
 
   return (
     <>
@@ -438,7 +445,7 @@ export default function Usuarios() {
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
               Usuarios
             </h2>
-            <span className={configUi.countBadge}>{totalFiltered} usuarios</span>
+            <span className={configUi.countBadge}>{totalItems} usuarios</span>
           </div>
 
           <div className={configUi.toolbar}>
@@ -455,15 +462,29 @@ export default function Usuarios() {
             </div>
 
             {/* Filter Dropdowns */}
-            <FilterDropdown
+             <FilterDropdown
               value={filterType}
               onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
               options={[
-                { label: "Todos los Roles", value: "Todos" },
-                { label: "Clientes", value: "Clientes", icon: User },
-                { label: "Instructores", value: "Instructores", icon: Briefcase }
+                { label: "Todos los Roles", value: "Todos", icon: SlidersHorizontal },
+                ...roles.map(r => ({
+                  label: r.nombre_rol,
+                  value: r.id_rol,
+                  icon: r.nombre_rol.toLowerCase().includes("admin") ? ShieldCheck : User
+                }))
               ]}
               placeholder="Filtrar por Rol"
+            />
+
+            <FilterDropdown
+              value={filterStatus}
+              onChange={(val) => { setFilterStatus(val); setCurrentPage(1); }}
+              options={[
+                { label: "Todos los Estados", value: "Todos", icon: ArrowUpDown },
+                { label: "Activos", value: "Activo", icon: Check },
+                { label: "Inactivos", value: "Inactivo", icon: X }
+              ]}
+              placeholder="Estado"
             />
 
 
@@ -579,10 +600,10 @@ export default function Usuarios() {
           </div>
 
           {/* Footer Pagination */}
-          {totalPagesLocal > 0 && (
+          {totalItems > 0 && (
             <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
-                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPagesLocal}</span>
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -593,8 +614,8 @@ export default function Usuarios() {
                   <ChevronLeft size={18} />
                 </button>
                 <button
-                  disabled={currentPage === totalPagesLocal}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPagesLocal, p + 1))}
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   className={configUi.paginationButton}
                 >
                   <ChevronRight size={18} />

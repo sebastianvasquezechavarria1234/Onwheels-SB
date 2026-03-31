@@ -123,16 +123,7 @@ const Compras = () => {
     document.body.removeChild(link);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Confirma la eliminación de este registro de compra?")) return;
-    try {
-      await comprasService.deleteCompra(id);
-      showNotification("Registro de compra eliminado");
-      fetchData();
-    } catch (err) {
-      showNotification("Error al eliminar el registro", "error");
-    }
-  };
+
 
   return (
     <div className={configUi.pageShell}>
