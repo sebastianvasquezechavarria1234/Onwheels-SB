@@ -32,7 +32,7 @@ const CompraEditar = () => {
     const [proveedores, setProveedores] = useState([]);
     const [allProducts, setAllProducts] = useState([]);
     const [showProductSelector, setShowProductSelector] = useState(false);
-    
+
     const [errors, setErrors] = useState({});
     const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
 
@@ -83,14 +83,11 @@ const CompraEditar = () => {
                 comprasService.getProductos({ limit: 1000 }),
                 getVariantes()
             ]);
-            
-            const provArray = provRes?.data || provRes?.proveedores || (Array.isArray(provRes) ? provRes : []);
-            setProveedores(provArray);
-            
-            const rawProducts = prodRes?.data || prodRes?.productos || (Array.isArray(prodRes) ? prodRes : []);
-            const rawVariantes = varRes?.data || varRes?.variantes || (Array.isArray(varRes) ? varRes : []);
-            
-            setAllProducts(combinarProductosConVariantes(rawProducts, rawVariantes));
+
+            setProveedores(Array.isArray(provRes) ? provRes : []);
+
+            const rawProducts = Array.isArray(prodRes?.productos) ? prodRes.productos : Array.isArray(prodRes) ? prodRes : [];
+            setAllProducts(combinarProductosConVariantes(rawProducts, varRes || []));
 
             if (isEditing) {
                 const data = await comprasService.getCompraById(id);
@@ -128,7 +125,7 @@ const CompraEditar = () => {
         if (!purchase.nit_proveedor) newErrors.nit_proveedor = "Seleccione un proveedor";
         if (!purchase.fecha_compra) newErrors.fecha_compra = "Requerido";
         if (items.length === 0) newErrors.items = "Debe añadir al menos un producto";
-        
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -146,17 +143,17 @@ const CompraEditar = () => {
 
         // Validar fecha de compra (no futura)
         if (purchase.fecha_compra) {
-          const buyDate = new Date(purchase.fecha_compra);
-          const today = new Date();
-          if (buyDate > today) {
-            toast.error("La fecha de compra no puede ser futura.");
-            return;
-          }
+            const buyDate = new Date(purchase.fecha_compra);
+            const today = new Date();
+            if (buyDate > today) {
+                toast.error("La fecha de compra no puede ser futura.");
+                return;
+            }
         }
 
         setSaving(true);
         try {
-            const payload = { 
+            const payload = {
                 nit_proveedor: purchase.nit_proveedor,
                 fecha_compra: purchase.fecha_compra,
                 total_compra: purchase.total_compra,
@@ -170,7 +167,7 @@ const CompraEditar = () => {
                     subtotal: item.subtotal
                 }))
             };
-            
+
             if (isEditing) {
                 await comprasService.updateCompra(id, payload);
                 showNotification("Registro actualizado correctamente");
@@ -225,7 +222,7 @@ const CompraEditar = () => {
                         }}
                     />
                 ) : (
-                    <motion.div 
+                    <motion.div
                         key="form"
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -241,13 +238,13 @@ const CompraEditar = () => {
                                 >
                                     <ArrowLeft size={20} />
                                 </button>
-                                <h1 className={configUi.title}>{isEditing ? `Modificar Compra #${id}` : "Nueva Compra"}</h1>
+                                <h2 className="text-2xl font-medium text-[#16315f] tracking-tight">{isEditing ? `Modificar Compra #${id}` : "Nueva Compra"}</h2>
                                 <span className={configUi.countBadge}>ESTADO: {isEditing ? "AJUSTE" : "EN CURSO"}</span>
                             </div>
 
                             <div className={configUi.toolbar}>
                                 <div className="px-6 border-r border-[#d7e5f8] flex flex-col items-end">
-                                    <p className="text-[9px] font-black text-[#6b84aa] uppercase tracking-widest leading-none mb-1">TOTAL LIQUIDADO</p>
+                                    <p className="text-[9px] font-black text-[#6b84aa] uppercase tracking-widest leading-none mb-1">TOTAL COMPRA</p>
                                     <span className="text-xl font-black text-[#16315f] tabular-nums">
                                         ${Number(purchase.total_compra).toLocaleString('es-CO')}
                                     </span>
@@ -264,14 +261,14 @@ const CompraEditar = () => {
                         </div>
 
                         {/* Main Grid Content */}
-                        <div className="flex-1 grid grid-cols-1 xl:grid-cols-12 gap-6 overflow-hidden min-h-0">
-                            
+                        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden min-h-0 pb-4">
+
                             {/* Left: General Info */}
-                            <div className="xl:col-span-4 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
-                                <div className={configUi.formSection + " space-y-6"}>
-                                    <h3 className={configUi.modalEyebrow + " flex items-center gap-2"}>
-                                       <Info size={14} className="text-indigo-500" /> Datos de la Transacción
-                                    </h3>
+                            <div className="lg:col-span-4 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-black text-[#16315f] uppercase tracking-widest flex items-center gap-2 border-b border-[#d7e5f8] pb-2">
+                                        <Info size={10} className="text-indigo-300" /> Información Principal
+                                    </h4>
 
                                     <div className={configUi.fieldGroup}>
                                         <label className={configUi.fieldLabel}>Proveedor Autorizado *</label>
@@ -289,6 +286,9 @@ const CompraEditar = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                                                <ChevronDown size={18} />
+                                            </div>
                                         </div>
                                         {errors.nit_proveedor && <p className="text-[10px] text-rose-500 mt-1 font-bold italic">{errors.nit_proveedor}</p>}
                                     </div>
@@ -308,32 +308,27 @@ const CompraEditar = () => {
                                     </div>
                                 </div>
 
-                                <button 
+                                <button
                                     onClick={() => setShowProductSelector(true)}
-                                    className="w-full flex flex-col items-center justify-center gap-4 py-8 rounded-[1.6rem] border-2 border-dashed border-[#bfd1f4] bg-white group hover:bg-[#f0f6ff] hover:border-[#7da7e8] transition-all"
+                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-indigo-100 bg-indigo-50/50 text-[#16315f] hover:bg-indigo-50 hover:border-indigo-200 transition-all"
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-[#edf5ff] flex items-center justify-center text-[#1d4f91] group-hover:scale-110 transition-transform shadow-sm">
-                                      <PlusCircle size={22} />
-                                    </div>
-                                    <div className="text-center">
-                                       <p className="text-sm font-black text-[#16315f] uppercase tracking-tight">Agregar Producto</p>
-                                       <p className="text-[10px] text-[#6b84aa] mt-1 font-bold">Seleccionar del catálogo</p>
-                                    </div>
+                                    <PlusCircle size={16} className="text-indigo-500" />
+                                    <span className="text-xs font-black uppercase tracking-widest">Agregar Producto</span>
                                 </button>
-                                {errors.items && <p className="text-center text-xs font-bold text-rose-500 mt-2">{errors.items}</p>}
+                                {errors.items && <p className="text-left text-xs font-bold text-rose-500">{errors.items}</p>}
                             </div>
 
                             {/* Right: Items List Table */}
-                            <div className="xl:col-span-8 flex flex-col overflow-hidden min-h-0">
-                                <div className={configUi.tableCard}>
-                                    <div className="px-6 py-4 border-b border-[#d7e5f8] flex justify-between items-center bg-[#fbfdff]/50">
-                                        <span className={configUi.modalEyebrow}>Sincronización de Stock</span>
+                            <div className="lg:col-span-8 flex flex-col overflow-hidden min-h-0">
+                                <div className={cn(configUi.tableCard, "h-full flex flex-col")}>
+                                    <div className="px-6 py-4 border-b border-[#d7e5f8] flex justify-between items-center bg-[#fbfdff]/50 shrink-0">
+                                        <span className={configUi.modalEyebrow}>Productos en la Compra</span>
                                         <span className={configUi.subtlePill}>{items.length} Referencias</span>
                                     </div>
-                                    
-                                    <div className={configUi.tableScroll}>
+
+                                    <div className={cn(configUi.tableScroll, "flex-1")}>
                                         <table className={configUi.table}>
-                                            <thead className={configUi.thead}>
+                                            <thead className={cn(configUi.thead, "sticky top-0 bg-[#f8fbff] z-10")}>
                                                 <tr>
                                                     <th className={configUi.th}>Producto / Variante</th>
                                                     <th className={configUi.th + " text-center"}>Cant.</th>
@@ -356,9 +351,18 @@ const CompraEditar = () => {
                                                     items.map((item, idx) => (
                                                         <tr key={idx} className={configUi.row}>
                                                             <td className={configUi.td}>
-                                                                <div className="flex flex-col">
-                                                                   <span className="font-bold uppercase leading-tight truncate max-w-[200px] text-[#16315f]">{item.nombre_producto}</span>
-                                                                   <span className="text-[10px] text-indigo-400 font-black tracking-tighter uppercase">{item.nombre_variante}</span>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center">
+                                                                        {item.imagen || item.url_imagen ? (
+                                                                            <img src={item.imagen || item.url_imagen} alt={item.nombre_producto} className="w-full h-full object-cover" />
+                                                                        ) : (
+                                                                            <Package size={14} className="text-slate-300" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-bold uppercase text-[11px] truncate max-w-[180px] text-[#16315f]">{item.nombre_producto}</span>
+                                                                        <span className="text-[10px] text-[#6b84aa] mt-0.5">{item.nombre_variante}</span>
+                                                                    </div>
                                                                 </div>
                                                             </td>
                                                             <td className={configUi.td + " text-center"}>
@@ -384,16 +388,16 @@ const CompraEditar = () => {
                                             </tbody>
                                         </table>
                                     </div>
-                                    
-                                    <div className="mt-auto px-6 py-6 border-t border-[#d7e5f8] bg-[#fbfdff] flex justify-between items-center">
-                                       <div className="flex items-center gap-2 text-emerald-600">
-                                          <CheckCircle size={18} />
-                                          <span className="text-[10px] font-black uppercase tracking-widest">Liquidación Verificada</span>
-                                       </div>
-                                       <div className="flex flex-col items-end">
-                                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Monto de Operación</p>
-                                          <p className="text-2xl font-black text-[#16315f] tabular-nums">${Number(purchase.total_compra).toLocaleString('es-CO')}</p>
-                                       </div>
+
+                                    <div className="mt-auto px-6 py-4 border-t border-[#d7e5f8] bg-[#fbfdff] flex justify-between items-center shrink-0">
+                                        <div className="flex items-center gap-2 text-emerald-600">
+                                            <CheckCircle size={18} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Total Verificado</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Monto Total Compra</p>
+                                            <p className="text-2xl font-black text-[#16315f] tabular-nums leading-none">${Number(purchase.total_compra).toLocaleString('es-CO')}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -404,20 +408,20 @@ const CompraEditar = () => {
 
             {/* --- NOTIFICATIONS --- */}
             <AnimatePresence>
-              {notification.show && (
-                <motion.div 
-                  initial={{ opacity: 0, x: 20 }} 
-                  animate={{ opacity: 1, x: 0 }} 
-                  exit={{ opacity: 0 }} 
-                  className={cn(
-                    "fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
-                    notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500"
-                  )}
-                >
-                  {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-                  <span className="tracking-tight">{notification.message}</span>
-                </motion.div>
-              )}
+                {notification.show && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0 }}
+                        className={cn(
+                            "fixed top-4 right-4 z-[1000] px-6 py-3 rounded-xl shadow-lg text-white text-sm font-bold flex items-center gap-3",
+                            notification.type === "success" ? "bg-[#16315f]" : "bg-rose-500"
+                        )}
+                    >
+                        {notification.type === "success" ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+                        <span className="tracking-tight">{notification.message}</span>
+                    </motion.div>
+                )}
             </AnimatePresence>
         </div>
     );

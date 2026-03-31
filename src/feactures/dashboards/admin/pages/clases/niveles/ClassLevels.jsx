@@ -126,19 +126,27 @@ const ClassLevels = () => {
             <table className={configUi.table}>
               <thead className={configUi.thead}>
                 <tr>
-                  <th className={`${configUi.th} w-[40%]`}>Nivel</th>
-                  <th className={`${configUi.th} w-[50%]`}>Descripción</th>
+                  <th className={`${configUi.th} w-[30%]`}>Nivel</th>
+                  <th className={`${configUi.th} w-[45%]`}>Descripción</th>
+                  <th className={`${configUi.th} text-center w-[15%]`}>Estado</th>
                   <th className={`${configUi.th} text-right w-[10%]`}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr><td colSpan="4" className={configUi.emptyState}>Cargando niveles...</td></tr>
-                ) : currentItems.map((lvl) => {
-                  return (
+                ) : filteredLevels.length === 0 ? (
+                  <tr><td colSpan="4" className={configUi.emptyState}>No se encontraron niveles registrados.</td></tr>
+                ) : (
+                  currentItems.map((lvl) => (
                   <tr key={lvl.id_nivel} className={configUi.row}>
                     <td className={`${configUi.td} font-bold text-[#16315f]`}>{lvl.nombre_nivel}</td>
                     <td className={`${configUi.td} text-[#5b7398]`}>{lvl.descripcion || "—"}</td>
+                    <td className={`${configUi.td} text-center`}>
+                      <span className={(lvl.estado || "Activo") === "Activo" ? configUi.successPill : configUi.dangerPill}>
+                        {lvl.estado || "Activo"}
+                      </span>
+                    </td>
                     <td className={`${configUi.td} text-right`}>
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => openModal("ver", lvl)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
@@ -215,7 +223,11 @@ const ClassLevels = () => {
                       </div>
                       <div className={configUi.fieldGroup}>
                         <label className={configUi.fieldLabel}>Descripción</label>
-                        <div className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium text-slate-500 min-h-[5rem]">{selectedLevel.descripcion || "Sin descripción"}</div>
+                        <div className={configUi.readOnlyField}>{selectedLevel.descripcion || "Sin descripción"}</div>
+                      </div>
+                      <div className={configUi.fieldGroup}>
+                        <label className={configUi.fieldLabel}>Estado</label>
+                        <div className={configUi.readOnlyField}>{selectedLevel.estado || "Activo"}</div>
                       </div>
                     </div>
                   )}

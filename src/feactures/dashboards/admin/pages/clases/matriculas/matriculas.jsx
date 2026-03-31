@@ -14,8 +14,8 @@ import {
   updateMatricula,
   createMatricula,
 } from "../../services/matriculaService";
-import { configUi, cn } from "../../configuracion/configUi";
-import FilterDropdown from "../../configuracion/FilterDropdown";
+import { configUi } from "../../configuracion/configUi";
+import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
 import { useToast } from "../../../../../../context/ToastContext";
 import api from "../../../../../../services/api";
 
@@ -128,6 +128,7 @@ const MatriculasAdmin = () => {
     setModalError(null);
     setModal(type);
     setSelectedMatricula(item);
+    setOpenMenuId(null);
     if (type === 'editar' && item) {
       setFormEdit({
         id_clase: item.id_clase,
@@ -142,6 +143,7 @@ const MatriculasAdmin = () => {
       setModoMatricula('existente');
     }
   };
+
 
   const closeModal = () => {
     setModal(null);

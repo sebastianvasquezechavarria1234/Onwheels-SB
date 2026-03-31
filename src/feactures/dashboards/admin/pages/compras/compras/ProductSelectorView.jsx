@@ -1,5 +1,9 @@
-import React, { useState } from "react";
-import { X, Search, Package, Plus, Image as ImageIcon, ExternalLink, ArrowLeft, CheckCircle, ShoppingCart, AlertCircle } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { 
+    X, Search, Package, Plus, Image as ImageIcon, 
+    ExternalLink, ArrowLeft, CheckCircle, ShoppingCart, 
+    AlertCircle, Minus, ChevronRight, TrendingUp 
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { cn, configUi } from "../../configuracion/configUi";
@@ -12,18 +16,29 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
     const [productSearch, setProductSearch] = useState("");
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedVariant, setSelectedVariant] = useState(null);
-    const [newItemData, setNewItemData] = useState({ cantidad: 1, precio_unitario: "" });
+    const [qty, setQty] = useState(1);
+    const [priceField, setPriceField] = useState("");
     const [error, setError] = useState("");
 
-    const filteredProducts = allProducts.filter(p =>
-        p.nombre_producto?.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.codigo_referencia?.toLowerCase().includes(productSearch.toLowerCase())
-    );
+    const filteredProducts = useMemo(() => {
+        return allProducts.filter(p =>
+            p.nombre_producto?.toLowerCase().includes(productSearch.toLowerCase()) ||
+            p.codigo_referencia?.toLowerCase().includes(productSearch.toLowerCase())
+        );
+    }, [allProducts, productSearch]);
+
+    const handleSelectProduct = (product) => {
+        setSelectedProduct(product);
+        setSelectedVariant(null);
+        setQty(1);
+        setPriceField(product.precio || "");
+        setError("");
+    };
 
     const handleAddItem = () => {
         if (!selectedProduct || !selectedVariant) return;
 
-        const cantidad = parseInt(newItemData.cantidad) || 0;
+        const cantidad = parseInt(qty) || 0;
         if (cantidad <= 0) {
             setError("La cantidad debe ser mayor a 0");
             return;
@@ -34,7 +49,7 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
             const existingQty = existingItem ? existingItem.qty : 0;
             const totalQty = existingQty + cantidad;
 
-            if (totalQty > selectedVariant.stock) {
+            if (totalQty > (selectedVariant.stock || 0)) {
                 setError(`Stock insuficiente. Ya tienes ${existingQty} en la lista. Máximo disponible: ${selectedVariant.stock}`);
                 return;
             }
@@ -44,8 +59,12 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
             product: selectedProduct,
             variant: selectedVariant,
             cantidad: cantidad,
-            precio_unitario: parseFloat(newItemData.precio_unitario) || 0
+            precio_unitario: parseFloat(priceField) || 0
         });
+        
+        // Reset after add
+        setSelectedVariant(null);
+        setQty(1);
         setError("");
     };
 
@@ -56,19 +75,15 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
             exit={{ opacity: 0, scale: 0.98 }}
             className={cn(configUi.modalPanel, "flex flex-col h-full min-h-0 border-[#bfd1f4] shadow-[0_20px_60px_-15px_rgba(34,58,99,0.3)]")}
         >
-            {/* Modal Header Style */}
+            {/* Modal Header */}
             <div className={configUi.modalHeader}>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={onClose}
-                        className={configUi.actionButton}
-                        title="Volver"
-                    >
+                    <button onClick={onClose} className={configUi.actionButton} title="Volver">
                         <ArrowLeft size={18} />
                     </button>
                     <div>
-                        <h2 className={configUi.modalTitle}>Catálogo de Activos</h2>
-                        <p className={configUi.modalSubtitle}>Sincronización de Stock Entrante</p>
+                        <h2 className="text-2xl font-light text-[#16315f] tracking-tight">Catálogo de Artículos</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Explora e incorpora productos al documento</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -86,203 +101,258 @@ export const ProductSelectorView = ({ onClose, onAdd, allProducts, checkStock = 
                 </div>
             </div>
 
-            {/* Content Split Style like configUi.modalSplit */}
-            <div className="flex-1 flex overflow-hidden min-h-0 bg-[#fbfdff]">
-                {/* Left: Product Selection List */}
-                <div className="w-full md:w-[400px] flex flex-col border-r border-[#d7e5f8] bg-white text-left">
-                    <div className="p-4 border-b border-[#f0f6ff] shrink-0">
-                        <div className={configUi.searchWrap + " w-full"}>
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <div className="flex-1 flex overflow-hidden">
+                {/* Sidebar: Product List */}
+                <div className="w-1/3 border-r border-indigo-50 bg-white flex flex-col min-h-0">
+                    <div className="p-4 border-b border-indigo-50">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                             <input
-                                placeholder="Filtrar por nombre o referencia..."
-                                className={configUi.inputWithIcon + " py-2.5"}
+                                placeholder="Buscar en catálogo..."
+                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                             />
                         </div>
                     </div>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
+                    
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar text-left flex flex-col items-start">
                         {filteredProducts.length === 0 ? (
-                            <div className={configUi.emptyState + " py-20"}>
-                                <Package size={32} className="mx-auto opacity-20 mb-2" />
-                                <p className="text-[10px] font-black uppercase tracking-widest">Sin coincidencias</p>
+                            <div className="py-20 text-center opacity-30 flex flex-col items-center w-full">
+                                <Package size={40} className="mb-3" />
+                                <p className="text-xs font-black uppercase tracking-widest">Sin Coincidencias</p>
                             </div>
                         ) : (
-                            filteredProducts.map(p => {
-                                const isSelected = selectedProduct?.id_producto === p.id_producto;
-                                const totalStock = (p.variantes || []).reduce((acc, v) => acc + (v.stock || 0), 0);
-                                return (
-                                    <button
-                                        key={p.id_producto}
-                                        onClick={() => {
-                                            setSelectedProduct(p);
-                                            setSelectedVariant(null);
-                                            setError("");
-                                            // BUG FIX: use sale price (precio), not cost (precio_compra)
-                                            setNewItemData({ cantidad: 1, precio_unitario: p.precio || "" });
-                                        }}
-                                        className={cn(
-                                            "w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
-                                            isSelected
-                                                ? "bg-[#16315f] border-[#16315f] shadow-md"
-                                                : "bg-white border-[#d7e5f8] hover:bg-[#f0f6ff] hover:border-[#9fbce7]"
+                            filteredProducts.map((p) => (
+                                <button
+                                    key={p.id_producto}
+                                    onClick={() => handleSelectProduct(p)}
+                                    className={cn(
+                                        "w-full p-4 rounded-2xl border transition-all flex items-center gap-4 text-left group",
+                                        selectedProduct?.id_producto === p.id_producto
+                                            ? "bg-[#16315f] border-[#16315f] text-white shadow-lg shadow-blue-100"
+                                            : "bg-white border-transparent hover:border-indigo-100 hover:bg-slate-50 text-[#16315f]"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "h-12 w-12 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center transition-colors border",
+                                        selectedProduct?.id_producto === p.id_producto ? "bg-white/10 border-transparent" : "bg-slate-50 border-slate-100"
+                                    )}>
+                                        {p.url_imagen || p.imagen || (p.imagenes && p.imagenes[0]?.url_imagen) ? (
+                                            <img src={p.url_imagen || p.imagen || (p.imagenes && p.imagenes[0]?.url_imagen)} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Package size={20} className={selectedProduct?.id_producto === p.id_producto ? "text-indigo-200" : "text-slate-300"} />
                                         )}
-                                    >
-                                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-100">
-                                            {p.imagen || p.url_imagen || (p.imagenes && p.imagenes[0]?.url_imagen) ? (
-                                                <img src={p.imagen || p.url_imagen || p.imagenes[0]?.url_imagen} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <ImageIcon size={18} className="text-slate-300" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className={cn("text-xs font-bold truncate", isSelected ? "text-white" : "text-[#16315f]")}>{p.nombre_producto}</h4>
-                                            <div className={cn("flex items-center gap-2 mt-0.5 text-[10px] font-bold", isSelected ? "text-white/60" : "text-[#6b84aa]")}>
-                                                <span>{p.variantes?.length || 0} variantes</span>
-                                                <span>·</span>
-                                                <span className={(!isSelected && totalStock <= 5) ? "text-rose-400" : ""}>{totalStock} en stock</span>
-                                            </div>
-                                        </div>
-                                        {isSelected && <CheckCircle size={16} className="text-white/80 shrink-0" />}
-                                    </button>
-                                );
-                            })
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-extrabold text-sm truncate uppercase tracking-tight leading-tight">{p.nombre_producto}</p>
+                                        <p className={cn(
+                                            "text-[9px] font-black uppercase tracking-widest leading-none mt-1",
+                                            selectedProduct?.id_producto === p.id_producto ? "text-indigo-200" : "text-slate-400"
+                                        )}>REF: {p.referencia || p.codigo_referencia || '—'}</p>
+                                    </div>
+                                    <ChevronRight size={14} className={cn("opacity-0 group-hover:opacity-100 transition-opacity", selectedProduct?.id_producto === p.id_producto && "opacity-40")} />
+                                </button>
+                            ))
                         )}
                     </div>
                 </div>
 
-                {/* Right: Variant Config & Items Form */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className={cn(configUi.modalContent, "space-y-8")}>
-                        <AnimatePresence mode="wait">
-                            {selectedProduct ? (
-                                <motion.div
-                                    key={selectedProduct.id_producto}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="space-y-8"
-                                >
-                                    {/* Variant picker */}
-                                    <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Selecciona variante (Color / Talla)</label>
-                                        {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
-                                            <div className="p-4 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100">
-                                                Este producto no tiene variantes configuradas.
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {selectedProduct.variantes.map(v => {
-                                                    const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
-                                                    const outOfStock = v.stock <= 0;
-                                                    return (
-                                                        <button
-                                                            key={v.id_variante || v.id_producto_variante}
-                                                            onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
-                                                            disabled={outOfStock}
-                                                            className={cn(
-                                                                "p-3 rounded-xl border text-left transition-all",
-                                                                outOfStock
-                                                                    ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-                                                                    : isVarSelected
-                                                                        ? "border-[#16315f] bg-[#16315f] text-white shadow-md"
-                                                                        : "border-[#d7e5f8] bg-[#fbfdff] text-[#5f7396] hover:border-[#9fbce7] hover:bg-[#f0f6ff]"
-                                                            )}
-                                                        >
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                {v.codigo_hex && (
-                                                                    <div
-                                                                        className="w-3 h-3 rounded-full border border-white/40 shadow-sm shrink-0"
-                                                                        style={{ backgroundColor: v.codigo_hex }}
-                                                                    />
-                                                                )}
-                                                                <span className="text-xs font-bold truncate">
-                                                                    {v.nombre_color || v.color || 'Único'} / {v.nombre_talla || v.talla || 'Única'}
-                                                                </span>
-                                                            </div>
-                                                            <span className={cn("text-[10px] font-bold", isVarSelected ? "text-white/70" : outOfStock ? "text-rose-400" : "text-[#6b84aa]")}>
-                                                                {outOfStock ? "Sin stock" : `${v.stock} disponibles`}
-                                                            </span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className={configUi.formSection + " grid grid-cols-1 md:grid-cols-2 gap-6 relative"}>
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Cantidad a Ingresar</label>
-                                            <input
-                                                type="number"
-                                                value={newItemData.cantidad}
-                                                onChange={(e) => {
-                                                    setNewItemData({ ...newItemData, cantidad: e.target.value });
-                                                    setError("");
-                                                }}
-                                                className={configUi.fieldInput}
-                                                placeholder="0"
-                                            />
-                                        </div>
-                                        <div className={configUi.fieldGroup}>
-                                            <label className={configUi.fieldLabel}>Costo Unitario</label>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-bold">$</span>
-                                                <input
-                                                    type="number"
-                                                    value={newItemData.precio_unitario}
-                                                    onChange={(e) => {
-                                                        setNewItemData({ ...newItemData, precio_unitario: e.target.value });
-                                                        setError("");
-                                                    }}
-                                                    className={configUi.fieldInput + " pl-8"}
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 bg-[#f0f6ff] border border-[#d7e5f8] rounded-2xl flex items-center justify-between">
-                                        <div>
-                                            <div className="text-[10px] font-black text-[#6b84aa] uppercase tracking-widest">Subtotal estimado</div>
-                                            <div className="text-xl font-black text-[#16315f] mt-0.5">
-                                                ${((parseInt(newItemData.cantidad) || 0) * (parseFloat(newItemData.precio_unitario) || 0)).toLocaleString('es-CO')}
-                                            </div>
-                                            {error && (
-                                                <div className="mt-2 text-[10px] font-bold text-rose-500 flex items-center gap-1 animate-bounce">
-                                                    <AlertCircle size={12} />
-                                                    {error}
-                                                </div>
+                {/* Main Content Area */}
+                <div className="flex-1 overflow-y-auto bg-slate-50/30 custom-scrollbar relative p-10">
+                    <AnimatePresence mode="wait">
+                        {selectedProduct ? (
+                            <motion.div
+                                key={selectedProduct.id_producto}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="max-w-3xl mx-auto space-y-10 pb-10"
+                            >
+                                {/* Selected Product Header */}
+                                <div className="flex items-start gap-10">
+                                    <div className="w-56 h-56 rounded-[2.5rem] bg-white shadow-2xl shadow-indigo-100/50 p-3 border border-indigo-50/50 flex flex-col group overflow-hidden">
+                                        <div className="flex-1 rounded-[1.8rem] bg-slate-50 overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
+                                            {selectedProduct.url_imagen || selectedProduct.imagen || (selectedProduct.imagenes && selectedProduct.imagenes[0]?.url_imagen) ? (
+                                                <img src={selectedProduct.url_imagen || selectedProduct.imagen || (selectedProduct.imagenes && selectedProduct.imagenes[0]?.url_imagen)} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ImageIcon size={40} className="text-slate-200" />
                                             )}
                                         </div>
-                                        <button
-                                            onClick={handleAddItem}
-                                            disabled={!newItemData.cantidad || !newItemData.precio_unitario}
-                                            className="flex items-center gap-2 px-5 py-3 bg-[#16315f] text-white text-xs font-black rounded-xl hover:bg-[#0d2248] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-95"
+                                    </div>
+                                    
+                                    <div className="flex-1 py-4 text-left">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase tracking-widest">Producto Base</span>
+                                            <span className="text-[10px] font-bold text-slate-300">#{selectedProduct.id_producto}</span>
+                                        </div>
+                                        <h3 className="text-4xl font-light text-[#16315f] tracking-tighter leading-none mb-4">{selectedProduct.nombre_producto}</h3>
+                                        <p className="text-slate-400 text-sm leading-relaxed max-w-md">{selectedProduct.descripcion || "Este artículo no cuenta con una descripción técnica detallada en el sistema."}</p>
+                                    </div>
+                                </div>
+
+                                {/* Variant Selection */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <TrendingUp size={16} className="text-indigo-400" />
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Variantes en Existencia</h4>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {(!selectedProduct.variantes || selectedProduct.variantes.length === 0) ? (
+                                            <div className="col-span-full p-8 rounded-3xl bg-white border border-indigo-50 border-dashed text-center">
+                                                <AlertCircle className="mx-auto text-slate-300 mb-2" size={24} />
+                                                <p className="text-xs font-medium text-slate-400">Sin variantes disponibles para este producto</p>
+                                            </div>
+                                        ) : (
+                                            selectedProduct.variantes.map(v => {
+                                                const isVarSelected = (selectedVariant?.id_variante || selectedVariant?.id_producto_variante) === (v.id_variante || v.id_producto_variante);
+                                                const outOfStock = v.stock <= 0 && checkStock;
+                                                return (
+                                                    <button
+                                                        key={v.id_variante || v.id_producto_variante}
+                                                        onClick={() => { if (!outOfStock) { setSelectedVariant(v); setError(""); } }}
+                                                        disabled={outOfStock}
+                                                        className={cn(
+                                                            "p-4 rounded-2xl border-2 text-left transition-all relative group",
+                                                            isVarSelected 
+                                                                ? "border-indigo-500 bg-white shadow-xl shadow-indigo-100 -translate-y-1"
+                                                                : outOfStock 
+                                                                    ? "border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
+                                                                    : "border-transparent bg-white hover:border-indigo-100 hover:shadow-lg"
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                {v.codigo_hex && (
+                                                                    <div className="h-3 w-3 rounded-full border border-slate-100" style={{ backgroundColor: v.codigo_hex }} />
+                                                                )}
+                                                                <span className="text-[10px] font-black uppercase text-[#16315f] tracking-tighter">
+                                                                    {v.nombre_color || v.color || 'Único'}
+                                                                </span>
+                                                            </div>
+                                                            <span className={cn("text-[10px] font-bold", isVarSelected ? "text-indigo-500" : "text-slate-300")}>
+                                                                {v.nombre_talla || v.talla || 'Única'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-[11px] font-bold text-slate-400">Stock</span>
+                                                            <span className={cn("text-xs font-black", (v.stock || 0) > 0 ? "text-[#16315f]" : "text-rose-500")}>
+                                                                {v.stock || 0}
+                                                            </span>
+                                                        </div>
+                                                        {isVarSelected && <div className="absolute top-2 right-2 h-4 w-4 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg"><CheckCircle size={10} className="text-white" /></div>}
+                                                    </button>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Form Panel (Amount & Price) */}
+                                <AnimatePresence>
+                                    {selectedVariant && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="overflow-hidden rounded-[2.5rem] bg-[#16315f] text-white shadow-2xl shadow-[#16315f]/20 relative"
                                         >
-                                            <ShoppingCart size={14} />
-                                            Agregar
-                                        </button>
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                            
+                                            <div className="p-8 flex flex-col gap-6 relative z-10 text-left">
+                                                <div className="grid grid-cols-2 gap-10">
+                                                    <div className="space-y-3">
+                                                        <div className="flex justify-between items-center px-1">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Cantidad</label>
+                                                            <span className="text-[10px] font-bold opacity-40 italic">{selectedVariant.stock || 0} Total</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 bg-white/10 rounded-2xl p-2 border border-white/10 h-16">
+                                                            <button 
+                                                                onClick={() => setQty(Math.max(1, qty - 1))}
+                                                                className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-all"
+                                                            >
+                                                                <Minus size={18} />
+                                                            </button>
+                                                            <input 
+                                                                type="number" 
+                                                                value={qty} 
+                                                                onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+                                                                className="flex-1 bg-transparent text-center font-black text-2xl border-none focus:ring-0 p-0 text-white outline-none"
+                                                            />
+                                                            <button 
+                                                                onClick={() => setQty(qty + 1)}
+                                                                className="h-12 w-12 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white transition-all"
+                                                            >
+                                                                <Plus size={18} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest opacity-60 px-1">Valor Unitario</label>
+                                                        <div className="flex items-center gap-3 bg-white/10 rounded-2xl px-6 border border-white/10 h-16 group focus-within:bg-white/15 transition-all">
+                                                            <span className="text-xl font-bold opacity-30">$</span>
+                                                            <input 
+                                                                type="number" 
+                                                                value={priceField} 
+                                                                onChange={(e) => setPriceField(e.target.value)}
+                                                                className="w-full bg-transparent font-black text-2xl border-none focus:ring-0 p-0 text-white outline-none tabular-nums"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between border-t border-white/10 pt-6 mt-2">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-1">Impacto Total</p>
+                                                        <p className="text-3xl font-black tabular-nums leading-none">
+                                                            ${(qty * (parseFloat(priceField) || 0)).toLocaleString('es-CO')}
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-4">
+                                                        {error && (
+                                                            <div className="flex items-center gap-2 text-rose-300 text-[11px] font-bold animate-pulse">
+                                                                <AlertCircle size={14} />
+                                                                {error}
+                                                            </div>
+                                                        )}
+                                                        <button 
+                                                            onClick={handleAddItem}
+                                                            className="h-14 px-8 rounded-2xl bg-white text-[#16315f] font-black tracking-widest uppercase text-[11px] flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-2xl group"
+                                                        >
+                                                            <ShoppingCart size={18} className="transition-transform group-hover:-translate-y-1" />
+                                                            Incluir en Lista
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-center p-12">
+                                <div className="h-40 w-40 rounded-[3rem] bg-indigo-50/50 flex items-center justify-center text-indigo-200 mb-8 border border-white shadow-inner relative group">
+                                    <div className="absolute inset-0 bg-indigo-500/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <ShoppingCart size={80} strokeWidth={1} className="relative z-10 text-indigo-100" />
+                                </div>
+                                <h3 className="text-3xl font-light text-[#16315f] tracking-tighter uppercase">Panel de Selección</h3>
+                                <p className="text-slate-400 text-sm font-medium max-w-xs mt-4 leading-relaxed">Navegue por el catálogo de la izquierda y seleccione un producto para comenzar la configuración de unidades.</p>
+                                
+                                <div className="mt-12 grid grid-cols-2 gap-4">
+                                    <div className="flex items-center gap-3 px-5 py-3 bg-white rounded-2xl border border-indigo-50 shadow-sm text-left">
+                                        <div className="h-2 w-2 rounded-full bg-indigo-400 shrink-0" />
+                                        <span className="text-[10px] font-black uppercase text-indigo-900/40">1. Buscar producto</span>
                                     </div>
-                                </motion.div>
-                            ) : (
-                                <motion.div
-                                    key="empty"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="h-full flex flex-col items-center justify-center text-center p-8 min-h-[350px]"
-                                >
-                                    <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4 border border-slate-100">
-                                        <Package size={28} className="text-slate-300" />
+                                    <div className="flex items-center gap-3 px-5 py-3 bg-indigo-100/30 rounded-2xl border border-indigo-100/50 text-left">
+                                        <div className="h-2 w-2 rounded-full bg-indigo-200 shrink-0" />
+                                        <span className="text-[10px] font-black uppercase text-indigo-900/20">2. Definir variante</span>
                                     </div>
-                                    <h3 className="text-sm font-bold text-[#16315f]">Ningún producto seleccionado</h3>
-                                    <p className="text-xs text-[#6b84aa] mt-2 max-w-[220px] leading-relaxed">Busca y selecciona un producto de la lista para elegir variante y cantidad.</p>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </motion.div>
