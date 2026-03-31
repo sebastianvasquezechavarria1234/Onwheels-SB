@@ -40,15 +40,50 @@ export const Administradores = () => {
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
 
+  const [adminTypes, setAdminTypes] = useState([]); // ✅ Para el filtro sin datos quemados
+
+  // ✅ Función para cargar todos los tipos posibles de admins
+  const fetchAdminTypes = useCallback(async () => {
+    try {
+      const res = await getAdministradores(); // Sin paginacion para obtener todos
+      const allAdmins = Array.isArray(res) ? res : (res.data || []);
+      const types = Array.from(new Set(allAdmins.map(a => a.tipo_admin).filter(Boolean)));
+      setAdminTypes(types);
+    } catch (err) {
+      console.error("Error cargando tipos de admin:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAdminTypes();
+  }, [fetchAdminTypes]);
+
   const fetchAdministradores = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      
       const [adminsRes, usuariosData] = await Promise.all([
-        getAdministradores(), // Fetch all
+        getAdministradores({ 
+          page: currentPage, 
+          limit: itemsPerPage, 
+          search, 
+          tipo_admin: filterType 
+        }),
         getUsuariosSoloConRolCliente()
       ]);
-      setAdministradores(Array.isArray(adminsRes) ? adminsRes : (adminsRes.data || []));
+
+      if (adminsRes?.data) {
+        setAdministradores(adminsRes.data);
+        setTotalPages(adminsRes.totalPages || 1);
+        setTotalItems(adminsRes.total || adminsRes.data.length);
+      } else {
+        const rawArray = Array.isArray(adminsRes) ? adminsRes : [];
+        setAdministradores(rawArray);
+        setTotalPages(1);
+        setTotalItems(rawArray.length);
+      }
+
       setUsuariosDisponibles(Array.isArray(usuariosData) ? usuariosData : []);
     } catch (err) {
       console.error("Error cargando administradores:", err);
@@ -57,7 +92,7 @@ export const Administradores = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, search, filterType]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -82,12 +117,12 @@ export const Administradores = () => {
 
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
-        tipo_admin: formData.tipo_admin || null,
-        area: formData.area || null
+        tipo_admin: formData.tipo_admin,
+        area: formData.area
       };
 
       await createAdministrador(payload);
-      await fetchAdministradores();
+      await Promise.all([fetchAdministradores(), fetchAdminTypes()]);
       closeModal();
       showNotification("Administrador creado con éxito");
     } catch (err) {
@@ -112,12 +147,12 @@ export const Administradores = () => {
 
       const payload = {
         id_usuario: parseInt(formData.id_usuario),
-        tipo_admin: formData.tipo_admin || null,
-        area: formData.area || null
+        tipo_admin: formData.tipo_admin,
+        area: formData.area
       };
 
       await updateAdministrador(selectedAdmin.id_admin, payload);
-      await fetchAdministradores();
+      await Promise.all([fetchAdministradores(), fetchAdminTypes()]);
       closeModal();
       showNotification("Administrador actualizado con éxito");
     } catch (err) {
@@ -134,7 +169,7 @@ export const Administradores = () => {
       if (!selectedAdmin) return;
       setSubmitting(true);
       await deleteAdministrador(selectedAdmin.id_admin);
-      await fetchAdministradores();
+      await Promise.all([fetchAdministradores(), fetchAdminTypes()]);
       closeModal();
       showNotification("Administrador eliminado con éxito");
     } catch (err) {
@@ -178,22 +213,19 @@ export const Administradores = () => {
     });
   };
 
-  const filteredAdmins = React.useMemo(() => {
-    return administradores.filter(a => {
-      const q = search.toLowerCase();
-      const matchesSearch = a.nombre_completo.toLowerCase().includes(q) ||
-        a.email.toLowerCase().includes(q) ||
-        (a.area || "").toLowerCase().includes(q);
+  const filterOptions = React.useMemo(() => {
+    return [
+      { label: "Todos los tipos", value: "Todos", icon: SlidersHorizontal },
+      ...adminTypes.map(t => ({
+        label: t.charAt(0).toUpperCase() + t.slice(1).toLowerCase(),
+        value: t,
+        icon: t.toLowerCase().includes("super") ? ShieldCheck : UserCog
+      }))
+    ];
+  }, [adminTypes]);
 
-      if (filterType === "Superadmin") return matchesSearch && a.tipo_admin?.toLowerCase() === "superadmin";
-      if (filterType === "Soporte") return matchesSearch && a.tipo_admin?.toLowerCase() === "soporte";
-      return matchesSearch;
-    });
-  }, [administradores, search, filterType]);
-
-  const totalFiltered = filteredAdmins.length;
-  const totalPagesLocal = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
-  const currentItems = filteredAdmins.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Ya no filtramos localmente, mostramos lo que trae el backend
+  const currentItems = administradores;
 
 
 
@@ -206,7 +238,7 @@ export const Administradores = () => {
             <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
               Admin y Personal
             </h2>
-            <span className={configUi.countBadge}>{totalFiltered} registros</span>
+            <span className={configUi.countBadge}>{totalItems} registros</span>
           </div>
 
           <div className={configUi.toolbar}>
@@ -222,17 +254,12 @@ export const Administradores = () => {
               />
             </div>
 
-            {/* Filter Dropdown
             <FilterDropdown
               value={filterType}
               onChange={(val) => { setFilterType(val); setCurrentPage(1); }}
-              options={[
-                { label: "Todos los Admins", value: "Todos" },
-                { label: "Superadmin", value: "Superadmin", icon: ShieldCheck },
-                { label: "Soporte", value: "Soporte", icon: UserCog }
-              ]}
+              options={filterOptions}
               placeholder="Tipo de Admin"
-            /> */}
+            />
 
 
 
@@ -319,10 +346,10 @@ export const Administradores = () => {
           </div>
 
           {/* Pagination Footer */}
-          {totalPagesLocal > 1 && (
+          {totalItems > 0 && (
             <div className={configUi.paginationBar}>
               <p className="text-sm font-bold text-slate-500">
-                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPagesLocal}</span>
+                Página <span className="text-[#16315f]">{currentPage}</span> de <span className="text-[#16315f]">{totalPages}</span>
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -333,8 +360,8 @@ export const Administradores = () => {
                   <ChevronLeft size={18} />
                 </button>
                 <button
-                  disabled={currentPage === totalPagesLocal}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPagesLocal, p + 1))}
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   className={configUi.paginationButton}
                 >
                   <ChevronRight size={18} />

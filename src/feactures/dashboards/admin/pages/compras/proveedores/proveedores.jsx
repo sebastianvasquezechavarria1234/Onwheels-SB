@@ -1,6 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, Phone, Mail, MapPin, Hash, User, Briefcase, Info } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { 
+  Eye, Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, 
+  Phone, Mail, MapPin, Hash, User, Briefcase, Info, 
+  TrendingUp, AlertCircle, ShieldCheck, Calendar, SlidersHorizontal, 
+  ShoppingCart, Star 
+} from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import api from "../../../../../../services/api";
 import { cn, configUi } from "../../configuracion/configUi";
 import FilterDropdown from "../../configuracion/FilterDropdown";
@@ -10,14 +15,15 @@ export default function Proveedores() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Todos");
+  const [activityFilter, setActivityFilter] = useState("Todos");
   
-  // Frontend Filtration & Pagination State
+  // Paginación local
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 10;
 
-  const [modalType, setModalType] = useState(null);
-  const [selected, setSelected] = useState(null);
+  const [modal, setModal] = useState(null); // "crear" | "editar" | "ver" | "eliminar"
+  const [selectedProveedor, setSelectedProveedor] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     nombre_proveedor: "",
     email: "",
@@ -27,7 +33,6 @@ export default function Proveedores() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
-  const [currentStep, setCurrentStep] = useState(1);
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -41,8 +46,7 @@ export default function Proveedores() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/proveedores"); // Fetch all
-      
+      const res = await api.get("/proveedores"); // Backend now returns total_compras
       const data = res.data;
       setProveedores(Array.isArray(data) ? data : (data.proveedores || []));
     } catch (err) {
@@ -54,10 +58,9 @@ export default function Proveedores() {
   };
 
   const openModal = (type, item = null) => {
-    setModalType(type);
-    setSelected(item);
-    setCurrentStep(1);
-    if ((type === "edit" || type === "details") && item) {
+    setModal(type);
+    setSelectedProveedor(item);
+    if ((type === "editar" || type === "ver") && item) {
       setFormData({
         nombre_proveedor: item.nombre_proveedor || "",
         email: item.email || "",
@@ -72,176 +75,191 @@ export default function Proveedores() {
   };
 
   const closeModal = () => {
-    setModalType(null);
-    setSelected(null);
+    setModal(null);
+    setSelectedProveedor(null);
     setFormErrors({});
   };
 
-  const handleSave = async () => {
-    if (!formData.nombre_proveedor || !formData.email || !formData.nit) {
-      showNotification("Completa los campos obligatorios (Nombre, Email, NIT)", "error");
-      return;
-    }
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.nombre_proveedor) errors.nombre_proveedor = "Nombre requerido";
+    if (!formData.email) errors.email = "Email requerido";
+    if (!formData.nit) errors.nit = "NIT requerido";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
+  const handleSave = async () => {
+    if (!validateForm()) return;
+    setSubmitting(true);
     try {
-      if (modalType === "add") {
+      if (modal === "crear") {
         await api.post("/proveedores", formData);
-        showNotification("Proveedor creado");
+        showNotification("Proveedor creado con éxito");
       } else {
-        await api.put(`/proveedores/${selected.nit}`, formData);
-        showNotification("Proveedor actualizado");
+        await api.put(`/proveedores/${selectedProveedor.nit}`, formData);
+        showNotification("Proveedor actualizado con éxito");
       }
       fetchData();
       closeModal();
     } catch (err) {
       showNotification(err.response?.data?.mensaje || "Error al guardar", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const filtered = React.useMemo(() => {
-    return proveedores.filter(p => {
-      const q = search.toLowerCase();
-      const matchesSearch = (p.nombre_proveedor || "").toLowerCase().includes(q) || 
-                           (p.nit || "").toLowerCase().includes(q) ||
-                           (p.email || "").toLowerCase().includes(q);
-      
-      const matchesStatus = statusFilter === "Todos" || 
-                           (statusFilter === "Verificado" && p.estado === "Verificado") ||
-                           (statusFilter === "Pendiente" && p.estado !== "Verificado");
-      
-      return matchesSearch && matchesStatus;
-    });
-  }, [proveedores, search, statusFilter]);
-
-  const totalFiltered = filtered.length;
-  const totalPaginasLocal = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
-  const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
-
-
-
-
   const handleDelete = async () => {
+    if (!selectedProveedor) return;
+    setSubmitting(true);
     try {
-      await api.delete(`/proveedores/${selected.nit}`);
-      showNotification("Proveedor eliminado");
+      await api.delete(`/proveedores/${selectedProveedor.nit}`);
+      showNotification("Proveedor eliminado con éxito");
       fetchData();
       closeModal();
     } catch (err) {
       showNotification(err.response?.data?.mensaje || "Error al eliminar", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const filtered = useMemo(() => {
+    return proveedores.filter(p => {
+      const q = search.toLowerCase();
+      const matchesSearch = (p.nombre_proveedor || "").toLowerCase().includes(q) || 
+                            (p.nit || "").toLowerCase().includes(q) ||
+                            (p.email || "").toLowerCase().includes(q);
+      
+      let matchesActivity = true;
+      if (activityFilter === "con_compras") matchesActivity = p.total_compras > 0;
+      if (activityFilter === "sin_compras") matchesActivity = p.total_compras === 0;
+      if (activityFilter === "premium") matchesActivity = p.total_compras >= 5;
+
+      return matchesSearch && matchesActivity;
+    });
+  }, [proveedores, search, activityFilter]);
+
+  const totalFiltered = filtered.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalFiltered / itemsPorPagina));
+  const currentItems = filtered.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina);
+
   return (
-    <div className="flex flex-col h-full bg-slate-50 overflow-hidden font-['Outfit']">
-      {/* Header & Stats */}
-      <div className="shrink-0 flex flex-col gap-6 p-8 pb-4 bg-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-[#040529] font-['Outfit'] tracking-tight">
-              Proveedores Estratégicos
+    <>
+      <div className={configUi.pageShell}>
+        {/* --- SECTION 1: HEADER & TOOLBAR --- */}
+        <div className={configUi.headerRow}>
+          <div className={configUi.titleWrap}>
+            <h2 className={configUi.title} style={{ fontFamily: '"Outfit", sans-serif' }}>
+              Proveedores
             </h2>
-            <div className="flex items-center gap-2 text-sm text-gray-400 font-medium">
-              <span>{totalFiltered} proveedores totales</span>
-              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-              <span>Gestión de suministros</span>
-            </div>
+            <span className={configUi.countBadge}>{totalFiltered} registros</span>
           </div>
-          
-          <div className="flex items-center gap-3">
+
+          <div className={configUi.toolbar}>
+            <div className={configUi.searchWrap}>
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar proveedores..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPaginaActual(1); }}
+                className={configUi.inputWithIcon}
+              />
+            </div>
+
+            <FilterDropdown
+              value={activityFilter}
+              onChange={(val) => { setActivityFilter(val); setPaginaActual(1); }}
+              options={[
+                { label: "Toda la actividad", value: "Todos", icon: SlidersHorizontal },
+                { label: "Con Compras", value: "con_compras", icon: ShoppingCart },
+                { label: "Sin Compras", value: "sin_compras", icon: AlertCircle },
+                { label: "Frecuentes (5+)", value: "premium", icon: Star }
+              ]}
+              placeholder="Actividad"
+            />
 
             <button
-              onClick={() => openModal("add")}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#040529] text-white rounded-xl text-sm font-bold hover:bg-[#040529]/90 transition-all shadow-lg shadow-[#040529]/10 active:scale-95"
+              onClick={() => openModal("crear")}
+              className={configUi.primaryButton}
             >
               <Plus size={18} />
-              <span>Nuevo Proveedor</span>
+              Registrar Proveedor
             </button>
           </div>
         </div>
 
-        {/* Toolbar: Search */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
-          <div className="relative flex-1 w-full group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#040529] transition-colors" size={18} />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPaginaActual(1); }}
-              placeholder="Buscar por NIT, razón social o contacto..."
-              className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#bfd1f4] rounded-xl focus:bg-white focus:ring-2 focus:ring-[#dbeafe] focus:border-[#7da7e8] outline-none transition-all text-sm text-[#16315f]"
-            />
-          </div>
-
-          <FilterDropdown
-            value={statusFilter}
-            onChange={(val) => { setStatusFilter(val); setPaginaActual(1); }}
-            options={[
-              { label: "Todos los Estados", value: "Todos" },
-              { label: "Verificados", value: "Verificado", color: "#10b981" },
-              { label: "Pendientes", value: "Pendiente", color: "#f59e0b" }
-            ]}
-            placeholder="Estado"
-          />
-        </div>
-      </div>
-
-      {/* Table Area */}
-      <div className="flex-1 p-8 pt-0 overflow-hidden flex flex-col min-h-0">
-        <div className="bg-white rounded-[1.6rem] border border-[#bfd1f4] shadow-[0_16px_40px_-28px_rgba(34,58,99,0.8)] flex flex-col h-full overflow-hidden">
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full min-w-[860px] text-left border-separate border-spacing-0">
-              <thead className="bg-[#dbeafe] text-[#16315f] sticky top-0 z-10">
+        {/* --- SECTION 2: TABLE AREA --- */}
+        <div className={configUi.tableCard}>
+          <div className={configUi.tableScroll}>
+            <table className={configUi.table}>
+              <thead className={configUi.thead}>
                 <tr>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Proveedor / NIT</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef]">Contacto Directo</th>
-                  <th className="px-3 py-2 font-black text-[10px] uppercase tracking-[0.14em] border-b border-[#9ec1ef] text-right">Acciones</th>
+                  <th className={`${configUi.th} rounded-tl-[1.4rem] w-[35%]`}>Proveedor / NIT</th>
+                  <th className={`${configUi.th} w-[35%]`}>Contacto y Ubicación</th>
+                  <th className={`${configUi.th} w-[15%]`}>Actividad</th>
+                  <th className={`${configUi.th} rounded-tr-[1.4rem] text-right w-[15%]`}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="3" className="p-20 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
-                        <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Sincronizando proveedores...</p>
-                      </div>
-                    </td>
+                    <td colSpan="4" className={configUi.emptyState}>Cargando proveedores...</td>
                   </tr>
-                 ) : currentItems.length === 0 ? (
+                ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="p-20 text-center space-y-4">
-                       <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto border border-slate-100">
-                         <Briefcase className="text-slate-200" size={32} />
-                       </div>
-                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sin resultados</p>
-                    </td>
+                    <td colSpan="4" className={configUi.emptyState}>No se encontraron proveedores.</td>
                   </tr>
                 ) : (
-                  currentItems.map((p) => (
-                    <tr key={p.nit} className="group hover:bg-[#f8fbff] transition-all">
-                      <td className="px-3 py-2 border-b border-[#d7e5f8] font-bold text-[#16315f] text-sm">
+                  currentItems.map((p, i) => (
+                    <tr key={p.id_proveedor || p.nit || i} className={configUi.row}>
+                      <td className={configUi.td}>
                         <div className="flex flex-col">
-                           <span className="leading-tight">{p.nombre_proveedor}</span>
+                           <span className="font-bold text-[#16315f] text-sm">{p.nombre_proveedor}</span>
                            <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase leading-none mt-0.5">NIT: {p.nit || "N/A"}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2 border-b border-[#d7e5f8]">
+                      <td className={configUi.td}>
                         <div className="flex flex-col gap-0.5">
                            <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
                              <Mail size={12} className="text-indigo-500" />
                              {p.email}
                            </div>
-                           <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400 italic">
-                             <MapPin size={10} className="text-slate-300" />
-                             {p.direccion || "Dirección no registrada"}
+                           <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-0.5">
+                             {p.telefono && (
+                               <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                                 <Phone size={10} className="text-slate-300" />
+                                 {p.telefono}
+                               </div>
+                             )}
+                             {p.direccion && (
+                               <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                                 <MapPin size={10} className="text-slate-300" />
+                                 {p.direccion}
+                               </div>
+                             )}
                            </div>
                         </div>
                       </td>
-                      <td className="px-3 py-2 border-b border-[#d7e5f8] text-right">
+                      <td className={configUi.td}>
+                        <div className="flex flex-col">
+                           <div className="flex items-center gap-1.5 text-xs font-black text-[#16315f]">
+                              <ShoppingCart size={14} className={p.total_compras > 0 ? "text-emerald-500" : "text-slate-300"} />
+                              {p.total_compras} compras
+                           </div>
+                           {p.total_compras >= 5 && (
+                             <span className="text-[9px] font-black uppercase text-amber-500 flex items-center gap-1">
+                                <Star size={10} fill="currentColor" /> Frecuente
+                             </span>
+                           )}
+                        </div>
+                      </td>
+                      <td className={`${configUi.td} text-right`}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <button onClick={() => openModal("details", p)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Eye size={14} /></button>
-                          <button onClick={() => openModal("edit", p)} className="p-2 rounded-xl bg-white text-[#6a85ad] hover:text-[#16315f] shadow-sm border border-[#bfd1f4] transition-all hover:scale-105"><Pencil size={14} /></button>
-                          <button onClick={() => openModal("delete", p)} className="p-2 rounded-xl bg-[#fff1f3] text-[#d44966] hover:bg-[#ffe4e8] shadow-sm border border-[#f5c4cc] transition-all hover:scale-105"><Trash2 size={14} /></button>
+                          <button onClick={() => openModal("ver", p)} className={configUi.actionButton} title="Ver detalles"><Eye size={14} /></button>
+                          <button onClick={() => openModal("editar", p)} className={configUi.actionButton} title="Editar"><Pencil size={14} /></button>
+                          <button onClick={() => openModal("eliminar", p)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -251,266 +269,292 @@ export default function Proveedores() {
             </table>
           </div>
 
-          <div className="shrink-0 border-t border-[#d7e5f8] px-5 py-4 bg-[#fbfdff] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-[#6b84aa]">
-              Mostrando <span className="font-bold text-[#16315f]">{currentItems.length}</span> de <span className="font-bold text-[#16315f]">{totalFiltered}</span> registros
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                disabled={paginaActual === 1}
-                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              
-              <div className="flex items-center gap-1">
-                {[...Array(totalPaginasLocal)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setPaginaActual(i + 1)}
-                    className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
-                      paginaActual === i + 1
-                        ? "bg-[#223a63] text-white shadow-lg shadow-[#223a63]/20"
-                        : "text-[#6b84aa] hover:text-[#16315f] hover:bg-white"
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+          {/* Footer Pagination */}
+          {totalFiltered > 0 && (
+            <div className={configUi.paginationBar}>
+              <p className="text-sm font-bold text-slate-500">
+                Página <span className="text-[#16315f]">{paginaActual}</span> de <span className="text-[#16315f]">{totalPaginas}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={paginaActual === 1}
+                  onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="flex gap-1">
+                  {[...Array(totalPaginas)].map((_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setPaginaActual(i + 1)}
+                      className={cn(
+                        "flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black transition-all",
+                        paginaActual === i + 1 ? "bg-[#223a63] text-white" : "text-slate-400 hover:bg-slate-50"
+                      )}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  disabled={paginaActual === totalPaginas}
+                  onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                  className={configUi.paginationButton}
+                >
+                  <ChevronRight size={18} />
+                </button>
               </div>
-
-              <button
-                disabled={paginaActual === totalPaginasLocal}
-                onClick={() => setPaginaActual(p => Math.min(totalPaginasLocal, p + 1))}
-                className="p-2 rounded-xl border border-[#bfd1f4] bg-white hover:bg-[#f8fbff] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm text-[#6a85ad]"
-              >
-                <ChevronRight size={20} />
-              </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* --- MODAL SYSTEM --- */}
+      <AnimatePresence mode="wait">
+        {modal && (
+          <motion.div
+            className={configUi.modalBackdrop}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+          >
+            <motion.div
+              className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-4xl")}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {modal === "eliminar" ? (
+                <div className="p-8 text-center">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-500 shadow-sm">
+                    <Trash2 size={28} />
+                  </div>
+                  <h3 className="mb-2 text-xl font-black text-[#16315f]">¿Eliminar proveedor?</h3>
+                  <p className="mb-8 text-sm font-medium text-slate-500 leading-relaxed">
+                    Esta acción no se puede deshacer. Se eliminará permanentemente al proveedor 
+                    <span className="block font-black text-[#16315f] mt-1">"{selectedProveedor?.nombre_proveedor}"</span>
+                  </p>
+                  <div className="flex gap-3">
+                    <button onClick={closeModal} className="flex-1 rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-400 transition hover:bg-slate-50">
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={handleDelete} 
+                      className="flex-1 rounded-2xl bg-rose-500 py-3 text-sm font-bold text-white shadow-lg shadow-rose-200 transition hover:bg-rose-600 disabled:opacity-50"
+                      disabled={submitting}
+                    >
+                      {submitting ? "Eliminando..." : "Eliminar"}
+                    </button>
+                  </div>
+                </div>
+              ) : modal === "ver" ? (
+                <div className={configUi.modalSplit}>
+                  <div className={configUi.modalSide}>
+                    <div className="space-y-6">
+                      <div className={configUi.modalSideIcon}>
+                        <Briefcase size={32} />
+                      </div>
+                      <div className="space-y-2">
+                         <p className={configUi.modalEyebrow}>Actividad Comercial</p>
+                         <div className="flex flex-col gap-2">
+                            <span className={cn(configUi.successPill, "justify-start gap-3")}>
+                               <ShoppingCart size={14} /> {formData.total_compras || selectedProveedor?.total_compras || 0} Compras
+                            </span>
+                            {(selectedProveedor?.total_compras >= 5) && (
+                              <span className="px-5 py-2 bg-amber-50 text-amber-500 text-[10px] font-black uppercase tracking-widest rounded-2xl border border-amber-100 flex items-center gap-3">
+                                 <Star size={14} fill="currentColor" /> Frecuente
+                              </span>
+                            )}
+                         </div>
+                      </div>
+                    </div>
+                    <div className="mt-auto space-y-4 pt-8 border-t border-[#d7e5f8]/50">
+                       <div className="flex items-center gap-3 text-slate-400">
+                          <Calendar size={14} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Base de Datos Activa</span>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 flex flex-col">
+                    <div className={configUi.modalHeader}>
+                      <div>
+                        <h3 className={configUi.modalTitle}>{formData.nombre_proveedor}</h3>
+                        <p className={configUi.modalSubtitle}>NIT: {formData.nit || "N/A"}</p>
+                      </div>
+                      <button onClick={closeModal} className={configUi.modalClose}>
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <div className={configUi.modalContent}>
+                      <div className="grid grid-cols-1 gap-6">
+                         <div className={configUi.formSection}>
+                            <h4 className="text-[11px] font-black uppercase tracking-widest text-[#1d4f91] mb-4">Información de Contacto</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="p-4 bg-white rounded-2xl border border-[#d7e5f8] flex items-center gap-4 shadow-sm transition hover:shadow-md">
+                                  <div className="w-10 h-10 bg-[#eef5ff] rounded-xl flex items-center justify-center text-[#2b64d8]">
+                                     <Mail size={18} />
+                                  </div>
+                                  <div className="truncate">
+                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">E-mail</p>
+                                     <p className="text-xs font-bold text-[#16315f] truncate">{formData.email}</p>
+                                  </div>
+                               </div>
+                               <div className="p-4 bg-white rounded-2xl border border-[#d7e5f8] flex items-center gap-4 shadow-sm transition hover:shadow-md">
+                                  <div className="w-10 h-10 bg-[#eef5ff] rounded-xl flex items-center justify-center text-[#2b64d8]">
+                                     <Phone size={18} />
+                                  </div>
+                                  <div>
+                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Teléfono</p>
+                                     <p className="text-xs font-bold text-[#16315f]">{formData.telefono || "N/A"}</p>
+                                  </div>
+                               </div>
+                            </div>
+                         </div>
+
+                         <div className={configUi.formSection}>
+                            <h4 className="text-[11px] font-black uppercase tracking-widest text-[#1d4f91] mb-4">Ubicación Física</h4>
+                            <div className="p-4 bg-white rounded-2xl border border-[#d7e5f8] flex items-center gap-4 shadow-sm transition hover:shadow-md">
+                               <MapPin size={18} className="text-slate-300 shrink-0" />
+                               <p className="text-xs font-bold text-[#16315f]">{formData.direccion || "Sin dirección registrada"}</p>
+                            </div>
+                         </div>
+                      </div>
+                    </div>
+
+                    <div className={configUi.modalFooter}>
+                      <button onClick={closeModal} className={configUi.secondaryButton}>Cerrar Detalle</button>
+                      <button onClick={() => openModal("editar", selectedProveedor)} className={configUi.primaryButton}>
+                        <Pencil size={14} /> Editar Perfil
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {/* Reuse of existing create/edit modal part */}
+                  <div className={configUi.modalHeader}>
+                    <div>
+                      <h3 className={configUi.modalTitle}>
+                        {modal === "crear" ? "Nuevo Proveedor" : "Editar Proveedor"}
+                      </h3>
+                      <p className={configUi.modalSubtitle}>
+                        Completa la información jurídica y comercial.
+                      </p>
+                    </div>
+                    <button onClick={closeModal} className={configUi.modalClose}>
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className={cn(configUi.modalContent, "grid grid-cols-2 gap-5 py-6")}>
+                    <div className={cn(configUi.fieldGroup, "col-span-2 md:col-span-1")}>
+                      <label className={configUi.fieldLabel}>Razón Social / Nombre *</label>
+                      <input
+                        type="text"
+                        className={configUi.fieldInput}
+                        placeholder="Ej: Insumos Globales S.A.S"
+                        value={formData.nombre_proveedor}
+                        onChange={(e) => setFormData({ ...formData, nombre_proveedor: e.target.value })}
+                      />
+                      {formErrors.nombre_proveedor && <p className="text-[10px] text-rose-500 font-bold ml-1">{formErrors.nombre_proveedor}</p>}
+                    </div>
+
+                    <div className={cn(configUi.fieldGroup, "col-span-2 md:col-span-1")}>
+                      <label className={configUi.fieldLabel}>NIT / Identificación *</label>
+                      <input
+                        type="text"
+                        className={cn(configUi.fieldInput, (modal === "editar") && "bg-slate-50 cursor-not-allowed")}
+                        placeholder="Ej: 900.123.456-1"
+                        value={formData.nit}
+                        onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
+                        disabled={modal !== "crear"}
+                      />
+                      {formErrors.nit && <p className="text-[10px] text-rose-500 font-bold ml-1">{formErrors.nit}</p>}
+                    </div>
+
+                    <div className={cn(configUi.fieldGroup, "col-span-2 md:col-span-1")}>
+                      <label className={configUi.fieldLabel}>Correo Electrónico *</label>
+                      <div className="relative">
+                        <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="email"
+                          className={cn(configUi.fieldInput, "pl-11")}
+                          placeholder="proveedor@empresa.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        />
+                      </div>
+                      {formErrors.email && <p className="text-[10px] text-rose-500 font-bold ml-1">{formErrors.email}</p>}
+                    </div>
+
+                    <div className={cn(configUi.fieldGroup, "col-span-2 md:col-span-1")}>
+                      <label className={configUi.fieldLabel}>Teléfono / Contacto</label>
+                      <div className="relative">
+                        <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          className={cn(configUi.fieldInput, "pl-11")}
+                          placeholder="Ej: 300 123 4567"
+                          value={formData.telefono}
+                          onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={cn(configUi.fieldGroup, "col-span-2")}>
+                      <label className={configUi.fieldLabel}>Dirección / Domicilio</label>
+                      <div className="relative">
+                        <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          className={cn(configUi.fieldInput, "pl-11")}
+                          placeholder="Calle 123 #45-67, Ciudad"
+                          value={formData.direccion}
+                          onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={configUi.modalFooter}>
+                    <button onClick={closeModal} className={configUi.secondaryButton}>Cancelar</button>
+                    <button 
+                      onClick={handleSave} 
+                      className={configUi.primaryButton}
+                      disabled={submitting}
+                    >
+                      {submitting ? "Guardando..." : modal === "crear" ? "Registrar Proveedor" : "Guardar Cambios"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {notification.show && (
           <motion.div 
-            initial={{ opacity: 0, y: 20, scale: 0.9 }} 
-            animate={{ opacity: 1, y: 0, scale: 1 }} 
-            exit={{ opacity: 0, scale: 0.9 }} 
-            className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-8 py-4 rounded-3xl shadow-2xl text-[11px] font-black uppercase tracking-[0.2em] border backdrop-blur-md flex items-center gap-3 ${
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0 }} 
+            className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 border backdrop-blur-md ${
               notification.type === "success" 
                 ? "bg-slate-900/90 text-white border-slate-700" 
                 : "bg-rose-500/90 text-white border-rose-400"
             }`}
           >
             <div className={`w-2 h-2 rounded-full animate-pulse ${notification.type === "success" ? "bg-emerald-400" : "bg-white"}`} />
-            {notification.message}
+            <span className="text-[12px] font-bold tracking-tight">{notification.message}</span>
           </motion.div>
         )}
       </AnimatePresence>
-
-      <AnimatePresence>
-        {modalType && (
-          <motion.div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#040529]/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className={`bg-white rounded-3xl shadow-2xl relative overflow-hidden border border-gray-200 ${modalType === "delete" ? "max-w-sm w-full" : "max-w-4xl w-full"}`} initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} onClick={(e) => e.stopPropagation()}>
-              <div className="p-10">
-                <div className="flex justify-between items-center mb-10">
-                  <div className="space-y-1">
-                     <h3 className="text-2xl font-black text-slate-800 tracking-tight">
-                       {modalType === "add" ? "Nuevo Proveedor" : modalType === "edit" ? "Editar Proveedor" : modalType === "details" ? "Ficha de Proveedor" : "Eliminar Registro"}
-                     </h3>
-                     <p className="text-xs text-slate-400 font-medium">{modalType === "add" || modalType === "edit" ? "Complete la información comercial" : "Resumen de perfil comercial"}</p>
-                  </div>
-                  <button onClick={closeModal} className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-300 hover:text-slate-900"><X size={24} /></button>
-                </div>
-
-                {modalType === "delete" ? (
-                  <div className="text-center space-y-8">
-                    <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto ring-8 ring-rose-50/50">
-                      <Trash2 size={32} className="text-rose-500" />
-                    </div>
-                    <div>
-                      <p className="text-slate-400 text-sm font-medium leading-relaxed">¿Confirmas la baja permanente del proveedor <span className="text-slate-900 font-bold">"{selected?.nombre_proveedor}"</span>?</p>
-                    </div>
-                     <div className="flex flex-col gap-3">
-                       <button onClick={handleDelete} className="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg active:scale-95">Eliminar Proveedor</button>
-                       <button onClick={closeModal} className="w-full py-4 bg-gray-50 text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Cancelar</button>
-                     </div>
-                  </div>
-                ) : modalType === "details" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-8">
-                       <div className="grid grid-cols-2 gap-8">
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Razón Social</label>
-                            <p className="text-lg font-black text-slate-800 ml-1 leading-none">{formData.nombre_proveedor}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NIT / Documento</label>
-                            <p className="text-lg font-black text-slate-800 ml-1 leading-none">{formData.nit || "N/A"}</p>
-                          </div>
-                       </div>
-                       
-                       <div className="space-y-4">
-                          <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] ml-1">Información de Contacto</h4>
-                          <div className="grid grid-cols-2 gap-4">
-                             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500">
-                                   <Mail size={18} />
-                                </div>
-                                <div className="truncate">
-                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Correo</p>
-                                   <p className="text-xs font-bold text-slate-600 truncate">{formData.email}</p>
-                                </div>
-                             </div>
-                             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500">
-                                   <Phone size={18} />
-                                </div>
-                                <div>
-                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Línea</p>
-                                   <p className="text-xs font-bold text-slate-600">{formData.telefono || "N/A"}</p>
-                                </div>
-                             </div>
-                          </div>
-                       </div>
-
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Domicilio Fiscal</label>
-                          <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                             <MapPin size={18} className="text-slate-300 shrink-0" />
-                             <p className="text-xs font-bold text-slate-600">{formData.direccion || "Sin dirección registrada"}</p>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col justify-between relative overflow-hidden">
-                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
-                       <div className="space-y-6">
-                          <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center">
-                             <Briefcase size={28} className="text-white" />
-                          </div>
-                          <div className="space-y-2">
-                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Estado Proveedor</p>
-                             <span className="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-500/30 inline-block">Verificado</span>
-                          </div>
-                       </div>
-                       <button onClick={closeModal} className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all mt-8">Cerrar Ficha</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {/* Stepper Indicator */}
-                    <div className="flex items-center justify-center gap-4 mb-8">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${currentStep === 1 ? 'bg-[#040529] text-white shadow-lg shadow-[#040529]/20' : 'bg-slate-100 text-slate-400'}`}>1</div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${currentStep === 1 ? 'text-[#040529]' : 'text-slate-300'}`}>IDENTIDAD</span>
-                      </div>
-                      <div className="w-12 h-[2px] bg-slate-100">
-                        <div className={`h-full bg-[#040529] transition-all duration-500 ${currentStep === 2 ? 'w-full' : 'w-0'}`} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${currentStep === 2 ? 'bg-[#040529] text-white shadow-lg shadow-[#040529]/20' : 'bg-slate-100 text-slate-400'}`}>2</div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${currentStep === 2 ? 'text-[#040529]' : 'text-slate-300'}`}>CONTACTO</span>
-                      </div>
-                    </div>
-
-                    <div className="min-h-[280px]">
-                      {currentStep === 1 ? (
-                        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-                          <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Razón Social *</label>
-                               <input 
-                                 type="text" 
-                                 value={formData.nombre_proveedor} 
-                                 onChange={(e) => setFormData({ ...formData, nombre_proveedor: e.target.value })} 
-                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all placeholder:text-gray-300 shadow-sm" 
-                                 placeholder="Nombre comercial" 
-                               />
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NIT / ID Fiscal *</label>
-                               <input 
-                                 type="text" 
-                                 value={formData.nit} 
-                                 onChange={(e) => setFormData({ ...formData, nit: e.target.value })} 
-                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-gray-50 border border-gray-300 rounded-xl outline-none disabled:opacity-50 shadow-sm" 
-                                 placeholder="Número de identificación" 
-                                 disabled={modalType === "edit"} 
-                               />
-                            </div>
-                          </div>
-                          <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50">
-                            <p className="text-[10px] font-medium text-blue-600 leading-relaxed italic">
-                              <Info size={12} className="inline mr-2 mb-0.5" />
-                              Asegúrese de que el NIT coincida con el RUT actualizado del proveedor para evitar inconsistencias en la facturación.
-                            </p>
-                          </div>
-                        </motion.div>
-                      ) : (
-                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico *</label>
-                             <input 
-                               type="email" 
-                               value={formData.email} 
-                               onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
-                               className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all shadow-sm" 
-                               placeholder="proveedor@ejemplo.com"
-                             />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono Móvil</label>
-                               <input 
-                                 type="text" 
-                                 value={formData.telefono} 
-                                 onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} 
-                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all shadow-sm" 
-                               />
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección Física</label>
-                               <input 
-                                 type="text" 
-                                 value={formData.direccion} 
-                                 onChange={(e) => setFormData({ ...formData, direccion: e.target.value })} 
-                                 className="w-full px-5 py-3 text-sm font-bold text-[#040529] bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#040529]/10 focus:border-[#040529] outline-none transition-all shadow-sm" 
-                               />
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-
-                     <div className="pt-4 flex gap-4">
-                        {currentStep === 1 ? (
-                          <>
-                            <button onClick={closeModal} className="flex-1 py-3.5 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Cancelar</button>
-                            <button onClick={() => setCurrentStep(2)} className="flex-[2] py-3.5 bg-[#040529] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#040529]/10 hover:bg-[#040529]/90 transition-all active:scale-95 flex items-center justify-center gap-2">
-                              Siguiente Paso <ChevronRight size={18} />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button onClick={() => setCurrentStep(1)} className="flex-1 py-3.5 bg-gray-50 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Volver</button>
-                            <button onClick={handleSave} className="flex-[2] py-3.5 bg-[#040529] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#040529]/10 hover:bg-[#040529]/90 transition-all active:scale-95">
-                              {modalType === "add" ? "Registrar Proveedor" : "Guardar Cambios"}
-                            </button>
-                          </>
-                        )}
-                     </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </>
   );
 }

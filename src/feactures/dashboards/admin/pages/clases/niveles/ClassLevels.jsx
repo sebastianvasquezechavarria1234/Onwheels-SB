@@ -139,22 +139,22 @@ const ClassLevels = () => {
                   <tr><td colSpan="4" className={configUi.emptyState}>No se encontraron niveles registrados.</td></tr>
                 ) : (
                   currentItems.map((lvl) => (
-                  <tr key={lvl.id_nivel} className={configUi.row}>
-                    <td className={`${configUi.td} font-bold text-[#16315f]`}>{lvl.nombre_nivel}</td>
-                    <td className={`${configUi.td} text-[#5b7398]`}>{lvl.descripcion || "—"}</td>
-                    <td className={`${configUi.td} text-center`}>
-                      <span className={(lvl.estado || "Activo") === "Activo" ? configUi.successPill : configUi.dangerPill}>
-                        {lvl.estado || "Activo"}
-                      </span>
-                    </td>
-                    <td className={`${configUi.td} text-right`}>
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openModal("ver", lvl)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
-                        <button onClick={() => openModal("editar", lvl)} className={configUi.actionButton} title="Modificar"><Pencil size={14} /></button>
-                        <button onClick={() => openModal("eliminar", lvl)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
-                  </tr>
+                    <tr key={lvl.id_nivel} className={configUi.row}>
+                      <td className={`${configUi.td} font-bold text-[#16315f]`}>{lvl.nombre_nivel}</td>
+                      <td className={`${configUi.td} text-[#5b7398]`}>{lvl.descripcion || "—"}</td>
+                      <td className={`${configUi.td} text-center`}>
+                        <span className={(lvl.estado || "Activo") === "Activo" ? configUi.successPill : configUi.dangerPill}>
+                          {lvl.estado || "Activo"}
+                        </span>
+                      </td>
+                      <td className={`${configUi.td} text-right`}>
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openModal("ver", lvl)} className={configUi.actionButton} title="Detalle"><Eye size={14} /></button>
+                          <button onClick={() => openModal("editar", lvl)} className={configUi.actionButton} title="Modificar"><Pencil size={14} /></button>
+                          <button onClick={() => openModal("eliminar", lvl)} className={configUi.actionDangerButton} title="Eliminar"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>
