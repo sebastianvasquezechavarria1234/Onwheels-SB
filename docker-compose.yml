@@ -3,9 +3,13 @@ services:
     build:
       context: .
       dockerfile: dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080/api
+        VITE_API_BASE: http://localhost:8080
+        VITE_REACT_APP_API_URL: http://localhost:8080/api
     container_name: onwheels-frontend
     ports:
-      - "3000:80"
+      - "8080:8080"
     restart: unless-stopped
     depends_on:
       - backend
