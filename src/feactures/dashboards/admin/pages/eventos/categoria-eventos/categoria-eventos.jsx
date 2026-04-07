@@ -10,6 +10,7 @@ import {
   deleteCategoriaEvento as deleteCategoria,
 } from "../../services/EventCategory";
 import { configUi, cn } from "../../configuracion/configUi";
+import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
 
 export default function CategoriaEventos() {
   // Data
@@ -29,6 +30,7 @@ export default function CategoriaEventos() {
   const [modal, setModal] = useState(null); // crear | editar | ver | eliminar
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [modalError, setModalError] = useState(null);
 
   // Form
   const [form, setForm] = useState({ nombre_categoria: "", descripcion: "" });
@@ -97,6 +99,7 @@ export default function CategoriaEventos() {
     setModal(type);
     setSelected(categoria);
     setSubmitting(false);
+    setModalError(null);
 
     setForm(
       categoria
@@ -114,6 +117,7 @@ export default function CategoriaEventos() {
     if (submitting) return;
     setModal(null);
     setSelected(null);
+    setModalError(null);
     setForm({ nombre_categoria: "", descripcion: "" });
     setFormErrors({});
   };
@@ -165,14 +169,21 @@ export default function CategoriaEventos() {
   const handleDelete = async () => {
     if (!selected) return;
     setSubmitting(true);
+    setModalError(null);
     try {
       await deleteCategoria(selected.id_categoria_evento);
-      showNotification("Categoría eliminada", "success");
+      showNotification("Categoría eliminada con éxito", "success");
       await fetchAll();
       closeModal();
     } catch (err) {
-      console.error("Error eliminando:", err);
-      showNotification("No se pudo eliminar", "error");
+      console.error("Error eliminando categoría:", err);
+      const errorMessage =
+        err.response?.data?.mensaje ||
+        err.response?.data?.msg ||
+        "Se produjo un error al intentar eliminar la categoría.";
+
+      setModalError(errorMessage);
+      showNotification(errorMessage, "error");
     } finally {
       setSubmitting(false);
     }
@@ -389,22 +400,22 @@ export default function CategoriaEventos() {
             onClick={closeModal}
           >
             <motion.div
-              className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-xl")}
+              className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-xl", "max-h-[92vh] flex flex-col")}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-col">
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className={configUi.modalHeader}>
                   <div>
                     <h3 className={configUi.modalTitle}>
                       {modal === "crear" ? "Nueva Categoría" : 
                        modal === "editar" ? "Editar Categoría" : 
-                       modal === "ver" ? "Detalles" : "Eliminar Categoría"}
+                       modal === "ver" ? "Detalles de la Categoría" : "Eliminar Categoría"}
                     </h3>
                     <p className={configUi.modalSubtitle}>
-                      {modal === "eliminar" ? "Esta acción no se puede deshacer." : "Complete la información requerida."}
+                      {modal === "eliminar" ? "Seleccione con cuidado antes de confirmar." : "Complete la información requerida."}
                     </p>
                   </div>
                   <button onClick={closeModal} className={configUi.modalClose} disabled={submitting}>
@@ -418,9 +429,13 @@ export default function CategoriaEventos() {
                       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
                         <Trash2 size={30} />
                       </div>
-                      <p className="text-sm leading-6 text-[#6b84aa]">
-                        ¿Estás seguro de eliminar la categoría <span className="font-bold text-[#d44966]">{selected?.nombre_categoria}</span>?
+                      <h3 className="mb-2 text-xl font-black text-[#16315f]">Confirmar Eliminación</h3>
+                      <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-[#6b84aa]">
+                        ¿Estás seguro de que deseas eliminar la categoría <span className="font-bold text-[#d44966]">{selected?.nombre_categoria}</span>?
+                        <br />Esta operación no se puede deshacer y fallará si hay eventos asociados.
                       </p>
+
+                      <ModalErrorAlert error={modalError} />
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -480,7 +495,7 @@ export default function CategoriaEventos() {
                         {submitting ? "Actualizando..." : "Actualizar"}
                       </button>
                     )}
-                    {modal === "eliminar" && (
+                    {modal === "eliminar" && !modalError && (
                       <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>
                         {submitting ? "Eliminando..." : "Eliminar"}
                       </button>

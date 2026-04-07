@@ -239,11 +239,11 @@ export default function EnviarCorreosMasivos() {
       <AnimatePresence>
         {modal && (
           <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModal(false)}>
-            <motion.div className={cn(configUi.modalPanel, "max-w-4xl")} initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}>
-              <div className="flex flex-col lg:flex-row h-full overflow-hidden min-h-[500px]">
+            <motion.div className={cn(configUi.modalPanel, "max-w-4xl max-h-[95vh] flex flex-col")} initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}>
+              <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
 
                 {/* Left (Visual Info) */}
-                <div className="hidden lg:flex w-1/3 bg-[#16315f] flex-col justify-between p-8 text-white relative">
+                <div className="hidden lg:flex w-1/3 bg-[#16315f] flex-col justify-between p-8 text-white relative overflow-y-auto">
                   <div>
                     <div className="h-12 w-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6"><Send size={24} /></div>
                     <h3 className="text-xl font-black mb-2 leading-tight">Comunicación Institucional</h3>
@@ -262,7 +262,7 @@ export default function EnviarCorreosMasivos() {
                 </div>
 
                 {/* Right (Form) */}
-                <div className="flex-1 flex flex-col bg-white">
+                <div className="flex-1 flex flex-col bg-white min-h-0">
                   <div className={configUi.modalHeader}>
                     <h3 className={configUi.modalTitle}>Redactar Nuevo Correo</h3>
                     <button onClick={() => setModal(false)} className={configUi.modalClose}><X size={20} /></button>
@@ -320,7 +320,7 @@ export default function EnviarCorreosMasivos() {
       <AnimatePresence>
         {modalPreview && (
           <motion.div className={configUi.modalBackdrop} onClick={() => setModalPreview(false)}>
-            <motion.div className={cn(configUi.modalPanel, "max-w-2xl")} onClick={e => e.stopPropagation()}>
+            <motion.div className={cn(configUi.modalPanel, "max-w-2xl max-h-[90vh] flex flex-col")} onClick={e => e.stopPropagation()}>
               <div className={configUi.modalHeader}>
                 <h3 className={configUi.modalTitle}>Vista Previa de Destinatarios</h3>
                 <button onClick={() => setModalPreview(false)} className={configUi.modalClose}><X size={20} /></button>
@@ -353,7 +353,7 @@ export default function EnviarCorreosMasivos() {
       <AnimatePresence>
         {modalDetalle && detalleEnvio && (
           <motion.div className={configUi.modalBackdrop} onClick={() => setModalDetalle(false)}>
-            <motion.div className={cn(configUi.modalPanel, "max-w-2xl")} onClick={e => e.stopPropagation()}>
+            <motion.div className={cn(configUi.modalPanel, "max-w-2xl max-h-[90vh] flex flex-col")} onClick={e => e.stopPropagation()}>
               <div className={configUi.modalHeader}>
                 <h3 className={configUi.modalTitle}>Detalle del Comunicado</h3>
                 <button onClick={() => setModalDetalle(false)} className={configUi.modalClose}><X size={20} /></button>

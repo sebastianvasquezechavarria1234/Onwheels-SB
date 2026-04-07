@@ -10,6 +10,7 @@ import {
   deletePatrocinador,
 } from "../../services/patrocinadoresServices";
 import { configUi, cn } from "../../configuracion/configUi";
+import ModalErrorAlert from "../../configuracion/ModalErrorAlert";
 
 export default function Patrocinadores() {
   // Data
@@ -29,6 +30,7 @@ export default function Patrocinadores() {
   const [modal, setModal] = useState(null); // crear | editar | ver | eliminar
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [modalError, setModalError] = useState(null);
 
   // Form
   const [form, setForm] = useState({
@@ -110,6 +112,7 @@ export default function Patrocinadores() {
     setModal(type);
     setSelected(patro);
     setSubmitting(false);
+    setModalError(null);
 
     if (patro) {
       setForm({
@@ -133,6 +136,7 @@ export default function Patrocinadores() {
     if (submitting) return;
     setModal(null);
     setSelected(null);
+    setModalError(null);
     setLogoPreview(null);
     setForm({ nombre_patrocinador: "", email: "", telefono: "", logo_patrocinador: "" });
     setFormErrors({});
@@ -198,14 +202,23 @@ export default function Patrocinadores() {
   const handleDelete = async () => {
     if (!selected) return;
     setSubmitting(true);
+    setModalError(null);
     try {
       await deletePatrocinador(selected.id_patrocinador);
-      showNotification("Patrocinador eliminado");
+      showNotification("Patrocinador eliminado con éxito", "success");
       await fetchAll();
       closeModal();
     } catch (err) {
-      console.error("Error eliminando:", err);
-      showNotification("No se pudo eliminar", "error");
+      console.error("Error eliminando patrocinador:", err);
+      // Intentar obtener el mensaje de la respuesta del servidor en diferentes rutas comunes
+      const errorMessage =
+        err.response?.data?.mensaje ||
+        err.response?.data?.msg ||
+        err.response?.data?.error ||
+        "Se produjo un error al intentar eliminar el patrocinador.";
+
+      setModalError(errorMessage);
+      showNotification(errorMessage, "error");
     } finally {
       setSubmitting(false);
     }
@@ -265,7 +278,7 @@ export default function Patrocinadores() {
           <h2 className={configUi.title}>Patrocinadores</h2>
           <span className={configUi.countBadge}>
             <Hash className="mr-1 h-3 w-3" />
-            {filteredAndSorted.length} empresas
+            {filteredAndSorted.length} patrocinadores
           </span>
         </div>
 
@@ -298,7 +311,7 @@ export default function Patrocinadores() {
                 <th className={cn(configUi.th, "w-[15%] pl-5")}>Logo</th>
                 <th className={cn(configUi.th, "w-[25%]")}>
                    <button onClick={() => toggleSort("nombre_patrocinador")} className="flex items-center gap-2">
-                    Empresa
+                    Patrocinador
                     {sortField === "nombre_patrocinador" && <ArrowUpDown className="h-3 w-3" />}
                   </button>
                 </th>
@@ -390,9 +403,9 @@ export default function Patrocinadores() {
                 <div className={configUi.modalHeader}>
                    <div>
                     <h3 className={configUi.modalTitle}>
-                      {modal === "crear" ? "Nuevo Patrocinador" : modal === "editar" ? "Editar Perfil" : modal === "ver" ? "Detalles del Aliado" : "Eliminar Aliado"}
+                      {modal === "crear" ? "Nuevo Patrocinador" : modal === "editar" ? "Editar Patrocinador" : modal === "ver" ? "Detalles del Patrocinador" : "Eliminar Patrocinador"}
                     </h3>
-                    <p className={configUi.modalSubtitle}>Gestión de marcas colaboradoras.</p>
+                    <p className={configUi.modalSubtitle}>Administración de patrocinadores del evento.</p>
                    </div>
                    <button onClick={closeModal} className={configUi.modalClose} disabled={submitting}><X size={20} /></button>
                 </div>
@@ -400,8 +413,16 @@ export default function Patrocinadores() {
                 <div className={configUi.modalContent}>
                    {modal === "eliminar" ? (
                      <div className="py-4 text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]"><Trash2 size={30} /></div>
-                        <p className="text-sm text-[#6b84aa]">¿Retirar a <span className="font-bold text-[#d44966]">{selected?.nombre_patrocinador}</span> de la lista? </p>
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#fff1f3] text-[#d44966]">
+                          <Trash2 size={30} />
+                        </div>
+                        <h3 className="mb-2 text-xl font-black text-[#16315f]">Confirmar Eliminación</h3>
+                        <p className="mx-auto mb-6 max-w-md text-sm leading-6 text-[#6b84aa]">
+                          ¿Estás seguro de que deseas eliminar al patrocinador <span className="font-bold text-[#d44966]">{selected?.nombre_patrocinador}</span>?
+                          <br />Esta acción no se puede deshacer y puede estar restringida si el activo tiene eventos vinculados.
+                        </p>
+
+                        <ModalErrorAlert error={modalError} />
                      </div>
                    ) : (
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -439,7 +460,7 @@ export default function Patrocinadores() {
                         {/* RIGHT: Fields */}
                         <div className="space-y-4">
                            <div className={configUi.fieldGroup}>
-                              <label className={configUi.fieldLabel}>Nombre de la Empresa *</label>
+                              <label className={configUi.fieldLabel}>Nombre del Patrocinador *</label>
                               <div className="relative">
                                  <Award className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                  <input name="nombre_patrocinador" value={form.nombre_patrocinador} onChange={handleChange} onBlur={(e) => validateField("nombre_patrocinador", e.target.value)} readOnly={modal === "ver"} disabled={submitting} placeholder="Ej: Red Bull" className={cn(configUi.fieldInput, "pl-10", formErrors.nombre_patrocinador && "border-red-500")} />
@@ -451,7 +472,7 @@ export default function Patrocinadores() {
                               <label className={configUi.fieldLabel}>Correo Electrónico *</label>
                               <div className="relative">
                                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                 <input name="email" value={form.email} onChange={handleChange} onBlur={(e) => validateField("email", e.target.value)} readOnly={modal === "ver"} disabled={submitting} placeholder="aliado@empresa.com" className={cn(configUi.fieldInput, "pl-10", formErrors.email && "border-red-500")} />
+                                 <input name="email" value={form.email} onChange={handleChange} onBlur={(e) => validateField("email", e.target.value)} readOnly={modal === "ver"} disabled={submitting} placeholder="patrocinador@empresa.com" className={cn(configUi.fieldInput, "pl-10", formErrors.email && "border-red-500")} />
                               </div>
                               {formErrors.email && <p className="mt-1 text-xs font-bold text-red-500">{formErrors.email}</p>}
                            </div>
@@ -472,13 +493,13 @@ export default function Patrocinadores() {
                 <div className={configUi.modalFooter}>
                   <div className="flex items-center gap-2">
                      <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                     <span className="text-[10px] font-black uppercase tracking-wider text-[#6b84aa]">Aliados Estratégicos</span>
+                     <span className="text-[10px] font-black uppercase tracking-wider text-[#6b84aa]">Gestión de Patrocinadores</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <button onClick={closeModal} className={configUi.secondaryButton}>{modal === "ver" ? "Cerrar" : "Cancelar"}</button>
-                    {modal === "crear" && <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Procesando..." : "Registrar Empresa"}</button>}
+                    {modal === "crear" && <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Procesando..." : "Registrar Patrocinador"}</button>}
                     {modal === "editar" && <button onClick={handleSave} disabled={submitting} className={configUi.primarySoftButton}>{submitting ? "Guardando..." : "Actualizar Datos"}</button>}
-                    {modal === "eliminar" && <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>{submitting ? "Eliminando..." : "Eliminar Permanentemente"}</button>}
+                    {modal === "eliminar" && !modalError && <button onClick={handleDelete} disabled={submitting} className={configUi.dangerButton}>{submitting ? "Eliminando..." : "Eliminar Permanentemente"}</button>}
                   </div>
                 </div>
               </div>

@@ -406,11 +406,11 @@ export default function Eventos() {
       <AnimatePresence>
         {modal && (
           <motion.div className={configUi.modalBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
-            <motion.div className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-4xl")} initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}>
-              <div className="flex flex-col h-full overflow-hidden">
+            <motion.div className={cn(configUi.modalPanel, modal === "eliminar" ? "max-w-md" : "max-w-3xl", "max-h-[95vh] flex flex-col")} initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}>
+              <div className="flex flex-col flex-1 overflow-hidden">
                 
                 {modal === "eliminar" ? (
-                   <div className="p-8 text-center flex flex-col items-center">
+                   <div className="p-8 text-center flex flex-col items-center overflow-y-auto">
                       <div className="h-16 w-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4"><Trash2 size={30}/></div>
                       <h3 className="text-xl font-bold text-[#16315f]">¿Eliminar Evento?</h3>
                       <p className="text-sm text-[#6b84aa] mt-2 mb-6">Esta acción removerá permanentemente el evento <span className="font-bold">"{selected?.nombre_evento}"</span> y todos sus datos asociados.</p>
@@ -428,7 +428,7 @@ export default function Eventos() {
                    </div>
                 ) : (
                   <>
-                    <div className={configUi.modalHeader}>
+                    <div className={cn(configUi.modalHeader, "shrink-0")}>
                        <div>
                           <h3 className={configUi.modalTitle}>{modal === "crear" ? "Nuevo Evento" : modal === "editar" ? "Editar Evento" : "Vista de Evento"}</h3>
                           <p className={configUi.modalSubtitle}>{modal !== "ver" && `Paso ${step} de 2 — ${step === 1 ? "Configuración básica" : "Detalles y Multimedia"}`}</p>
@@ -540,7 +540,7 @@ export default function Eventos() {
                        </div>
 
                        {/* RIGHT: PREVIEW CARD (Visible if image exists or in step 2) */}
-                       <div className="hidden lg:flex w-72 flex-col gap-4 border-l border-slate-100 pl-6">
+                       <div className="hidden lg:flex w-64 flex-col gap-4 border-l border-slate-100 pl-6">
                            <div className="relative rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-sm group">
                               <div className="h-40 bg-slate-50 flex items-center justify-center overflow-hidden">
                                  {form.imagen_evento ? <img src={form.imagen_evento} alt="Preview" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <ImageIcon size={40} className="text-slate-200" />}
@@ -561,7 +561,7 @@ export default function Eventos() {
                        </div>
                     </div>
 
-                    <div className={configUi.modalFooter}>
+                    <div className={cn(configUi.modalFooter, "shrink-0")}>
                        <div className="flex items-center gap-2">
                           {modal === "ver" ? (
                              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest px-3 py-1 bg-slate-50 rounded-full border border-slate-100">Histórico de Eventos</span>
