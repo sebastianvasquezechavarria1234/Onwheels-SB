@@ -782,7 +782,15 @@ export const Clases = () => {
             onClick={closeModal}
           >
             <motion.div
-              className={`${configUi.modalPanel} ${modal === "eliminar" ? "max-w-sm" : "max-w-4xl"}`}
+              className={cn(
+                configUi.modalPanel,
+                "max-h-[90vh] flex flex-col",
+                modal === "eliminar"
+                  ? "max-w-sm"
+                  : modal === "ver"
+                    ? "max-w-3xl"
+                    : "max-w-2xl"
+              )}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -804,7 +812,7 @@ export const Clases = () => {
                   </button>
                 </div>
 
-                <div className={configUi.modalContent}>
+                <div className={cn(configUi.modalContent, modal !== "eliminar" && "px-5 py-4")}>
                   {modal === "eliminar" ? (
                     <div className="py-8 text-center px-6">
                       <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[2rem] bg-rose-50 text-rose-500 shadow-inner border border-rose-100">
@@ -816,9 +824,9 @@ export const Clases = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-8">
+                    <div className="flex flex-col gap-5">
                         {/* --- PIPELINE STEPPER --- */}
-                        <div className="flex items-center justify-between px-10 py-6 mb-4 bg-slate-50/50 rounded-[2rem] border border-slate-100/50">
+                      <div className="flex items-center justify-between px-4 py-3 mb-3 bg-slate-50/50 rounded-3xl border border-slate-100/50">
                           <div className="flex items-center gap-4 relative">
                              <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500", formStep >= 1 ? "bg-[#16315f] text-white shadow-lg shadow-[#16315f]/20" : "bg-slate-100 text-slate-400")}>
                                <Hash size={18} />
@@ -847,12 +855,12 @@ export const Clases = () => {
                           </div>
                         </div>
 
-                        <div className="flex flex-col lg:flex-row gap-10 min-h-[400px]">
+                        <div className="flex flex-col lg:flex-row gap-4 min-h-[300px]">
                         {formStep === 1 ? (
                           <>
                             {/* Step 1 Left: Image Preview */}
-                            <div className="w-full lg:w-1/3 space-y-6">
-                              <div className="w-full aspect-square bg-[#fbfdff] rounded-[3rem] border-4 border-dashed border-[#d7e5f8] flex items-center justify-center overflow-hidden shadow-inner group relative">
+                            <div className="w-full lg:w-1/3 space-y-5">
+                              <div className="w-full aspect-square bg-[#fbfdff] rounded-[2.25rem] border-4 border-dashed border-[#d7e5f8] flex items-center justify-center overflow-hidden shadow-inner group relative">
                                 {formData.url_imagen ? (
                                   <img src={formData.url_imagen} alt="Preview" className="w-full h-full object-cover transition duration-700 group-hover:scale-110" />
                                 ) : (
@@ -900,8 +908,8 @@ export const Clases = () => {
                             </div>
 
                             {/* Step 1 Right: Basic Info */}
-                            <div className="flex-1 flex flex-col gap-8">
-                               <div className="grid grid-cols-1 gap-8">
+                             <div className="flex-1 flex flex-col gap-6">
+                               <div className="grid grid-cols-1 gap-6">
                                   <div className={configUi.fieldGroup}>
                                     <label className={configUi.fieldLabel}>Definición de Clase *</label>
                                     {modal === "ver" ? (
@@ -978,7 +986,7 @@ export const Clases = () => {
                                   </div>
                                </div>
                               
-                              <div className="mt-auto p-8 bg-[#16315f] rounded-[2.5rem] text-white shadow-xl shadow-[#16315f]/10 relative overflow-hidden group">
+                              <div className="mt-auto p-6 bg-[#16315f] rounded-[2rem] text-white shadow-xl shadow-[#16315f]/10 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-4 opacity-5 translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-700">
                                    <ImageIcon size={120} />
                                 </div>
@@ -996,8 +1004,8 @@ export const Clases = () => {
                         ) : (
                           <>
                             {/* Step 2 Left: Staff Pool */}
-                            <div className="w-full lg:w-1/3 space-y-6">
-                              <div className="p-10 bg-[#fbfdff] rounded-[3rem] border border-[#d7e5f8] shadow-inner relative overflow-hidden group">
+                            <div className="w-full lg:w-1/3 space-y-5">
+                              <div className="p-6 bg-[#fbfdff] rounded-[2.25rem] border border-[#d7e5f8] shadow-inner relative overflow-hidden group">
                                 <p className="text-[10px] text-[#6b84aa] font-black uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
                                   <User size={16} className="text-indigo-400" /> Especialistas Asignados
                                 </p>
@@ -1076,7 +1084,7 @@ export const Clases = () => {
                             </div>
 
                             {/* Step 2 Right: Schedule & More */}
-                            <div className="flex-1 space-y-8">
+                            <div className="flex-1 space-y-6">
                                <div className={configUi.fieldGroup}>
                                   <label className={configUi.fieldLabel}>Planificación Semanal de Entrenamiento</label>
                                   {modal === "ver" ? (
@@ -1117,7 +1125,7 @@ export const Clases = () => {
                                   {formErrors.dia_semana && <p className="text-[10px] text-rose-500 font-black mt-3 ml-1 flex items-center gap-2 animate-bounce"><AlertCircle size={12} strokeWidth={3} /> {formErrors.dia_semana}</p>}
                                </div>
 
-                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-4">
+                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
                                   <div className={configUi.fieldGroup}>
                                     <label className={configUi.fieldLabel}>Bloque Inicio</label>
                                     {modal === "ver" ? (

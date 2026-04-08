@@ -1,5 +1,8 @@
 FROM node:20-alpine AS build
 
+# Update system packages to fix vulnerabilities like libpng and zlib
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -15,6 +18,10 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine
+
+# Update system packages to fix vulnerabilities like libpng and zlib
+RUN apk update && apk upgrade --no-cache
+
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 

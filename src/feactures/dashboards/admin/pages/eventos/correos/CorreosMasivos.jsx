@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Plus, X, Eye, Mail, Calendar, Users, Send, Search, Hash,
-  ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle, AlertCircle, Info
+  ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,22 +10,9 @@ import {
   enviarCorreosMasivos,
   obtenerHistorialEnvios
 } from "../../services/emailMasivoServices";
-import api from "../../../../../../services/api";
 import { configUi, cn } from "../../configuracion/configUi";
 
 export default function EnviarCorreosMasivos() {
-  const apiConnection = useMemo(() => {
-    const baseUrl = api?.defaults?.baseURL || "";
-    const isLocal = /localhost:3000|127\.0\.0\.1:3000/i.test(baseUrl);
-    return {
-      label: isLocal ? "API Local" : "API Remota",
-      baseUrl,
-      tone: isLocal
-        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-        : "bg-amber-50 text-amber-700 border-amber-200",
-    };
-  }, []);
-
   const [roles, setRoles] = useState([]);
   const [historial, setHistorial] = useState([]);
 
@@ -192,11 +179,6 @@ export default function EnviarCorreosMasivos() {
           <h2 className={configUi.title}>Emails Masivos</h2>
           <span className={configUi.countBadge}>
             <Mail className="mr-1 h-3 w-3" /> {historial.length} envíos históricos
-          </span>
-          <span className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wide", apiConnection.tone)} title={apiConnection.baseUrl || "Sin baseURL"}>
-            <AlertCircle className="h-3 w-3" />
-            {apiConnection.label}
-            <span className="opacity-75 normal-case font-bold tracking-normal">{apiConnection.baseUrl?.replace(/^https?:\/\//, "") || "sin-url"}</span>
           </span>
         </div>
 
