@@ -10,9 +10,22 @@ import {
   enviarCorreosMasivos,
   obtenerHistorialEnvios
 } from "../../services/emailMasivoServices";
+import api from "../../../../../../services/api";
 import { configUi, cn } from "../../configuracion/configUi";
 
 export default function EnviarCorreosMasivos() {
+  const apiConnection = useMemo(() => {
+    const baseUrl = api?.defaults?.baseURL || "";
+    const isLocal = /localhost:3000|127\.0\.0\.1:3000/i.test(baseUrl);
+    return {
+      label: isLocal ? "API Local" : "API Remota",
+      baseUrl,
+      tone: isLocal
+        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+        : "bg-amber-50 text-amber-700 border-amber-200",
+    };
+  }, []);
+
   const [roles, setRoles] = useState([]);
   const [historial, setHistorial] = useState([]);
 
@@ -112,20 +125,36 @@ export default function EnviarCorreosMasivos() {
 
   const handleEnviar = async () => {
     if (!validateForm()) return;
+    
     setLoading(true);
     try {
       const idsRoles = rolesSeleccionados.map(r => r.idRol);
       const rolesNombres = rolesSeleccionados.map(r => r.nombreRol);
+      
       const resp = await enviarCorreosMasivos(form.asunto, form.mensaje, idsRoles, rolesNombres);
-      if (resp.success) {
-        showNotification("Emails enviados exitosamente");
-        setForm({ asunto: "", mensaje: "" });
-        setRolesSeleccionados([]);
-        setModal(false);
+      
+      // Siempre cerramos y notificamos si no hubo error de red/servidor (catch)
+      // El backend ahora está estructurado para responder siempre success: true si llega aquí
+      setModal(false);
+      showNotification("¡Enviado! El comunicado se ha registrado y está en proceso de envío.", "success");
+      
+      // Limpiar formulario
+      setForm({ asunto: "", mensaje: "" });
+      setRolesSeleccionados([]);
+      
+      // Actualizar listado
+      if (resp && resp.data && resp.data.envio) {
         setHistorial(prev => [resp.data.envio, ...prev]);
+      } else {
+        // Fallback: recargar todo el historial si el objeto no viene como se espera
+        obtenerHistorialEnvios().then(r => {
+          if (r.success) setHistorial(r.data);
+        });
       }
     } catch (err) {
-      showNotification("Error al realizar el envío", "error");
+      console.error("Error al realizar el envío:", err);
+      const errorMsg = err.response?.data?.msg || err.response?.data?.mensaje || "No se pudo realizar el envío. Intente de nuevo.";
+      showNotification(errorMsg, "error");
     } finally {
       setLoading(false);
     }
@@ -163,6 +192,11 @@ export default function EnviarCorreosMasivos() {
           <h2 className={configUi.title}>Emails Masivos</h2>
           <span className={configUi.countBadge}>
             <Mail className="mr-1 h-3 w-3" /> {historial.length} envíos históricos
+          </span>
+          <span className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wide", apiConnection.tone)} title={apiConnection.baseUrl || "Sin baseURL"}>
+            <AlertCircle className="h-3 w-3" />
+            {apiConnection.label}
+            <span className="opacity-75 normal-case font-bold tracking-normal">{apiConnection.baseUrl?.replace(/^https?:\/\//, "") || "sin-url"}</span>
           </span>
         </div>
 

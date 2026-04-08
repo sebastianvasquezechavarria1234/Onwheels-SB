@@ -1,7 +1,15 @@
 import axios from "axios"
 
+// Usar VITE_API_URL (Render) por defecto en producción
+// Permitir override solo si se establece VITE_FORCE_LOCAL_API=true en .env.local
+const useLocalApi = import.meta.env.VITE_FORCE_LOCAL_API === "true"
+
+const resolvedBaseURL = useLocalApi
+  ? "http://localhost:3000/api"
+  : (import.meta.env.VITE_API_URL || "https://onwheels-sb-api-sg4j.onrender.com/api")
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+  baseURL: resolvedBaseURL,
 })
 
 // Interceptor para añadir el token a todas las requests

@@ -36,6 +36,8 @@ export const enviarCorreosMasivos = async (asunto, mensaje, idsRoles, rolesNombr
       mensaje,
       idsRoles,
       rolesNombres,
+    }, {
+      timeout: 60000,
     });
     return res.data;
   } catch (error) {
